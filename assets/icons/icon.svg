@@ -1,0 +1,16 @@
+<svg viewBox="0 0 512 512" xmlns="http://www.w3.org/2000/svg">
+  <defs>
+    <linearGradient id="ebg" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#14213f"/><stop offset="1" stop-color="#05070d"/></linearGradient>
+    <mask id="em"><rect width="512" height="512" fill="#fff"/><circle cx="418" cy="98" r="46" fill="#000"/></mask>
+  </defs>
+  <rect width="512" height="512" rx="112" fill="url(#ebg)"/>
+  <circle cx="392" cy="118" r="52" fill="#f6e7bf" mask="url(#em)"/>
+  <path d="M40 410H240A110 110 0 1 0 130 300V470" fill="none" stroke="#05070d" stroke-width="58" stroke-linecap="round"/>
+  <path d="M40 410H240A110 110 0 1 0 130 300V470" fill="none" stroke="#ff9a2e" stroke-width="30" stroke-linecap="round"/>
+  <path d="M40 410H240" stroke="#ffd29a" stroke-width="4" stroke-dasharray="14 14"/>
+  <path d="M130 370V470" stroke="#05070d" stroke-width="58"/>
+  <path d="M130 360V470" stroke="#ff9a2e" stroke-width="30" stroke-linecap="round"/>
+  <path d="M36 190H476" stroke="#05070d" stroke-width="50" stroke-linecap="round"/>
+  <path d="M36 190H476" stroke="#2fbf71" stroke-width="28" stroke-linecap="round"/>
+  <path d="M60 190H452" stroke="#e9fff2" stroke-width="4" stroke-dasharray="18 16"/>
+</svg>

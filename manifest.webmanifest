@@ -1,0 +1,25 @@
+{
+  "name": "MIDNIGHT JAPAN — ミッドナイト・ジャパン",
+  "short_name": "ミッドナイト・ジャパン",
+  "description": "A browser 3D car-meet game set at Daikoku PA on the Shuto Expressway, Yokohama.",
+  "id": "./",
+  "start_url": "./",
+  "scope": "./",
+  "display": "standalone",
+  "display_override": ["fullscreen", "standalone"],
+  "orientation": "any",
+  "theme_color": "#060a13",
+  "background_color": "#060a13",
+  "categories": ["games", "entertainment"],
+  "lang": "ja",
+  "icons": [
+    { "src": "assets/icons/icon-192.png", "sizes": "192x192", "type": "image/png", "purpose": "any" },
+    { "src": "assets/icons/icon-512.png", "sizes": "512x512", "type": "image/png", "purpose": "any" },
+    { "src": "assets/icons/icon-maskable-512.png", "sizes": "512x512", "type": "image/png", "purpose": "maskable" },
+    { "src": "assets/icons/icon.svg", "sizes": "any", "type": "image/svg+xml", "purpose": "any" }
+  ],
+  "shortcuts": [
+    { "name": "Play", "short_name": "Play", "url": "play.html", "icons": [{ "src": "assets/icons/icon-192.png", "sizes": "192x192" }] },
+    { "name": "Cars", "short_name": "Cars", "url": "cars.html", "icons": [{ "src": "assets/icons/icon-192.png", "sizes": "192x192" }] }
+  ]
+}

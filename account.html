@@ -1,0 +1,130 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Account — MIDNIGHT JAPAN (ミッドナイト・ジャパン · 미드나잇 재팬)</title>
+<meta name="description" content="Create a MIDNIGHT JAPAN account: nickname, favourite car and outfit for the Daikoku PA car-meet game.">
+<meta name="keywords" content="MIDNIGHT JAPAN, ミッドナイト・ジャパン, 미드나잇 재팬, Daikoku PA game, 大黒PA ゲーム, 다이코쿠 PA 게임, 大黒PA, 다이코쿠 PA, Daikoku PA, 首都高, Shuto Expressway, car meet game, browser car game, JDM, free online car game, 무료 브라우저 자동차 게임, 車 ゲーム ブラウザ 無料">
+<meta name="robots" content="index, follow">
+<link rel="canonical" href="https://midnight-japan.github.io/account.html">
+<meta name="theme-color" content="#060a13">
+<meta property="og:type" content="website">
+<meta property="og:site_name" content="MIDNIGHT JAPAN">
+<meta property="og:title" content="Account — MIDNIGHT JAPAN (ミッドナイト・ジャパン · 미드나잇 재팬)">
+<meta property="og:description" content="Create a MIDNIGHT JAPAN account: nickname, favourite car and outfit for the Daikoku PA car-meet game.">
+<meta property="og:url" content="https://midnight-japan.github.io/account.html">
+<meta property="og:image" content="https://midnight-japan.github.io/docs/screenshots/01-pa-night.png">
+<meta property="og:image:alt" content="Night car meet at Daikoku PA in MIDNIGHT JAPAN">
+<meta property="og:locale" content="en_US">
+<meta property="og:locale:alternate" content="ja_JP">
+<meta property="og:locale:alternate" content="ko_KR">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:title" content="Account — MIDNIGHT JAPAN (ミッドナイト・ジャパン · 미드나잇 재팬)">
+<meta name="twitter:description" content="Create a MIDNIGHT JAPAN account: nickname, favourite car and outfit for the Daikoku PA car-meet game.">
+<meta name="twitter:image" content="https://midnight-japan.github.io/docs/screenshots/01-pa-night.png">
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="icon" href="assets/icons/icon.svg" type="image/svg+xml">
+<link rel="icon" href="assets/icons/favicon-32.png" sizes="32x32" type="image/png">
+<link rel="apple-touch-icon" href="assets/icons/apple-touch-icon.png">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="ミッドナイト・ジャパン">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Chakra+Petch:wght@500;600;700&family=Noto+Sans+JP:wght@400;500;700;900&family=Noto+Sans+KR:wght@400;500;700;900&display=swap">
+<link rel="stylesheet" href="css/site.css">
+<script type="module" src="js/site/account-page.js"></script>
+</head>
+<body>
+<header id="site-header" class="site-header"></header>
+<main id="main">
+  <section class="page-hero">
+    <div class="wrap">
+      <div class="sec-head">
+        <span class="kicker"><span class="route">ID</span><span data-i18n="site.account.kicker">Driver profile</span></span>
+        <h1 class="sec-title" data-i18n="site.account.title">Account</h1>
+        <span class="sec-jp" lang="ja">アカウント</span>
+      </div>
+    </div>
+  </section>
+  <section class="section" style="padding-top:0">
+    <div class="wrap">
+      <div class="notice" role="note"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M12 8h.01M11 12h1v5h1"/></svg>
+        <div><strong data-i18n="site.account.localTitle">Stored on this device only</strong><br><span data-i18n="site.account.localBody">For now, accounts live in this browser's storage. Nothing is sent to a server. Online sync is planned for a future update — clearing site data will delete your account.</span></div></div>
+
+      <div id="acc-out" hidden>
+        <div class="tabs" role="tablist">
+          <button class="tab" role="tab" id="tab-login" aria-selected="true" aria-controls="form-login" data-i18n="site.account.login">Log in</button>
+          <button class="tab" role="tab" id="tab-signup" aria-selected="false" aria-controls="form-signup" data-i18n="site.account.signup">Sign up</button>
+        </div>
+        <div class="acc-grid">
+          <form class="card form" id="form-login" novalidate>
+            <h2 data-i18n="site.account.loginTitle">Welcome back</h2>
+            <label><span data-i18n="site.account.id">ID</span><input class="field" name="id" autocomplete="username" required></label>
+            <label><span data-i18n="site.account.pw">Password</span><input class="field" name="password" type="password" autocomplete="current-password" required></label>
+            <p class="form-err" role="alert"></p>
+            <button class="btn btn-play" type="submit" data-i18n="site.account.login">Log in</button>
+          </form>
+          <form class="card form" id="form-signup" novalidate hidden>
+            <h2 data-i18n="site.account.signupTitle">Create your driver ID</h2>
+            <label><span data-i18n="site.account.id">ID</span><input class="field" name="id" autocomplete="username" required><span class="hint" data-i18n="site.account.idHint">3–40 characters: a–z, 0–9, _ . @ -</span></label>
+            <label><span data-i18n="site.account.nick">Nickname</span><input class="field" name="nickname" autocomplete="nickname" maxlength="16" required><span class="hint" data-i18n="site.account.nickHint">2–16 characters. Shown above your car in the game.</span></label>
+            <label><span data-i18n="site.account.pw">Password</span><input class="field" name="password" type="password" autocomplete="new-password" required><span class="hint" data-i18n="site.account.pwHint">At least 6 characters.</span></label>
+            <label><span data-i18n="site.account.pw2">Confirm password</span><input class="field" name="password2" type="password" autocomplete="new-password" required></label>
+            <p class="form-err" role="alert"></p>
+            <button class="btn btn-play" type="submit" data-i18n="site.account.signupBtn">Create account</button>
+          </form>
+          <div class="card">
+            <h2 data-i18n="site.account.whyTitle">Why sign up?</h2>
+            <ul style="color:var(--muted);padding-left:1.2em;margin:0">
+              <li data-i18n="site.account.why1">Your nickname appears above your car at the meet.</li>
+              <li data-i18n="site.account.why2">Save a favourite car and outfit to start with.</li>
+              <li data-i18n="site.account.why3">Ready for online sync and multiplayer when they arrive.</li>
+            </ul>
+            <p style="margin:14px 0 0;color:var(--dim);font-size:.88rem" data-i18n="site.account.guestNote">You can also play as a guest without an account.</p>
+          </div>
+        </div>
+      </div>
+
+      <div id="acc-in" hidden>
+        <div class="acc-grid wide">
+          <div class="card">
+            <div class="profile-id"><span class="av" id="p-av">?</span><div><div class="nm" id="p-nick"></div><div class="sub" id="p-id"></div><div class="sub" id="p-since"></div></div></div>
+            <form class="form" id="form-nick" novalidate>
+              <label><span data-i18n="site.account.changeNick">Change nickname</span><input class="field" name="nickname" maxlength="16" autocomplete="nickname" required></label>
+              <p class="form-err" role="alert"></p>
+              <button class="btn btn-ghost btn-sm" type="submit" data-i18n="site.account.save">Save</button>
+            </form>
+            <hr style="border:0;border-top:1px solid var(--line);margin:20px 0">
+            <div class="row">
+              <a class="btn btn-play btn-sm" href="play.html" data-i18n="site.nav.play">Play</a>
+              <button class="btn btn-danger btn-sm" type="button" id="btn-logout" data-i18n="site.account.logout">Log out</button>
+            </div>
+          </div>
+          <form class="card form" id="form-profile" novalidate>
+            <h2 data-i18n="site.account.profile">Profile</h2>
+            <label><span data-i18n="site.account.car">Favourite car</span><select class="field" name="car" id="p-car"></select></label>
+            <div class="car-pick-prev" id="p-car-prev"></div>
+            <h3 style="font-size:1rem;margin:8px 0 0" data-i18n="site.account.outfit">Outfit</h3>
+            <div class="outfit">
+              <div id="p-figure"></div>
+              <div class="colors">
+                <label><span data-i18n="site.account.top">Top</span><input type="color" name="top" value="#1f2a44"></label>
+                <label><span data-i18n="site.account.bottom">Bottom</span><input type="color" name="bottom" value="#2a2f3a"></label>
+                <label><span data-i18n="site.account.shoes">Shoes</span><input type="color" name="shoes" value="#e9e9e7"></label>
+                <label><span data-i18n="site.account.cap">Cap</span><input type="color" name="cap" value="#ff9a2e"></label>
+              </div>
+            </div>
+            <p class="form-ok" aria-live="polite"></p>
+            <button class="btn btn-green" type="submit" data-i18n="site.account.saveProfile">Save profile</button>
+          </form>
+        </div>
+      </div>
+    </div>
+  </section>
+</main>
+<footer id="site-footer" class="site-footer"></footer>
+</body>
+</html>

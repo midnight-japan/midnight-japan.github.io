@@ -1,0 +1,70 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Regions — MIDNIGHT JAPAN (ミッドナイト・ジャパン · 미드나잇 재팬)</title>
+<meta name="description" content="Where you can drive in MIDNIGHT JAPAN (ミッドナイト・ジャパン / 미드나잇 재팬): Daikoku PA (大黒PA), Daikoku JCT, the Bay Bridge and the Shuto Expressway routes coming next.">
+<meta name="keywords" content="MIDNIGHT JAPAN, ミッドナイト・ジャパン, 미드나잇 재팬, Daikoku PA game, 大黒PA ゲーム, 다이코쿠 PA 게임, 大黒PA, 다이코쿠 PA, Daikoku PA, 首都高, Shuto Expressway, car meet game, browser car game, JDM, free online car game, 무료 브라우저 자동차 게임, 車 ゲーム ブラウザ 無料">
+<meta name="robots" content="index, follow">
+<link rel="canonical" href="https://midnight-japan.github.io/regions.html">
+<meta name="theme-color" content="#060a13">
+<meta property="og:type" content="website">
+<meta property="og:site_name" content="MIDNIGHT JAPAN">
+<meta property="og:title" content="Regions — MIDNIGHT JAPAN (ミッドナイト・ジャパン · 미드나잇 재팬)">
+<meta property="og:description" content="Where you can drive in MIDNIGHT JAPAN (ミッドナイト・ジャパン / 미드나잇 재팬): Daikoku PA (大黒PA), Daikoku JCT, the Bay Bridge and the Shuto Expressway routes coming next.">
+<meta property="og:url" content="https://midnight-japan.github.io/regions.html">
+<meta property="og:image" content="https://midnight-japan.github.io/docs/screenshots/01-pa-night.png">
+<meta property="og:image:alt" content="Night car meet at Daikoku PA in MIDNIGHT JAPAN">
+<meta property="og:locale" content="en_US">
+<meta property="og:locale:alternate" content="ja_JP">
+<meta property="og:locale:alternate" content="ko_KR">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:title" content="Regions — MIDNIGHT JAPAN (ミッドナイト・ジャパン · 미드나잇 재팬)">
+<meta name="twitter:description" content="Where you can drive in MIDNIGHT JAPAN (ミッドナイト・ジャパン / 미드나잇 재팬): Daikoku PA (大黒PA), Daikoku JCT, the Bay Bridge and the Shuto Expressway routes coming next.">
+<meta name="twitter:image" content="https://midnight-japan.github.io/docs/screenshots/01-pa-night.png">
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="icon" href="assets/icons/icon.svg" type="image/svg+xml">
+<link rel="icon" href="assets/icons/favicon-32.png" sizes="32x32" type="image/png">
+<link rel="apple-touch-icon" href="assets/icons/apple-touch-icon.png">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="ミッドナイト・ジャパン">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Chakra+Petch:wght@500;600;700&family=Noto+Sans+JP:wght@400;500;700;900&family=Noto+Sans+KR:wght@400;500;700;900&display=swap">
+<link rel="stylesheet" href="css/site.css">
+<script type="module" src="js/site/regions.js"></script>
+</head>
+<body>
+<header id="site-header" class="site-header"></header>
+<main id="main">
+  <section class="page-hero">
+    <div class="wrap">
+      <div class="sec-head">
+        <span class="kicker"><span class="route">B</span><span data-i18n="site.regions.kicker">Map</span></span>
+        <h1 class="sec-title" data-i18n="site.regions.title">Regions</h1>
+        <span class="sec-jp" lang="ja">収録エリア</span>
+        <p class="sec-lead" data-i18n="site.regions.lead">The game starts at Daikoku and grows along the Bayshore Route around Tokyo Bay.</p>
+      </div>
+    </div>
+  </section>
+  <section class="section" style="padding-top:0">
+    <div class="wrap reg-layout">
+      <div class="card map-card">
+        <div id="bay-map"></div>
+        <div class="map-legend">
+          <span><i class="dot live"></i><span data-i18n="site.status.live">Live</span></span>
+          <span><i class="dot partial"></i><span data-i18n="site.status.partial">Partial</span></span>
+          <span><i class="dot planned"></i><span data-i18n="site.status.planned">Planned</span></span>
+          <span><i style="display:inline-block;width:18px;height:3px;background:#2fbf71;border-radius:2px"></i><span data-i18n="site.map.expressway">Expressway</span></span>
+        </div>
+      </div>
+      <div class="regions" id="region-list"></div>
+    </div>
+  </section>
+</main>
+<footer id="site-footer" class="site-footer"></footer>
+</body>
+</html>

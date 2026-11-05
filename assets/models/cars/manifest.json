@@ -1,0 +1,1042 @@
+{
+  "r32": {
+    "file": "r32.glb",
+    "title": "Nissan skyline r32 gt-r (improved)",
+    "author": "Dan_man5000",
+    "source": "https://sketchfab.com/3d-models/nissan-skyline-r32-gt-r-improved-81b21ffb76854051923c5c6425c79d2d",
+    "license": "CC-BY-4.0",
+    "substitute": null,
+    "stylized": false,
+    "tris": 98452,
+    "bytes": 909160,
+    "forward": "+z",
+    "up": "+y",
+    "paint": [
+      "car_paint"
+    ],
+    "glass": [
+      "clear_glass"
+    ],
+    "wheels": {
+      "fl": "wheel_fl",
+      "fr": "wheel_fr",
+      "rl": "wheel_rl",
+      "rr": "wheel_rr"
+    },
+    "hood": null,
+    "doors": null,
+    "trunk": null,
+    "engine": null,
+    "bbox": [
+      -0.957,
+      0,
+      -2.272,
+      0.957,
+      1.288,
+      2.272
+    ],
+    "notes": "Source had untextured plain-white materials; colors were assigned by material name (paint is neutral light grey for recoloring). Wheels split from material-merged meshes. Normalized on export: units = metres, car length scaled to the real vehicle, front = +Z, up = +Y, ground at y=0, centred on X/Z (wrapper node MJ_root). Wheel nodes wheel_fl/fr/rl/rr have their pivot at the wheel centre (axle = local X). fl = car's left = +X side."
+  },
+  "r33": {
+    "file": "r33.glb",
+    "title": "Nissan Skyline R33 GT-R",
+    "author": "GReddy295 (greddy295)",
+    "source": "https://sketchfab.com/3d-models/nissan-skyline-r33-gt-r-9107448c53f3452888f2ccf96acc3d3f",
+    "license": "CC-BY-4.0",
+    "substitute": null,
+    "stylized": false,
+    "tris": 69371,
+    "bytes": 759816,
+    "forward": "+z",
+    "up": "+y",
+    "paint": [
+      "Carcolor",
+      "Carcolor.001"
+    ],
+    "glass": [
+      "Windows"
+    ],
+    "wheels": {
+      "fl": "wheel_fl",
+      "fr": "wheel_fr",
+      "rl": "wheel_rl",
+      "rr": "wheel_rr"
+    },
+    "hood": null,
+    "doors": null,
+    "trunk": null,
+    "engine": null,
+    "bbox": [
+      -0.993,
+      0,
+      -2.337,
+      0.993,
+      1.378,
+      2.337
+    ],
+    "notes": "Author describes it as unfinished (rear window has hatch-like shading). Rim_Color is green in source; recolor if desired. Normalized on export: units = metres, car length scaled to the real vehicle, front = +Z, up = +Y, ground at y=0, centred on X/Z (wrapper node MJ_root). Wheel nodes wheel_fl/fr/rl/rr have their pivot at the wheel centre (axle = local X). fl = car's left = +X side."
+  },
+  "r35": {
+    "file": "r35.glb",
+    "title": "Nissan GT-R 2008",
+    "author": "PolyTigr",
+    "source": "https://sketchfab.com/3d-models/nissan-gt-r-2008-c8cd27c3c8cf4e2d86da031f1e98f8c8",
+    "license": "CC-BY-4.0",
+    "substitute": "2008 GT-R (R35, pre-facelift) instead of 2024",
+    "stylized": false,
+    "tris": 214219,
+    "bytes": 5772416,
+    "forward": "+z",
+    "up": "+y",
+    "paint": [
+      "lambert1"
+    ],
+    "glass": [
+      "Glass",
+      "dark_glassw"
+    ],
+    "wheels": {
+      "fl": "wheel_fl",
+      "fr": "wheel_fr",
+      "rl": "wheel_rl",
+      "rr": "wheel_rr"
+    },
+    "hood": null,
+    "doors": null,
+    "trunk": null,
+    "engine": null,
+    "bbox": [
+      -1.002,
+      0,
+      -2.328,
+      1.002,
+      1.386,
+      2.327
+    ],
+    "notes": "Node names in source are all \"defaultMaterial\" (flat hierarchy), so no named hood/door nodes. Engine bay geometry present (materials aluminium_engine_1..4). Simplified from 757k to ~214k tris. Normalized on export: units = metres, car length scaled to the real vehicle, front = +Z, up = +Y, ground at y=0, centred on X/Z (wrapper node MJ_root). Wheel nodes wheel_fl/fr/rl/rr have their pivot at the wheel centre (axle = local X). fl = car's left = +X side."
+  },
+  "ae86": {
+    "file": "ae86.glb",
+    "title": "Toyota AE86 Sprinter Trueno Zenki",
+    "author": "Martin Trafas (TinoD2)",
+    "source": "https://sketchfab.com/3d-models/toyota-ae86-sprinter-trueno-zenki-a5737bf3cc9b4179a6e5ebe173ff70d9",
+    "license": "CC-BY-4.0",
+    "substitute": null,
+    "stylized": false,
+    "tris": 195870,
+    "bytes": 3470288,
+    "forward": "+z",
+    "up": "+y",
+    "paint": [
+      "Primary"
+    ],
+    "glass": [
+      "Windows"
+    ],
+    "wheels": {
+      "fl": "wheel_fl",
+      "fr": "wheel_fr",
+      "rl": "wheel_rl",
+      "rr": "wheel_rr"
+    },
+    "hood": null,
+    "doors": null,
+    "trunk": null,
+    "engine": null,
+    "bbox": [
+      -0.96,
+      0,
+      -2.103,
+      0.96,
+      1.274,
+      2.102
+    ],
+    "notes": "Pop-up headlights are modeled in the raised position. Simplified from 706k to ~196k tris. Brake calipers stay on the body (not in wheel nodes). Source GLB taken from a GitHub copy (Z11430373/3d-race) whose triangle count (706,212) matches the Sketchfab page (706,225). Normalized on export: units = metres, car length scaled to the real vehicle, front = +Z, up = +Y, ground at y=0, centred on X/Z (wrapper node MJ_root). Wheel nodes wheel_fl/fr/rl/rr have their pivot at the wheel centre (axle = local X). fl = car's left = +X side."
+  },
+  "fd3s": {
+    "file": "fd3s.glb",
+    "title": "Mazda RX-7 FD",
+    "author": "Lexyc16",
+    "source": "https://sketchfab.com/3d-models/mazda-rx-7-fd-d35ff630df614771b82e7b2f59035b1e",
+    "license": "CC-BY-4.0",
+    "substitute": null,
+    "stylized": false,
+    "tris": 31384,
+    "bytes": 744340,
+    "forward": "+z",
+    "up": "+y",
+    "paint": [
+      "Material.007"
+    ],
+    "glass": [
+      "Material.003"
+    ],
+    "wheels": {
+      "fl": "wheel_fl",
+      "fr": "wheel_fr",
+      "rl": "wheel_rl",
+      "rr": "wheel_rr"
+    },
+    "hood": null,
+    "doors": null,
+    "trunk": null,
+    "engine": null,
+    "bbox": [
+      -0.928,
+      0,
+      -2.148,
+      0.928,
+      1.27,
+      2.147
+    ],
+    "notes": "Generic Blender material names. Material.003 (windows) forced to dark translucent glass. Normalized on export: units = metres, car length scaled to the real vehicle, front = +Z, up = +Y, ground at y=0, centred on X/Z (wrapper node MJ_root). Wheel nodes wheel_fl/fr/rl/rr have their pivot at the wheel centre (axle = local X). fl = car's left = +X side."
+  },
+  "jza80": {
+    "file": "jza80.glb",
+    "title": "Toyota Supra",
+    "author": "Willy Decarpentrie (skudgee)",
+    "source": "https://sketchfab.com/3d-models/toyota-supra-d316c7fee53d42208c391ea5693ae252",
+    "license": "CC-BY-4.0",
+    "substitute": null,
+    "stylized": false,
+    "tris": 81289,
+    "bytes": 1170800,
+    "forward": "+z",
+    "up": "+y",
+    "paint": [
+      "Material_0"
+    ],
+    "glass": [
+      "Glass",
+      "GlassK",
+      "GlassAdditive"
+    ],
+    "wheels": {
+      "fl": "wheel_fl",
+      "fr": "wheel_fr",
+      "rl": "wheel_rl",
+      "rr": "wheel_rr"
+    },
+    "hood": null,
+    "doors": null,
+    "trunk": null,
+    "engine": null,
+    "bbox": [
+      -0.944,
+      0,
+      -2.26,
+      0.944,
+      1.34,
+      2.26
+    ],
+    "notes": "Source used KHR_materials_pbrSpecularGlossiness (unsupported by three r180) and was converted to metal/rough. Paint is textured (Material_0 has a base color map). GlowAvant = front lamps, GlowBack = rear lamps. Normalized on export: units = metres, car length scaled to the real vehicle, front = +Z, up = +Y, ground at y=0, centred on X/Z (wrapper node MJ_root). Wheel nodes wheel_fl/fr/rl/rr have their pivot at the wheel centre (axle = local X). fl = car's left = +X side."
+  },
+  "a90": {
+    "file": "a90.glb",
+    "title": "Toyota GR Supra",
+    "author": "3dmodels.cars (3dcarsmodels)",
+    "source": "https://sketchfab.com/3d-models/toyota-gr-supra-86f609515557438e93bd3c6145ef99ca",
+    "license": "CC-BY-4.0",
+    "substitute": null,
+    "stylized": false,
+    "tris": 214840,
+    "bytes": 2014788,
+    "forward": "+z",
+    "up": "+y",
+    "paint": [
+      "Car_Paint"
+    ],
+    "glass": [
+      "Ext_Glass"
+    ],
+    "wheels": {
+      "fl": "wheel_fl",
+      "fr": "wheel_fr",
+      "rl": "wheel_rl",
+      "rr": "wheel_rr"
+    },
+    "hood": null,
+    "doors": null,
+    "trunk": null,
+    "engine": null,
+    "bbox": [
+      -0.994,
+      0.001,
+      -2.19,
+      0.994,
+      1.302,
+      2.19
+    ],
+    "notes": "Simplified from 626k to ~215k tris. Detailed interior. An identical-poly copy exists under another uploader (srush651); 3dcarsmodels appears to be the original. Normalized on export: units = metres, car length scaled to the real vehicle, front = +Z, up = +Y, ground at y=0, centred on X/Z (wrapper node MJ_root). Wheel nodes wheel_fl/fr/rl/rr have their pivot at the wheel centre (axle = local X). fl = car's left = +X side."
+  },
+  "na1": {
+    "file": "na1.glb",
+    "title": "Honda NSX 1990",
+    "author": "Lexyc16",
+    "source": "https://sketchfab.com/3d-models/honda-nsx-1990-1cc15628a00a4739a6b6c01128927c8d",
+    "license": "CC-BY-4.0",
+    "substitute": null,
+    "stylized": false,
+    "tris": 70684,
+    "bytes": 886372,
+    "forward": "+z",
+    "up": "+y",
+    "paint": [
+      "Material.003"
+    ],
+    "glass": [
+      "Material.004"
+    ],
+    "wheels": {
+      "fl": "wheel_fl",
+      "fr": "wheel_fr",
+      "rl": "wheel_rl",
+      "rr": "wheel_rr"
+    },
+    "hood": null,
+    "doors": null,
+    "trunk": null,
+    "engine": null,
+    "bbox": [
+      -0.976,
+      0,
+      -2.203,
+      0.976,
+      1.158,
+      2.202
+    ],
+    "notes": "Generic Blender material names; paint/glass identification by color/position (moderate confidence). Front direction judged from geometry (pop-up nose vs. tail). Normalized on export: units = metres, car length scaled to the real vehicle, front = +Z, up = +Y, ground at y=0, centred on X/Z (wrapper node MJ_root). Wheel nodes wheel_fl/fr/rl/rr have their pivot at the wheel centre (axle = local X). fl = car's left = +X side."
+  },
+  "ek9": {
+    "file": "ek9.glb",
+    "title": "Honda Civic Type R -98 (Free Asset)",
+    "author": "tiedtke",
+    "source": "https://sketchfab.com/3d-models/honda-civic-type-r-98-free-asset-b9604dd71c6546ec842702682019492a",
+    "license": "CC-BY-4.0",
+    "substitute": null,
+    "stylized": false,
+    "tris": 196342,
+    "bytes": 2296368,
+    "forward": "+z",
+    "up": "+y",
+    "paint": [
+      "Body_MAT"
+    ],
+    "glass": [
+      "Glass_MAT"
+    ],
+    "wheels": {
+      "fl": "wheel_fl",
+      "fr": "wheel_fr",
+      "rl": "wheel_rl",
+      "rr": "wheel_rr"
+    },
+    "hood": null,
+    "doors": null,
+    "trunk": null,
+    "engine": null,
+    "bbox": [
+      -0.977,
+      0,
+      -2.09,
+      0.977,
+      1.358,
+      2.09
+    ],
+    "notes": "Author states it is a retextured/remodelled version of a widebody Civic Type R by Louweee___ (also credit that author). Body_MAT is textured. Normalized on export: units = metres, car length scaled to the real vehicle, front = +Z, up = +Y, ground at y=0, centred on X/Z (wrapper node MJ_root). Wheel nodes wheel_fl/fr/rl/rr have their pivot at the wheel centre (axle = local X). fl = car's left = +X side."
+  },
+  "evo9": {
+    "file": "evo9.glb",
+    "title": "Mitsubishi Lancer Evolution IX",
+    "author": "Benit Kibabu (benitkibabu)",
+    "source": "https://sketchfab.com/3d-models/mitsubishi-lancer-evolution-ix-ee88ad9414884bdabaf0658943ac339b",
+    "license": "CC-BY-4.0",
+    "substitute": null,
+    "stylized": false,
+    "tris": 202526,
+    "bytes": 1640608,
+    "forward": "+z",
+    "up": "+y",
+    "paint": [
+      "Body_Paint"
+    ],
+    "glass": [
+      "Glass_Material"
+    ],
+    "wheels": {
+      "fl": "wheel_fl",
+      "fr": "wheel_fr",
+      "rl": "wheel_rl",
+      "rr": "wheel_rr"
+    },
+    "hood": null,
+    "doors": null,
+    "trunk": null,
+    "engine": null,
+    "bbox": [
+      -0.991,
+      0,
+      -2.245,
+      0.991,
+      1.517,
+      2.245
+    ],
+    "notes": "Original Maya model per author (description mentions Forza only as a use case). Normalized on export: units = metres, car length scaled to the real vehicle, front = +Z, up = +Y, ground at y=0, centred on X/Z (wrapper node MJ_root). Wheel nodes wheel_fl/fr/rl/rr have their pivot at the wheel centre (axle = local X). fl = car's left = +X side."
+  },
+  "gr86": {
+    "file": "gr86.glb",
+    "title": "toyota gt 86",
+    "author": "klikker228666",
+    "source": "https://sketchfab.com/3d-models/toyota-gt-86-27aa106c5d2e4f248fdc8c351ce54554",
+    "license": "CC-BY-4.0",
+    "substitute": "first-generation Toyota GT86 (ZN6) instead of GR86 (ZN8)",
+    "stylized": false,
+    "tris": 178480,
+    "bytes": 2996272,
+    "forward": "+z",
+    "up": "+y",
+    "paint": [
+      "body.001"
+    ],
+    "glass": [
+      "glass.001"
+    ],
+    "wheels": {
+      "fl": "wheel_fl",
+      "fr": "wheel_fr",
+      "rl": "wheel_rl",
+      "rr": "wheel_rr"
+    },
+    "hood": null,
+    "doors": null,
+    "trunk": null,
+    "engine": null,
+    "bbox": [
+      -1.023,
+      0,
+      -2.12,
+      1.023,
+      1.275,
+      2.12
+    ],
+    "notes": "All four wheels were a single mesh in the source; split into wheel_* nodes. Normalized on export: units = metres, car length scaled to the real vehicle, front = +Z, up = +Y, ground at y=0, centred on X/Z (wrapper node MJ_root). Wheel nodes wheel_fl/fr/rl/rr have their pivot at the wheel centre (axle = local X). fl = car's left = +X side."
+  },
+  "z33": {
+    "file": "z33.glb",
+    "title": "Fairlady 350z Nismo",
+    "author": "m-11356016moe-dl.edu.my",
+    "source": "https://sketchfab.com/3d-models/fairlady-350z-nismo-f3b70845e5cf4c57a23c520e99dbf351",
+    "license": "CC-BY-4.0",
+    "substitute": null,
+    "stylized": false,
+    "tris": 89482,
+    "bytes": 592640,
+    "forward": "+z",
+    "up": "+y",
+    "paint": [
+      "Material.005"
+    ],
+    "glass": [
+      "Material.003",
+      "Material.004",
+      "Material.006"
+    ],
+    "wheels": {
+      "fl": "wheel_fl",
+      "fr": "wheel_fr",
+      "rl": "wheel_rl",
+      "rr": "wheel_rr"
+    },
+    "hood": null,
+    "doors": null,
+    "trunk": null,
+    "engine": null,
+    "bbox": [
+      -0.851,
+      0,
+      -2.158,
+      0.851,
+      1.223,
+      2.157
+    ],
+    "notes": "Fairlady Z Nismo variant with a stripe livery. Stray \"Collada_visual_scene_group\" helper meshes removed. Glass material identification is uncertain. Normalized on export: units = metres, car length scaled to the real vehicle, front = +Z, up = +Y, ground at y=0, centred on X/Z (wrapper node MJ_root). Wheel nodes wheel_fl/fr/rl/rr have their pivot at the wheel centre (axle = local X). fl = car's left = +X side."
+  },
+  "crown": {
+    "file": "crown.glb",
+    "title": "Toyota Crown Super Deluxe Mild Hybrid",
+    "author": "Andrasfi Games (andrasfi1027)",
+    "source": "https://sketchfab.com/3d-models/toyota-crown-super-deluxe-mild-hybrid-6e357d856df44d98a615cac1d0c30b56",
+    "license": "CC-BY-4.0",
+    "substitute": "Toyota Crown Super Deluxe / Crown Sedan (S170-based fleet sedan) instead of S220",
+    "stylized": false,
+    "tris": 69357,
+    "bytes": 1171880,
+    "forward": "+z",
+    "up": "+y",
+    "paint": [
+      "Paint"
+    ],
+    "glass": [
+      "Windshield"
+    ],
+    "wheels": {
+      "fl": "wheel_fl",
+      "fr": "wheel_fr",
+      "rl": "wheel_rl",
+      "rr": "wheel_rr"
+    },
+    "hood": null,
+    "doors": null,
+    "trunk": null,
+    "engine": null,
+    "bbox": [
+      -1.009,
+      0,
+      -2.348,
+      1.009,
+      1.458,
+      2.348
+    ],
+    "notes": "Typical Japanese taxi/patrol-car sedan body. Wheels are simple low-poly discs. Body material \"Crown\" is textured (trim/details). Normalized on export: units = metres, car length scaled to the real vehicle, front = +Z, up = +Y, ground at y=0, centred on X/Z (wrapper node MJ_root). Wheel nodes wheel_fl/fr/rl/rr have their pivot at the wheel centre (axle = local X). fl = car's left = +X side."
+  },
+  "police": {
+    "file": "crown.glb",
+    "title": "Toyota Crown Super Deluxe Mild Hybrid",
+    "author": "Andrasfi Games (andrasfi1027)",
+    "source": "https://sketchfab.com/3d-models/toyota-crown-super-deluxe-mild-hybrid-6e357d856df44d98a615cac1d0c30b56",
+    "license": "CC-BY-4.0",
+    "substitute": "shares crown.glb (Crown Super Deluxe sedan); no police livery/lightbar in the model",
+    "stylized": false,
+    "tris": 69357,
+    "bytes": 1171880,
+    "forward": "+z",
+    "up": "+y",
+    "paint": [
+      "Paint"
+    ],
+    "glass": [
+      "Windshield"
+    ],
+    "wheels": {
+      "fl": "wheel_fl",
+      "fr": "wheel_fr",
+      "rl": "wheel_rl",
+      "rr": "wheel_rr"
+    },
+    "hood": null,
+    "doors": null,
+    "trunk": null,
+    "engine": null,
+    "bbox": [
+      -1.009,
+      0,
+      -2.348,
+      1.009,
+      1.458,
+      2.348
+    ],
+    "notes": "Add light bar and black/white paint in code. Normalized on export: units = metres, car length scaled to the real vehicle, front = +Z, up = +Y, ground at y=0, centred on X/Z (wrapper node MJ_root). Wheel nodes wheel_fl/fr/rl/rr have their pivot at the wheel centre (axle = local X). fl = car's left = +X side."
+  },
+  "police_unmarked": {
+    "file": "crown.glb",
+    "title": "Toyota Crown Super Deluxe Mild Hybrid",
+    "author": "Andrasfi Games (andrasfi1027)",
+    "source": "https://sketchfab.com/3d-models/toyota-crown-super-deluxe-mild-hybrid-6e357d856df44d98a615cac1d0c30b56",
+    "license": "CC-BY-4.0",
+    "substitute": "shares crown.glb (Crown Super Deluxe sedan)",
+    "stylized": false,
+    "tris": 69357,
+    "bytes": 1171880,
+    "forward": "+z",
+    "up": "+y",
+    "paint": [
+      "Paint"
+    ],
+    "glass": [
+      "Windshield"
+    ],
+    "wheels": {
+      "fl": "wheel_fl",
+      "fr": "wheel_fr",
+      "rl": "wheel_rl",
+      "rr": "wheel_rr"
+    },
+    "hood": null,
+    "doors": null,
+    "trunk": null,
+    "engine": null,
+    "bbox": [
+      -1.009,
+      0,
+      -2.348,
+      1.009,
+      1.458,
+      2.348
+    ],
+    "notes": "Unmarked: use dark paint. Normalized on export: units = metres, car length scaled to the real vehicle, front = +Z, up = +Y, ground at y=0, centred on X/Z (wrapper node MJ_root). Wheel nodes wheel_fl/fr/rl/rr have their pivot at the wheel centre (axle = local X). fl = car's left = +X side."
+  },
+  "taxi": {
+    "file": "crown.glb",
+    "title": "Toyota Crown Super Deluxe Mild Hybrid",
+    "author": "Andrasfi Games (andrasfi1027)",
+    "source": "https://sketchfab.com/3d-models/toyota-crown-super-deluxe-mild-hybrid-6e357d856df44d98a615cac1d0c30b56",
+    "license": "CC-BY-4.0",
+    "substitute": "shares crown.glb (Crown Super Deluxe sedan, the classic pre-JPN-Taxi cab) instead of JPN Taxi",
+    "stylized": false,
+    "tris": 69357,
+    "bytes": 1171880,
+    "forward": "+z",
+    "up": "+y",
+    "paint": [
+      "Paint"
+    ],
+    "glass": [
+      "Windshield"
+    ],
+    "wheels": {
+      "fl": "wheel_fl",
+      "fr": "wheel_fr",
+      "rl": "wheel_rl",
+      "rr": "wheel_rr"
+    },
+    "hood": null,
+    "doors": null,
+    "trunk": null,
+    "engine": null,
+    "bbox": [
+      -1.009,
+      0,
+      -2.348,
+      1.009,
+      1.458,
+      2.348
+    ],
+    "notes": "Add taxi roof sign in code. Normalized on export: units = metres, car length scaled to the real vehicle, front = +Z, up = +Y, ground at y=0, centred on X/Z (wrapper node MJ_root). Wheel nodes wheel_fl/fr/rl/rr have their pivot at the wheel centre (axle = local X). fl = car's left = +X side."
+  },
+  "p911": {
+    "file": "p911.glb",
+    "title": "Porsche 911 C4S 2020 Aerokit",
+    "author": "JK3Dstudios (JK3Dstudio)",
+    "source": "https://sketchfab.com/3d-models/porsche-911-c4s-2020-aerokit-ee69c474a1cc4085944cde4cb7ae87db",
+    "license": "CC-BY-4.0",
+    "substitute": null,
+    "stylized": false,
+    "tris": 200013,
+    "bytes": 2191676,
+    "forward": "+z",
+    "up": "+y",
+    "paint": [],
+    "glass": [
+      "glass"
+    ],
+    "wheels": {
+      "fl": "wheel_fl",
+      "fr": "wheel_fr",
+      "rl": "wheel_rl",
+      "rr": "wheel_rr"
+    },
+    "hood": null,
+    "doors": null,
+    "trunk": null,
+    "engine": null,
+    "bbox": [
+      -0.929,
+      0,
+      -2.26,
+      0.929,
+      1.307,
+      2.26
+    ],
+    "notes": "Whole car uses ONE texture atlas material (Porsche_911_C4S_2020_Aerokit), so paint cannot be recolored by material. 992 C4S with aero kit. Simplified from 323k to ~200k tris. Normalized on export: units = metres, car length scaled to the real vehicle, front = +Z, up = +Y, ground at y=0, centred on X/Z (wrapper node MJ_root). Wheel nodes wheel_fl/fr/rl/rr have their pivot at the wheel centre (axle = local X). fl = car's left = +X side."
+  },
+  "e46": {
+    "file": "e46.glb",
+    "title": "BMW M3 E46",
+    "author": "MMC Works (mmcworks)",
+    "source": "https://sketchfab.com/3d-models/bmw-m3-e46-f1b00ff37d504629b10031da32bc7497",
+    "license": "CC-BY-4.0",
+    "substitute": null,
+    "stylized": false,
+    "tris": 227349,
+    "bytes": 2334888,
+    "forward": "+z",
+    "up": "+y",
+    "paint": [
+      "Car_Paint_-_All_Colors"
+    ],
+    "glass": [
+      "Glass_ext",
+      "Glass_-_Clear_-_Bumps"
+    ],
+    "wheels": {
+      "fl": "wheel_fl",
+      "fr": "wheel_fr",
+      "rl": "wheel_rl",
+      "rr": "wheel_rr"
+    },
+    "hood": null,
+    "doors": null,
+    "trunk": null,
+    "engine": null,
+    "bbox": [
+      -0.953,
+      0,
+      -2.245,
+      0.953,
+      1.368,
+      2.245
+    ],
+    "notes": "FRONT WHEELS ARE MODELED STEERED (turned); spinning wheel_fl/wheel_fr about their local X axis will wobble. Simplified from 847k to ~227k tris. A copy with identical poly count exists under another uploader (mahdiadib99); mmcworks appears to be the original. Normalized on export: units = metres, car length scaled to the real vehicle, front = +Z, up = +Y, ground at y=0, centred on X/Z (wrapper node MJ_root). Wheel nodes wheel_fl/fr/rl/rr have their pivot at the wheel centre (axle = local X). fl = car's left = +X side."
+  },
+  "model3": {
+    "file": "model3.glb",
+    "title": "Tesla M3 model",
+    "author": "wintrez",
+    "source": "https://sketchfab.com/3d-models/tesla-m3-model-3a602469d7874d1397efa67182198705",
+    "license": "CC-BY-4.0",
+    "substitute": null,
+    "stylized": false,
+    "tris": 247356,
+    "bytes": 1614108,
+    "forward": "+z",
+    "up": "+y",
+    "paint": [
+      "carpaint"
+    ],
+    "glass": [
+      "glass",
+      "glassDark"
+    ],
+    "wheels": {
+      "fl": "wheel_fl",
+      "fr": "wheel_fr",
+      "rl": "wheel_rl",
+      "rr": "wheel_rr"
+    },
+    "hood": null,
+    "doors": null,
+    "trunk": null,
+    "engine": null,
+    "bbox": [
+      -1.048,
+      0,
+      -2.347,
+      1.048,
+      1.456,
+      2.347
+    ],
+    "notes": "Pure-material model (no textures), pre-2024 facelift shape. Normalized on export: units = metres, car length scaled to the real vehicle, front = +Z, up = +Y, ground at y=0, centred on X/Z (wrapper node MJ_root). Wheel nodes wheel_fl/fr/rl/rr have their pivot at the wheel centre (axle = local X). fl = car's left = +X side."
+  },
+  "jimny": {
+    "file": "jimny.glb",
+    "title": "JIMNY 2019",
+    "author": "paige.visuals",
+    "source": "https://sketchfab.com/3d-models/jimny-2019-2c95627ba090412b88883733bcaee568",
+    "license": "CC-BY-4.0",
+    "substitute": null,
+    "stylized": true,
+    "tris": 10680,
+    "bytes": 187904,
+    "forward": "+z",
+    "up": "+y",
+    "paint": [
+      "SUKI"
+    ],
+    "glass": [
+      "window"
+    ],
+    "wheels": {
+      "fl": "wheel_fl",
+      "fr": "wheel_fr",
+      "rl": "wheel_rl",
+      "rr": "wheel_rr"
+    },
+    "hood": null,
+    "doors": null,
+    "trunk": null,
+    "engine": null,
+    "bbox": [
+      -0.859,
+      0,
+      -1.74,
+      0.859,
+      1.757,
+      1.74
+    ],
+    "notes": "Very low-poly (10.7k tris) blocky model of the JB64 Jimny. Rear spare tire stays on the body. Paint material guess: SUKI (body shell). Normalized on export: units = metres, car length scaled to the real vehicle, front = +Z, up = +Y, ground at y=0, centred on X/Z (wrapper node MJ_root). Wheel nodes wheel_fl/fr/rl/rr have their pivot at the wheel centre (axle = local X). fl = car's left = +X side."
+  },
+  "gdb": {
+    "file": "gdb.glb",
+    "title": "2006 Subaru Impreza WRX STI",
+    "author": "iammoney45",
+    "source": "https://sketchfab.com/3d-models/2006-subaru-impreza-wrx-sti-d2a7a11fec074476a797fec81ac4b0e8",
+    "license": "CC-BY-4.0",
+    "substitute": null,
+    "stylized": false,
+    "tris": 18697,
+    "bytes": 224156,
+    "forward": "+z",
+    "up": "+y",
+    "paint": [
+      "CarPaint"
+    ],
+    "glass": [
+      "Glass",
+      "BlackGlass"
+    ],
+    "wheels": {
+      "fl": "wheel_fl",
+      "fr": "wheel_fr",
+      "rl": "wheel_rl",
+      "rr": "wheel_rr"
+    },
+    "hood": null,
+    "doors": null,
+    "trunk": null,
+    "engine": null,
+    "bbox": [
+      -1.041,
+      0,
+      -2.232,
+      1.041,
+      1.47,
+      2.232
+    ],
+    "notes": "GDB \"hawkeye\" (2006) WRX STI, low-poly (18.7k tris), gold wheels. Normalized on export: units = metres, car length scaled to the real vehicle, front = +Z, up = +Y, ground at y=0, centred on X/Z (wrapper node MJ_root). Wheel nodes wheel_fl/fr/rl/rr have their pivot at the wheel centre (axle = local X). fl = car's left = +X side."
+  },
+  "truck": {
+    "file": "truck.glb",
+    "title": "Mitsubishi Fuso Canter",
+    "author": "Raed Almaharmah (raedalmaharmah6)",
+    "source": "https://sketchfab.com/3d-models/mitsubishi-fuso-canter-2b58376d6aaf4641adf30d4c9044de74",
+    "license": "CC-BY-4.0",
+    "substitute": "Mitsubishi Fuso Canter box truck instead of Isuzu Giga",
+    "stylized": false,
+    "tris": 129583,
+    "bytes": 1381648,
+    "forward": "+z",
+    "up": "+y",
+    "paint": [],
+    "glass": [],
+    "wheels": null,
+    "hood": null,
+    "doors": null,
+    "trunk": null,
+    "engine": null,
+    "bbox": [
+      -0.994,
+      0,
+      -3,
+      0.994,
+      2.618,
+      3
+    ],
+    "notes": "Whole truck is one untextured material (mat_23) - plain white; wheels not separable. No glass material. Normalized on export: units = metres, car length scaled to the real vehicle, front = +Z, up = +Y, ground at y=0, centred on X/Z (wrapper node MJ_root). Wheel nodes wheel_fl/fr/rl/rr have their pivot at the wheel centre (axle = local X). fl = car's left = +X side."
+  },
+  "bus": {
+    "file": "bus.glb",
+    "title": "Mitsubishi Fuso Rosa",
+    "author": "Raed Almaharmah (raedalmaharmah6)",
+    "source": "https://sketchfab.com/3d-models/mitsubishi-fuso-rosa-5c095be867aa4660ada952ec6c503408",
+    "license": "CC-BY-4.0",
+    "substitute": "Mitsubishi Fuso Rosa microbus instead of Hino Selega coach",
+    "stylized": false,
+    "tris": 166274,
+    "bytes": 1117916,
+    "forward": "+z",
+    "up": "+y",
+    "paint": [
+      "PAINT"
+    ],
+    "glass": [
+      "GLASS"
+    ],
+    "wheels": null,
+    "hood": null,
+    "doors": null,
+    "trunk": null,
+    "engine": null,
+    "bbox": [
+      -1.126,
+      0,
+      -3.495,
+      1.126,
+      2.494,
+      3.495
+    ],
+    "notes": "Untextured (mostly white) materials; wheels not separable. Possibly a left-hand-drive export version (passenger door is on the right side of the body). Normalized on export: units = metres, car length scaled to the real vehicle, front = +Z, up = +Y, ground at y=0, centred on X/Z (wrapper node MJ_root). Wheel nodes wheel_fl/fr/rl/rr have their pivot at the wheel centre (axle = local X). fl = car's left = +X side."
+  },
+  "s15": {
+    "file": "s15.glb",
+    "title": "Nissan 200SX Silvia S14",
+    "author": "Lexyc16",
+    "source": "https://sketchfab.com/3d-models/nissan-200sx-silvia-s14-f2a917a924734a89a020e7f970e55e7c",
+    "license": "CC-BY-4.0",
+    "substitute": "Nissan 200SX / Silvia S14 instead of S15",
+    "stylized": false,
+    "tris": 16776,
+    "bytes": 255076,
+    "forward": "+z",
+    "up": "+y",
+    "paint": [
+      "Material.003"
+    ],
+    "glass": [
+      "Material.006",
+      "Material.007"
+    ],
+    "wheels": {
+      "fl": "wheel_fl",
+      "fr": "wheel_fr",
+      "rl": "wheel_rl",
+      "rr": "wheel_rr"
+    },
+    "hood": null,
+    "doors": null,
+    "trunk": null,
+    "engine": null,
+    "bbox": [
+      -0.956,
+      0,
+      -2.26,
+      0.956,
+      1.292,
+      2.26
+    ],
+    "notes": "Low-poly (16.8k tris) but clean. Generic Blender material names. Normalized on export: units = metres, car length scaled to the real vehicle, front = +Z, up = +Y, ground at y=0, centred on X/Z (wrapper node MJ_root). Wheel nodes wheel_fl/fr/rl/rr have their pivot at the wheel centre (axle = local X). fl = car's left = +X side."
+  },
+  "rps13": {
+    "file": "rps13.glb",
+    "title": "Nissan 240SX",
+    "author": "InstaSky",
+    "source": "https://sketchfab.com/3d-models/nissan-240sx-8c653e23d1d74a5991c947e8a57887a3",
+    "license": "CC-BY-4.0",
+    "substitute": "Nissan 240SX fastback (same RPS13 body as 180SX)",
+    "stylized": false,
+    "tris": 102432,
+    "bytes": 3219000,
+    "forward": "+z",
+    "up": "+y",
+    "paint": [
+      "Body"
+    ],
+    "glass": [
+      "Windows",
+      "WindowAdd"
+    ],
+    "wheels": {
+      "fl": "wheel_fl",
+      "fr": "wheel_fr",
+      "rl": "wheel_rl",
+      "rr": "wheel_rr"
+    },
+    "hood": null,
+    "doors": null,
+    "trunk": null,
+    "engine": null,
+    "bbox": [
+      -1.012,
+      0,
+      -2.27,
+      1.012,
+      1.299,
+      2.27
+    ],
+    "notes": "Ground plane (\"floor\") removed. Body is textured. Pop-up headlight housings visible. Normalized on export: units = metres, car length scaled to the real vehicle, front = +Z, up = +Y, ground at y=0, centred on X/Z (wrapper node MJ_root). Wheel nodes wheel_fl/fr/rl/rr have their pivot at the wheel centre (axle = local X). fl = car's left = +X side."
+  },
+  "altow": {
+    "file": "altow.glb",
+    "title": "Stylized Suzuki Alto Works",
+    "author": "3DBuilder (EddyNL)",
+    "source": "https://sketchfab.com/3d-models/stylized-suzuki-alto-works-467f2e28ff334919879841216766903b",
+    "license": "CC-BY-4.0",
+    "substitute": "stylized 1995 Alto Works (HA21-era) instead of 2018 HA36S",
+    "stylized": true,
+    "tris": 6245,
+    "bytes": 346900,
+    "forward": "+z",
+    "up": "+y",
+    "paint": [
+      "Body"
+    ],
+    "glass": [
+      "Windows"
+    ],
+    "wheels": null,
+    "hood": null,
+    "doors": null,
+    "trunk": null,
+    "engine": null,
+    "bbox": [
+      -0.982,
+      0,
+      -1.698,
+      0.982,
+      1.453,
+      1.698
+    ],
+    "notes": "Low-poly stylized model (6.2k tris). Front wheels modeled steered, so wheels were NOT split (wheels null). Normalized on export: units = metres, car length scaled to the real vehicle, front = +Z, up = +Y, ground at y=0, centred on X/Z (wrapper node MJ_root). Wheel nodes wheel_fl/fr/rl/rr have their pivot at the wheel centre (axle = local X). fl = car's left = +X side."
+  },
+  "hiace": {
+    "file": "hiace.glb",
+    "title": "Toyota Hiace 1982",
+    "author": "Raed Almaharmah (raedalmaharmah6)",
+    "source": "https://sketchfab.com/3d-models/toyota-hiace-1982-bb0b919780374dc2b190af711e3201d7",
+    "license": "CC-BY-4.0",
+    "substitute": "1982 Toyota HiAce (H50) van instead of 2021 H200",
+    "stylized": false,
+    "tris": 191111,
+    "bytes": 1171332,
+    "forward": "+z",
+    "up": "+y",
+    "paint": [
+      "mat_0.001"
+    ],
+    "glass": [],
+    "wheels": null,
+    "hood": null,
+    "doors": null,
+    "trunk": null,
+    "engine": null,
+    "bbox": [
+      -0.877,
+      0,
+      -2.345,
+      0.877,
+      1.997,
+      2.345
+    ],
+    "notes": "Whole van is one untextured material; wheels not separable. Normalized on export: units = metres, car length scaled to the real vehicle, front = +Z, up = +Y, ground at y=0, centred on X/Z (wrapper node MJ_root). Wheel nodes wheel_fl/fr/rl/rr have their pivot at the wheel centre (axle = local X). fl = car's left = +X side."
+  },
+  "leaf": {
+    "file": "leaf.glb",
+    "title": "Nissan Leaf 2018",
+    "author": "yokada000",
+    "source": "https://sketchfab.com/3d-models/nissan-leaf-2018-424e21ec6667481eb86a7faf59061843",
+    "license": "CC-BY-4.0",
+    "substitute": "Nissan Leaf 2018 (ZE1) - same generation as 2022",
+    "stylized": false,
+    "tris": 199995,
+    "bytes": 1163496,
+    "forward": "+z",
+    "up": "+y",
+    "paint": [
+      "Scene_-_Root"
+    ],
+    "glass": [],
+    "wheels": null,
+    "hood": null,
+    "doors": null,
+    "trunk": null,
+    "engine": null,
+    "bbox": [
+      -0.919,
+      0,
+      -2.24,
+      0.919,
+      1.576,
+      2.24
+    ],
+    "notes": "Converted from an STL solid: ONE material for everything (no separate glass/tires/lights) - recoloring tints the whole car. Wheels not separable. Simplified from 354k to ~200k tris. Normalized on export: units = metres, car length scaled to the real vehicle, front = +Z, up = +Y, ground at y=0, centred on X/Z (wrapper node MJ_root). Wheel nodes wheel_fl/fr/rl/rr have their pivot at the wheel centre (axle = local X). fl = car's left = +X side."
+  }
+}

@@ -1,0 +1,625 @@
+{
+  "materials": {
+    "asphalt_fresh": {
+      "category": "asphalt",
+      "maps": [
+        "diff",
+        "nor_gl",
+        "rough",
+        "ao"
+      ],
+      "res": "2k",
+      "meters": 2,
+      "source": "Poly Haven",
+      "id": "asphalt_track",
+      "url": "https://polyhaven.com/a/asphalt_track",
+      "license": "CC0"
+    },
+    "asphalt_worn": {
+      "category": "asphalt",
+      "maps": [
+        "diff",
+        "nor_gl",
+        "rough",
+        "ao"
+      ],
+      "res": "2k",
+      "meters": 4.04,
+      "source": "Poly Haven",
+      "id": "asphalt_04",
+      "url": "https://polyhaven.com/a/asphalt_04",
+      "license": "CC0"
+    },
+    "asphalt_patched": {
+      "category": "asphalt",
+      "maps": [
+        "diff",
+        "nor_gl",
+        "rough",
+        "ao"
+      ],
+      "res": "1k",
+      "meters": 3,
+      "source": "Poly Haven",
+      "id": "asphalt_02",
+      "url": "https://polyhaven.com/a/asphalt_02",
+      "license": "CC0",
+      "hi": [
+        "diff",
+        "nor_gl"
+      ]
+    },
+    "asphalt_coarse": {
+      "category": "asphalt",
+      "maps": [
+        "diff",
+        "nor_gl",
+        "rough",
+        "ao"
+      ],
+      "res": "1k",
+      "meters": 2,
+      "source": "Poly Haven",
+      "id": "asphalt_pit_lane",
+      "url": "https://polyhaven.com/a/asphalt_pit_lane",
+      "license": "CC0",
+      "hi": [
+        "diff",
+        "nor_gl"
+      ]
+    },
+    "asphalt_parking": {
+      "category": "asphalt",
+      "maps": [
+        "diff",
+        "nor_gl",
+        "rough",
+        "ao"
+      ],
+      "res": "1k",
+      "meters": 2.1,
+      "source": "Poly Haven",
+      "id": "clean_asphalt",
+      "url": "https://polyhaven.com/a/clean_asphalt",
+      "license": "CC0",
+      "hi": [
+        "diff",
+        "nor_gl"
+      ]
+    },
+    "concrete_barrier": {
+      "category": "concrete",
+      "maps": [
+        "diff",
+        "nor_gl",
+        "rough",
+        "ao"
+      ],
+      "res": "2k",
+      "meters": 1.8,
+      "source": "Poly Haven",
+      "id": "concrete_wall_009",
+      "url": "https://polyhaven.com/a/concrete_wall_009",
+      "license": "CC0"
+    },
+    "concrete_smooth": {
+      "category": "concrete",
+      "maps": [
+        "diff",
+        "nor_gl",
+        "rough",
+        "ao"
+      ],
+      "res": "1k",
+      "meters": 3,
+      "source": "Poly Haven",
+      "id": "concrete_floor_worn_001",
+      "url": "https://polyhaven.com/a/concrete_floor_worn_001",
+      "license": "CC0",
+      "hi": [
+        "diff",
+        "nor_gl"
+      ]
+    },
+    "concrete_weathered": {
+      "category": "concrete",
+      "maps": [
+        "diff",
+        "nor_gl",
+        "rough",
+        "ao"
+      ],
+      "res": "1k",
+      "meters": 2,
+      "source": "Poly Haven",
+      "id": "concrete_wall_006",
+      "url": "https://polyhaven.com/a/concrete_wall_006",
+      "license": "CC0",
+      "hi": [
+        "diff",
+        "nor_gl"
+      ]
+    },
+    "concrete_formwork": {
+      "category": "concrete",
+      "maps": [
+        "diff",
+        "nor_gl",
+        "rough",
+        "ao"
+      ],
+      "res": "1k",
+      "meters": 2.3,
+      "source": "Poly Haven",
+      "id": "concrete_slab_wall",
+      "url": "https://polyhaven.com/a/concrete_slab_wall",
+      "license": "CC0",
+      "hi": [
+        "diff",
+        "nor_gl"
+      ]
+    },
+    "concrete_precast": {
+      "category": "concrete",
+      "maps": [
+        "diff",
+        "nor_gl",
+        "rough",
+        "ao"
+      ],
+      "res": "1k",
+      "meters": 2,
+      "source": "Poly Haven",
+      "id": "concrete_wall_004",
+      "url": "https://polyhaven.com/a/concrete_wall_004",
+      "license": "CC0",
+      "hi": [
+        "diff",
+        "nor_gl"
+      ]
+    },
+    "concrete_floor": {
+      "category": "concrete",
+      "maps": [
+        "diff",
+        "nor_gl",
+        "rough",
+        "ao"
+      ],
+      "res": "1k",
+      "meters": 2,
+      "source": "Poly Haven",
+      "id": "concrete_floor_02",
+      "url": "https://polyhaven.com/a/concrete_floor_02",
+      "license": "CC0",
+      "hi": [
+        "diff",
+        "nor_gl"
+      ]
+    },
+    "paving_brick": {
+      "category": "sidewalk",
+      "maps": [
+        "diff",
+        "nor_gl",
+        "rough",
+        "ao"
+      ],
+      "res": "2k",
+      "meters": 1.8,
+      "source": "Poly Haven",
+      "id": "red_brick_pavers",
+      "url": "https://polyhaven.com/a/red_brick_pavers",
+      "license": "CC0"
+    },
+    "paving_herringbone": {
+      "category": "sidewalk",
+      "maps": [
+        "diff",
+        "nor_gl",
+        "rough",
+        "ao"
+      ],
+      "res": "1k",
+      "meters": 1.8,
+      "source": "Poly Haven",
+      "id": "herringbone_pavement_04",
+      "url": "https://polyhaven.com/a/herringbone_pavement_04",
+      "license": "CC0",
+      "hi": [
+        "diff",
+        "nor_gl"
+      ]
+    },
+    "paving_square": {
+      "category": "sidewalk",
+      "maps": [
+        "diff",
+        "nor_gl",
+        "rough",
+        "ao"
+      ],
+      "res": "1k",
+      "meters": 2,
+      "source": "Poly Haven",
+      "id": "granite_tile_04",
+      "url": "https://polyhaven.com/a/granite_tile_04",
+      "license": "CC0",
+      "hi": [
+        "diff",
+        "nor_gl"
+      ]
+    },
+    "paving_small_tiles": {
+      "category": "sidewalk",
+      "maps": [
+        "diff",
+        "nor_gl",
+        "rough",
+        "ao"
+      ],
+      "res": "1k",
+      "meters": 1.8,
+      "source": "Poly Haven",
+      "id": "square_concrete_pavers",
+      "url": "https://polyhaven.com/a/square_concrete_pavers",
+      "license": "CC0",
+      "hi": [
+        "diff",
+        "nor_gl"
+      ]
+    },
+    "metal_corrugated": {
+      "category": "metal",
+      "maps": [
+        "diff",
+        "nor_gl",
+        "rough",
+        "ao",
+        "metal"
+      ],
+      "res": "1k",
+      "meters": 2.7,
+      "source": "Poly Haven",
+      "id": "corrugated_iron_02",
+      "url": "https://polyhaven.com/a/corrugated_iron_02",
+      "license": "CC0",
+      "hi": [
+        "diff"
+      ]
+    },
+    "metal_box_profile": {
+      "category": "metal",
+      "maps": [
+        "diff",
+        "nor_gl",
+        "rough",
+        "ao",
+        "metal"
+      ],
+      "res": "1k",
+      "meters": 2,
+      "source": "Poly Haven",
+      "id": "box_profile_metal_sheet",
+      "url": "https://polyhaven.com/a/box_profile_metal_sheet",
+      "license": "CC0",
+      "hi": [
+        "diff"
+      ]
+    },
+    "metal_rusty": {
+      "category": "metal",
+      "maps": [
+        "diff",
+        "nor_gl",
+        "rough",
+        "ao"
+      ],
+      "res": "1k",
+      "meters": 1,
+      "source": "Poly Haven",
+      "id": "rusty_metal_02",
+      "url": "https://polyhaven.com/a/rusty_metal_02",
+      "license": "CC0",
+      "hi": [
+        "diff"
+      ]
+    },
+    "metal_shutter_painted": {
+      "category": "metal",
+      "maps": [
+        "diff",
+        "nor_gl",
+        "rough",
+        "ao"
+      ],
+      "res": "1k",
+      "meters": 2,
+      "source": "Poly Haven",
+      "id": "painted_metal_shutter",
+      "url": "https://polyhaven.com/a/painted_metal_shutter",
+      "license": "CC0",
+      "hi": [
+        "diff"
+      ]
+    },
+    "metal_container": {
+      "category": "metal",
+      "maps": [
+        "diff",
+        "nor_gl",
+        "rough",
+        "ao"
+      ],
+      "res": "1k",
+      "meters": 1.94,
+      "source": "Poly Haven",
+      "id": "container_side",
+      "url": "https://polyhaven.com/a/container_side",
+      "license": "CC0",
+      "hi": [
+        "diff"
+      ]
+    },
+    "metal_diamond_plate": {
+      "category": "metal",
+      "maps": [
+        "diff",
+        "nor_gl",
+        "rough",
+        "ao",
+        "metal"
+      ],
+      "res": "1k",
+      "meters": 0.5,
+      "source": "Poly Haven",
+      "id": "metal_plate",
+      "url": "https://polyhaven.com/a/metal_plate",
+      "license": "CC0",
+      "hi": [
+        "diff"
+      ]
+    },
+    "plaster_white": {
+      "category": "building",
+      "maps": [
+        "diff",
+        "nor_gl",
+        "rough",
+        "ao"
+      ],
+      "res": "1k",
+      "meters": 1,
+      "source": "Poly Haven",
+      "id": "white_plaster_02",
+      "url": "https://polyhaven.com/a/white_plaster_02",
+      "license": "CC0",
+      "hi": [
+        "diff"
+      ]
+    },
+    "facade_tiles": {
+      "category": "building",
+      "maps": [
+        "diff",
+        "nor_gl",
+        "rough",
+        "ao"
+      ],
+      "res": "1k",
+      "meters": 2,
+      "source": "Poly Haven",
+      "id": "rectangular_facade_tiles",
+      "url": "https://polyhaven.com/a/rectangular_facade_tiles",
+      "license": "CC0",
+      "hi": [
+        "diff"
+      ]
+    },
+    "grass": {
+      "category": "ground",
+      "maps": [
+        "diff",
+        "nor_gl",
+        "rough",
+        "ao"
+      ],
+      "res": "1k",
+      "meters": 2,
+      "source": "Poly Haven",
+      "id": "sparse_grass",
+      "url": "https://polyhaven.com/a/sparse_grass",
+      "license": "CC0",
+      "hi": [
+        "diff"
+      ]
+    },
+    "gravel": {
+      "category": "ground",
+      "maps": [
+        "diff",
+        "nor_gl",
+        "rough",
+        "ao"
+      ],
+      "res": "1k",
+      "meters": 2,
+      "source": "Poly Haven",
+      "id": "gravel",
+      "url": "https://polyhaven.com/a/gravel",
+      "license": "CC0",
+      "hi": [
+        "diff"
+      ]
+    },
+    "sand": {
+      "category": "ground",
+      "maps": [
+        "diff",
+        "nor_gl",
+        "rough",
+        "ao"
+      ],
+      "res": "1k",
+      "meters": 2,
+      "source": "Poly Haven",
+      "id": "sand_03",
+      "url": "https://polyhaven.com/a/sand_03",
+      "license": "CC0",
+      "hi": [
+        "diff"
+      ]
+    },
+    "dirt": {
+      "category": "ground",
+      "maps": [
+        "diff",
+        "nor_gl",
+        "rough",
+        "ao"
+      ],
+      "res": "1k",
+      "meters": 2,
+      "source": "Poly Haven",
+      "id": "dirt",
+      "url": "https://polyhaven.com/a/dirt",
+      "license": "CC0",
+      "hi": [
+        "diff"
+      ]
+    },
+    "leather": {
+      "category": "misc",
+      "maps": [
+        "diff",
+        "nor_gl",
+        "rough",
+        "ao"
+      ],
+      "res": "1k",
+      "meters": 0.5,
+      "source": "Poly Haven",
+      "id": "fabric_leather_02",
+      "url": "https://polyhaven.com/a/fabric_leather_02",
+      "license": "CC0",
+      "hi": [
+        "diff"
+      ]
+    },
+    "wood_planks": {
+      "category": "misc",
+      "maps": [
+        "diff",
+        "nor_gl",
+        "rough",
+        "ao"
+      ],
+      "res": "1k",
+      "meters": 2,
+      "source": "Poly Haven",
+      "id": "weathered_planks",
+      "url": "https://polyhaven.com/a/weathered_planks",
+      "license": "CC0",
+      "hi": [
+        "diff"
+      ]
+    },
+    "fence_chainlink": {
+      "category": "metal",
+      "maps": [
+        "diff",
+        "nor_gl",
+        "rough",
+        "metal",
+        "opacity"
+      ],
+      "res": "1k",
+      "meters": 1,
+      "source": "ambientCG",
+      "id": "Fence003",
+      "url": "https://ambientcg.com/view?id=Fence003",
+      "license": "CC0"
+    },
+    "metal_galvanized": {
+      "category": "metal",
+      "maps": [
+        "diff",
+        "nor_gl",
+        "rough",
+        "metal"
+      ],
+      "res": "1k",
+      "meters": 1,
+      "source": "ambientCG",
+      "id": "Metal038",
+      "url": "https://ambientcg.com/view?id=Metal038",
+      "license": "CC0"
+    },
+    "rubber": {
+      "category": "misc",
+      "maps": [
+        "diff",
+        "nor_gl",
+        "rough"
+      ],
+      "res": "1k",
+      "meters": 1,
+      "source": "ambientCG",
+      "id": "Rubber004",
+      "url": "https://ambientcg.com/view?id=Rubber004",
+      "license": "CC0"
+    },
+    "carbon_fibre": {
+      "category": "misc",
+      "maps": [
+        "diff",
+        "nor_gl",
+        "rough",
+        "metal"
+      ],
+      "res": "1k",
+      "meters": 0.25,
+      "source": "ambientCG",
+      "id": "Fabric004",
+      "url": "https://ambientcg.com/view?id=Fabric004",
+      "license": "CC0"
+    },
+    "plastic_black": {
+      "category": "misc",
+      "maps": [
+        "diff",
+        "nor_gl",
+        "rough"
+      ],
+      "res": "1k",
+      "meters": 1,
+      "source": "ambientCG",
+      "id": "Plastic006",
+      "url": "https://ambientcg.com/view?id=Plastic006",
+      "license": "CC0"
+    }
+  },
+  "hdri": {
+    "shanghai_bund": {
+      "file": "assets/hdri/shanghai_bund_1k.hdr",
+      "kind": "night",
+      "source": "Poly Haven",
+      "url": "https://polyhaven.com/a/shanghai_bund",
+      "license": "CC0"
+    },
+    "highway_bridge_sunset": {
+      "file": "assets/hdri/highway_bridge_sunset_2k.hdr",
+      "kind": "dusk",
+      "source": "Poly Haven",
+      "url": "https://polyhaven.com/a/highway_bridge_sunset",
+      "license": "CC0"
+    },
+    "wide_street_01": {
+      "file": "assets/hdri/wide_street_01_2k.hdr",
+      "kind": "day",
+      "source": "Poly Haven",
+      "url": "https://polyhaven.com/a/wide_street_01",
+      "license": "CC0"
+    }
+  }
+}
