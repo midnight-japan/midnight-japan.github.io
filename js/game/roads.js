@@ -133,7 +133,9 @@ export class Road {
 // ───────────────────────── spatial index & surface query ─────────────────────────
 export class RoadNet {
   constructor(defs = ROAD_DEFS) {
-    this.roads = defs.map((d, i) => new Road(d, i));
+    // drop degenerate polylines from the OSM import (zero-length ways would put signs/lamps on one point of another road)
+    const plen = d => d.pts.reduce((a, q, i) => i ? a + Math.hypot(q[0] - d.pts[i - 1][0], q[2] - d.pts[i - 1][2]) : 0, 0);
+    this.roads = defs.filter(d => d.pts?.length > 1 && plen(d) > 8).map((d, i) => new Road(d, i));
     this.byId = Object.fromEntries(this.roads.map(r => [r.id, r]));
     this.cell = 24; this.grid = new Map();
     for (const r of this.roads) {
@@ -410,10 +412,7 @@ export function buildRoadMeshes(net, opts = {}) {
           if (span && r === span.road && s > span.s0 && s < span.s1) continue; // cable-stayed Bay Bridge
           const t = r.dirAt(s), cl = (r.edgeL + r.edgeR) / 2, px = p.x + t.z * cl, pz = p.z - t.x * cl;
           if (noPier(px, pz) || opts.noPier?.(px, pz)) continue;
-          // a deck below (stacked K5 decks, ramps underneath) → portal frame with legs outside the lower deck
-          let under = 0;
-          for (const h of net.hits(px, pz)) if (h.road !== r && h.inside && h.y < p.y - 3 && h.y > -1) under = Math.max(under, Math.max(h.road.edgeL, -h.road.edgeR) + Math.abs(h.lat) + 1.2);
-          pierSpots.push({ p, t, w: r.edgeL - r.edgeR, road: r, under });
+          pierSpots.push({ p, t, w: r.edgeL - r.edgeR, road: r });
         }
       }
     } else {
@@ -434,36 +433,68 @@ export function buildRoadMeshes(net, opts = {}) {
     group.add(mesh);
   }
   if (opts.isLand) group.add(buildTunnels(net, opts.isLand, opts.tunnelLamps));
-  // piers (instanced): column + cap
-  if (pierSpots.length) {
+  // piers (instanced): column + cap. Every leg footprint is checked against all lower roads/tunnels (incl. kerbs and
+  // sidewalks): a leg never stands on a carriageway. If the default layout is blocked, the legs are pushed outwards into a
+  // portal frame that straddles the lower roads; if no clear portal exists within reach the pier is dropped (the deck spans).
+  const legClear = (x, z, top) => {
+    for (const [ox, oz] of [[0, 0], [1.7, 0], [-1.7, 0], [0, 1.7], [0, -1.7], [1.2, 1.2], [-1.2, -1.2], [1.2, -1.2], [-1.2, 1.2]]) {
+      for (const h of net.hits(x + ox, z + oz)) {
+        if (h.beyond || h.y > top - 2.5) continue; // own deck / decks above
+        const m = h.road.kind === 'local' ? (h.road.sidewalk || 3) + 0.6 : 0.9;
+        if (h.lat <= h.road.edgeL + m && h.lat >= h.road.edgeR - m) return false;
+      }
+    }
+    return true;
+  };
+  // the cross-beam must not hang into the traffic envelope of a lower road
+  const beamClear = (cx, cz, lx, lz, half, top) => {
+    for (let o = -half; o <= half; o += 1.5) {
+      for (const h of net.hits(cx + lx * o, cz + lz * o)) {
+        if (h.beyond || !h.inside) continue;
+        if (h.y < top - 0.2 && h.y > top - 1.4 - 4.1) return false; // 4.1 m clearance (Japanese limit 3.8 m)
+      }
+    }
+    return true;
+  };
+  const legs = [];
+  const caps = [];
+  for (const sp of pierSpots) {
+    const top = sp.p.y - 2.0;
+    const center = (sp.road.edgeL + sp.road.edgeR) / 2;
+    const lx = sp.t.z, lz = -sp.t.x; // left vector
+    const cx = sp.p.x + lx * center, cz = sp.p.z + lz * center;
+    const tries = [];
+    if (sp.w <= 14) tries.push({ offs: [0], cap: sp.w * 0.92, thick: 1 });
+    tries.push({ offs: [-sp.w * 0.28, sp.w * 0.28], cap: sp.w * 0.92, thick: 1.2 });
+    for (let half = sp.w * 0.5 + 0.8; half <= sp.w * 0.5 + 26; half += 1.5) tries.push({ offs: [-half, half], cap: half * 2 + 2.4, thick: 1.25, portal: true });
+    const ok = tries.find(tr => tr.offs.every(o => legClear(cx + lx * o, cz + lz * o, top)) && (!tr.portal || beamClear(cx, cz, lx, lz, tr.cap / 2, top + 1.4)));
+    if (!ok) continue;
+    const capTop = ok.portal ? top + 1.4 : top;
+    for (const o of ok.offs) legs.push({ x: cx + lx * o, z: cz + lz * o, top: capTop, thick: ok.thick, t: sp.t });
+    caps.push({ x: cx, z: cz, top: capTop, len: ok.cap, t: sp.t, portal: !!ok.portal });
+  }
+  if (legs.length) {
     const col = new THREE.CylinderGeometry(1.1, 1.3, 1, 20); col.translate(0, 0.5, 0);
     const cap = new THREE.BoxGeometry(1, 1.4, 2.4); cap.translate(0, -0.7, 0);
-    const colMesh = new THREE.InstancedMesh(col, concreteOld, pierSpots.length * 2);
-    const capMesh = new THREE.InstancedMesh(cap, concreteOld, pierSpots.length);
-    const m4 = new THREE.Matrix4(), q = new THREE.Quaternion(), sc = new THREE.Vector3(), pos = new THREE.Vector3();
-    let ci = 0;
-    pierSpots.forEach((sp, i) => {
-      const yaw = Math.atan2(sp.t.x, sp.t.z);
-      q.setFromAxisAngle(new THREE.Vector3(0, 1, 0), yaw);
-      const bottom = -6, top = sp.p.y - 2.0;
-      const twin = sp.w > 14 || sp.under > 0;
-      const half = sp.under > 0 ? Math.max(sp.w * 0.5 + 0.8, sp.under) : sp.w * 0.28;
-      for (const off of twin ? [-half, half] : [0]) {
-        const lx = sp.t.z * off, lz = -sp.t.x * off;
-        const center = (sp.road.edgeL + sp.road.edgeR) / 2;
-        pos.set(sp.p.x + sp.t.z * center + lx, bottom, sp.p.z - sp.t.x * center + lz);
-        sc.set(twin ? 1.2 : 1, top - bottom - 1.4, twin ? 1.2 : 1);
-        m4.compose(pos, q, sc); colMesh.setMatrixAt(ci++, m4);
-      }
-      const center = (sp.road.edgeL + sp.road.edgeR) / 2;
-      pos.set(sp.p.x + sp.t.z * center, top, sp.p.z - sp.t.x * center);
-      sc.set(sp.under > 0 ? half * 2 + 2.4 : sp.w * 0.92, 1, 1);
-      // cap spans across the road: local X across → rotate so X = left vector
+    const colMesh = new THREE.InstancedMesh(col, concreteOld, legs.length);
+    const capMesh = new THREE.InstancedMesh(cap, concreteOld, caps.length);
+    const m4 = new THREE.Matrix4(), q = new THREE.Quaternion(), sc = new THREE.Vector3(), pos = new THREE.Vector3(), Y = new THREE.Vector3(0, 1, 0);
+    const bottom = -6;
+    legs.forEach((l, i) => {
+      q.setFromAxisAngle(Y, Math.atan2(l.t.x, l.t.z));
+      pos.set(l.x, bottom, l.z); sc.set(l.thick, l.top - bottom - 1.4, l.thick);
+      m4.compose(pos, q, sc); colMesh.setMatrixAt(i, m4);
+    });
+    caps.forEach((c, i) => {
+      q.setFromAxisAngle(Y, Math.atan2(c.t.x, c.t.z));
+      pos.set(c.x, c.top, c.z); sc.set(c.len, 1, c.portal ? 1.15 : 1);
       m4.compose(pos, q, sc); capMesh.setMatrixAt(i, m4);
     });
-    colMesh.count = ci;
     colMesh.castShadow = capMesh.castShadow = true; colMesh.receiveShadow = capMesh.receiveShadow = true;
+    colMesh.name = 'piers'; capMesh.name = 'pier_caps';
     group.add(colMesh, capMesh);
+    group.userData.piers = legs; // for collision
+    group.userData.pierStats = { spots: pierSpots.length, placed: caps.length };
   }
   return group;
 }
@@ -479,6 +510,13 @@ export function lampSpots(net) {
       if (p.y < -0.3) continue; // tunnels have their own ceiling lights
       if (r.kind === 'local' && PA.inLot(p.x, p.z, 6)) continue;
       const left = new THREE.Vector3(t.z, 0, -t.x);
+      const coverY = (x, z) => { let y = Infinity; for (const h of net.hits(x, z)) if (h.road !== r && !h.beyond && h.lat <= h.road.edgeL + 1.5 && h.lat >= h.road.edgeR - 1.5 && h.y > p.y + 0.8 && h.y < p.y + 13) y = Math.min(y, h.y); return y; };
+      const side0 = r.kind === 'local' ? r.edgeL + 0.8 : r.edgeL + 0.2;
+      const cy = Math.min(coverY(p.x, p.z), coverY(p.x + left.x * side0, p.z + left.z * side0));
+      if (cy < Infinity) { // another deck overhead: soffit-mounted luminaire instead of a pole (it would pierce the deck)
+        if (cy - 2.0 - p.y > 4.2) out.push({ pos: p.clone(), arms: [], h: cy - 2.15 - p.y, road: r, ceiling: true, t });
+        continue;
+      }
       if (r.kind === 'expressway' && r.median > 0) out.push({ pos: p.clone(), arms: [left.clone(), left.clone().negate()], h: 10, road: r, median: true });
       else { const side = r.kind === 'local' ? r.edgeL + 0.8 : r.edgeL + 0.2; out.push({ pos: p.clone().addScaledVector(left, side), arms: [left.clone().negate()], h: r.kind === 'local' ? 8 : 10, road: r }); }
     }

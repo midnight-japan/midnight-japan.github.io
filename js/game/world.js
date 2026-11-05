@@ -166,7 +166,9 @@ export class World {
     this.static = S;
     this.buildGround(S);
     this.tunnelHeads = [];
-    this.group.add(buildRoadMeshes(this.net, { isLand: (x, z) => this.isLand(x, z), tunnelLamps: this.tunnelHeads, noPier: noPierBay(this.net) }));
+    const roadMeshes = buildRoadMeshes(this.net, { isLand: (x, z) => this.isLand(x, z), tunnelLamps: this.tunnelHeads, noPier: noPierBay(this.net) });
+    this.group.add(roadMeshes);
+    for (const l of roadMeshes.userData.piers || []) if (l.top > 3) this.addCollider(l.x, l.z, 1.2 * l.thick, 1.2 * l.thick, 0, -6, l.top - 1.4, 'pier');
     this.buildPA(S);
     this.buildKonbini(S);
     this.buildPolicePost(S);
@@ -289,10 +291,29 @@ export class World {
     this.walkRects.push(P.rect(-PA.hx + 1, PA.hx - 1, -PA.hz + 1, PA.hz - 1));
     this.walkRects.push(P.rect(-80, -60, -62, -51)); // EV chargers / west corner path
     // trees in planters
-    const leaf = new THREE.MeshStandardMaterial({ color: 0x2f4d25, roughness: 0.9 });
-    const trunk = new THREE.MeshStandardMaterial({ color: 0x4a3a2b, roughness: 0.9 });
-    const crown = new THREE.IcosahedronGeometry(2.4, 2); const stem = new THREE.CylinderGeometry(0.18, 0.25, 3, 8);
-    const tree = (x, z) => { const s = 0.8 + rnd() * 0.5; P.add(stem, trunk, x, 1.5, z); P.add(crown, leaf, x, 3.8 * s, z, rnd() * 6, s, s * 0.9, s); };
+    // planter trees (zelkova / camphor-like): tapered trunk with limbs, a crown of lumpy leaf clusters in two tones
+    const leafA = new THREE.MeshStandardMaterial({ color: 0x2c4a22, roughness: 0.95 });
+    const leafB = new THREE.MeshStandardMaterial({ color: 0x3f6230, roughness: 0.95 });
+    const trunk = new THREE.MeshStandardMaterial({ color: 0x4a3d31, roughness: 1 });
+    const lump = (r, seed) => { // displaced icosphere → irregular foliage clump
+      const g = new THREE.IcosahedronGeometry(r, 2); const p = g.attributes.position; const v = new THREE.Vector3();
+      for (let i = 0; i < p.count; i++) { v.fromBufferAttribute(p, i); const n = Math.sin(v.x * 2.1 + seed) * Math.cos(v.z * 1.7 + seed * 2) * Math.sin(v.y * 2.6 + seed * 3);
+        v.multiplyScalar(1 + 0.22 * n + 0.08 * Math.sin(i * 12.9898 + seed)); v.y *= 0.82; p.setXYZ(i, v.x, v.y, v.z); }
+      g.computeVertexNormals(); return g; };
+    const lumps = [0, 1, 2, 3].map(i => lump(1.25 + i * 0.12, i * 1.7 + 0.3));
+    const stem = new THREE.CylinderGeometry(0.13, 0.24, 3.2, 9); stem.translate(0, 1.6, 0);
+    const limb = new THREE.CylinderGeometry(0.06, 0.11, 1.8, 6); limb.translate(0, 0.9, 0);
+    const tree = (x, z) => {
+      const s = 0.85 + rnd() * 0.4, rot = rnd() * 6.28;
+      P.add(stem, trunk, x, 0, z, rot, s, s, s);
+      for (let k = 0; k < 3; k++) { // limbs: tilt via a pre-rotated copy
+        const a = rot + k * 2.1; const g = limb.clone(); g.rotateZ(0.55); g.rotateY(a); P.add(g, trunk, x, 2.6 * s, z, 0, s, s, s); }
+      const n = 7 + Math.floor(rnd() * 3);
+      for (let k = 0; k < n; k++) {
+        const a = rnd() * 6.28, r = (k === 0 ? 0 : 0.9 + rnd() * 0.9) * s, y = (3.9 + (k === 0 ? 0.6 : rnd() * 1.4 - 0.3)) * s;
+        P.add(lumps[k % 4], k % 3 ? leafA : leafB, x + Math.cos(a) * r, y, z + Math.sin(a) * r, rnd() * 6, s * (0.9 + rnd() * 0.35), s * (0.85 + rnd() * 0.3), s * (0.9 + rnd() * 0.35));
+      }
+    };
     for (let x = -46; x <= 30; x += 12) tree(x + rnd() * 2, -62);
     for (let z = -76; z <= 20; z += 12) tree(85, z + rnd() * 2);
     // perimeter chain-link fence with gaps for the entrance / exit
@@ -489,6 +510,12 @@ export class World {
     // road lamps (sodium-orange on Shuto)
     for (const L of lampSpots(this.net)) {
       const base = L.pos; const h = L.h;
+      if (L.ceiling) { // under a deck: flat soffit luminaire
+        const t = L.t; S.add(headG, L.road.kind === 'local' ? ledOn : headOn, base.x, base.y + h, base.z, Math.atan2(t.x, t.z) + Math.PI / 2, 1.6, 1, 1.2);
+        pools.push([base.x, base.y + 0.06, base.z, L.road.kind === 'local' ? 1 : 0, 12]);
+        this.lampHeads.push(new THREE.Vector3(base.x, base.y + h - 0.3, base.z));
+        continue;
+      }
       S.add(poleG, pole, base.x, base.y, base.z, 0, 1, h, 1);
       for (const a of L.arms) {
         const ry = Math.atan2(a.x, a.z);
@@ -732,6 +759,9 @@ export class World {
     const net = this.net; const bay = net.byId.bayshore;
     const place = (road, s, lat, kind, opts, h = 0, scale = 1, back = false) => {
       s = Math.max(2, Math.min(road.length - 2, s));
+      // overhead gantries span the road on purpose; post-mounted signs must stand clear of every carriageway → slide along
+      const blocked = (q) => lat !== 0 && net.hits(q.x, q.z).some(h => !h.beyond && h.lat < h.road.edgeL + 0.4 && h.lat > h.road.edgeR - 0.4 && Math.abs(h.y - q.y) < 4);
+      for (let k = 0, s0 = s; k < 30 && blocked(road.at(s, lat)); k++) s = Math.max(2, Math.min(road.length - 2, s0 + (k % 2 ? -1 : 1) * Math.ceil((k + 1) / 2) * 8));
       const p = road.at(s, lat); const t = road.dirAt(s);
       let ry = Math.atan2(t.x, t.z) + Math.PI; if (back) ry += Math.PI;
       return this.sign(kind, opts, p.x, p.y + h, p.z, ry, scale);
@@ -884,7 +914,11 @@ export class World {
       }
     }
     if (this.flares) this.flares.forEach((f, i) => { f.scale.y = 0.8 + Math.sin(this.t * 7 + i) * 0.15 + Math.random() * 0.1; f.visible = true; });
-    if (this.sea) this.sea.material.envMapIntensity = 0.35 * (1 - 0.82 * n); // the night HDRI is a city: keep its lights out of the open sea
+    if (this.sea) { // own envMap so envMapIntensity applies (scene.environment ignores per-material intensity)
+      const sm = this.sea.material, env = this.scene.environment || null;
+      if (sm.envMap !== env) { sm.envMap = env; sm.needsUpdate = true; }
+      sm.envMapIntensity = 0.35 * (1 - 0.97 * n); sm.roughness = 0.18 + 0.1 * n;
+    } // the night HDRI is a city: keep its lights out of the open sea
     if (this.sea?.material.normalMap) { this.sea.material.normalMap.offset.x += dt * 0.004; this.sea.material.normalMap.offset.y += dt * 0.0025; }
   }
 

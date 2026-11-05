@@ -26,7 +26,7 @@ export class Police {
     if (v && g.mode === 'drive' && this.state === 'patrol') {
       const over = v.kmh - this.speedLimit(v);
       const d = pol.pos.distanceTo(v.pos);
-      if (over > 40 && d < 140 && Math.abs(pol.pos.y - v.pos.y) < 4) this.startPursuit(over);
+      if (over > ({ lenient: 60, strict: 25 }[g.settings?.police] ?? 40) && d < 140 && Math.abs(pol.pos.y - v.pos.y) < 4) this.startPursuit(over);
     }
     if (this.state === 'pursuit') this.pursue(dt, v, pol);
     // siren audio

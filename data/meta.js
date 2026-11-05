@@ -1,8 +1,31 @@
 // Shared game metadata: version, changelog, regions. Update VERSION + CHANGELOG on every release.
-export const GAME = { title: 'MIDNIGHT JAPAN', titleJa: 'ミッドナイト・ジャパン', version: '0.2.0', build: '2026.11.05' };
+export const GAME = { title: 'MIDNIGHT JAPAN', titleJa: 'ミッドナイト・ジャパン', version: '0.3.0', build: '2026.11.06' };
 
 // Newest first. type: new | change | fix | known
 export const CHANGELOG = [
+  {
+    version: '0.3.0', date: '2026-11-06', codename: 'Full Throttle',
+    summary: {
+      ko: '주행감·사운드·콕핏·그래픽을 전부 다시 만들었어요. 실제 R34, 차종별 실내, 실녹음 엔진음, 난이도 설정, 그리고 도로 위에 서 있던 교각 수정.',
+      ja: '走り・サウンド・コックピット・グラフィックを作り直しました。リアルなR34、車種別の室内、実録エンジン音、難易度設定、そして道路上の橋脚を修正。',
+      en: 'Handling, sound, cockpits and graphics rebuilt: a real R34, per-car interiors, recorded engines, difficulty settings — and no more piers on the road.'
+    },
+    items: [
+      { type: 'new', ko: '주행 모델 전면 재작성: 부드러운 타이어 그립 곡선·하중 이동·속도 감응 조향 — 200km/h 이상에서도 안정, 코너 약 1g, 실제에 가까운 제동거리', ja: '走行モデルを全面刷新：なめらかなタイヤグリップ・荷重移動・車速感応ステアリング — 200km/h超でも安定、コーナー約1g、実車に近い制動距離', en: 'Driving model rebuilt: smooth tyre grip curve, load transfer and speed-sensitive steering — planted at 200+ km/h, ~1 g cornering, realistic braking distances' },
+      { type: 'new', ko: '난이도 프리셋(초보·표준·프로·시뮬레이션)과 조향 보조·STM·TCS·ABS·경찰 단속 개별 설정', ja: '難易度プリセット（ビギナー・スタンダード・プロ・シミュレーション）と、ステアリングアシスト・STM・TCS・ABS・取り締まりの個別設定', en: 'Difficulty presets (Beginner / Standard / Pro / Simulation) with separate steering assist, STM, TCS, ABS and police-tolerance options' },
+      { type: 'new', ko: '차종별 실제 콕핏: 우핸들/좌핸들, 야간 조명이 들어오는 실시간 계기판, R34 멀티 디스플레이·R32/R33 센터 3연계, 비치는 룸미러·사이드미러, 움직이는 핸들·시프터·페달', ja: '車種別のリアルなコックピット：右/左ハンドル、夜間照明付きのライブメーター、R34マルチファンクションディスプレイ・R32/R33センター3連メーター、映るミラー、連動するハンドル・シフト・ペダル', en: 'Per-car cockpits: RHD/LHD, live night-lit clusters, R34 multi-function display and R32/R33 console gauges, working mirrors, moving wheel, shifter and pedals' },
+      { type: 'new', ko: '실제 R34 GT-R 3D 모델 및 시빅 타입R·머스탱 GT·마크II(JZX100)·LFA 모델 추가 (CC BY 4.0)', ja: 'R34 GT-Rの実車3Dモデル、シビック タイプR・マスタングGT・マークII(JZX100)・LFAのモデルを追加（CC BY 4.0）', en: 'Real 3D model for the R34 GT-R, plus Civic Type R, Mustang GT, Mark II (JZX100) and LFA models (CC BY 4.0)' },
+      { type: 'new', ko: '엔진음: 실제 CC0 녹음 기반(직렬6·직렬4·수평대향·V8·V10·디젤), 가속/엔진브레이크 별도 레이어, 타이어 스퀼·노면·바람·팝·블로오프 실녹음, 터널·고가 아래 잔향, 이음매 「타탄」 소리', ja: 'エンジン音：実録CC0素材ベース（直6・直4・水平対向・V8・V10・ディーゼル）、加速／エンブレ別レイヤー、スキール・ロードノイズ・風・アフターファイア・ブローオフも実録、トンネル・高架下の残響、継ぎ目の「タタン」', en: 'Engines from real CC0 recordings (I6, I4, boxer, V8, V10, diesel) with on/off-throttle layers; recorded tyre squeal, road, wind, pops and blow-off; tunnel and under-viaduct reverb; expansion-joint thumps' },
+      { type: 'change', ko: '다이코쿠 PA 밋: 차와 사람이 동쪽 밋 구역에 모이고 규모가 커짐, 가로수 개선', ja: '大黒PAのミーティング：クルマと人が東側に集まり規模アップ、植栽を改善', en: 'Daikoku PA meet: cars and people gather in the east meet rows, bigger crowds, better trees' },
+      { type: 'change', ko: '하늘: 낮 하늘이 하얗게 날아가지 않음, 구름층, 도쿄 광공해가 비치는 밤하늘, 밤바다의 금빛 번쩍임 제거', ja: '空：昼の空が白飛びしない、雲、東京の光害を映す夜空、夜の海の金色の反射を解消', en: 'Sky: blue day sky (no more white-out), cloud deck, light-polluted Tokyo night sky, no more golden glare on the night sea' },
+      { type: 'change', ko: '웹사이트 리디자인: 인게임 히어로, 도쿄만 섹션, 빠른 이미지, 휴대폰·4K 레이아웃 수정, 20개 언어 완성', ja: 'サイトをリデザイン：ゲーム画面のヒーロー、東京湾セクション、高速な画像、スマホ・4Kのレイアウト修正、20言語完備', en: 'Website redesign: in-game hero, Tokyo Bay section, faster images, phone/4K layout fixes, all 20 languages complete' },
+      { type: 'fix', ko: '고가 교각이 아래 도로 차선 위에 서 있던 문제 수정 — 아래 도로를 걸치는 문형 교각으로 변경, 교각 충돌 판정 추가', ja: '高架の橋脚が下の道路の車線上に立っていた問題を修正 — 下の道路をまたぐ門型橋脚に、橋脚の当たり判定も追加', en: 'Fixed viaduct piers standing on the lanes of roads below — they are now portal frames straddling the lower road, and piers are solid' },
+      { type: 'fix', ko: '도로 위에 서 있던 표지판, 상층 데크를 뚫던 가로등 수정 (2층 구간은 데크 하부 조명)', ja: '道路上に立っていた標識、上層デッキを突き抜けていた街灯を修正（2層区間はデッキ下照明に）', en: 'Fixed signs standing on the road and lamp posts piercing the deck above (stacked sections now use soffit lights)' },
+      { type: 'fix', ko: '지붕이 투명해 오픈카처럼 보이던 절차적 차량 수정, 12개 3D 차량의 야간 램프 점등', ja: '屋根が透けてオープンカーに見えていた車両を修正、3Dモデル12車種の夜間ランプ点灯', en: 'Fixed procedural cars whose roofs looked see-through; night lamps now light on 12 more 3D models' },
+      { type: 'fix', ko: '벽에 닿으면 멈춰 붙던 문제 → 벽을 따라 미끄러짐, 저단 무한 휠스핀·자동 변속 시동 꺼짐 수정', ja: '壁に張り付く問題→壁に沿って滑るように、低速ギアの空転とAT時のエンストを修正', en: 'Walls: you now slide along instead of sticking; fixed endless low-gear wheelspin and auto-gearbox stalls' },
+      { type: 'known', ko: 'ND·S2000·S660 등 8종은 아직 라이선스가 확실한 3D 모델이 없어 절차적 모델 사용', ja: 'ND・S2000・S660など8車種はライセンスの明確な3Dモデルがなく、手続き生成モデルのまま', en: '8 cars (incl. ND, S2000, S660) still use procedural models — no clearly licensed 3D model yet' },
+    ]
+  },
   {
     version: '0.2.0', date: '2026-11-05', codename: 'Bayshore',
     summary: {
@@ -59,10 +82,10 @@ export const CHANGELOG = [
       { type: 'new', ko: '도보 모드와 복장 선택, 출입 금지 구역 차단', ja: '徒歩モードと服装選択、立入禁止エリア', en: 'On-foot mode with outfit selection; restricted areas are blocked' },
       { type: 'new', ko: '차량 라디오 4채널 (자작 시티팝·유로비트·로파이·엔카풍) — 창문/문을 열면 밖에서도 들림', ja: 'カーラジオ4局（オリジナルのシティポップ・ユーロビート・ローファイ・演歌風）— 窓やドアを開けると車外にも聞こえる', en: 'Car radio with 4 stations (original city pop, eurobeat, lo-fi, enka-style) — audible outside when windows/doors are open' },
       { type: 'new', ko: '20개 언어, 키보드·게임패드·모바일 터치 조작, 그래픽 품질 프리셋', ja: '20言語、キーボード・ゲームパッド・タッチ操作、画質プリセット', en: '20 languages, keyboard / gamepad / touch controls, graphics presets' },
-      { type: 'new', ko: '공식 웹사이트, 로컬 계정(회원가입·닉네임), PWA 설치, 데스크탑 앱(Electron)', ja: '公式サイト、ローカルアカウント（登録・ニックネーム）、PWA、デスクトップアプリ(Electron)', en: 'Official website, local accounts (sign-up, nickname), installable PWA, desktop app (Electron)' },
+      { type: 'new', ko: '공식 웹사이트, 로컬 계정(회원가입·닉네임), PWA 설치', ja: '公式サイト、ローカルアカウント（登録・ニックネーム）、PWA', en: 'Official website, local accounts (sign-up, nickname), installable PWA' },
       { type: 'new', ko: '차종별 엔진음: 엔진 형식(직렬4·6, V6·V8·V10, 수평대향, 로터리, 경차 3기통, EV)·배기량·엔진 코드별 음색, 터보 휘슬과 블로오프, 자연흡기 고회전·VTEC 전환음, 디젤 트럭', ja: '車種ごとのエンジン音：形式（直4・直6・V6・V8・V10・水平対向・ロータリー・軽3気筒・EV）、排気量、エンジン型式ごとの音色、ターボのヒューン音とブローオフ、NAの高回転・VTEC切替、ディーゼル', en: 'Per-car engine sound: layout (I4/I6/V6/V8/V10/boxer/rotary/kei I3/EV), displacement and engine-code voicing, turbo whistle and blow-off, NA high-rev & VTEC crossover, diesel trucks' },
       { type: 'new', ko: '차량 정보: 제조사·연식·섀시 코드·엔진·구동방식(FF 전륜 / FR·MR·RR 후륜 / AWD 사륜)·터보/자연흡기 표시 (게임 차고 + 웹사이트)', ja: '車両情報：メーカー・年式・型式・エンジン・駆動方式（FF／FR・MR・RR／4WD）・ターボ/NA表示（ゲーム内ガレージ＋公式サイト）', en: 'Vehicle info: maker, year, chassis code, engine, drivetrain (FF / FR·MR·RR / AWD) and turbo/NA shown in the garage and on the website' },
-      { type: 'new', ko: '실행 간편화: start.command / start.bat 더블클릭, 데스크탑 앱(Windows·macOS·Linux) 자동 빌드', ja: 'かんたん起動：start.command／start.bat をダブルクリック、デスクトップ版（Windows・macOS・Linux）自動ビルド', en: 'Easy launch: double-click start.command / start.bat; desktop builds for Windows, macOS and Linux' },
+      { type: 'new', ko: '실행 간편화: start.command / start.bat 더블클릭', ja: 'かんたん起動：start.command／start.bat をダブルクリック', en: 'Easy launch: double-click start.command / start.bat' },
       { type: 'change', ko: '게임 이름을 MIDNIGHT JAPAN(ミッドナイト・ジャパン)으로 확정', ja: 'タイトルを MIDNIGHT JAPAN（ミッドナイト・ジャパン）に決定', en: 'Title set to MIDNIGHT JAPAN (ミッドナイト・ジャパン)' },
       { type: 'known', ko: '온라인 멀티플레이는 아직 없음 (계정은 이 기기에만 저장)', ja: 'オンラインマルチは未実装（アカウントは端末内保存）', en: 'No online multiplayer yet — accounts are stored on this device only' },
     ]
@@ -79,10 +102,10 @@ export const REGIONS = [
     desc: { ko: '컨테이너 야드·자동차 수출 선적장·창고가 늘어선 매립지. 출입구 톨게이트 포함.', ja: 'コンテナヤード・自動車積出し埠頭・倉庫が並ぶ埋立地。出入口料金所あり。', en: 'Reclaimed port island of container yards, car-export berths and warehouses, with its toll gate.' } },
   { id: 'baybridge', status: 'partial', name: { ko: '요코하마 베이브리지', ja: '横浜ベイブリッジ', en: 'Yokohama Bay Bridge' }, pref: '首都高速 湾岸線',
     desc: { ko: '사장교 진입부까지 구현. 혼모쿠 방면은 다음 업데이트.', ja: '斜張橋の取付部まで。本牧方面は次回。', en: 'Built up to the cable-stayed span; Honmoku side comes later.' } },
-  { id: 'tsubasa', status: 'planned', name: { ko: '츠루미 츠바사 다리', ja: '鶴見つばさ橋', en: 'Tsurumi Tsubasa Bridge' }, pref: '首都高速 湾岸線', desc: { ko: '예정', ja: '予定', en: 'Planned' } },
+  { id: 'tsubasa', status: 'live', name: { ko: '츠루미 츠바사 다리', ja: '鶴見つばさ橋', en: 'Tsurumi Tsubasa Bridge' }, pref: '首都高速 湾岸線', desc: { ko: '하네다로 이어지는 완간선의 1주 사장교. 밤이면 케이블 조명이 바다 위에 떠요.', ja: '羽田へ続く湾岸線の一本柱斜張橋。夜はケーブルの照明が海に浮かぶ。', en: 'The single-tower cable-stayed bridge on the Bayshore Route toward Haneda; its cables glow over the sea at night.' } },
   { id: 'tatsumi', status: 'planned', name: { ko: '타츠미 PA', ja: '辰巳第一PA', en: 'Tatsumi PA' }, pref: '東京都江東区', desc: { ko: '예정', ja: '予定', en: 'Planned' } },
   { id: 'shibaura', status: 'planned', name: { ko: '시바우라 PA', ja: '芝浦PA', en: 'Shibaura PA' }, pref: '東京都港区', desc: { ko: '예정', ja: '予定', en: 'Planned' } },
-  { id: 'umihotaru', status: 'planned', name: { ko: '우미호타루 PA', ja: '海ほたるPA', en: 'Umihotaru PA' }, pref: '東京湾アクアライン', desc: { ko: '예정', ja: '予定', en: 'Planned' } },
+  { id: 'umihotaru', status: 'live', name: { ko: '우미호타루 PA', ja: '海ほたるPA', en: 'Umihotaru PA' }, pref: '東京湾アクアライン', desc: { ko: '도쿄만 한가운데 배 모양 PA. 해저 터널을 빠져나오면 바로 나와요.', ja: '東京湾の真ん中に浮かぶ船の形のPA。海底トンネルを抜けるとすぐ。', en: 'The ship-shaped PA in the middle of Tokyo Bay, right where the undersea tunnel surfaces.' } },
 ];
 
 export const LANGS = [

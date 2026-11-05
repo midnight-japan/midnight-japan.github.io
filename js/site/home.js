@@ -1,5 +1,5 @@
 // Homepage: hero art, 3-step start, features, car showcase, roadmap, gallery + lightbox, latest update teaser, requirements, controls, FAQ.
-import { GAME, CHANGELOG, LANGS } from '../../data/meta.js';
+import { GAME, CHANGELOG, LANGS, REGIONS } from '../../data/meta.js';
 import { CARS } from '../../data/cars.js';
 import { t, pick } from '../i18n.js';
 import { initSite, onLang, esc, num, swap, reducedMotion } from './common.js';
@@ -23,24 +23,48 @@ const FEATURES = [
   ['langs', ic('<circle cx="12" cy="12" r="9"/><path d="M3 12h18M12 3a14 14 0 0 1 0 18M12 3a14 14 0 0 0 0 18"/>'), '多言語'],
 ];
 
-// ── Screenshots: file names in docs/screenshots/ (without .png). Append new ones here, e.g. '07-wangan-night'.
-// Caption: i18n key site.shot.<first 2 chars> if it exists, otherwise the file name ("07-wangan-night" → "Wangan night").
-const SHOTS = ['01-pa-night', '02-loop-day', '03-cockpit', '04-garage', '05-onfoot', '06-tollgate'];
+// ── Screenshots in docs/screenshots/: each entry needs <name>.jpg (1600 px wide) and <name>-800.jpg (800 px wide).
+//    If the .jpg is missing the page falls back to <name>.png. Make the JPEGs on macOS with:
+//    sips -s format jpeg -s formatOptions 78 -Z 1600 X.png --out X.jpg && sips -s format jpeg -s formatOptions 74 -Z 800 X.png --out X-800.jpg
+// Caption: i18n key site.shot.<first 2 chars> if it exists, otherwise the file name ("08-wangan-night" → "Wangan night").
+// 9 entries fill the grid exactly on desktop (first one large). Other shots on disk: 05-onfoot, 06-tollgate.
+const SHOTS = ['07-ae86-loops', '16-tsubasa', '14-aqua-tunnel', '13-umihotaru', '01-pa-night', '04-garage', '15-aqua-bridge', '03-cockpit', '02-loop-day'];
+const SHOT_DIR = 'docs/screenshots/';
+const shotSrc = (s, w) => SHOT_DIR + s + (w === 800 ? '-800' : '') + '.jpg';
 const shotCap = s => {
   const k = 'site.shot.' + s.slice(0, 2), v = t(k);
   if (v !== k) return v;
   const w = s.replace(/^\d+[-_]?/, '').replace(/[-_]+/g, ' ').trim();
   return w ? w[0].toUpperCase() + w.slice(1) : s;
 };
+/** <img> fallback chain: -800.jpg/.jpg → .png → placeholder. */
+function pngFallback(img, name, onFail) {
+  img.addEventListener('error', () => {
+    if (!img.dataset.png) { img.dataset.png = '1'; img.removeAttribute('srcset'); img.src = SHOT_DIR + name + '.png'; }
+    else onFail?.();
+  });
+}
+
+// ── World tiles (home): [screenshot, region id in data/meta.js REGIONS or i18n key, route badge, Japanese name]
+const WORLD = [
+  ['07-ae86-loops', 'daikoku_pa', 'B', '大黒PA'],
+  ['16-tsubasa', 'tsubasa', 'B', '鶴見つばさ橋'],
+  ['14-aqua-tunnel', 'site.world.aqua', 'CA', '東京湾アクアライン'],
+  ['13-umihotaru', 'umihotaru', 'CA', '海ほたるPA'],
+];
+// Route-sign ticker words (decorative, Japanese/English place names — not translated on purpose)
+const TICKER = ['大黒PA', 'DAIKOKU PA', '首都高速湾岸線', 'BAYSHORE ROUTE', '鶴見つばさ橋', 'TSURUMI TSUBASA BRIDGE', '川崎浮島JCT', '東京湾アクアライン', 'TOKYO BAY AQUA-LINE', '海ほたるPA', 'UMIHOTARU', '羽田', 'HANEDA', '横浜ベイブリッジ', 'YOKOHAMA BAY BRIDGE'];
 
 // ── Featured cars for the home showcase strip (ids from data/cars.js; unknown ids are skipped).
 const FEATURED = ['r34', 'r32', 'jza80', 'fd3s', 'na1', 'ae86', 'gr86', 'ap1', 'evo9', 'lfa'];
 
 // ── Roadmap: [version, status, item keys]. Keep it modest — plans, not promises.
+// Item keys: site.road.<version without dot>.<key>, except entries written as 'NN.key' which point at another version's key.
 const ROADMAP = [
-  ['0.1', 'now', ['pa', 'cars', 'life', 'online']],
-  ['0.2', 'next', ['routes', 'models', 'perf']],
-  ['0.3', 'later', ['events', 'tuning', 'areas']],
+  ['0.1', 'done', ['pa', 'cars', 'life', 'online']],
+  ['0.2', 'now', ['bay', 'aqua', 'models3d']],
+  ['0.3', 'next', ['c1', '02.models', '02.perf']],
+  ['Later', 'later', ['03.events', '03.tuning', '03.areas']],
 ];
 
 // ── Controls. Keep in sync with the game's input map. Values: keyboard keys (array → <kbd>), gamepad, touch i18n key.
@@ -63,63 +87,6 @@ const CONTROLS = [
 const REQ = ['browser', 'gpu', 'ram', 'display', 'mobile', 'network'];
 const FAQ = ['free', 'install', 'multi', 'account', 'real', 'perf'];
 
-function heroArt() {
-  // Stylised night view: stars, Minato-Mirai-ish skyline, Ferris wheel, cable-stayed bridge, elevated JCT loops with light trails.
-  let stars = '', win = '', lamps = '';
-  let s = 11; const rnd = () => (s = (s * 16807) % 2147483647) / 2147483647;
-  for (let i = 0; i < 90; i++) stars += `<circle cx="${(rnd() * 1600).toFixed(0)}" cy="${(rnd() * 380).toFixed(0)}" r="${(rnd() * 1.4 + .3).toFixed(1)}" fill="#dfe8ff" opacity="${(rnd() * .6 + .2).toFixed(2)}"${i % 7 === 0 ? ' class="twinkle"' : ''}/>`;
-  const bld = [[600, 70, 210], [680, 55, 300], [745, 40, 250], [800, 70, 360], [880, 50, 270], [940, 60, 330], [1010, 45, 230], [1060, 80, 290], [1150, 40, 210], [1200, 60, 250], [1270, 50, 190]];
-  const blds = bld.map(([x, w, h]) => {
-    for (let k = 0; k < h / 16; k++) for (let j = 0; j < w / 12; j++) if (rnd() > .62) win += `<rect x="${x + 4 + j * 12}" y="${560 - h + 8 + k * 16}" width="5" height="6" fill="${rnd() > .8 ? '#ffd9a0' : '#9fc3ff'}" opacity="${(rnd() * .5 + .35).toFixed(2)}"/>`;
-    return `<rect x="${x}" y="${560 - h}" width="${w}" height="${h}" fill="#0b1426"/>`;
-  }).join('');
-  let spokes = '';
-  for (let a = 0; a < 360; a += 15) { const r = a * Math.PI / 180; spokes += `<line x1="1370" y1="400" x2="${(1370 + Math.cos(r) * 110).toFixed(1)}" y2="${(400 + Math.sin(r) * 110).toFixed(1)}"/>`; }
-  for (let i = 0; i < 16; i++) { const x = 70 + i * 100; lamps += `<line x1="${x}" y1="690" x2="${x}" y2="655" stroke="#1a2236" stroke-width="3"/><circle cx="${x + 6}" cy="654" r="16" fill="url(#lampg)"/><circle cx="${x + 6}" cy="654" r="2.6" fill="#ffd18a"/>`; }
-  return `<svg viewBox="0 0 1600 900" preserveAspectRatio="xMidYMid slice">
-  <defs>
-    <linearGradient id="sky" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#050913"/><stop offset=".55" stop-color="#0d1a3a"/><stop offset=".72" stop-color="#2a2238"/><stop offset="1" stop-color="#05070d"/></linearGradient>
-    <linearGradient id="sea" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#0b1730"/><stop offset="1" stop-color="#03060c"/></linearGradient>
-    <radialGradient id="lampg"><stop offset="0" stop-color="#ffb04a" stop-opacity=".9"/><stop offset="1" stop-color="#ff8a1f" stop-opacity="0"/></radialGradient>
-    <radialGradient id="cityglow" cx=".55" cy="1" r=".6"><stop offset="0" stop-color="#ff9a2e" stop-opacity=".28"/><stop offset="1" stop-color="#ff9a2e" stop-opacity="0"/></radialGradient>
-    <filter id="blur"><feGaussianBlur stdDeviation="2.2"/></filter>
-  </defs>
-  <rect width="1600" height="900" fill="url(#sky)"/>
-  ${stars}
-  <mask id="moonm"><rect width="1600" height="900" fill="#fff"/><circle cx="1405" cy="110" r="30" fill="#000"/></mask><circle cx="1390" cy="120" r="34" fill="#f6e7bf" opacity=".95" mask="url(#moonm)"/>
-  <rect y="380" width="1600" height="300" fill="url(#cityglow)"/>
-  ${blds}${win}
-  <g stroke="#2f4774" stroke-width="1.4" opacity=".9">${spokes}</g>
-  <circle cx="1370" cy="400" r="110" fill="none" stroke="#5fd4ff" stroke-width="3" opacity=".7"/>
-  <circle cx="1370" cy="400" r="110" fill="none" stroke="#ff7ad9" stroke-width="3" stroke-dasharray="6 18" opacity=".8" class="twinkle"/>
-  <path d="M1360 400 1335 560h70z" fill="#0b1426"/>
-  <g stroke="#9fb3d9" stroke-width="1.2" opacity=".55">
-    <path d="M300 560 330 330 360 560M300 560 220 520M330 330 120 520M330 330 200 525M330 330 260 535M330 330 540 520M330 330 460 525M330 330 400 535"/>
-  </g>
-  <path d="M0 520H600" stroke="#203357" stroke-width="7"/>
-  <rect y="560" width="1600" height="340" fill="url(#sea)"/>
-  <g opacity=".35" filter="url(#blur)">${win.replace(/y="(\d+)"/g, (m, y) => `y="${1120 - y}"`)}</g>
-  <!-- elevated JCT loops -->
-  <g fill="none">
-    <ellipse cx="1050" cy="700" rx="470" ry="120" stroke="#04060b" stroke-width="34"/>
-    <ellipse cx="1050" cy="700" rx="470" ry="120" stroke="#1a2440" stroke-width="22"/>
-    <ellipse cx="1050" cy="700" rx="470" ry="120" stroke="#ff2a2a" stroke-width="4" class="trail" opacity=".9" pathLength="286"/>
-    <ellipse cx="1050" cy="700" rx="470" ry="120" stroke="#ff2a2a" stroke-width="4" class="trail d2" opacity=".9" pathLength="286"/>
-    <ellipse cx="1050" cy="700" rx="470" ry="120" stroke="#fff3d6" stroke-width="4" class="trail r d3" pathLength="286"/>
-    <ellipse cx="1080" cy="760" rx="360" ry="80" stroke="#04060b" stroke-width="30"/>
-    <ellipse cx="1080" cy="760" rx="360" ry="80" stroke="#172038" stroke-width="18"/>
-    <ellipse cx="1080" cy="760" rx="360" ry="80" stroke="#fff3d6" stroke-width="3.5" class="trail" pathLength="286"/>
-    <ellipse cx="1080" cy="760" rx="360" ry="80" stroke="#ff2a2a" stroke-width="3.5" class="trail r d2" pathLength="286"/>
-  </g>
-  <path d="M0 690H1600" stroke="#04060b" stroke-width="30"/>
-  <path d="M0 690H1600" stroke="#1b2a4a" stroke-width="18"/>
-  <path d="M0 690H1600" stroke="#ff9a2e" stroke-width="2" stroke-dasharray="30 40" opacity=".55"/>
-  <g fill="#070b14">${[150, 450, 750, 1050, 1350].map(x => `<rect x="${x}" y="700" width="26" height="200"/>`).join('')}</g>
-  ${lamps}
-  <path d="M0 700H1600" stroke="#2fbf71" stroke-width="2" opacity=".5"/>
-</svg>`;
-}
-
 function renderFeatures() {
   const n = CARS.length;
   document.getElementById('feature-grid').innerHTML = FEATURES.map(([k, svg, jp, beta]) => `
@@ -127,20 +94,38 @@ function renderFeatures() {
       <h3>${esc(t('site.feat.' + k + '.t', { n }))}${beta ? ` <span class="beta">${esc(t('site.beta'))}</span>` : ''}</h3><p>${esc(t('site.feat.' + k + '.d', { n }))}</p></article>`).join('');
 }
 
-let loaded = []; // indices of screenshots that loaded
 function renderGallery() {
   const g = document.getElementById('gallery-grid');
   g.innerHTML = SHOTS.map((s, i) => `
     <button type="button" class="shot" data-i="${i}" aria-label="${esc(shotCap(s))}">
-      <img src="docs/screenshots/${s}.png" alt="${esc(shotCap(s))}" loading="lazy">
+      <img src="${shotSrc(s, 800)}" srcset="${shotSrc(s, 800)} 800w, ${shotSrc(s, 1600)} 1600w" sizes="(min-width: 900px) ${i === 0 ? '66vw' : '33vw'}, 100vw" alt="${esc(shotCap(s))}" loading="lazy" decoding="async" width="800" height="450">
       <span class="cap">${esc(shotCap(s))}</span>
     </button>`).join('');
   g.querySelectorAll('.shot').forEach(b => {
     const img = b.querySelector('img');
     const fail = () => { b.classList.add('missing'); b.disabled = true; img.remove(); b.insertAdjacentHTML('afterbegin', `<span class="ph"><span>${esc(t('site.gallery.soon'))}</span></span>`); };
-    img.addEventListener('error', fail, { once: true });
+    pngFallback(img, SHOTS[+b.dataset.i], fail);
     b.addEventListener('click', () => { if (!b.classList.contains('missing')) openLb(+b.dataset.i); });
   });
+}
+
+function renderWorld() {
+  const name = id => { const r = REGIONS.find(x => x.id === id); return r ? pick(r.name) : t(id); };
+  const g = document.getElementById('world-grid');
+  g.innerHTML = WORLD.map(([s, id, route, jp], i) => {
+    const href = REGIONS.some(x => x.id === id) ? `regions.html#r-${encodeURIComponent(id)}` : 'regions.html';
+    return `<a class="wtile${i === 0 ? ' big' : ''}" href="${href}">
+      <img src="${shotSrc(s, 800)}" srcset="${shotSrc(s, 800)} 800w, ${shotSrc(s, 1600)} 1600w" sizes="(min-width: 900px) ${i === 0 ? '60vw' : '30vw'}, 100vw" alt="" loading="lazy" decoding="async" width="800" height="450">
+      <span class="wt-body"><span class="route${route === 'CA' ? ' aq' : ''}">${esc(route)}</span><span class="wt-name">${esc(name(id))}</span><span class="wt-jp" lang="ja">${esc(jp)}</span></span>
+    </a>`;
+  }).join('');
+  g.querySelectorAll('.wtile img').forEach((img, i) => pngFallback(img, WORLD[i][0], () => img.remove()));
+}
+
+function renderTicker() {
+  const el = document.getElementById('ticker'); if (!el) return;
+  const run = TICKER.map(w => `<span>${esc(w)}</span>`).join('<i></i>');
+  el.innerHTML = `<div>${run}<i></i></div><div>${run}<i></i></div>`;
 }
 
 let lbIndex = 0;
@@ -148,7 +133,9 @@ const lb = () => document.getElementById('lightbox');
 function avail() { return [...document.querySelectorAll('#gallery-grid .shot:not(.missing)')].map(b => +b.dataset.i); }
 function openLb(i) {
   lbIndex = i; const s = SHOTS[i];
-  document.getElementById('lb-img').src = `docs/screenshots/${s}.png`;
+  const im = document.getElementById('lb-img'); delete im.dataset.png;
+  im.onerror = () => { if (!im.dataset.png) { im.dataset.png = '1'; im.src = SHOT_DIR + s + '.png'; } };
+  im.src = shotSrc(s, 1600);
   document.getElementById('lb-img').alt = shotCap(s);
   document.getElementById('lb-cap').textContent = shotCap(s);
   swap(document.getElementById('lb-img'));
@@ -234,8 +221,8 @@ function wireStrip() {
 function renderRoadmap() {
   document.getElementById('road-grid').innerHTML = ROADMAP.map(([v, st, items]) => `
     <article class="card road-col ${st}">
-      <div class="road-top"><span class="road-v">v${esc(v)}</span><span class="status ${st === 'now' ? 'live' : st === 'next' ? 'partial' : 'planned'}">${esc(t('site.road.' + st))}</span></div>
-      <ul>${items.map(k => `<li>${esc(t('site.road.' + v.replace('.', '') + '.' + k, { n: CARS.length }))}</li>`).join('')}</ul>
+      <div class="road-top"><span class="road-v">${/^\d/.test(v) ? 'v' + esc(v) : '+'}</span><span class="status ${st === 'done' || st === 'now' ? 'live' : st === 'next' ? 'partial' : 'planned'}">${esc(t('site.road.' + st))}</span></div>
+      <ul>${items.map(k => `<li>${esc(t('site.road.' + (k.includes('.') ? k : v.replace('.', '') + '.' + k), { n: CARS.length }))}</li>`).join('')}</ul>
     </article>`).join('');
 }
 
@@ -255,13 +242,14 @@ function wireCopy() {
   });
 }
 
-document.getElementById('hero-art').innerHTML = heroArt();
 document.getElementById('hero-version').textContent = 'v' + GAME.version;
+document.getElementById('hero-code').textContent = CHANGELOG[0]?.codename || '';
+renderTicker();
 document.getElementById('hero-carcount').textContent = CARS.length;
 // Count-up for the hero stats (numbers only; "30:00" style values are left as-is).
 function countUp() {
   if (reducedMotion()) return;
-  document.querySelectorAll('.hero-meta b').forEach((b, i) => {
+  document.querySelectorAll('.hero-meta b:not(.nocount)').forEach((b, i) => {
     const end = +b.textContent; if (!Number.isFinite(end) || end <= 0) return;
     const t0 = performance.now() + 700 + i * 120, dur = 1300;
     b.textContent = '0';
@@ -276,4 +264,4 @@ function countUp() {
 countUp();
 wireLb(); wireTabs(); wireCopy(); wireStrip();
 await initSite('home');
-onLang(() => { renderFeatures(); renderShowcase(); requestAnimationFrame(stripUpd); renderGallery(); renderRoadmap(); renderLatest(); renderReq(); renderCtl(); renderFaq(); });
+onLang(() => { document.getElementById('hero-cars').textContent = t('site.show.all', { n: CARS.length }) + ' →'; renderWorld(); renderFeatures(); renderShowcase(); requestAnimationFrame(stripUpd); renderGallery(); renderRoadmap(); renderLatest(); renderReq(); renderCtl(); renderFaq(); });

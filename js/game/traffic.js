@@ -52,7 +52,7 @@ export class Traffic {
   constructor(game) {
     this.g = game; this.net = game.net; this.world = game.world; this.scene = game.scene;
     this.cars = []; this.max = { low: 10, medium: 22, high: 34, ultra: 46 }[game.quality] ?? 22;
-    this.meetMax = { low: 10, medium: 18, high: 28, ultra: 36 }[game.quality] ?? 18;
+    this.meetMax = { low: 12, medium: 22, high: 32, ultra: 44 }[game.quality] ?? 22;
     this.t = 0; this.spawnT = 0; this.paClosed = false;
     this.headPool = this.makeHeadPool();
   }
@@ -101,12 +101,18 @@ export class Traffic {
       this.placeOnRoad(ai, road, lane, Math.random() * road.length);
     }
     // meet cars already parked
+    // like the real Daikoku meets the cars bunch up in one corner of the lot (the east meet rows, where the player parks)
     const spots = this.world.parkingSpots.filter(s => s.size === 's');
-    const n = Math.round(this.meetMax * 0.7);
-    for (let i = 0; i < n; i++) {
-      const spot = spots.filter(s => !s.taken)[Math.floor(Math.random() * spots.length * 0.6)] || spots.find(s => !s.taken);
-      if (!spot) break;
-      this.spawnParked(MEET_POOL[Math.floor(Math.random() * MEET_POOL.length)], spot);
+    const meetSide = spots.filter(s => s.pos.x > 55); const ctr = { x: 0, z: 0 };
+    for (const s of meetSide.length ? meetSide : spots) { ctr.x += s.pos.x; ctr.z += s.pos.z; }
+    ctr.x /= Math.max(1, (meetSide.length || spots.length)); ctr.z /= Math.max(1, (meetSide.length || spots.length));
+    const order = spots.slice().sort((a, b) => Math.hypot(a.pos.x - ctr.x, a.pos.z - ctr.z) - Math.hypot(b.pos.x - ctr.x, b.pos.z - ctr.z));
+    const n = Math.round(this.meetMax * 0.8); let placed = 0;
+    const pool = MEET_POOL.slice().sort(() => Math.random() - 0.5); // variety: no duplicates until the pool is used up
+    for (const spot of order) {
+      if (placed >= n) break;
+      if (spot.taken || Math.random() < 0.18) continue; // a few gaps, like real arrivals
+      this.spawnParked(pool[placed % pool.length], spot); placed++;
     }
     // a few trucks parked in the large bays
     const big = this.world.parkingSpots.filter(s => s.size === 'l');

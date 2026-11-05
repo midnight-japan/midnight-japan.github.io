@@ -77,5 +77,44 @@ The car models in `assets/models/cars/` are third-party works downloaded from Sk
 | `altow` | Stylized Suzuki Alto Works | 3DBuilder (EddyNL) | https://sketchfab.com/3d-models/stylized-suzuki-alto-works-467f2e28ff334919879841216766903b | [CC BY 4.0](https://creativecommons.org/licenses/by/4.0/) | modified: optimized/compressed (normalized scale/orientation, textures resized to WebP, meshopt-compressed) |
 | `hiace` | Toyota Hiace 1982 | Raed Almaharmah (raedalmaharmah6) | https://sketchfab.com/3d-models/toyota-hiace-1982-bb0b919780374dc2b190af711e3201d7 | [CC BY 4.0](https://creativecommons.org/licenses/by/4.0/) | modified: optimized/compressed (normalized scale/orientation, textures resized to WebP, meshopt-compressed) |
 | `leaf` | Nissan Leaf 2018 | yokada000 | https://sketchfab.com/3d-models/nissan-leaf-2018-424e21ec6667481eb86a7faf59061843 | [CC BY 4.0](https://creativecommons.org/licenses/by/4.0/) | modified: optimized/compressed (normalized scale/orientation, textures resized to WebP, meshopt-compressed, geometry simplified) |
+| `r34` | Nissan Skyline R34 GT-R | Lexyc16 | https://sketchfab.com/3d-models/nissan-skyline-r34-gt-r-ff8fb2251dfa4bb9979e7022c5a6666c | [CC BY 4.0](https://creativecommons.org/licenses/by/4.0/) | modified: optimized/compressed (normalized scale/orientation, wheels split into separate nodes, materials renamed/retinted for in-game paint & lamps, textures resized to WebP, meshopt-compressed) |
+| `fl5` | Honda Civic Type-R | shindedhirendra780 | https://sketchfab.com/3d-models/honda-civic-type-r-770a5c9b025449f59769d8cd27d915bb | [CC BY 4.0](https://creativecommons.org/licenses/by/4.0/) | modified: optimized/compressed (normalized scale/orientation, wheels split into separate nodes, materials renamed/retinted for in-game paint & lamps, textures resized to WebP, meshopt-compressed) |
+| `mustang` | Ford Mustang GT 2019 | broawz.n.nove | https://sketchfab.com/3d-models/ford-mustang-gt-2019-5b737fd21a5f432080ee32b12cf26a37 | [CC BY 4.0](https://creativecommons.org/licenses/by/4.0/) | modified: optimized/compressed (normalized scale/orientation, wheels split into separate nodes, materials renamed/retinted for in-game paint & lamps, textures resized to WebP, meshopt-compressed) |
+| `lfa` | Low Poly Lexus LFA | yokatann | https://sketchfab.com/3d-models/low-poly-lexus-lfa-56c3a62e5bb645d8afaf1dcfa4b665ea | [CC BY 4.0](https://creativecommons.org/licenses/by/4.0/) | modified: optimized/compressed (normalized scale/orientation, wheels split into separate nodes, materials renamed/retinted for in-game paint & lamps, textures resized to WebP, meshopt-compressed) |
+| `jzx100` | Toyota Mark II Jzx100 | own.guest | https://sketchfab.com/3d-models/toyota-mark-ii-jzx100-383483429d0e43378b7e049804b08fc4 | [CC BY 4.0](https://creativecommons.org/licenses/by/4.0/) | modified: optimized/compressed (normalized scale/orientation, wheels split into separate nodes, materials renamed/retinted for in-game paint & lamps, textures resized to WebP, meshopt-compressed) |
 
 `ek9.glb` is itself, per its author, a retextured/remodelled version of a widebody Honda Civic Type R model by Louweee___ (Sketchfab) — credit to both authors.
+
+## Audio samples (assets/audio/)
+
+All sources are freesound.org recordings released under **CC0 1.0** (public domain; licence verified on each sound page). Attribution is not required but is given here. Files were downloaded as the public preview MP3s and modified: trimmed, filtered, loudness-normalised, looped, and — for `engines/*` — pitch-tracked and resampled into crank-angle-domain grain tables (Ogg Vorbis + JSON). No game audio was used.
+
+| Used in | Title | Author | Source | Licence |
+|---|---|---|---|---|
+| `engines/i6 (on/off-load sweeps)` | Import car revs on Chassis Dyno with Turbo | editboy23 | https://freesound.org/people/editboy23/sounds/496171/ | [CC0 1.0](https://creativecommons.org/publicdomain/zero/1.0/) |
+| `engines/i6 (idle)` | engine start BMW 320 VG91 | joanfelipsound | https://freesound.org/people/joanfelipsound/sounds/57939/ | [CC0 1.0](https://creativecommons.org/publicdomain/zero/1.0/) |
+| `engines/i6 (idle, revs)` | BMW 320 1988 | ninebilly | https://freesound.org/people/ninebilly/sounds/173005/ | [CC0 1.0](https://creativecommons.org/publicdomain/zero/1.0/) |
+| `engines/i4 (idle, full-throttle pulls, lift)` | auto5 | escortmarius | https://freesound.org/people/escortmarius/sounds/141459/ | [CC0 1.0](https://creativecommons.org/publicdomain/zero/1.0/) |
+| `engines/i4 (idle)` | car idle | seth-m | https://freesound.org/people/seth-m/sounds/269771/ | [CC0 1.0](https://creativecommons.org/publicdomain/zero/1.0/) |
+| `engines/f4 (on/off-load sweeps)` | DynoJet Scion FR-S | dezoris | https://freesound.org/people/dezoris/sounds/183654/ | [CC0 1.0](https://creativecommons.org/publicdomain/zero/1.0/) |
+| `engines/f4 (idle, revs)` | WRX - Exhaust sounds | ulose2piranha | https://freesound.org/people/ulose2piranha/sounds/273334/ | [CC0 1.0](https://creativecommons.org/publicdomain/zero/1.0/) |
+| `engines/v8 (idle)` | Ford Mustang Engine (1985) | lmbubec | https://freesound.org/people/lmbubec/sounds/119449/ | [CC0 1.0](https://creativecommons.org/publicdomain/zero/1.0/) |
+| `engines/v8 (on-load pulls)` | Audi V8 Acceleration Sound | FFKoenigsegg20012017 | https://freesound.org/people/FFKoenigsegg20012017/sounds/339703/ | [CC0 1.0](https://creativecommons.org/publicdomain/zero/1.0/) |
+| `engines/v8 (revs, overrun)` | mustang 8 | VacekH | https://freesound.org/people/VacekH/sounds/205509/ | [CC0 1.0](https://creativecommons.org/publicdomain/zero/1.0/) |
+| `engines/v10 (pulls, coast)` | Acceleration of a Sports Car Engine like Ferrari or Lamborghini or Porsche | florianreichelt | https://freesound.org/people/florianreichelt/sounds/457560/ | [CC0 1.0](https://creativecommons.org/publicdomain/zero/1.0/) |
+| `engines/v10 (idle)` | Lambo Start Up Sound | JaimeLopes | https://freesound.org/people/JaimeLopes/sounds/564373/ | [CC0 1.0](https://creativecommons.org/publicdomain/zero/1.0/) |
+| `engines/diesel` | Isuzu Diesel Engine Sound | ithoanglong26 | https://freesound.org/people/ithoanglong26/sounds/546740/ | [CC0 1.0](https://creativecommons.org/publicdomain/zero/1.0/) |
+| `sfx/tire_squeal, sfx/tire_scrub` | screeching tyres / tires | johnnydekk | https://freesound.org/people/johnnydekk/sounds/614627/ | [CC0 1.0](https://creativecommons.org/publicdomain/zero/1.0/) |
+| `sfx/road` | Car rolling on asphalt | orlandorizo | https://freesound.org/people/orlandorizo/sounds/591079/ | [CC0 1.0](https://creativecommons.org/publicdomain/zero/1.0/) |
+| `sfx/wind` | Wind Whipping By | FunWithSound | https://freesound.org/people/FunWithSound/sounds/361487/ | [CC0 1.0](https://creativecommons.org/publicdomain/zero/1.0/) |
+| `sfx/backfire` | BACKFIRE | CeebFrack | https://freesound.org/people/CeebFrack/sounds/105351/ | [CC0 1.0](https://creativecommons.org/publicdomain/zero/1.0/) |
+| `sfx/bov` | Turbo Spooling and Blow Off | EwanPenman11 | https://freesound.org/people/EwanPenman11/sounds/659544/ | [CC0 1.0](https://creativecommons.org/publicdomain/zero/1.0/) |
+| `sfx/pops` | Car Antilag (No cleanup, 32float) | modusmogulus | https://freesound.org/people/modusmogulus/sounds/797835/ | [CC0 1.0](https://creativecommons.org/publicdomain/zero/1.0/) |
+| `sfx/door_close` | car door close | monotraum | https://freesound.org/people/monotraum/sounds/208695/ | [CC0 1.0](https://creativecommons.org/publicdomain/zero/1.0/) |
+| `sfx/door_close_in` | CAR DOOR CLOSING FROM INSIDE | metrostock99 | https://freesound.org/people/metrostock99/sounds/345066/ | [CC0 1.0](https://creativecommons.org/publicdomain/zero/1.0/) |
+| `sfx/handbrake` | Handbrake | ninebilly | https://freesound.org/people/ninebilly/sounds/173007/ | [CC0 1.0](https://creativecommons.org/publicdomain/zero/1.0/) |
+| `sfx/blink_on, sfx/blink_off` | VEHCar_NISSAN SENTRA-TURNING SIGNAL_MP | MPierluissi | https://freesound.org/people/MPierluissi/sounds/446322/ | [CC0 1.0](https://creativecommons.org/publicdomain/zero/1.0/) |
+| `sfx/ui_click` | Soft UI Button Click | Jummit | https://freesound.org/people/Jummit/sounds/528561/ | [CC0 1.0](https://creativecommons.org/publicdomain/zero/1.0/) |
+| `sfx/shift` | civic manual shifter noise | jrssandoval | https://freesound.org/people/jrssandoval/sounds/67135/ | [CC0 1.0](https://creativecommons.org/publicdomain/zero/1.0/) |
+
+Everything else in the audio (synth engine layer, turbo whistle, EV drive, siren, radio, ambience, reverb impulse responses) is synthesised in code.

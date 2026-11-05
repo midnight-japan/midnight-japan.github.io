@@ -12,10 +12,24 @@ export const KEYMAP = {
 };
 const ACTIONS = ['shiftUp', 'shiftDown', 'interact', 'ignition', 'lights', 'horn', 'camera', 'radio', 'radioNext', 'signalL', 'signalR', 'hazard', 'fog', 'carMenu', 'strobe', 'siren', 'map', 'pause', 'photo', 'look', 'regen', 'gear1', 'gear2', 'gear3', 'gear4', 'gear5', 'gear6', 'gear7', 'gearR', 'gearN', 'jump'];
 
+// keyboard steer de-glitch: fast linear ramp (≈70 ms lock-to-lock) so a 1-frame key tap is not a full-lock spike
+export function kbSteer(prev, target, dt) { const rate = 14; return prev + Math.max(-rate * dt, Math.min(rate * dt, target - prev)); }
+// gamepad stick → steer: radial deadzone (so a slightly-off-centre stick doesn't drift), small outer deadzone,
+// then a gentle response curve (finer control around centre, full lock still reachable)
+export const PAD = { deadzone: 0.1, outer: 0.04, expo: 1.45 };
+export function padSteer(x, y = 0) {
+  const mag = Math.hypot(x, y * 0.5); if (mag < PAD.deadzone) return 0;
+  const ax = Math.abs(x); if (ax < 1e-4) return 0;
+  const n = Math.min(1, Math.max(0, (ax - PAD.deadzone * ax / mag) / (1 - PAD.outer - PAD.deadzone)));
+  return Math.sign(x) * Math.pow(n, PAD.expo);
+}
+// analog trigger with a small deadzone (worn triggers rest at ~0.02-0.05) and full value reached slightly early
+export function padTrigger(b) { const v = b ? (typeof b.value === 'number' && b.value > 0 ? b.value : b.pressed ? 1 : 0) : 0; return v < 0.04 ? 0 : Math.min(1, (v - 0.04) / 0.92); }
+
 export class Input {
   constructor(el) {
     this.down = new Set(); this.pressed = new Set(); this.enabled = true;
-    this.axes = { throttle: 0, brake: 0, steer: 0, clutch: 0, handbrake: 0, moveX: 0, moveY: 0, lookX: 0, lookY: 0 };
+    this.axes = { throttle: 0, brake: 0, steer: 0, steerDigital: true, clutch: 0, handbrake: 0, moveX: 0, moveY: 0, lookX: 0, lookY: 0 };
     this.touch = { throttle: 0, brake: 0, steer: 0, handbrake: 0, moveX: 0, moveY: 0 };
     this.mouse = { dx: 0, dy: 0, wheel: 0, dragging: false };
     this.steerSmooth = 0; this.tilt = false; this.tiltSteer = 0;
@@ -41,19 +55,18 @@ export class Input {
   poll(dt) {
     const a = this.axes;
     const kb = { throttle: this.key('throttle') ? 1 : 0, brake: this.key('brake') ? 1 : 0, steer: (this.key('left') ? 1 : 0) - (this.key('right') ? 1 : 0), clutch: this.key('clutch') ? 1 : 0, handbrake: this.key('handbrake') ? 1 : 0 };
-    // smooth keyboard steering (rate-limited, auto-centre)
-    const target = kb.steer;
-    const rate = target === 0 ? 5 : (Math.sign(target) !== Math.sign(this.steerSmooth) ? 7 : 3.2);
-    this.steerSmooth += Math.max(-rate * dt, Math.min(rate * dt, target - this.steerSmooth));
+    // keyboard steering: only de-glitched here; the vehicle applies the speed-sensitive ramp / auto-centre
+    // (it knows the speed) because axes.steerDigital is set
+    this.steerSmooth = kbSteer(this.steerSmooth, kb.steer, dt);
     // gamepad
     let gp = null;
     try { gp = [...(navigator.getGamepads?.() || [])].find(g => g && g.connected); } catch {}
     const g = { throttle: 0, brake: 0, steer: 0, clutch: 0, handbrake: 0, mx: 0, my: 0, lx: 0, ly: 0 };
     if (gp) {
       const dz = v => Math.abs(v) < 0.12 ? 0 : (v - Math.sign(v) * 0.12) / 0.88;
-      g.steer = -dz(gp.axes[0] || 0); g.mx = dz(gp.axes[0] || 0); g.my = -dz(gp.axes[1] || 0);
+      g.steer = -padSteer(gp.axes[0] || 0, gp.axes[1] || 0); g.mx = dz(gp.axes[0] || 0); g.my = -dz(gp.axes[1] || 0);
       g.lx = dz(gp.axes[2] || 0); g.ly = dz(gp.axes[3] || 0);
-      g.throttle = gp.buttons[7]?.value || 0; g.brake = gp.buttons[6]?.value || 0;
+      g.throttle = padTrigger(gp.buttons[7]); g.brake = padTrigger(gp.buttons[6]);
       g.handbrake = gp.buttons[0]?.pressed ? 1 : 0; g.clutch = gp.buttons[2]?.pressed ? 1 : 0;
       const map = { 5: 'shiftUp', 4: 'shiftDown', 3: 'camera', 13: 'interact', 1: 'interact', 8: 'ignition', 12: 'lights', 11: 'horn', 15: 'radio', 14: 'radioNext', 9: 'pause', 10: 'look' };
       for (const [i, act] of Object.entries(map)) { const p = !!gp.buttons[i]?.pressed; if (p && !this.gpPrev[i]) { this.pressed.add('GP:' + act); this.lastDevice = 'gp'; } this.gpPrev[i] = p; }
@@ -62,11 +75,12 @@ export class Input {
     const T = this.touch;
     a.throttle = Math.max(kb.throttle, g.throttle, T.throttle);
     a.brake = Math.max(kb.brake, g.brake, T.brake);
-    let st = this.steerSmooth;
-    if (Math.abs(g.steer) > Math.abs(st)) st = g.steer;
-    if (Math.abs(T.steer) > Math.abs(st)) st = T.steer;
-    if (this.tilt && Math.abs(this.tiltSteer) > Math.abs(st)) st = this.tiltSteer;
-    a.steer = st;
+    let st = this.steerSmooth, digital = kb.steer !== 0 || st !== 0;
+    if (Math.abs(g.steer) > Math.abs(st)) { st = g.steer; digital = false; }
+    if (Math.abs(T.steer) > Math.abs(st)) { st = T.steer; digital = true; } // touch ◀ ▶ buttons are digital
+    if (this.tilt && Math.abs(this.tiltSteer) > Math.abs(st)) { st = this.tiltSteer; digital = false; }
+    if (st === 0) digital = this.lastDevice === 'kb' || !gp; // centred: keep the last device's behaviour
+    a.steer = st; a.steerDigital = digital;
     a.clutch = Math.max(kb.clutch, g.clutch, T.clutch || 0);
     a.handbrake = Math.max(kb.handbrake, g.handbrake, T.handbrake);
     a.moveY = (this.key('throttle') ? 1 : 0) - (this.key('brake') ? 1 : 0) || g.my || T.moveY;

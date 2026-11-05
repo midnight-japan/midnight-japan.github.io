@@ -8,18 +8,18 @@ const POS = {
   daikoku_pa: [128, 318], daikoku_jct: [140, 306], daikoku_futo: [146, 330], baybridge: [118, 346],
   tsubasa: [168, 290], tatsumi: [262, 94], shibaura: [222, 106], umihotaru: [325, 315],
 };
-const LABEL_SIDE = { daikoku_pa: 'l', daikoku_jct: 'r', daikoku_futo: 'r', baybridge: 'l', tsubasa: 'r', tatsumi: 'r', shibaura: 'l', umihotaru: 'r' };
+const LABEL_SIDE = { daikoku_pa: 'l', daikoku_jct: 'r', daikoku_futo: 'r', baybridge: 'r', tsubasa: 'r', tatsumi: 'r', shibaura: 'l', umihotaru: 'r' };
 
 const WATER = 'M216 100 L262 98 L300 112 L350 112 L392 80 L432 58 L470 96 L520 130 L552 162 L540 205 L522 246 L486 284 L452 322 L400 370 L352 418 L336 456 L292 478 L252 504 L292 528 L316 600 L160 600 L184 578 L148 560 L120 541 L128 470 L132 420 L124 372 L102 350 L96 336 L118 326 L134 312 L150 292 L190 276 L226 262 L248 236 L256 214 L238 186 L214 168 L204 148 L210 122 Z';
 
 function map() {
-  const pt = (id, i) => {
+  const pt = id => { const i = REGIONS.findIndex(x => x.id === id);
     const r = REGIONS.find(x => x.id === id); const [x, y] = POS[id];
     const left = LABEL_SIDE[id] === 'l';
     return `<g class="mk" data-id="${esc(id)}" tabindex="0" role="button" aria-label="${esc(pick(r.name))} — ${esc(t('site.status.' + r.status))}">
       ${r.status === 'live' ? `<circle class="pulse" cx="${x}" cy="${y}" r="7" fill="none" stroke="#33c27a" stroke-width="2"/>` : ''}
       <circle class="ring" cx="${x}" cy="${y}" r="9" fill="${r.status === 'live' ? '#33c27a' : r.status === 'partial' ? '#ff9a2e' : '#0a1120'}" fill-opacity="${r.status === 'planned' ? 1 : .25}" stroke="${r.status === 'live' ? '#33c27a' : r.status === 'partial' ? '#ff9a2e' : '#8796b5'}" stroke-width="2"/>
-      <circle cx="${x}" cy="${y}" r="3.2" fill="${r.status === 'planned' ? '#8796b5' : '#fff'}"/>
+      <text x="${x}" y="${y + 3.6}" text-anchor="middle" class="mn">${i + 1}</text>
       <text x="${left ? x - 14 : x + 14}" y="${y + 4 + (i % 2 ? 0 : 0)}" text-anchor="${left ? 'end' : 'start'}" class="ml">${esc(pick(r.name))}</text>
     </g>`;
   };
@@ -33,6 +33,8 @@ function map() {
   <style>
     .pl{fill:#7f8ba3;font-family:var(--display);letter-spacing:.14em;text-transform:uppercase;font-weight:600}
     .ml{fill:#e9edf5;font:600 12.5px var(--font);paint-order:stroke;stroke:#060a13;stroke-width:4px;stroke-linejoin:round}
+    .mn{fill:#fff;font:700 10px var(--display);pointer-events:none}
+    @media (max-width: 700px){.ml{display:none}.mk .ring{r:11}.mn{font-size:12px}}
     .rt{fill:none;stroke-linecap:round;stroke-linejoin:round}
   </style>
   <rect width="600" height="600" fill="#0d1526"/>
@@ -54,7 +56,7 @@ function map() {
 
 function list() {
   return REGIONS.map(r => `<article class="card region" id="r-${esc(r.id)}" data-id="${esc(r.id)}">
-    <div class="rtop"><h3>${esc(pick(r.name))}</h3><span class="status ${esc(r.status)}"><i class="dot ${esc(r.status)}"></i>${esc(t('site.status.' + r.status))}</span></div>
+    <div class="rtop"><h3><span class="rnum" aria-hidden="true">${REGIONS.indexOf(r) + 1}</span>${esc(pick(r.name))}</h3><span class="status ${esc(r.status)}"><i class="dot ${esc(r.status)}"></i>${esc(t('site.status.' + r.status))}</span></div>
     <div class="pref" lang="ja">${esc(r.pref || '')}</div>
     <p>${esc(r.status === 'planned' && (pick(r.desc) || '').length < 16 ? t('site.status.plannedDesc') : pick(r.desc))}</p>
   </article>`).join('');

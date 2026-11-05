@@ -35,7 +35,13 @@
       1.288,
       2.272
     ],
-    "notes": "Source had untextured plain-white materials; colors were assigned by material name (paint is neutral light grey for recoloring). Wheels split from material-merged meshes. Normalized on export: units = metres, car length scaled to the real vehicle, front = +Z, up = +Y, ground at y=0, centred on X/Z (wrapper node MJ_root). Wheel nodes wheel_fl/fr/rl/rr have their pivot at the wheel centre (axle = local X). fl = car's left = +X side."
+    "notes": "Source had untextured plain-white materials; colors were assigned by material name (paint is neutral light grey for recoloring). Wheels split from material-merged meshes. Normalized on export: units = metres, car length scaled to the real vehicle, front = +Z, up = +Y, ground at y=0, centred on X/Z (wrapper node MJ_root). Wheel nodes wheel_fl/fr/rl/rr have their pivot at the wheel centre (axle = local X). fl = car's left = +X side.",
+    "lamps": {
+      "tail": [
+        "red_glass",
+        "dark_red_glass"
+      ]
+    }
   },
   "r33": {
     "file": "r33.glb",
@@ -74,7 +80,12 @@
       1.378,
       2.337
     ],
-    "notes": "Author describes it as unfinished (rear window has hatch-like shading). Rim_Color is green in source; recolor if desired. Normalized on export: units = metres, car length scaled to the real vehicle, front = +Z, up = +Y, ground at y=0, centred on X/Z (wrapper node MJ_root). Wheel nodes wheel_fl/fr/rl/rr have their pivot at the wheel centre (axle = local X). fl = car's left = +X side."
+    "notes": "Author describes it as unfinished (rear window has hatch-like shading). Rim_Color is green in source; recolor if desired. Normalized on export: units = metres, car length scaled to the real vehicle, front = +Z, up = +Y, ground at y=0, centred on X/Z (wrapper node MJ_root). Wheel nodes wheel_fl/fr/rl/rr have their pivot at the wheel centre (axle = local X). fl = car's left = +X side.",
+    "lamps": {
+      "tail": [
+        "Rcklichter"
+      ]
+    }
   },
   "r35": {
     "file": "r35.glb",
@@ -113,7 +124,16 @@
       1.386,
       2.327
     ],
-    "notes": "Node names in source are all \"defaultMaterial\" (flat hierarchy), so no named hood/door nodes. Engine bay geometry present (materials aluminium_engine_1..4). Simplified from 757k to ~214k tris. Normalized on export: units = metres, car length scaled to the real vehicle, front = +Z, up = +Y, ground at y=0, centred on X/Z (wrapper node MJ_root). Wheel nodes wheel_fl/fr/rl/rr have their pivot at the wheel centre (axle = local X). fl = car's left = +X side."
+    "notes": "Node names in source are all \"defaultMaterial\" (flat hierarchy), so no named hood/door nodes. Engine bay geometry present (materials aluminium_engine_1..4). Simplified from 757k to ~214k tris. Normalized on export: units = metres, car length scaled to the real vehicle, front = +Z, up = +Y, ground at y=0, centred on X/Z (wrapper node MJ_root). Wheel nodes wheel_fl/fr/rl/rr have their pivot at the wheel centre (axle = local X). fl = car's left = +X side.",
+    "lamps": {
+      "head": [
+        "chrome_light"
+      ],
+      "tail": [
+        "RedLights",
+        "RedightGlass"
+      ]
+    }
   },
   "ae86": {
     "file": "ae86.glb",
@@ -189,7 +209,15 @@
       1.27,
       2.147
     ],
-    "notes": "Generic Blender material names. Material.003 (windows) forced to dark translucent glass. Normalized on export: units = metres, car length scaled to the real vehicle, front = +Z, up = +Y, ground at y=0, centred on X/Z (wrapper node MJ_root). Wheel nodes wheel_fl/fr/rl/rr have their pivot at the wheel centre (axle = local X). fl = car's left = +X side."
+    "notes": "Generic Blender material names. Material.003 (windows) forced to dark translucent glass. Normalized on export: units = metres, car length scaled to the real vehicle, front = +Z, up = +Y, ground at y=0, centred on X/Z (wrapper node MJ_root). Wheel nodes wheel_fl/fr/rl/rr have their pivot at the wheel centre (axle = local X). fl = car's left = +X side.",
+    "lamps": {
+      "head": [
+        "Material.002"
+      ],
+      "tail": [
+        "Material.016"
+      ]
+    }
   },
   "jza80": {
     "file": "jza80.glb",
@@ -229,7 +257,15 @@
       1.34,
       2.26
     ],
-    "notes": "Source used KHR_materials_pbrSpecularGlossiness (unsupported by three r180) and was converted to metal/rough. Paint is textured (Material_0 has a base color map). GlowAvant = front lamps, GlowBack = rear lamps. Normalized on export: units = metres, car length scaled to the real vehicle, front = +Z, up = +Y, ground at y=0, centred on X/Z (wrapper node MJ_root). Wheel nodes wheel_fl/fr/rl/rr have their pivot at the wheel centre (axle = local X). fl = car's left = +X side."
+    "notes": "Source used KHR_materials_pbrSpecularGlossiness (unsupported by three r180) and was converted to metal/rough. Paint is textured (Material_0 has a base color map). GlowAvant = front lamps, GlowBack = rear lamps. Normalized on export: units = metres, car length scaled to the real vehicle, front = +Z, up = +Y, ground at y=0, centred on X/Z (wrapper node MJ_root). Wheel nodes wheel_fl/fr/rl/rr have their pivot at the wheel centre (axle = local X). fl = car's left = +X side.",
+    "lamps": {
+      "head": [
+        "GlowAvant"
+      ],
+      "tail": [
+        "GlowBack"
+      ]
+    }
   },
   "a90": {
     "file": "a90.glb",
@@ -305,7 +341,16 @@
       1.158,
       2.202
     ],
-    "notes": "Generic Blender material names; paint/glass identification by color/position (moderate confidence). Front direction judged from geometry (pop-up nose vs. tail). Normalized on export: units = metres, car length scaled to the real vehicle, front = +Z, up = +Y, ground at y=0, centred on X/Z (wrapper node MJ_root). Wheel nodes wheel_fl/fr/rl/rr have their pivot at the wheel centre (axle = local X). fl = car's left = +X side."
+    "notes": "Generic Blender material names; paint/glass identification by color/position (moderate confidence). Front direction judged from geometry (pop-up nose vs. tail). Normalized on export: units = metres, car length scaled to the real vehicle, front = +Z, up = +Y, ground at y=0, centred on X/Z (wrapper node MJ_root). Wheel nodes wheel_fl/fr/rl/rr have their pivot at the wheel centre (axle = local X). fl = car's left = +X side.",
+    "lamps": {
+      "head": [
+        "Material.014",
+        "material_0"
+      ],
+      "tail": [
+        "Material.009"
+      ]
+    }
   },
   "ek9": {
     "file": "ek9.glb",
@@ -419,7 +464,12 @@
       1.275,
       2.12
     ],
-    "notes": "All four wheels were a single mesh in the source; split into wheel_* nodes. Normalized on export: units = metres, car length scaled to the real vehicle, front = +Z, up = +Y, ground at y=0, centred on X/Z (wrapper node MJ_root). Wheel nodes wheel_fl/fr/rl/rr have their pivot at the wheel centre (axle = local X). fl = car's left = +X side."
+    "notes": "All four wheels were a single mesh in the source; split into wheel_* nodes. Normalized on export: units = metres, car length scaled to the real vehicle, front = +Z, up = +Y, ground at y=0, centred on X/Z (wrapper node MJ_root). Wheel nodes wheel_fl/fr/rl/rr have their pivot at the wheel centre (axle = local X). fl = car's left = +X side.",
+    "lamps": {
+      "tail": [
+        "back_lights.001"
+      ]
+    }
   },
   "z33": {
     "file": "z33.glb",
@@ -459,7 +509,12 @@
       1.223,
       2.157
     ],
-    "notes": "Fairlady Z Nismo variant with a stripe livery. Stray \"Collada_visual_scene_group\" helper meshes removed. Glass material identification is uncertain. Normalized on export: units = metres, car length scaled to the real vehicle, front = +Z, up = +Y, ground at y=0, centred on X/Z (wrapper node MJ_root). Wheel nodes wheel_fl/fr/rl/rr have their pivot at the wheel centre (axle = local X). fl = car's left = +X side."
+    "notes": "Fairlady Z Nismo variant with a stripe livery. Stray \"Collada_visual_scene_group\" helper meshes removed. Glass material identification is uncertain. Normalized on export: units = metres, car length scaled to the real vehicle, front = +Z, up = +Y, ground at y=0, centred on X/Z (wrapper node MJ_root). Wheel nodes wheel_fl/fr/rl/rr have their pivot at the wheel centre (axle = local X). fl = car's left = +X side.",
+    "lamps": {
+      "head": [
+        "Material.004"
+      ]
+    }
   },
   "crown": {
     "file": "crown.glb",
@@ -686,7 +741,14 @@
       1.368,
       2.245
     ],
-    "notes": "FRONT WHEELS ARE MODELED STEERED (turned); spinning wheel_fl/wheel_fr about their local X axis will wobble. Simplified from 847k to ~227k tris. A copy with identical poly count exists under another uploader (mahdiadib99); mmcworks appears to be the original. Normalized on export: units = metres, car length scaled to the real vehicle, front = +Z, up = +Y, ground at y=0, centred on X/Z (wrapper node MJ_root). Wheel nodes wheel_fl/fr/rl/rr have their pivot at the wheel centre (axle = local X). fl = car's left = +X side."
+    "notes": "FRONT WHEELS ARE MODELED STEERED (turned); spinning wheel_fl/wheel_fr about their local X axis will wobble. Simplified from 847k to ~227k tris. A copy with identical poly count exists under another uploader (mahdiadib99); mmcworks appears to be the original. Normalized on export: units = metres, car length scaled to the real vehicle, front = +Z, up = +Y, ground at y=0, centred on X/Z (wrapper node MJ_root). Wheel nodes wheel_fl/fr/rl/rr have their pivot at the wheel centre (axle = local X). fl = car's left = +X side.",
+    "lamps": {
+      "tail": [
+        "Glass_-_Red_-_Bump",
+        "Glass_ext-red",
+        "Glass_-_Red_-_Rough_0.4"
+      ]
+    }
   },
   "model3": {
     "file": "model3.glb",
@@ -725,7 +787,12 @@
       1.456,
       2.347
     ],
-    "notes": "Pure-material model (no textures), pre-2024 facelift shape. Normalized on export: units = metres, car length scaled to the real vehicle, front = +Z, up = +Y, ground at y=0, centred on X/Z (wrapper node MJ_root). Wheel nodes wheel_fl/fr/rl/rr have their pivot at the wheel centre (axle = local X). fl = car's left = +X side."
+    "notes": "Pure-material model (no textures), pre-2024 facelift shape. Normalized on export: units = metres, car length scaled to the real vehicle, front = +Z, up = +Y, ground at y=0, centred on X/Z (wrapper node MJ_root). Wheel nodes wheel_fl/fr/rl/rr have their pivot at the wheel centre (axle = local X). fl = car's left = +X side.",
+    "lamps": {
+      "tail": [
+        "RedLight"
+      ]
+    }
   },
   "jimny": {
     "file": "jimny.glb",
@@ -903,7 +970,13 @@
       1.292,
       2.26
     ],
-    "notes": "Low-poly (16.8k tris) but clean. Generic Blender material names. Normalized on export: units = metres, car length scaled to the real vehicle, front = +Z, up = +Y, ground at y=0, centred on X/Z (wrapper node MJ_root). Wheel nodes wheel_fl/fr/rl/rr have their pivot at the wheel centre (axle = local X). fl = car's left = +X side."
+    "notes": "Low-poly (16.8k tris) but clean. Generic Blender material names. Normalized on export: units = metres, car length scaled to the real vehicle, front = +Z, up = +Y, ground at y=0, centred on X/Z (wrapper node MJ_root). Wheel nodes wheel_fl/fr/rl/rr have their pivot at the wheel centre (axle = local X). fl = car's left = +X side.",
+    "lamps": {
+      "tail": [
+        "Material.010",
+        "Material.011"
+      ]
+    }
   },
   "rps13": {
     "file": "rps13.glb",
@@ -942,7 +1015,12 @@
       1.299,
       2.27
     ],
-    "notes": "Ground plane (\"floor\") removed. Body is textured. Pop-up headlight housings visible. Normalized on export: units = metres, car length scaled to the real vehicle, front = +Z, up = +Y, ground at y=0, centred on X/Z (wrapper node MJ_root). Wheel nodes wheel_fl/fr/rl/rr have their pivot at the wheel centre (axle = local X). fl = car's left = +X side."
+    "notes": "Ground plane (\"floor\") removed. Body is textured. Pop-up headlight housings visible. Normalized on export: units = metres, car length scaled to the real vehicle, front = +Z, up = +Y, ground at y=0, centred on X/Z (wrapper node MJ_root). Wheel nodes wheel_fl/fr/rl/rr have their pivot at the wheel centre (axle = local X). fl = car's left = +X side.",
+    "lamps": {
+      "tail": [
+        "RearLight"
+      ]
+    }
   },
   "altow": {
     "file": "altow.glb",
@@ -1038,5 +1116,197 @@
       2.24
     ],
     "notes": "Converted from an STL solid: ONE material for everything (no separate glass/tires/lights) - recoloring tints the whole car. Wheels not separable. Simplified from 354k to ~200k tris. Normalized on export: units = metres, car length scaled to the real vehicle, front = +Z, up = +Y, ground at y=0, centred on X/Z (wrapper node MJ_root). Wheel nodes wheel_fl/fr/rl/rr have their pivot at the wheel centre (axle = local X). fl = car's left = +X side."
+  },
+  "r34": {
+    "file": "r34.glb",
+    "title": "Nissan Skyline R34 GT-R",
+    "author": "Lexyc16",
+    "source": "https://sketchfab.com/3d-models/nissan-skyline-r34-gt-r-ff8fb2251dfa4bb9979e7022c5a6666c",
+    "license": "CC-BY-4.0",
+    "substitute": null,
+    "stylized": false,
+    "tris": 62468,
+    "bytes": 851872,
+    "forward": "+z",
+    "up": "+y",
+    "paint": [
+      "r34_paint"
+    ],
+    "glass": [
+      "window_glass",
+      "headlight_glass"
+    ],
+    "wheels": {
+      "fl": "wheel_fl",
+      "fr": "wheel_fr",
+      "rl": "wheel_rl",
+      "rr": "wheel_rr"
+    },
+    "hood": null,
+    "doors": null,
+    "trunk": null,
+    "engine": null,
+    "bbox": [
+      -0.941,
+      0,
+      -2.3,
+      0.941,
+      1.341,
+      2.3
+    ],
+    "notes": "Author-made in Blender 2.83 (62k tris). Generic Blender material names renamed on export (paint r34_paint, taillight, headlight_lens with emissive = base texture so lamps glow in their own colours). Normalized on export: units = metres, car length scaled to the real vehicle, front = +Z, up = +Y, ground at y=0, centred on X/Z (wrapper node MJ_root). Wheel nodes wheel_fl/fr/rl/rr have their pivot at the wheel centre (axle = local X). fl = car's left = +X side."
+  },
+  "fl5": {
+    "file": "fl5.glb",
+    "title": "Honda Civic Type-R",
+    "author": "shindedhirendra780",
+    "source": "https://sketchfab.com/3d-models/honda-civic-type-r-770a5c9b025449f59769d8cd27d915bb",
+    "license": "CC-BY-4.0",
+    "substitute": "FK8 Civic Type R (2017-2021) instead of FL5",
+    "stylized": false,
+    "tris": 374681,
+    "bytes": 2729640,
+    "forward": "+z",
+    "up": "+y",
+    "paint": [
+      "civic_paint"
+    ],
+    "glass": [
+      "window_glass"
+    ],
+    "wheels": {
+      "fl": "wheel_fl",
+      "fr": "wheel_fr",
+      "rl": "wheel_rl",
+      "rr": "wheel_rr"
+    },
+    "hood": null,
+    "doors": null,
+    "trunk": null,
+    "engine": null,
+    "bbox": [
+      -1.015,
+      0,
+      -2.279,
+      1.015,
+      1.421,
+      2.279
+    ],
+    "notes": "Author-made in Blender (595k tris, simplified on export). Materials renamed for in-game paint and lamps. Normalized on export: units = metres, car length scaled to the real vehicle, front = +Z, up = +Y, ground at y=0, centred on X/Z (wrapper node MJ_root). Wheel nodes wheel_fl/fr/rl/rr have their pivot at the wheel centre (axle = local X). fl = car's left = +X side."
+  },
+  "mustang": {
+    "file": "mustang.glb",
+    "title": "Ford Mustang GT 2019",
+    "author": "broawz.n.nove",
+    "source": "https://sketchfab.com/3d-models/ford-mustang-gt-2019-5b737fd21a5f432080ee32b12cf26a37",
+    "license": "CC-BY-4.0",
+    "substitute": "2018-2023 S550 facelift Mustang GT instead of S650",
+    "stylized": false,
+    "tris": 238932,
+    "bytes": 1860492,
+    "forward": "+z",
+    "up": "+y",
+    "paint": [
+      "mustang_paint"
+    ],
+    "glass": [
+      "window_glass",
+      "headlight_glass"
+    ],
+    "wheels": {
+      "fl": "wheel_fl",
+      "fr": "wheel_fr",
+      "rl": "wheel_rl",
+      "rr": "wheel_rr"
+    },
+    "hood": null,
+    "doors": null,
+    "trunk": null,
+    "engine": null,
+    "bbox": [
+      -1.135,
+      0,
+      -2.395,
+      1.135,
+      1.4,
+      2.395
+    ],
+    "notes": "Author-made in Blender 2.8 (534k tris, simplified on export). Plain white source materials retinted by name (French names: carroserie = body, phare = headlamp). Normalized on export: units = metres, car length scaled to the real vehicle, front = +Z, up = +Y, ground at y=0, centred on X/Z (wrapper node MJ_root). Wheel nodes wheel_fl/fr/rl/rr have their pivot at the wheel centre (axle = local X). fl = car's left = +X side."
+  },
+  "jzx100": {
+    "file": "jzx100.glb",
+    "title": "Toyota Mark II Jzx100",
+    "author": "own.guest",
+    "source": "https://sketchfab.com/3d-models/toyota-mark-ii-jzx100-383483429d0e43378b7e049804b08fc4",
+    "license": "CC-BY-4.0",
+    "substitute": "Toyota Mark II Tourer V (JZX100) instead of its Chaser twin - same chassis, different nose/tail",
+    "stylized": false,
+    "tris": 17965,
+    "bytes": 159036,
+    "forward": "+z",
+    "up": "+y",
+    "paint": [
+      "mark2_paint"
+    ],
+    "glass": [
+      "glass"
+    ],
+    "wheels": {
+      "fl": "wheel_fl",
+      "fr": "wheel_fr",
+      "rl": "wheel_rl",
+      "rr": "wheel_rr"
+    },
+    "hood": null,
+    "doors": null,
+    "trunk": null,
+    "engine": null,
+    "bbox": [
+      -1,
+      0,
+      -2.38,
+      1,
+      1.394,
+      2.38
+    ],
+    "notes": "Low-poly (18k tris) but clean and well-proportioned. Normalized on export: units = metres, car length scaled to the real vehicle, front = +Z, up = +Y, ground at y=0, centred on X/Z (wrapper node MJ_root). Wheel nodes wheel_fl/fr/rl/rr have their pivot at the wheel centre (axle = local X). fl = car's left = +X side."
+  },
+  "lfa": {
+    "file": "lfa.glb",
+    "title": "Low Poly Lexus LFA",
+    "author": "yokatann",
+    "source": "https://sketchfab.com/3d-models/low-poly-lexus-lfa-56c3a62e5bb645d8afaf1dcfa4b665ea",
+    "license": "CC-BY-4.0",
+    "substitute": "stylized low-poly LFA (5.6k tris)",
+    "stylized": true,
+    "tris": 3696,
+    "bytes": 69184,
+    "forward": "+z",
+    "up": "+y",
+    "paint": [
+      "lfa_paint"
+    ],
+    "glass": [
+      "window_glass"
+    ],
+    "wheels": {
+      "fl": "wheel_fl",
+      "fr": "wheel_fr",
+      "rl": "wheel_rl",
+      "rr": "wheel_rr"
+    },
+    "hood": null,
+    "doors": null,
+    "trunk": null,
+    "engine": null,
+    "bbox": [
+      -0.929,
+      0,
+      -2.253,
+      0.929,
+      1.238,
+      2.253
+    ],
+    "notes": "Low-poly stylized model; recognisable LFA proportions. Normalized on export: units = metres, car length scaled to the real vehicle, front = +Z, up = +Y, ground at y=0, centred on X/Z (wrapper node MJ_root). Wheel nodes wheel_fl/fr/rl/rr have their pivot at the wheel centre (axle = local X). fl = car's left = +X side."
   }
 }

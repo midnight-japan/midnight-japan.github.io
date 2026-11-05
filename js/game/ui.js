@@ -9,6 +9,7 @@ import { PLATE_REGIONS, PLATE_KANA, PLATE_TYPES, plateCanvas, formatNumber } fro
 import { STROBE_MODES } from './carmodel.js';
 import { OUTFIT_OPTIONS } from './humans.js';
 import { PA_RECT } from './roads.js';
+import { ASSIST_SETTING_KEYS, assistsFromSettings, applyDifficulty } from './vehicle.js';
 
 const $ = (s, r = document) => r.querySelector(s);
 const el = (tag, cls, html) => { const e = document.createElement(tag); if (cls) e.className = cls; if (html !== undefined) e.innerHTML = html; return e; };
@@ -226,10 +227,22 @@ export class UI {
     const sel = (key, opts, label, reload) => `<label><span>${esc(t(label))}${reload ? ' ↻' : ''}</span><select data-s="${key}" ${reload ? 'data-reload="1"' : ''}>${opts.map(([v, l]) => `<option value="${v}" ${String(s[key]) === String(v) ? 'selected' : ''}>${esc(l)}</option>`).join('')}</select></label>`;
     const rng = (key, label, min = 0, max = 1, step = 0.05) => `<label><span>${esc(t(label))}</span><input type="range" data-s="${key}" min="${min}" max="${max}" step="${step}" value="${s[key]}"></label>`;
     const chk = (key, label) => `<label class="chk"><input type="checkbox" data-s="${key}" ${s[key] ? 'checked' : ''}><span>${esc(t(label))}</span></label>`;
+    // driving difficulty / assists (labels fall back to built-in en/ko/ja text until the i18n keys exist)
+    const tf = (k, f) => { const x = t(k); return x !== k ? x : typeof f === 'string' ? f : (f[getLang()] || f.en); };
+    const selF = (key, opts, label, fb) => `<label><span>${esc(tf(label, fb))}</span><select data-s="${key}">${opts.map(([v, l, lf]) => `<option value="${v}" ${String(s[key]) === String(v) ? 'selected' : ''}>${esc(tf(l, lf))}</option>`).join('')}</select></label>`;
+    const ON = { en: 'On', ko: '켜기', ja: 'オン' }, OFF = { en: 'Off', ko: '끄기', ja: 'オフ' }, SPORT = { en: 'Sport', ko: '스포츠', ja: 'スポーツ' };
+    const assistHtml =
+      selF('difficulty', [['beginner', 'game.diff.beginner', { en: 'Beginner', ko: '초보', ja: 'ビギナー' }], ['standard', 'game.diff.standard', { en: 'Standard', ko: '표준', ja: 'スタンダード' }], ['pro', 'game.diff.pro', { en: 'Pro', ko: '프로', ja: 'プロ' }], ['sim', 'game.diff.sim', { en: 'Simulation', ko: '시뮬레이션', ja: 'シミュレーション' }], ['custom', 'game.diff.custom', { en: 'Custom', ko: '사용자 지정', ja: 'カスタム' }]], 'game.set.difficulty', { en: 'Driving difficulty', ko: '주행 난이도', ja: '運転難易度' }) +
+      selF('steerAssist', [['assisted', 'game.assist.assisted', { en: 'Assisted', ko: '보조', ja: 'アシスト' }], ['standard', 'game.assist.standard', { en: 'Standard', ko: '표준', ja: 'スタンダード' }], ['sim', 'game.assist.sim', { en: 'Simulation', ko: '시뮬레이션', ja: 'シミュレーション' }]], 'game.set.steerAssist', { en: 'Steering', ko: '조향', ja: 'ステアリング' }) +
+      selF('stm', [['full', 'game.assist.on', ON], ['sport', 'game.assist.sport', SPORT], ['off', 'game.assist.off', OFF]], 'game.set.stm', { en: 'Stability control (STM)', ko: '자세 제어 (STM)', ja: '姿勢制御 (STM)' }) +
+      selF('tcs', [['full', 'game.assist.on', ON], ['sport', 'game.assist.sport', SPORT], ['off', 'game.assist.off', OFF]], 'game.set.tcs', { en: 'Traction control (TCS)', ko: '트랙션 컨트롤 (TCS)', ja: 'トラクションコントロール (TCS)' }) +
+      selF('abs', [['true', 'game.assist.on', ON], ['false', 'game.assist.off', OFF]], 'game.set.abs', 'ABS') +
+      selF('police', [['lenient', 'game.police.lenient', { en: 'Lenient (+60 km/h)', ko: '관대 (+60 km/h)', ja: '寛容 (+60 km/h)' }], ['normal', 'game.police.normal', { en: 'Normal (+40 km/h)', ko: '보통 (+40 km/h)', ja: '標準 (+40 km/h)' }], ['strict', 'game.police.strict', { en: 'Strict (+25 km/h)', ko: '엄격 (+25 km/h)', ja: '厳しい (+25 km/h)' }]], 'game.set.police', { en: 'Police tolerance', ko: '경찰 단속 기준', ja: '取り締まり基準' });
     $('#s-grid').innerHTML =
       `<label><span>${esc(t('game.set.lang'))}</span><select id="s-lang">${LANGS.map(([c, n]) => `<option value="${c}" ${c === getLang() ? 'selected' : ''}>${n}</option>`).join('')}</select></label>` +
       sel('quality', [['low', t('game.q.low')], ['medium', t('game.q.medium')], ['high', t('game.q.high')], ['ultra', t('game.q.ultra')]], 'game.set.quality', true) +
       sel('resScale', [[0.5, '50%'], [0.75, '75%'], [1, '100%']], 'game.set.res', true) +
+      assistHtml +
       sel('transmission', [['auto', t('game.trans.auto')], ['manual', t('game.trans.manual')], ['manual_clutch', t('game.trans.manual_clutch')]], 'game.set.transmission') +
       sel('touch', [['auto', t('game.set.auto')], ['on', 'ON'], ['off', 'OFF']], 'game.set.touch') +
       sel('timeSpeed', [[1, t('game.set.time1')], [0.25, t('game.set.time025')], [0, t('game.set.time0')]], 'game.set.time') +
@@ -239,12 +252,24 @@ export class UI {
     $('#s-grid').querySelectorAll('[data-s]').forEach(i => i.onchange = i.oninput = () => {
       const k = i.dataset.s; let v = i.type === 'checkbox' ? i.checked : i.type === 'range' ? +i.value : i.value;
       if (['resScale', 'timeSpeed'].includes(k)) v = +v;
+      if (k === 'abs') v = v === 'true';
       s[k] = v; g.saveSettings(); g.applyVolumes();
       if (k === 'tilt') { g.input.tilt = v; if (v && typeof DeviceOrientationEvent?.requestPermission === 'function') DeviceOrientationEvent.requestPermission().catch(() => {}); }
       if (k === 'dj' && g.radio) g.radio.djVoice = v;
       if (k === 'online') { if (v && g.vehicle) g.online.start(); else if (!v) g.online.stop(); this.updateOnline(); }
       if (k === 'bloom') g.bloom.enabled = v && g.quality !== 'low';
       if (k === 'transmission' && g.vehicle && !g.vehicle.ev) { g.vehicle.mode = v; g.vehicle.gear = 0; g.vehicle.atSel = 'P'; }
+      if (k === 'difficulty' || ASSIST_SETTING_KEYS.includes(k)) {
+        const prevTrans = s.transmission;
+        if (k === 'difficulty') applyDifficulty(s, v); else s.difficulty = 'custom';
+        g.saveSettings();
+        g.vehicle?.setAssists(assistsFromSettings(s));
+        if (s.transmission !== prevTrans && g.vehicle && !g.vehicle.ev) { // keep the current gear when switching on the move
+          const gv = g.vehicle; gv.mode = s.transmission;
+          if (Math.abs(gv.vx) < 1) { gv.gear = 0; gv.atSel = 'P'; } else if (s.transmission === 'auto') { gv.atSel = gv.gear < 0 ? 'R' : 'D'; if (gv.gear === 0) gv.gear = 1; }
+        }
+        return this.buildSettings();
+      }
       if (k === 'touch') this.touchMode(g.mode === 'drive' || g.mode === 'walk' ? g.mode : null);
       if (i.dataset.reload) this.toast(t('game.set.reload'), 'info', 4);
     });

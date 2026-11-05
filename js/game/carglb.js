@@ -78,17 +78,25 @@ const HEAD_RE = /head.?(light|lamp)|front.?(light|lamp)|scheinwerfer|^hl(_|$)/i,
 /** Build a CarModel around a loaded glTF entry. opts: same as buildCar (+ openable=false to skip the bonnet cut). */
 export function buildGlbCar(car, e, opts = {}) {
   const low = opts.lod === 'low';
-  const model = buildCar(car, { ...opts, lod: low ? 'low' : 'mid' });
+  // player car / garage (full LOD): the full procedural car (cockpit interior, mirrors, live gauges) is built underneath
+  // and swapped in for the first-person view (setCockpitView); everything else only needs the cheap mid shell
+  const full = !low && (!opts.lod || opts.lod === 'full');
+  const model = buildCar(car, { ...opts, lod: low ? 'low' : full ? 'full' : 'mid' });
   const { root, bodyG, parts, P } = model; const info = e.info;
   model.isGlb = true; model.glbInfo = info;
   // hide the procedural shell (keep plates, police lightbar & door decals), and the procedural wheels
-  bodyG.traverse(o => { if ((o.isMesh || o.isPoints || o.isLine || o.isSprite) && !o.userData.isPlate && !o.userData.glbKeep && o.userData.glbDecal === undefined) o.visible = false; });
+  const procShell = [];
+  bodyG.traverse(o => { if ((o.isMesh || o.isPoints || o.isLine || o.isSprite) && o.visible && !o.userData.isPlate && !o.userData.glbKeep && o.userData.glbDecal === undefined) { o.visible = false; procShell.push(o); } });
   for (const w of parts.wheels) w.steer.traverse(o => { if (o.isMesh) o.visible = false; });
   if (parts.engineBay) parts.engineBay.visible = false;
+  const procHood = parts.hood?.pivot || null;
   for (const d of parts.doors) { d.pivot.visible = false; }
   const vis = e.scene.clone(true); vis.name = 'glb';
   // per-instance paint & lamp materials (the rest is shared between all instances of this model)
   const paintNames = new Set(info.paint || []), paintMats = [], head = [], tail = [];
+  // lamp materials: by name, or listed explicitly in the manifest (models with generic material names)
+  const headNames = new Set(info.lamps?.head || []), tailNames = new Set(info.lamps?.tail || []);
+  const isHead = n => headNames.has(n) || (!tailNames.has(n) && HEAD_RE.test(n) && !TAIL_RE.test(n)), isTail = n => tailNames.has(n) || (!headNames.has(n) && TAIL_RE.test(n));
   const matMap = new Map();
   const own = m => { let c = matMap.get(m); if (!c) { c = m.clone(); matMap.set(m, c); } return c; };
   vis.traverse(o => {
@@ -96,8 +104,8 @@ export function buildGlbCar(car, e, opts = {}) {
     const mats = Array.isArray(o.material) ? o.material : [o.material];
     const out = mats.map(m => {
       if (paintNames.has(m.name)) { const c = own(m); if (!paintMats.includes(c)) paintMats.push(c); return c; }
-      if (HEAD_RE.test(m.name) && !TAIL_RE.test(m.name)) { const c = own(m); if (!head.includes(c)) head.push(c); return c; }
-      if (TAIL_RE.test(m.name)) { const c = own(m); if (!tail.includes(c)) tail.push(c); return c; }
+      if (isHead(m.name)) { const c = own(m); if (!head.includes(c)) head.push(c); return c; }
+      if (isTail(m.name)) { const c = own(m); if (!tail.includes(c)) tail.push(c); return c; }
       return m;
     });
     o.material = Array.isArray(o.material) ? out : out[0];
@@ -133,6 +141,18 @@ export function buildGlbCar(car, e, opts = {}) {
   const bay = opts.openable === false || low ? null : analyseBay(e, REAR_ENGINE(car));
   let cut = null;
   if (bay) cut = makeOpenable(model, vis, bay, car, new Set(matMap.values()));
+  // first-person view: the procedural cabin (aligned with its own greenhouse, full interior) replaces the model
+  if (full && parts.eye) {
+    model.cockpitView = false;
+    model.setCockpitView = on => {
+      on = !!on; if (on === model.cockpitView) return; model.cockpitView = on;
+      for (const o of procShell) o.visible = on;
+      for (const d of parts.doors) d.pivot.visible = on;
+      vis.visible = !on;
+      if (procHood) procHood.visible = on;
+      if (model.parts.hood?.pivot && model.parts.hood.pivot !== procHood) model.parts.hood.pivot.visible = !on;
+    };
+  }
   const base = model.onUpdate;
   model.onUpdate = dt => {
     base?.(dt);

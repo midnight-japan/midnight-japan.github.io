@@ -1,12 +1,45 @@
 # 📜 MIDNIGHT JAPAN 업데이트 기록 · Changelog
 
-현재 버전 · Current: **v0.2.0**
+현재 버전 · Current: **v0.3.0** · [▶ 웹에서 플레이](https://midnight-japan.github.io/) · [🌐 업데이트 페이지](https://midnight-japan.github.io/changelog.html)
 
 | 버전 | 날짜 | 이름 | 요약 |
 |---|---|---|---|
+| [v0.3.0](#v030--full-throttle-2026-11-06) | 2026-11-06 | Full Throttle | 주행감·사운드·콕핏·그래픽을 전부 다시 만들었어요. 실제 R34, 차종별 실내, 실녹음 엔진음, 난이도 설정, 그리고 도로 위에 서 있던 교각 수정. |
 | [v0.2.0](#v020--bayshore-2026-11-05) | 2026-11-05 | Bayshore | 수도고속 완간선을 따라 하네다까지, 도쿄만 아쿠아라인 해저터널을 지나 우미호타루 PA까지. 실제 3D 차량 모델과 열리는 보닛도 들어왔어요. |
 | [v0.1.1](#v011--one-click-2026-11-04) | 2026-11-04 | One Click | 링크 하나로 바로 플레이. 크롬에서 공식 사이트 주소만 열면 설치 없이 실행돼요. |
 | [v0.1.0](#v010--first-meet-2026-11-04) | 2026-11-04 | First Meet | 첫 공개 버전. 다이코쿠 JCT·PA와 다이코쿠 부두 일대를 3D로 구현했습니다. |
+
+---
+
+## v0.3.0 — Full Throttle (2026-11-06)
+
+> 주행감·사운드·콕핏·그래픽을 전부 다시 만들었어요. 실제 R34, 차종별 실내, 실녹음 엔진음, 난이도 설정, 그리고 도로 위에 서 있던 교각 수정.
+> Handling, sound, cockpits and graphics rebuilt: a real R34, per-car interiors, recorded engines, difficulty settings — and no more piers on the road.
+
+**✨ 추가 · New**
+
+- 주행 모델 전면 재작성: 부드러운 타이어 그립 곡선·하중 이동·속도 감응 조향 — 200km/h 이상에서도 안정, 코너 약 1g, 실제에 가까운 제동거리<br><sub>Driving model rebuilt: smooth tyre grip curve, load transfer and speed-sensitive steering — planted at 200+ km/h, ~1 g cornering, realistic braking distances</sub>
+- 난이도 프리셋(초보·표준·프로·시뮬레이션)과 조향 보조·STM·TCS·ABS·경찰 단속 개별 설정<br><sub>Difficulty presets (Beginner / Standard / Pro / Simulation) with separate steering assist, STM, TCS, ABS and police-tolerance options</sub>
+- 차종별 실제 콕핏: 우핸들/좌핸들, 야간 조명이 들어오는 실시간 계기판, R34 멀티 디스플레이·R32/R33 센터 3연계, 비치는 룸미러·사이드미러, 움직이는 핸들·시프터·페달<br><sub>Per-car cockpits: RHD/LHD, live night-lit clusters, R34 multi-function display and R32/R33 console gauges, working mirrors, moving wheel, shifter and pedals</sub>
+- 실제 R34 GT-R 3D 모델 및 시빅 타입R·머스탱 GT·마크II(JZX100)·LFA 모델 추가 (CC BY 4.0)<br><sub>Real 3D model for the R34 GT-R, plus Civic Type R, Mustang GT, Mark II (JZX100) and LFA models (CC BY 4.0)</sub>
+- 엔진음: 실제 CC0 녹음 기반(직렬6·직렬4·수평대향·V8·V10·디젤), 가속/엔진브레이크 별도 레이어, 타이어 스퀼·노면·바람·팝·블로오프 실녹음, 터널·고가 아래 잔향, 이음매 「타탄」 소리<br><sub>Engines from real CC0 recordings (I6, I4, boxer, V8, V10, diesel) with on/off-throttle layers; recorded tyre squeal, road, wind, pops and blow-off; tunnel and under-viaduct reverb; expansion-joint thumps</sub>
+
+**🔧 변경 · Changed**
+
+- 다이코쿠 PA 밋: 차와 사람이 동쪽 밋 구역에 모이고 규모가 커짐, 가로수 개선<br><sub>Daikoku PA meet: cars and people gather in the east meet rows, bigger crowds, better trees</sub>
+- 하늘: 낮 하늘이 하얗게 날아가지 않음, 구름층, 도쿄 광공해가 비치는 밤하늘, 밤바다의 금빛 번쩍임 제거<br><sub>Sky: blue day sky (no more white-out), cloud deck, light-polluted Tokyo night sky, no more golden glare on the night sea</sub>
+- 웹사이트 리디자인: 인게임 히어로, 도쿄만 섹션, 빠른 이미지, 휴대폰·4K 레이아웃 수정, 20개 언어 완성<br><sub>Website redesign: in-game hero, Tokyo Bay section, faster images, phone/4K layout fixes, all 20 languages complete</sub>
+
+**🐞 수정 · Fixed**
+
+- 고가 교각이 아래 도로 차선 위에 서 있던 문제 수정 — 아래 도로를 걸치는 문형 교각으로 변경, 교각 충돌 판정 추가<br><sub>Fixed viaduct piers standing on the lanes of roads below — they are now portal frames straddling the lower road, and piers are solid</sub>
+- 도로 위에 서 있던 표지판, 상층 데크를 뚫던 가로등 수정 (2층 구간은 데크 하부 조명)<br><sub>Fixed signs standing on the road and lamp posts piercing the deck above (stacked sections now use soffit lights)</sub>
+- 지붕이 투명해 오픈카처럼 보이던 절차적 차량 수정, 12개 3D 차량의 야간 램프 점등<br><sub>Fixed procedural cars whose roofs looked see-through; night lamps now light on 12 more 3D models</sub>
+- 벽에 닿으면 멈춰 붙던 문제 → 벽을 따라 미끄러짐, 저단 무한 휠스핀·자동 변속 시동 꺼짐 수정<br><sub>Walls: you now slide along instead of sticking; fixed endless low-gear wheelspin and auto-gearbox stalls</sub>
+
+**⚠️ 알려진 문제 · Known issues**
+
+- ND·S2000·S660 등 8종은 아직 라이선스가 확실한 3D 모델이 없어 절차적 모델 사용<br><sub>8 cars (incl. ND, S2000, S660) still use procedural models — no clearly licensed 3D model yet</sub>
 
 ---
 
@@ -77,10 +110,10 @@
 - 도보 모드와 복장 선택, 출입 금지 구역 차단<br><sub>On-foot mode with outfit selection; restricted areas are blocked</sub>
 - 차량 라디오 4채널 (자작 시티팝·유로비트·로파이·엔카풍) — 창문/문을 열면 밖에서도 들림<br><sub>Car radio with 4 stations (original city pop, eurobeat, lo-fi, enka-style) — audible outside when windows/doors are open</sub>
 - 20개 언어, 키보드·게임패드·모바일 터치 조작, 그래픽 품질 프리셋<br><sub>20 languages, keyboard / gamepad / touch controls, graphics presets</sub>
-- 공식 웹사이트, 로컬 계정(회원가입·닉네임), PWA 설치, 데스크탑 앱(Electron)<br><sub>Official website, local accounts (sign-up, nickname), installable PWA, desktop app (Electron)</sub>
+- 공식 웹사이트, 로컬 계정(회원가입·닉네임), PWA 설치<br><sub>Official website, local accounts (sign-up, nickname), installable PWA</sub>
 - 차종별 엔진음: 엔진 형식(직렬4·6, V6·V8·V10, 수평대향, 로터리, 경차 3기통, EV)·배기량·엔진 코드별 음색, 터보 휘슬과 블로오프, 자연흡기 고회전·VTEC 전환음, 디젤 트럭<br><sub>Per-car engine sound: layout (I4/I6/V6/V8/V10/boxer/rotary/kei I3/EV), displacement and engine-code voicing, turbo whistle and blow-off, NA high-rev & VTEC crossover, diesel trucks</sub>
 - 차량 정보: 제조사·연식·섀시 코드·엔진·구동방식(FF 전륜 / FR·MR·RR 후륜 / AWD 사륜)·터보/자연흡기 표시 (게임 차고 + 웹사이트)<br><sub>Vehicle info: maker, year, chassis code, engine, drivetrain (FF / FR·MR·RR / AWD) and turbo/NA shown in the garage and on the website</sub>
-- 실행 간편화: start.command / start.bat 더블클릭, 데스크탑 앱(Windows·macOS·Linux) 자동 빌드<br><sub>Easy launch: double-click start.command / start.bat; desktop builds for Windows, macOS and Linux</sub>
+- 실행 간편화: start.command / start.bat 더블클릭<br><sub>Easy launch: double-click start.command / start.bat</sub>
 
 **🔧 변경 · Changed**
 

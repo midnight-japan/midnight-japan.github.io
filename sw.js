@@ -1,14 +1,16 @@
 // MIDNIGHT JAPAN service worker.
 // - vendor/ (three.js etc.): cache-first (immutable per release)
-// - everything else same-origin GET: stale-while-revalidate
+// - pages, scripts, styles, data, translations (html/js/mjs/css/json/md/webmanifest): NETWORK-FIRST, cache only as offline fallback
+//   → a new release is picked up on the next load; game code is never served stale while online
+// - everything else (images, models, audio): stale-while-revalidate
 // - cross-origin (Google Fonts, GitHub) is not intercepted
 // Keep VERSION in sync with GAME.version in data/meta.js — bumping it drops old caches.
-const VERSION = '0.2.0';
-const CACHE = 'dn-' + VERSION;
+const VERSION = '0.3.0';
+const CACHE = 'dn-' + VERSION + '-nf1'; // suffix bumps when the caching strategy changes
 const VENDOR = 'dn-vendor-' + VERSION;
 
 const PRECACHE = [
-  './', 'index.html', 'cars.html', 'regions.html', 'changelog.html', 'account.html',
+  './', 'index.html', 'cars.html', 'regions.html', 'changelog.html', 'account.html', 'credits.html',
   'manifest.webmanifest', 'css/site.css',
   'js/i18n.js', 'js/account.js',
   'js/site/common.js', 'js/site/carart.js', 'js/site/car3d.js', 'js/site/home.js', 'js/site/cars.js', 'js/site/regions.js', 'js/site/changelog.js', 'js/site/account-page.js',
@@ -60,6 +62,20 @@ async function staleWhileRevalidate(event, req) {
   }
 }
 
+async function networkFirst(req) {
+  try {
+    const res = await fetch(req, { cache: 'no-cache' });
+    put(CACHE, req, res.clone());
+    return res;
+  } catch (err) {
+    const hit = await caches.match(req, { ignoreSearch: req.mode === 'navigate' }).catch(() => null);
+    if (hit) return hit;
+    if (req.mode === 'navigate') { const home = await caches.match('index.html').catch(() => null); if (home) return home; }
+    throw err;
+  }
+}
+const CODE = /\.(?:html?|m?js|css|json|md|webmanifest)$/i;
+
 self.addEventListener('fetch', event => {
   const req = event.request;
   if (req.method !== 'GET' || req.headers.has('range')) return; // let media range requests etc. go straight through
@@ -68,7 +84,9 @@ self.addEventListener('fetch', event => {
   if (url.pathname.endsWith('/sw.js')) return;
   const scope = new URL(self.registration.scope).pathname;
   const path = url.pathname.startsWith(scope) ? url.pathname.slice(scope.length) : url.pathname;
-  const handler = path.startsWith('vendor/') ? cacheFirst(req) : staleWhileRevalidate(event, req);
+  const handler = path.startsWith('vendor/') ? cacheFirst(req)
+    : (req.mode === 'navigate' || path === '' || CODE.test(path)) ? networkFirst(req)
+    : staleWhileRevalidate(event, req);
   // Never let a SW bug break the page: fall back to a plain network fetch.
   event.respondWith(handler.catch(() => fetch(req)));
 });

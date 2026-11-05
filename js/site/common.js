@@ -126,6 +126,7 @@ function footer() {
         <a class="brand" href="index.html" aria-label="MIDNIGHT JAPAN">${emblem('ft')}<span class="brand-t">MIDNIGHT<b>JAPAN</b></span></a>
         <p style="margin-top:14px;max-width:420px" data-i18n="site.footer.about">A browser car-meet game set at Daikoku PA on the Shuto Expressway, Yokohama.</p>
         <p class="ft-ver">v${esc(GAME.version)} · build ${esc(GAME.build)}</p>
+        <p class="ft-aka">MIDNIGHT JAPAN · <span lang="ja">ミッドナイト・ジャパン</span> · <span lang="ko">미드나잇 재팬</span> — Daikoku PA game · <span lang="ja">大黒PA ゲーム</span> · <span lang="ko">다이코쿠 PA 게임</span></p>
       </div>
       <div>
         <h4 data-i18n="site.footer.game">Game</h4>
@@ -192,6 +193,7 @@ function setTitle() {
 /** Build chrome, load language, wire everything. Page modules re-render dynamic parts on the 'langchange' event. */
 export async function initSite(page) {
   pageKey = page;
+  document.body.dataset.page = page;
   const h = document.getElementById('site-header'), f = document.getElementById('site-footer');
   if (h) { h.className = 'site-header'; h.innerHTML = header(page); }
   if (f) { f.className = 'site-footer'; f.innerHTML = footer(); }

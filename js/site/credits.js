@@ -3,7 +3,15 @@ import { initSite, esc } from './common.js';
 
 const inline = s => esc(s).replace(/\*\*(.+?)\*\*/g, '<b>$1</b>').replace(/`([^`]+)`/g, '<code>$1</code>')
   .replace(/\[([^\]]+)\]\((https?:[^)\s]+)\)/g, '<a href="$2" target="_blank" rel="noopener">$1</a>')
-  .replace(/(^|[\s(])(https?:\/\/[^\s)<|]+)/g, '$1<a href="$2" target="_blank" rel="noopener">$2</a>');
+  .replace(/(^|[\s(])(https?:\/\/[^\s)<|]+)/g, (m, pre, url) => `${pre}<a href="${url}" target="_blank" rel="noopener" title="${url}">${shortUrl(url)}</a>`);
+// Long asset URLs make table columns explode on phones: show "host/…/last-part" (full URL stays in href/title).
+function shortUrl(u) {
+  const m = u.match(/^https?:\/\/(?:www\.)?([^/]+)(\/.*)?$/); if (!m) return u;
+  const parts = (m[2] || '').split('/').filter(Boolean);
+  if (!parts.length) return m[1];
+  let last = parts[parts.length - 1]; if (last.length > 32) last = last.slice(0, 30) + '…';
+  return m[1] + (parts.length > 1 ? '/…/' : '/') + last;
+}
 function md(text) {
   const out = []; const lines = text.split('\n'); let i = 0;
   while (i < lines.length) {

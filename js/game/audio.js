@@ -1,9 +1,11 @@
 // MIDNIGHT JAPAN — audio system.
-// 100% synthesized with the Web Audio API (no audio files, no samples).
-// Engines, tyres, wind, ambience, SFX, Japanese police siren and a 4-station generative radio.
+// Hybrid: CC0 recordings (granular RPM-tracked engine banks, tyres, road, wind, pops, BOV, doors, UI — see
+// audio-banks.js / assets/CREDITS.md) on top of Web Audio synthesis (fallback engine layer, turbo, EV, siren, radio,
+// ambience, tunnel/viaduct reverb). Missing or undecodable assets fall back to pure synthesis.
 // Every public method is exception-safe: if Web Audio is unavailable everything is a silent no-op.
 
 import { MusicEngine, STATIONS, songName } from './music.js';
+import { Banks, engineFamily } from './audio-banks.js';
 
 const W = typeof window !== 'undefined' ? window : {};
 const AC = W.AudioContext || W.webkitAudioContext || null;
@@ -86,6 +88,40 @@ function makeIR(ctx, dur, decay, fcStart, fcEnd, gated) {
   }
   return buf;
 }
+// Space impulse responses for the environment reverb.
+// tunnel: concrete box (~10 m wide, 6.8 m high) → dense flutter between the walls + long bright tail
+// trench: open-top cutting with retaining walls → side-wall flutter, short tail
+// deck: under a viaduct deck / bridge → one strong slap from the soffit, pier reflections, short tail
+function makeSpaceIR(ctx, kind) {
+  const sr = ctx.sampleRate;
+  const P = {
+    tunnel: { dur: 2.6, decay: 2.2, flutter: 0.031, fl: 26, slap: 0.019, tailG: 0.55, lp0: 6500, lp1: 1600 },
+    trench: { dur: 1.1, decay: 2.8, flutter: 0.034, fl: 10, slap: 0, tailG: 0.25, lp0: 7000, lp1: 2200 },
+    deck: { dur: 0.9, decay: 3.2, flutter: 0, fl: 0, slap: 0.055, tailG: 0.22, lp0: 5000, lp1: 1800 },
+  }[kind];
+  const len = Math.floor(sr * P.dur), buf = ctx.createBuffer(2, len, sr);
+  for (let ch = 0; ch < 2; ch++) {
+    const d = buf.getChannelData(ch);
+    // diffuse tail: filtered noise with exponential decay and a falling lowpass
+    let y = 0;
+    for (let i = 0; i < len; i++) {
+      const x = i / len;
+      const fc = P.lp0 + (P.lp1 - P.lp0) * Math.sqrt(x), c = Math.exp(-TAU * fc / sr);
+      y = (1 - c) * (Math.random() * 2 - 1) + c * y;
+      const onset = Math.min(1, i / (sr * 0.012));
+      d[i] = y * Math.pow(1 - x, P.decay) * P.tailG * onset * 2.2;
+    }
+    const imp = (t, g) => { const i = Math.floor(t * sr); if (i >= 0 && i < len - 4) { d[i] += g; d[i + 1] += g * 0.5; d[i + 2] -= g * 0.25; } };
+    if (P.slap) { imp(P.slap * (ch ? 1.06 : 1), 0.55); imp(P.slap * 2.1 * (ch ? 0.97 : 1), 0.22); }
+    // side-wall flutter (alternating L/R, slight jitter so it isn't a pure comb)
+    for (let k = 1; k <= P.fl; k++) {
+      const t = k * P.flutter * (1 + (Math.random() - 0.5) * 0.08) + (ch ? 0.0013 : 0);
+      imp(t, 0.42 * Math.pow(0.86, k) * ((k + ch) % 2 ? 1 : 0.6));
+    }
+    if (kind === 'deck') for (let k = 0; k < 6; k++) imp(0.09 + Math.random() * 0.25, 0.08 + Math.random() * 0.08); // piers
+  }
+  return buf;
+}
 function makeCrackle(ctx) {
   const sr = ctx.sampleRate, len = sr * 4;
   const buf = ctx.createBuffer(2, len, sr);
@@ -138,6 +174,19 @@ const PROFILES = {
   F4: { ev: [{ t: 0, a: 1 }, { t: 0.25 + 0.045, a: 0.74, w: 1.2 }, { t: 0.5, a: 0.97 }, { t: 0.75 + 0.045, a: 0.7, w: 1.2 }], w: 0.3, ring: 2.0, ra: 0.2, res: [[130, 6, 0.9], [700, 2, 1.2]], bright: 0.9, vol: 1 },
   F6: { ev: evenEv(6, [1, 0.88]), w: 0.22, ring: 3.0, ra: 0.3, res: [[480, 4, 1], [2600, 5, 1.5]], bright: 1.25, vol: 1 },
   R2: { ev: evenEv(4, [1, 0.97]), w: 0.45, rotary: true, ring: 2.2, ra: 0.3, res: [[380, 5, 1], [1900, 6, 2]], bright: 1.2, vol: 1.25 },
+};
+// per-layout tone shaping applied to the recorded bank: [freq, Q, gain dB] (freq is scaled per car by voiceK)
+const SAMPLE_TONE = {
+  i6: [[2400, 1.2, 2.5], [180, 1, 1.5]],
+  v6: [[1500, 1.1, 3], [320, 1.3, -2]],
+  f6: [[2900, 1.4, 4], [120, 0.9, 2]],
+  i4: [[1700, 1.0, 2], [240, 1.0, 1]],
+  i3: [[900, 1.2, 3], [2600, 1.4, -2]],
+  rotary: [[1900, 1.6, 6], [420, 1.5, 4]],
+  f4: [[140, 1.0, 3], [1300, 1.1, 1.5]],
+  v8: [[95, 1.0, 3], [600, 1.2, 1.5]],
+  v10: [[3200, 1.3, 3], [1300, 1.2, 2]],
+  diesel: [[110, 0.9, 2], [1900, 1.5, 2.5]],
 };
 const WAVES = new WeakMap();
 const WN = 2048;
@@ -234,6 +283,24 @@ function tn(a, dest, t, o) {
   osc.start(t); osc.stop(end);
   return end;
 }
+// recorded sample one-shot (returns end time, or 0 if the buffer isn't loaded → caller falls back to synthesis)
+function smp(a, dest, t, name, o = {}) {
+  const buf = a.banks && a.banks.get(name);
+  if (!buf) return 0;
+  const ctx = a.ctx, src = ctx.createBufferSource(), g = ctx.createGain();
+  src.buffer = buf;
+  const rate = o.rate || 1;
+  src.playbackRate.value = rate;
+  g.gain.value = o.gain !== undefined ? o.gain : 1;
+  let node = src;
+  if (o.lp) { const f = ctx.createBiquadFilter(); f.type = 'lowpass'; f.frequency.value = o.lp; src.connect(f); node = f; }
+  node.connect(g); g.connect(dest);
+  const off = o.offset || 0, dur = Math.min(o.dur || buf.duration, buf.duration - off);
+  src.start(t, off, dur);
+  return t + dur / rate;
+}
+const SFX_FILES = ['tire_squeal', 'tire_scrub', 'road', 'wind', 'backfire', 'bov', 'pops', 'door_close', 'door_close_in', 'handbrake', 'blink_on', 'blink_off', 'ui_click', 'shift'];
+
 // FM bell (store chime, coin, …)
 function bell(a, dest, t, f, gain, decay, ratio = 3.5, idx = 1.5) {
   const ctx = a.ctx, car = ctx.createOscillator(), mod = ctx.createOscillator(), mg = ctx.createGain(), g = ctx.createGain();
@@ -271,6 +338,8 @@ const SFX = {
     return nz(a, d, t + 0.05, { f: 1300, q: 0.8, gain: 0.04, attack: 0.03, decay: 0.08 });
   },
   door_close(a, d, t) {
+    const e = smp(a, d, t, 'door_close', { gain: 0.9, rate: 0.96 + Math.random() * 0.08 });
+    if (e) { tn(a, d, t, { f: 70, f2: 42, gain: 0.35, decay: 0.07, glide: 0.1 }); return e; }
     tn(a, d, t, { f: 78, f2: 42, gain: 0.85, decay: 0.09, glide: 0.12 });
     nz(a, d, t, { type: 'lowpass', f: 380, gain: 0.7, decay: 0.07, noise: 'brown' });
     nz(a, d, t + 0.012, { f: 2100, q: 2.5, gain: 0.3, decay: 0.01 });
@@ -282,6 +351,8 @@ const SFX = {
     return nz(a, d, t + 0.08, { f: 3400, f2: 2600, q: 1.4, gain: 0.05, attack: 0.08, hold: 0.25, decay: 0.12 });
   },
   trunk_close(a, d, t) {
+    const e = smp(a, d, t, 'door_close', { gain: 0.85, rate: 0.82 + Math.random() * 0.06, lp: 3500 });
+    if (e) { tn(a, d, t, { f: 60, f2: 36, gain: 0.4, decay: 0.09, glide: 0.12 }); return e; }
     tn(a, d, t, { f: 66, f2: 38, gain: 0.85, decay: 0.11, glide: 0.14 });
     nz(a, d, t, { type: 'lowpass', f: 300, gain: 0.7, decay: 0.09, noise: 'brown' });
     return nz(a, d, t + 0.02, { f: 1900, q: 2.5, gain: 0.25, decay: 0.012 });
@@ -304,6 +375,8 @@ const SFX = {
     return nz(a, d, t + 1.58, { type: 'lowpass', f: 600, gain: 0.2, decay: 0.03 });
   },
   handbrake_on(a, d, t) {
+    const e = smp(a, d, t, 'handbrake', { gain: 0.8 });
+    if (e) return e;
     let tt = t;
     for (let i = 0; i < 7; i++) {
       nz(a, d, tt, { f: 3200, q: 6, gain: 0.28, decay: 0.006 });
@@ -318,6 +391,8 @@ const SFX = {
     return nz(a, d, t + 0.09, { type: 'lowpass', f: 700, gain: 0.25, decay: 0.04 });
   },
   shift(a, d, t) {
+    const e = smp(a, d, t, 'shift', { gain: 0.75, rate: 0.95 + Math.random() * 0.1 });
+    if (e) return e;
     nz(a, d, t, { f: 2000, q: 2, gain: 0.3, decay: 0.01 });
     tn(a, d, t + 0.005, { f: 130, f2: 90, gain: 0.25, decay: 0.03 });
     return nz(a, d, t + 0.045, { f: 1400, q: 2, gain: 0.22, decay: 0.012 });
@@ -360,6 +435,8 @@ const SFX = {
     return nz(a, d, tt + 0.08, { f: 1500, q: 3, gain: 0.18, decay: 0.02 });
   },
   ui_click(a, d, t) {
+    const e = smp(a, d, t, 'ui_click', { gain: 0.55 });
+    if (e) return e;
     tn(a, d, t, { f: 2400, f2: 1800, gain: 0.12, decay: 0.012 });
     return nz(a, d, t, { type: 'highpass', f: 4000, gain: 0.06, decay: 0.003 });
   },
@@ -369,11 +446,16 @@ const SFX = {
   },
   turn_tick(a, d, t) {
     a._tick = !a._tick;
+    const e = smp(a, d, t, a._tick ? 'blink_on' : 'blink_off', { gain: 0.8 });
+    if (e) return e;
     const f = a._tick ? 2800 : 2200;
     nz(a, d, t, { f, q: 5, gain: 0.3, decay: 0.006 });
     return tn(a, d, t, { f: a._tick ? 1100 : 900, gain: 0.06, decay: 0.01 });
   },
   hazard_tick(a, d, t) {
+    a._tick = !a._tick;
+    const e = smp(a, d, t, a._tick ? 'blink_on' : 'blink_off', { gain: 0.8, rate: 1.03 });
+    if (e) return e;
     nz(a, d, t, { f: 2600, q: 5, gain: 0.3, decay: 0.006 });
     nz(a, d, t + 0.02, { f: 2000, q: 5, gain: 0.15, decay: 0.006 });
     return tn(a, d, t, { f: 1000, gain: 0.06, decay: 0.01 });
@@ -462,6 +544,9 @@ class EngineSound {
     this._alive = 0; this._ice = this.hybrid ? 0 : 1; this._intW = 0; this._vr = 0; this._dop = 1; this._prevD = null; this._lastT = 0;
     this._sleep = false; this._built = false; this._dead = false; this._jit = 0; this._sq = 1100; this._prevThr = 0;
     this._crackleQ = 0;
+    // recorded engine bank (granular, lazy loaded); the synth below stays as fallback + character layer
+    this.fam = engineFamily(this.car);
+    this._smpW = 0; this._pw = 0;
     a.engines.add(this);
   }
 
@@ -557,11 +642,56 @@ class EngineSound {
       N.boomLP = F('lowpass', 110, 0.7); N.boomG = G(0); brown.connect(N.boomLP); N.boomLP.connect(N.boomG); N.boomG.connect(N.int);
       N.windBP = F('bandpass', 800, 0.5); N.windG = G(0); pink.connect(N.windBP); N.windBP.connect(N.windG); N.windG.connect(N.int);
     }
+    if (full) {
+      // recorded tyre squeal / scrub / rolling-road loops (attached once the buffers are decoded)
+      N.sqS = G(0); N.scS = G(0); N.roadS = G(0);
+      N.sqS.connect(N.tire); N.scS.connect(N.tire); N.roadS.connect(N.tire);
+      // off-road: low rumble + gravel crunch; expressway expansion joints go to N.tire too
+      N.offLP = F('lowpass', 170, 0.7); N.offG = G(0); NS('brown').connect(N.offLP); N.offLP.connect(N.offG); N.offG.connect(N.tire);
+      N.grBP = F('bandpass', 2600, 0.8); N.grG = G(0); white.connect(N.grBP); N.grBP.connect(N.grG); N.grG.connect(N.tire);
+      this._loops = false;
+    }
+    if (this.fam && a.banks) {
+      // sample chain: granular voice → load-dependent lowpass → per-car/layout tone → exhaust sum
+      N.smpG = G(0);
+      N.smpLP = F('lowpass', 14000, 0.6);
+      N.smpG.connect(N.smpLP);
+      let last = N.smpLP;
+      const tone = SAMPLE_TONE[this.fam.tone || this.fam.fam] || [];
+      for (const [f, q, g] of (full ? tone : tone.slice(0, 1))) { const pk = F('peaking', f * this.voiceK, q, g * this.voiceG); last.connect(pk); last = pk; }
+      last.connect(N.exSum);
+      this._attachSample();
+    }
     for (const s of srcs) {
       if (s.loop) s.start(t, Math.random() * 2); else s.start(t);
     }
     this._built = true;
     for (const p of [N.ext.gain, N.int.gain]) p._lv = undefined;
+  }
+
+  _attachLoops() {
+    const a = this.a, B = a.banks, N = this.N;
+    if (this._loops || !B || !N || !N.sqS) return;
+    const bs = B.get('tire_squeal'), bc = B.get('tire_scrub'), br = B.get('road');
+    if (!bs || !bc || !br) return;
+    const ctx = a.ctx, t = ctx.currentTime;
+    const L = (buf, dest) => { const s = ctx.createBufferSource(); s.buffer = buf; s.loop = true; s.connect(dest); s.start(t, Math.random() * buf.duration); this.srcs.push(s); return s; };
+    N.sqSrc = L(bs, N.sqS); N.scSrc = L(bc, N.scS); N.roadSrc = L(br, N.roadS);
+    this._loops = true;
+  }
+
+  _attachSample() {
+    const a = this.a, B = a.banks, fam = this.fam && this.fam.fam;
+    if (!B || !fam || !this.N || this.N.wk) return;
+    if (B.ready.has(fam)) {
+      try {
+        const node = B.voice(fam);
+        if (node) { node.connect(this.N.smpG); this.N.wk = node; }
+      } catch (e) { a._err(e); }
+      return;
+    }
+    const N0 = this.N;
+    B.engine(fam).then((bank) => { if (bank && !this._dead && this.N === N0) this._attachSample(); });
   }
 
   _starter(on) {
@@ -594,6 +724,7 @@ class EngineSound {
       for (const s of this.srcs || []) { try { s.stop(); } catch (e) { /* */ } }
       if (N.stOsc) { try { N.stOsc.stop(); N.chug.stop(); } catch (e) { /* */ } }
       if (N.horn) { for (const o of N.horn._oscs || []) { try { o.stop(); } catch (e) { /* */ } } }
+      if (N.wk) { try { N.wk.port.postMessage({ type: 'stop' }); N.wk.disconnect(); } catch (e) { /* */ } if (this.a.banks) this.a.banks.live--; N.wk = null; }
       try { N.panner.disconnect(); N.int.disconnect(); } catch (e) { /* */ }
     };
     if (fade && !this.a._offline) {
@@ -637,6 +768,7 @@ class EngineSound {
     }
     this._prevD = d;
     const dop = clamp(343 / (343 + this._vr), 0.7, 1.4);
+    this._dop = dop;
     setPos(N.panner, this.pos);
 
     const rpm = Math.max(0, st.rpm), thr = clamp(st.throttle, 0, 1), load = clamp(st.load, -1, 1);
@@ -657,8 +789,29 @@ class EngineSound {
     else this._intW += (intT - this._intW) * Math.min(1, dt * 20);
     const alive = this._alive * (this.isEV ? 0 : this._ice);
 
+    if (this.lod === 'full') a._intW = this._intW;
     sp(N.ext.gain, 1 - this._intW, t, 0.02);
     sp(N.int.gain, this._intW, t, 0.02);
+
+    // ── recorded engine (granular bank) ──
+    this._smpW += ((N.wk ? 1 : 0) - this._smpW) * Math.min(1, dt * 4);
+    const smpW = this._smpW;
+    if (N.wk) {
+      // smoothed load: pulls → on-load layer, lift / coast → overrun layer (equal-power crossfade)
+      const pwT = clamp(power * 1.25 + (rpm < this.idle * 1.25 ? 0.15 : 0), 0, 1);
+      this._pw += (pwT - this._pw) * Math.min(1, dt * (pwT > this._pw ? 12 : 6));
+      const pw = this._pw;
+      const rpmB = Math.max(cranking ? Math.max(rpm, 200) : rpm, 1) * this.fam.scale * dop;
+      const P = N.wk.parameters;
+      sp(P.get('rpm'), rpmB, t, 0.008);
+      const lOn = (0.42 + 0.58 * Math.min(1, rpmN)) * (0.55 + 0.45 * pw);
+      const lOff = (0.3 + 0.3 * Math.min(1, rpmN)) * (1 - 0.3 * ov);
+      sp(P.get('on'), lOn * Math.sqrt(pw), t, 0.02);
+      sp(P.get('off'), lOff * Math.sqrt(1 - pw), t, 0.02);
+      sp(N.smpG.gain, this.vol * alive * (cranking ? 0.25 : 1) * 1.55 * smpW, t, 0.03);
+      sv(N.smpLP.frequency, clamp((2600 + 5000 * rpmN + 9000 * pw) * (1 - 0.25 * ov), 1200, 18000), 0.03);
+    }
+    const synW = 1 - 0.82 * smpW;
 
     // ── combustion engine ──
     if (N.exOsc) {
@@ -670,15 +823,15 @@ class EngineSound {
       const exAmp = (cranking ? 0.25 : 0.15 + 0.5 * power + 0.18 * rpmN - 0.05 * ov) * this.vol * alive * 0.42;
       let cut = (420 + 1500 * rpmN + 6500 * Math.pow(power, 1.3) + 2500 * vt) * this.prof.bright * (1 - 0.35 * ov);
       if (cranking) cut = 350;
-      sp(N.exGain.gain, Math.max(0, exAmp), t, 0.025);
+      sp(N.exGain.gain, Math.max(0, exAmp) * synW, t, 0.025);
       sv(N.exLP.frequency, clamp(cut, 150, 16000), 0.02);
       if (N.inOsc) {
         sp(N.inOsc.frequency, fC, t, 0.012);
         const inAmp = (0.03 + 0.3 * power * (0.3 + rpmN) + 0.12 * vt + 0.04 * ov * rpmN) * this.vol * alive * 0.4;
-        sp(N.inGain.gain, inAmp, t, 0.03);
+        sp(N.inGain.gain, inAmp * (1 - 0.45 * smpW), t, 0.03);
         sv(N.inBP.frequency, 500 + 1400 * rpmN + 600 * vt, 0.02);
         sv(N.vtecPk.gain, 10 * vt, 0.03);
-        sp(N.amDepth.gain, (0.02 + 0.12 * power * (0.3 + rpmN) + (this.diesel ? 0.08 : 0)) * this.vol * alive, t, 0.03);
+        sp(N.amDepth.gain, (0.02 + 0.12 * power * (0.3 + rpmN) + (this.diesel ? 0.08 : 0)) * this.vol * alive * synW, t, 0.03);
         sv(N.combBP.frequency, 1200 + 2000 * rpmN, 0.03);
       }
       if (N.whOsc) {
@@ -730,7 +883,43 @@ class EngineSound {
     this._sq = clamp(this._sq + (Math.random() - 0.5) * dt * 2600, 850, 1500);
     const slip = clamp(st.slip, 0, 1);
     if (this._sqOn) { sv(N.sq1.frequency, this._sq, 0.01); if (N.sq2) sv(N.sq2.frequency, this._sq * 1.93, 0.01); }
-    sp(N.sqG.gain, 0.26 * Math.pow(slip, 1.4) * clamp((speed + slip * 6) / 4, 0, 1), t, 0.03);
+    const spdF = clamp((speed + slip * 6) / 4, 0, 1);
+    if (N.sqS && !this._loops && ((this._loopT = (this._loopT || 0) - dt) <= 0)) { this._loopT = 0.5; this._attachLoops(); }
+    const lw = this._loops ? 1 : 0;
+    sp(N.sqG.gain, 0.26 * Math.pow(slip, 1.4) * spdF * (1 - 0.85 * lw), t, 0.03);
+    if (this._loops) {
+      // squeal = high slip (tonal), scrub = onset / understeer (broadband); pitch rises with slip, a little with speed
+      const sq = Math.pow(clamp((slip - 0.22) / 0.78, 0, 1), 1.15), sc = clamp(slip / 0.45, 0, 1) * (1 - 0.6 * sq);
+      this._sqJ = (this._sqJ || 0) * 0.92 + (Math.random() - 0.5) * 0.02;
+      sp(N.sqS.gain, 0.55 * sq * spdF, t, 0.04);
+      sp(N.scS.gain, 0.32 * sc * spdF, t, 0.05);
+      sp(N.sqSrc.playbackRate, (0.86 + 0.2 * slip + Math.min(speed, 40) * 0.002 + this._sqJ) * this._dop, t, 0.05);
+      sp(N.scSrc.playbackRate, 0.8 + 0.35 * slip + Math.min(speed, 40) * 0.004, t, 0.05);
+      sp(N.roadS.gain, 0.2 * Math.pow(clamp(speed / 30, 0, 1.6), 1.25) * (this._onRoad === false ? 0.4 : 1), t, 0.08);
+      sp(N.roadSrc.playbackRate, clamp(0.5 + speed / 32, 0.5, 2.2), t, 0.1);
+      sp(N.roadG.gain, 0.05 * Math.pow(spd, 1.5), t, 0.05);
+    }
+    if (N.offG) {
+      // surface + expansion joints (needs attachWorld): probe a few times a second
+      if ((this._probeT = (this._probeT || 0) - dt) <= 0) {
+        this._probeT = 0.2;
+        const q = a.probe(this.pos);
+        this._onRoad = q.onRoad; this._elev = q.elevated && q.onRoad;
+      }
+      const off = this._onRoad === false ? 1 : 0;
+      this._offW = (this._offW || 0) + (off - (this._offW || 0)) * Math.min(1, dt * 5);
+      const sf = clamp(speed / 20, 0, 1.5);
+      sp(N.offG.gain, 0.35 * this._offW * sf, t, 0.05);
+      sp(N.grG.gain, 0.12 * this._offW * sf * (0.4 + Math.random() * 1.2), t, 0.012);
+      if (this._elev && speed > 4) {
+        this._jointD = (this._jointD === undefined ? 10 + Math.random() * 20 : this._jointD) - speed * dt;
+        if (this._jointD <= 0) {
+          this._jointD = 22 + Math.random() * 26;
+          const gj = clamp(speed / 28, 0.25, 1.1), wb = clamp(2.6 / speed, 0.03, 0.4);
+          this._joint(t + 0.005, gj); this._joint(t + 0.005 + wb, gj * 0.85);
+        }
+      }
+    }
     // squeal filters only run while needed
     if (slip > 0.02) { this._sqIdle = 0; if (!this._sqOn) { N.white.connect(N.sq1); if (N.sq2) N.white.connect(N.sq2); this._sqOn = true; } }
     else if (this._sqOn && (this._sqIdle += dt) > 1) { try { N.white.disconnect(N.sq1); if (N.sq2) N.white.disconnect(N.sq2); } catch (e) { /* */ } this._sqOn = false; }
@@ -750,6 +939,15 @@ class EngineSound {
     }
   }
 
+  // expressway expansion joint: short low "ta-tan" thump per axle
+  _joint(t, g) {
+    const a = this.a, d = this.N && this.N.tire;
+    if (!d) return;
+    tn(a, d, t, { f: 62 + Math.random() * 10, f2: 38, gain: 0.32 * g, decay: 0.035, glide: 0.06 });
+    nz(a, d, t, { type: 'lowpass', f: 420, gain: 0.35 * g, decay: 0.022, noise: 'brown' });
+    nz(a, d, t + 0.002, { f: 1700 + Math.random() * 500, q: 2, gain: 0.05 * g, decay: 0.008 });
+  }
+
   _dest(where) {
     const N = this.N;
     if (!N) return null;
@@ -759,6 +957,9 @@ class EngineSound {
     const a = this.a, d = this._dest('ex');
     if (!d) return;
     const t = a.ctx.currentTime + 0.005;
+    // recorded overrun pop (4 variations packed 0.25 s apart), random pitch; synth fallback
+    const k = Math.floor(Math.random() * 4);
+    if (smp(a, d, t, 'pops', { offset: k * 0.25, dur: 0.22, rate: 0.8 + Math.random() * 0.45, gain: g * this.vol * 1.1 })) return;
     nz(a, d, t, { f: 500 + Math.random() * 1600, q: 0.9, gain: g * this.vol * 0.5, decay: 0.012 + Math.random() * 0.012 });
     tn(a, d, t, { f: 90 + Math.random() * 40, f2: 50, gain: g * 0.25 * this.vol, decay: 0.02 });
   }
@@ -767,6 +968,10 @@ class EngineSound {
       const a = this.a, d = this._dest('ex');
       if (!d) return;
       const t = a.ctx.currentTime + 0.005;
+      if (smp(a, d, t, 'backfire', { gain: 0.9 * this.vol, rate: 0.9 + Math.random() * 0.25 })) {
+        if (Math.random() < 0.5) smp(a, d, t + 0.08 + Math.random() * 0.06, 'pops', { offset: Math.floor(Math.random() * 4) * 0.25, dur: 0.22, gain: 0.5 * this.vol });
+        return;
+      }
       nz(a, d, t, { type: 'lowpass', f: 1400, gain: 0.7, decay: 0.05, noise: 'brown' });
       nz(a, d, t, { f: 700, q: 0.7, gain: 0.45, decay: 0.03 });
       tn(a, d, t, { f: 75, f2: 40, gain: 0.6, decay: 0.06 });
@@ -778,6 +983,19 @@ class EngineSound {
       const a = this.a, d = this._dest('bay');
       if (!d) return;
       const t = a.ctx.currentTime + 0.005, b = 0.5 + 0.5 * clamp(this.st.boost, 0, 1);
+      if (a.banks && a.banks.get('bov')) {
+        // recorded blow-off / compressor-surge flutter; per-car pitch, louder with boost
+        const rate = (this.bovStyle === 'flutter' ? 0.88 : 1.05) * (0.94 + ((hashStr(String(this.car.id || '')) >> 3) % 13) / 100);
+        if (this.bovStyle === 'flutter') {
+          const ctx = a.ctx, am = ctx.createGain(), lfo = ctx.createOscillator(), lg = ctx.createGain();
+          lfo.type = 'triangle'; lfo.frequency.setValueAtTime(22, t); lfo.frequency.linearRampToValueAtTime(13, t + 0.6);
+          lg.gain.value = 0.45; am.gain.value = 0.55; lfo.connect(lg); lg.connect(am.gain); am.connect(d);
+          lfo.start(t); lfo.stop(t + 0.9);
+          smp(a, am, t, 'bov', { rate, gain: 0.75 * b });
+          if (!a._offline) setTimeout(() => { try { am.disconnect(); lg.disconnect(); } catch (e) { /* */ } }, 2500);
+        } else smp(a, d, t, 'bov', { rate, gain: 0.7 * b });
+        return;
+      }
       if (this.bovStyle === 'flutter') {
         // compressor surge "chu-tu-tu-tu"
         const ctx = a.ctx, am = ctx.createGain(), lfo = ctx.createOscillator(), lg = ctx.createGain();
@@ -1147,6 +1365,7 @@ export class GameAudio {
     this._hallIR = makeIR(ctx, 1.9, 2.6, 7000, 1800, false);
     this._gateIR = makeIR(ctx, 0.26, 1, 8000, 4000, true);
     this._crackle = makeCrackle(ctx);
+    try { this.banks = new Banks(ctx); for (const n of SFX_FILES) this.banks.buffer(n); } catch (e) { this.banks = null; this._err(e); }
     // master chain: buses → master → glue comp → limiter → out
     this.master = G(this._vol.master);
     this.comp = ctx.createDynamicsCompressor();
@@ -1162,6 +1381,18 @@ export class GameAudio {
     this.rev = ctx.createConvolver(); this.rev.buffer = makeIR(ctx, 1.3, 3, 6000, 1500, false);
     this.revOut = G(0.3);
     this.revIn.connect(this.rev); this.rev.connect(this.revOut); this.revOut.connect(this.master);
+    // environment reverb (tunnel / trench / under a viaduct): engine + sfx buses → sends → convolvers
+    this.envIn = G(1); this.envLP = ctx.createBiquadFilter(); this.envLP.type = 'lowpass'; this.envLP.frequency.value = 9000;
+    this.bus.engine.connect(this.envIn); this.bus.sfx.connect(this.envIn);
+    this.envIn.connect(this.envLP);
+    this.envW = {};
+    for (const k of ['tunnel', 'trench', 'deck']) {
+      const send = G(0), cv = ctx.createConvolver();
+      cv.normalize = false; cv.buffer = makeSpaceIR(ctx, k);
+      send.connect(cv); cv.connect(this.master);
+      this.envW[k] = { send, cv, on: false, idle: 0 };
+    }
+    this._space = { tunnel: 0, trench: 0, deck: 0, deckH: 10, t: 0 };
     this._buildAmbient();
     this._applyListener();
     // fade everything out while the tab is hidden (engines would otherwise drone on)
@@ -1231,6 +1462,50 @@ export class GameAudio {
       if (e.nearSea !== undefined) E.nearSea = !!e.nearSea;
       if (e.speedWind !== undefined) E.speedWind = Math.abs(num(e.speedWind, 0));
     } catch (x) { this._err(x); }
+  }
+
+  /** optional: lets the audio probe the road network for tunnels / viaduct decks / surfaces (reverb, joints, rumble) */
+  attachWorld(net, world) { this._net = net || null; this._world = world || null; }
+  // what kind of space is around a point: { tunnel, trench, deck (0..1), deckH, onRoad, elevated }
+  probe(p) {
+    const net = this._net, w = this._world;
+    const r = { tunnel: 0, trench: 0, deck: 0, deckH: 10, onRoad: true, elevated: false, y: 0 };
+    if (!net || !net.hits || !p) return r;
+    let below = null, over = null;
+    for (const h of net.hits(p.x, p.z)) {
+      if (!h.inside) continue;
+      if (h.y <= p.y + 0.6) { if (!below || h.y > below.y) below = h; }
+      else if (h.y > p.y + 2.2 && h.y < p.y + 45) { if (!over || h.y < over.y) over = h; }
+    }
+    const land = w && w.isLand ? w.isLand(p.x, p.z) : true;
+    if (below && p.y - below.y < 7) {
+      r.y = below.y;
+      if (below.y < -0.6) {
+        if (!land || below.y < -6.2) r.tunnel = 1; else r.trench = clamp((-0.6 - below.y) / 3, 0.3, 1);
+      }
+      r.elevated = below.y > 4;
+    } else r.onRoad = false;
+    if (over && !r.tunnel) { r.deckH = over.y - p.y; r.deck = clamp(1.25 - r.deckH / 30, 0.3, 1); }
+    return r;
+  }
+  _updateSpace(dt) {
+    const S = this._space;
+    if (!S || !this.envW) return;
+    if ((S.t -= dt) <= 0) {
+      S.t = 0.15;
+      const q = this.probe(this._L.pos);
+      S.tunnel = q.tunnel; S.trench = q.tunnel ? 0 : q.trench; S.deck = q.deck; S.deckH = q.deckH;
+    }
+    const t = this.ctx.currentTime, inside = clamp(this._intW || 0, 0, 1);
+    sv(this.envLP.frequency, 9000 - 7600 * inside, 0.03);
+    const lvl = { tunnel: 0.55, trench: 0.38, deck: 0.42 };
+    for (const k in this.envW) {
+      const E = this.envW[k], v = S[k] * lvl[k] * (1 - 0.55 * inside);
+      // only keep a convolver running while it is audible (+ its tail)
+      if (v > 0.002) { E.idle = 0; if (!E.on) { this.envLP.connect(E.send); E.on = true; } }
+      else if (E.on && (E.idle = (E.idle || 0) + dt) > 3.5) { try { this.envLP.disconnect(E.send); } catch (e) { /* */ } E.on = false; }
+      sp(E.send.gain, v, t, 0.25);
+    }
   }
 
   createEngine(car, opts) {
@@ -1308,6 +1583,7 @@ export class GameAudio {
         if (now - this._resumeT > 1000) { this._resumeT = now; Promise.resolve(ctx.resume()).catch(() => {}); }
       }
       this._updateAmbient(dt);
+      this._updateSpace(dt);
       // engine budget: only the nearest `maxEngines` lite engines are synthesized
       if ((this._budgetT -= dt) <= 0) {
         this._budgetT = 0.4;
@@ -1372,7 +1648,19 @@ export class GameAudio {
     sp(A.sea.gain, E.nearSea ? 0.09 : 0, t, 0.8);
     A.gust = clamp(A.gust + (Math.random() - 0.5) * dt * 1.5, -0.4, 0.4);
     const w = clamp(E.speedWind / 30, 0, 1.5);
-    sp(A.wind.gain, (0.012 * (E.nearSea ? 1.8 : 1) + 0.16 * w * w) * (1 + A.gust), t, 0.15);
+    const wTot = (0.012 * (E.nearSea ? 1.8 : 1) + 0.16 * w * w) * (1 + A.gust);
+    if (!A.windS && this.banks && this.banks.get('wind')) {
+      // recorded wind loop replaces most of the filtered-noise wind
+      const src = ctx.createBufferSource(); src.buffer = this.banks.get('wind'); src.loop = true;
+      A.windSG = ctx.createGain(); A.windSG.gain.value = 0; A.windSLP = ctx.createBiquadFilter(); A.windSLP.type = 'lowpass'; A.windSLP.frequency.value = 2500;
+      src.connect(A.windSLP); A.windSLP.connect(A.windSG); A.windSG.connect(A.out); src.start(t, Math.random() * 4); A.windS = src;
+    }
+    if (A.windS) {
+      sp(A.windSG.gain, wTot * 1.6, t, 0.15);
+      sp(A.windS.playbackRate, 0.75 + 0.45 * Math.min(w, 1.2) + A.gust * 0.1, t, 0.3);
+      sv(A.windSLP.frequency, 1200 + 5000 * Math.min(w, 1.2), 0.03);
+    }
+    sp(A.wind.gain, wTot * (A.windS ? 0.35 : 1), t, 0.15);
     sv(A.windBP.frequency, 350 + 900 * Math.min(w, 1) + A.gust * 200, 0.03);
     sp(A.rum.gain, Math.min(0.35, 0.22 * w * w) * (1 + A.gust), t, 0.15);
     // crowd

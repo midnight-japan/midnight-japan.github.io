@@ -12,7 +12,8 @@
 import * as THREE from 'three';
 import { shapeFor } from './carshapes.js';
 import { plateMesh, randomPlate } from './plates.js';
-import { Kit, T, M, roundedBox as rbox, buildWheel, buildInterior, buildInteriorLite, lampMaterial, flarePoints, LAMP, flakeTex, clusterStyle } from './carparts.js';
+import { Kit, T, M, roundedBox as rbox, buildWheel, buildInteriorLite, lampMaterial, flarePoints, LAMP, flakeTex, clusterStyle } from './carparts.js';
+import { buildInterior, drawCockpit, makeMirrors } from './interiors.js';
 
 const TAU = Math.PI * 2;
 const clamp = (x, a, b) => Math.max(a, Math.min(b, x));
@@ -387,13 +388,15 @@ export function buildCar(car, opts = {}) {
     }
     return 1;
   };
-  const cabGeo = gridGeometry(RC, NC, cabPos, { faceKeep: (r, c) => cabGroup(r, c) >= 0, faceGroup: (r, c) => Math.max(0, cabGroup(r, c)), colorFn: () => 1, flip: true }); // faces outwards
+  const cabGeo = gridGeometry(RC, NC, cabPos, { faceKeep: (r, c) => cabGroup(r, c) >= 0, faceGroup: (r, c) => Math.max(0, cabGroup(r, c)), colorFn: () => 1 }); // rows run rear→front, columns left→right over the top: unflipped winding faces outwards (like the body)
   const glassOut = low ? m.glassLow : S.tint ? m.glassTint : m.glass, glassIn = S.tint ? m.glassInTint : m.glassIn;
   if (low) {
     const cabin = new THREE.Mesh(cabGeo, [paint, glassOut, m.trimGloss]);
     cabin.castShadow = true; cabin.renderOrder = 2; bodyG.add(cabin);
   } else {
     const cabin = new THREE.Mesh(cabGeo, [paint, m.hidden, m.trimGloss]); cabin.castShadow = true; bodyG.add(cabin);
+    // headliner / pillar trim seen from the cockpit (the painted skin only faces outwards)
+    const headliner = new THREE.Mesh(cabGeo, [m.liner, m.hidden, m.liner]); headliner.customDepthMaterial = M.noShadow(); bodyG.add(headliner);
     const gOut = new THREE.Mesh(cabGeo, [m.hidden, glassOut, m.hidden]); gOut.renderOrder = 3; gOut.customDepthMaterial = M.noShadow();
     const gIn = new THREE.Mesh(cabGeo, [m.hidden, glassIn, m.hidden]); gIn.renderOrder = 2; gIn.customDepthMaterial = M.noShadow();
     bodyG.add(gOut, gIn);
@@ -405,7 +408,7 @@ export function buildCar(car, opts = {}) {
     const r0 = rows[0];
     const pv = d.pivot.position;
     const geo = gridGeometry(rows.length, NC, (r, c, o) => { cabPos(r + r0, c, o); o.sub(pv); o.x *= 0.995; return o; },
-      { flip: true, faceKeep: (r, c) => { const th = ((c + 0.5) / (NC - 1)) * Math.PI; return (d.left ? th < S.sideTh - 0.12 : th > Math.PI - S.sideTh + 0.12) && th > 0.06 && th < Math.PI - 0.06; } });
+      { faceKeep: (r, c) => { const th = ((c + 0.5) / (NC - 1)) * Math.PI; return (d.left ? th < S.sideTh - 0.12 : th > Math.PI - S.sideTh + 0.12) && th > 0.06 && th < Math.PI - 0.06; } });
     const wg = new THREE.Group();
     const win = new THREE.Mesh(geo, glassOut); win.renderOrder = 3; win.customDepthMaterial = M.noShadow(); wg.add(win);
     if (!low) { const wi = new THREE.Mesh(geo, glassIn); wi.renderOrder = 2; wi.customDepthMaterial = M.noShadow(); wg.add(wi); }
@@ -607,6 +610,7 @@ export function buildCar(car, opts = {}) {
     const arm = new THREE.Mesh(rbox(0.09, 0.03, 0.06, 0.012), m.trim); arm.position.x = -sx * 0.07; arm.position.y = -0.035;
     const glass = new THREE.Mesh(new THREE.CircleGeometry(0.055, 20), low ? m.chrome : M.mirror()); glass.position.z = -0.052; glass.rotation.y = Math.PI; glass.scale.set(1.3, 0.72, 1);
     mg.add(shell, arm, glass); bodyG.add(mg);
+    if (full) (parts.doorMirrors ||= []).push(glass); // live reflections in the cockpit (interiors.makeMirrors)
   }
   const exN = S.exhaust;
   for (let i = 0; i < exN; i++) {
@@ -675,17 +679,24 @@ export function buildCar(car, opts = {}) {
   }
 
   // ───── interior ─────
-  const ctx = { lod, driverX, doorZ0, doorZ1, rdoorZ0, rdoorZ1, B_PILLAR, bodyXAt: (z, y) => bodyXAt(P, S, z, y) };
+  const ctx = { lod, driverX, doorZ0, doorZ1, rdoorZ0, rdoorZ1, B_PILLAR, bodyXAt: (z, y) => bodyXAt(P, S, z, y), paint: paintFlat };
   let interior = null;
   if (full) {
     interior = buildInterior(P, S, car, ctx);
     bodyG.add(interior.group);
     parts.steering = interior.wheel; parts.shifter = interior.shifter; parts.handbrake = interior.handbrake; parts.gauge = interior.gauge;
-    parts.eye = interior.eye.clone();
+    parts.eye = interior.eye.clone(); parts.eyePitch = interior.eyePitch;
+    parts.pedals = interior.pedals; parts.cockpitLive = interior.live; parts.cockpitSpec = interior.spec; parts.rearMirror = interior.rearMirror;
     // door cards ride on the door pivots
     for (const d of parts.doors) { const k = new Kit(); interior.doorCard(k, d.z0, d.z1, d.left ? 1 : -1); k.build(d.pivot, { offset: d.pivot.position }); }
     // headliner / pillar trim seen from inside
-    if (!S.open) { const hl = new THREE.Mesh(cabGeo, [M.headliner(interior.theme.head), m.hidden, M.headliner(interior.theme.head)]); hl.receiveShadow = true; bodyG.add(hl); }
+    if (!S.open) { // inset a little towards the cabin centre so it never fights with the shell, visible from either winding
+      const hg = cabGeo.clone(), hp = hg.attributes.position, hv = new THREE.Vector3(), hd = new THREE.Vector3();
+      for (let i = 0; i < hp.count; i++) { hv.fromBufferAttribute(hp, i); hd.set(-hv.x, (S.belt - hv.y) * 0.8, 0).normalize(); hv.addScaledVector(hd, 0.014); hp.setXYZ(i, hv.x, hv.y, hv.z); }
+      hg.computeVertexNormals();
+      const hm = M.headliner(interior.theme.head).clone(); hm.side = THREE.DoubleSide;
+      const hl = new THREE.Mesh(hg, [hm, m.hidden, hm]); hl.receiveShadow = true; hl.name = 'headliner'; bodyG.add(hl);
+    }
   } else {
     if (lod === 'mid') bodyG.add(buildInteriorLite(P, S, car, ctx).group);
     else { // seat silhouettes so the glass isn't see-through to nothing
@@ -924,8 +935,9 @@ export class CarModel {
     if (sh.type === 'mt') {
       const n = sh.gears, cols = Math.ceil((n + 1) / 2), mid = (cols - 1) / 2;
       let col = mid, fwd = 0;
-      if (g === 'R') { col = cols - 1; fwd = n % 2 ? -1 : 1; }
-      else if (/^\d$/.test(g)) { const k = +g - 1; col = Math.floor(k / 2); fwd = k % 2 ? -1 : 1; }
+      const off = sh.rev === 'L' ? 1 : 0; // reverse left of 1st (e.g. R34 Getrag) shifts the gears one gate right
+      if (g === 'R') { col = off ? 0 : cols - 1; fwd = off ? 1 : n % 2 ? -1 : 1; }
+      else if (/^\d$/.test(g)) { const k = +g - 1; col = Math.min(cols - 1, Math.floor(k / 2) + off); fwd = k % 2 ? -1 : 1; }
       sh.tgt.x = (col - mid) * 0.12; sh.tgt.z = fwd * 0.2;
     } else if (sh.type === 'at') {
       const pos = { P: 0.045, R: 0.015, N: -0.015, D: -0.045, B: -0.06, S: -0.06, M: -0.06 }[g[0]] ?? -0.015;
@@ -955,6 +967,10 @@ export class CarModel {
       else if (sh.type === 'ev') sh.group.rotation.y = sh.cur.x;
     }
     if (p.handbrake) { this.hb = ease(this.hb, this.hbTgt, 4); p.handbrake.rotation.x = -0.1 - this.hb * 0.32; }
+    if (p.pedals && this._ctl) { // pedals follow the driver's inputs
+      const c = this._ctl, k = 1 - Math.exp(-dt * 18), pd = p.pedals;
+      for (const [key, val] of [['throttle', c.throttle], ['brake', c.brake], ['clutch', c.clutch], ['park', this.hbTgt]]) if (pd[key]) pd[key].rotation.x += (-(val || 0) * 0.32 - pd[key].rotation.x) * k;
+    }
     for (const d of p.doors) {
       d.open = ease(d.open, d.target, 1.6);
       d.pivot.rotation.y = (d.left ? -1 : 1) * smooth(d.open) * 1.1;
@@ -1008,67 +1024,23 @@ export class CarModel {
     if (p.lights.taxi) p.lights.taxi.material.emissiveIntensity = L.head ? 2 : 0.3;
     for (const pl of p.plates) pl.material.emissiveIntensity = pos ? 0.25 : 0;
   }
-  // instrument cluster (canvas). st: { rpm, kmh, gear, kw, info, warn, fuel?, temp? }
+  // live cockpit (cluster, MFD, aux gauges — see interiors.js). st: { rpm, kmh, gear, kw, info, warn, boost, fuel, night, ctl, hb, ax, ay, odo }
   drawGauges(st = {}) {
-    const gg = this.parts.gauge; if (!gg) return;
+    if (!this.parts.gauge && !this.parts.cockpitSpec) return;
     if (st.gear !== undefined && st.gear !== this._gear) this.setGear(st.gear);
-    if (st.warn !== undefined) this.hbTgt = /\(P\)/.test(st.warn) ? 1 : 0;
-    const c = gg.canvas, g = c.getContext('2d');
-    const W = c.width, H = c.height;
-    const car = this.car, ev = car.engine.type === 'EV';
-    const red = car.engine.redline, maxR = Math.ceil((red + 1000) / 1000) * 1000;
-    const maxK = car.cat === 'kei' || car.cat === 'traffic' ? 180 : car.year < 2000 ? 180 : 320;
-    if (!gg.bg) gg.bg = drawClusterBg(gg.style, W, H, { maxR, red, maxK, ev });
-    g.drawImage(gg.bg, 0, 0);
-    const L = this.lights, blink = this.blinkOn;
-    const tell = (x, y, kind, on, col) => drawTelltale(g, x, y, kind, on, col);
-    if (gg.style === 'analog') {
-      const needle = (cx, cy, r, f, col = '#ff4a12') => {
-        const a = Math.PI * 0.75 + Math.PI * 1.5 * clamp(f, 0, 1.02);
-        g.save(); g.translate(cx, cy); g.rotate(a);
-        g.shadowColor = col; g.shadowBlur = 14; g.fillStyle = col;
-        g.beginPath(); g.moveTo(-r * 0.12, -4); g.lineTo(r * 0.88, -1.5); g.lineTo(r * 0.88, 1.5); g.lineTo(-r * 0.12, 4); g.fill();
-        g.restore(); g.fillStyle = '#1a1a1c'; g.beginPath(); g.arc(cx, cy, 16, 0, TAU); g.fill(); g.strokeStyle = '#555'; g.lineWidth = 2; g.stroke();
-      };
-      if (ev) needle(240, 192, 160, Math.abs(st.kw || 0) / 300); else needle(240, 192, 160, (st.rpm || 0) / maxR);
-      needle(784, 192, 160, (st.kmh || 0) / maxK);
-      // centre: gear + odometer
-      g.fillStyle = '#ff9a3c'; g.font = 'bold 64px sans-serif'; g.textAlign = 'center'; g.textBaseline = 'middle'; g.fillText(st.gear ?? 'N', W / 2, 186);
-      g.font = '22px monospace'; g.fillStyle = '#9ad'; g.fillText(st.info || '', W / 2, 250);
-      if (st.warn) { g.fillStyle = '#ff3a2a'; g.font = 'bold 22px sans-serif'; g.fillText(st.warn, W / 2, 292); }
-      tell(W / 2 - 70, 60, 'left', (L.left || L.hazard) && blink, '#2fe05a'); tell(W / 2 + 70, 60, 'right', (L.right || L.hazard) && blink, '#2fe05a');
-      tell(W / 2 - 24, 112, 'high', L.head && L.high, '#3a6dff'); tell(W / 2 + 24, 112, 'fog', L.fog, '#ffb020');
-      tell(W / 2 - 70, 112, 'pos', L.head || L.pos, '#2fe05a'); tell(W / 2 + 70, 112, 'brake', /\(P\)/.test(st.warn || ''), '#ff3a2a');
-    } else if (gg.style === 'digital') {
-      const f = ev ? Math.abs(st.kw || 0) / 300 : (st.rpm || 0) / maxR;
-      const cx = W / 2, cy = 236, r = 170;
-      const a0 = Math.PI * 0.8, a1 = Math.PI * 2.2;
-      g.lineCap = 'butt'; g.lineWidth = 22;
-      const grd = g.createLinearGradient(cx - r, 0, cx + r, 0); grd.addColorStop(0, '#1e7bff'); grd.addColorStop(0.75, '#2fd0ff'); grd.addColorStop(1, '#ff3a2a');
-      g.strokeStyle = grd; g.shadowColor = '#2fa8ff'; g.shadowBlur = 18;
-      g.beginPath(); g.arc(cx, cy, r, a0, a0 + (a1 - a0) * clamp(f, 0, 1)); g.stroke(); g.shadowBlur = 0;
-      g.fillStyle = '#f2f6fa'; g.font = 'bold 120px sans-serif'; g.textAlign = 'center'; g.textBaseline = 'middle'; g.fillText(String(Math.round(Math.abs(st.kmh || 0))), cx, cy - 10);
-      g.font = '24px sans-serif'; g.fillStyle = '#8a9aaa'; g.fillText('km/h', cx, cy + 62);
-      g.font = 'bold 56px sans-serif'; g.fillStyle = '#ff9a3c'; g.fillText(st.gear ?? 'N', cx + 300, cy - 10);
-      g.font = '24px monospace'; g.fillStyle = '#9ad'; g.fillText(st.info || '', cx - 300, cy - 10);
-      if (st.warn) { g.fillStyle = '#ff3a2a'; g.font = 'bold 24px sans-serif'; g.fillText(st.warn, cx - 300, cy + 40); }
-      tell(cx - 190, 44, 'left', (L.left || L.hazard) && blink, '#2fe05a'); tell(cx + 190, 44, 'right', (L.right || L.hazard) && blink, '#2fe05a');
-      tell(cx - 60, 44, 'high', L.head && L.high, '#3a6dff'); tell(cx, 44, 'pos', L.head || L.pos, '#2fe05a'); tell(cx + 60, 44, 'fog', L.fog, '#ffb020');
-    } else { // tesla-style centre screen
-      g.fillStyle = '#eef0f2'; g.fillRect(0, 0, W * 0.34, H);
-      g.fillStyle = '#111'; g.font = 'bold 130px sans-serif'; g.textAlign = 'center'; g.textBaseline = 'middle'; g.fillText(String(Math.round(Math.abs(st.kmh || 0))), W * 0.17, H * 0.3);
-      g.font = '30px sans-serif'; g.fillStyle = '#666'; g.fillText('km/h', W * 0.17, H * 0.42);
-      const gear = String(st.gear ?? 'P')[0];
-      g.font = 'bold 34px sans-serif'; 'PRND'.split('').forEach((ch, i) => { g.fillStyle = ch === gear ? '#111' : '#aaa'; g.fillText(ch, W * 0.08 + i * 46, H * 0.08); });
-      g.fillStyle = '#333'; g.font = '26px sans-serif'; g.fillText(st.info || '', W * 0.17, H * 0.52);
-      if (st.warn) { g.fillStyle = '#d22'; g.fillText(st.warn, W * 0.17, H * 0.6); }
-      tell(W * 0.06, H * 0.9, 'left', (L.left || L.hazard) && blink, '#1aa64a'); tell(W * 0.28, H * 0.9, 'right', (L.right || L.hazard) && blink, '#1aa64a');
-      tell(W * 0.13, H * 0.9, 'high', L.head && L.high, '#2a5dff'); tell(W * 0.21, H * 0.9, 'fog', L.fog, '#e09010');
-    }
-    gg.tex.needsUpdate = true;
+    if (st.warn !== undefined) this.hbTgt = st.hb ?? /\(P\)/.test(st.warn) ? 1 : 0;
+    if (st.ctl) this._ctl = st.ctl;
+    drawCockpit(this, st);
+  }
+  // rear-view / door mirror reflections (cockpit view only; called by the camera)
+  renderMirrors(renderer, scene, frame) {
+    if (!this.parts.rearMirror && !this.parts.doorMirrors) return;
+    if (this._mirrors === undefined) this._mirrors = makeMirrors(this);
+    this._mirrors?.render(renderer, scene, frame, this.parts.eye);
   }
   dispose() {
     LIVE_LIGHTS.delete(this);
+    this._mirrors?.dispose();
     this.root.traverse(o => { if (o.geometry && !o.geometry.userData?.shared) o.geometry.dispose?.(); });
   }
 }

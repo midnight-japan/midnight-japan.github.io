@@ -17,7 +17,7 @@ import { RoadNet, PA_RECT } from './roads.js';
 import { World } from './world.js';
 import { TimeOfDay } from './sky.js';
 import { buildCarAuto, requestGlb, loadManifest, hasGlb, glbEntry } from './carfactory.js';
-import { Vehicle } from './vehicle.js';
+import { Vehicle, assistsFromSettings } from './vehicle.js';
 import { Input } from './input.js';
 import { Traffic } from './traffic.js';
 import { NPCs, CHATTER } from './npc.js';
@@ -39,6 +39,7 @@ const save = (k, v) => { try { localStorage.setItem(k, JSON.stringify(v)); } cat
 const isMobile = /Android|iPhone|iPad|iPod|Mobile|SamsungBrowser/i.test(navigator.userAgent) || (navigator.maxTouchPoints > 1 && /Mac/.test(navigator.platform));
 export const DEFAULT_SETTINGS = {
   quality: isMobile ? 'low' : 'high', resScale: isMobile ? 0.75 : 1, transmission: 'auto', assist: true, units: 'kmh', etc: true,
+  difficulty: 'standard', steerAssist: 'standard', stm: 'sport', tcs: 'sport', abs: true, police: 'normal',
   master: 0.8, engine: 0.85, sfx: 0.8, ambient: 0.6, radio: 0.7, dj: true, tilt: false, shake: true, fps: false, timeSpeed: 1, bloom: true, online: true, touch: isMobile ? 'on' : 'auto',
 };
 
@@ -136,7 +137,7 @@ class Game {
     addEventListener('resize', () => this.resize());
     this.input = new Input(canvas);
     this.input.tilt = this.settings.tilt;
-    this.audio = new GameAudio({ maxEngines: isMobile ? 10 : 24 });
+    this.audio = new GameAudio({ maxEngines: isMobile ? 10 : 24 }); this.audio.attachWorld?.(this.net, this.world);
     this.ui.loading(0.8, t('game.load.traffic'));
     this.npc = new NPCs(this);
     this.traffic = new Traffic(this);
@@ -204,7 +205,7 @@ class Game {
     this.scene.add(this.model.root);
     // the real 3D model may still be downloading → swap it in when ready (keeps position, lights, doors)
     if (!this.model.isGlb) loadManifest().then(() => hasGlb(id) && requestGlb(id).then(() => this.swapPlayerModel(id)).catch(() => {}));
-    const v = new Vehicle(car, this.model, { mode: this.settings.transmission, tcs: this.settings.assist });
+    const v = new Vehicle(car, this.model, { mode: this.settings.transmission, assists: assistsFromSettings(this.settings) });
     v.camberF = this.model.camber.f; v.camberR = this.model.camber.r;
     if (keepPos && prev) v.place(prev.pos, prev.yaw); else v.place(spot.pos.clone(), spot.yaw);
     v.handbrakeOn = true;
@@ -346,7 +347,7 @@ class Game {
     if (A.handbrake > 0.5 && Math.abs(v.vx) < 0.3 && !this._hbToggle) { v.handbrakeOn = !v.handbrakeOn; this._hbToggle = true; this.audio.sfx(v.handbrakeOn ? 'handbrake_on' : 'handbrake_off'); }
     if (A.handbrake < 0.2) this._hbToggle = false;
     if (Math.abs(v.vx) > 0.5 && v.handbrakeOn && throttle > 0.2) v.handbrakeOn = false;
-    v.ctl.throttle = throttle; v.ctl.brake = brake; v.ctl.steer = A.steer; v.ctl.handbrake = Math.abs(v.vx) > 0.3 ? A.handbrake : 0; v.ctl.clutch = A.clutch;
+    v.ctl.throttle = throttle; v.ctl.brake = brake; v.ctl.steer = A.steer; v.ctl.steerDigital = A.steerDigital !== false; v.ctl.handbrake = Math.abs(v.vx) > 0.3 ? A.handbrake : 0; v.ctl.clutch = A.clutch;
     // auto clutch for "manual" (sequential) mode: blip-free
     // lights & misc
     const L = m.lights;
@@ -404,7 +405,7 @@ class Game {
     // align to grade
     m.root.rotation.x = -Math.atan(v.grade || 0);
     // gauges in cockpit
-    if (this.camMode === 'cockpit' && this.frame % 3 === 0) m.drawGauges({ rpm: v.engine.rpm, kmh: Math.abs(v.kmh), gear: v.gearLabel, kw: v.kw, info: v.ev ? `${Math.round(v.battery * 100)}%` : (this.settings.etc ? 'ETC' : ''), warn: !v.engine.running ? 'ENGINE OFF' : v.handbrakeOn ? '(P)' : '' });
+    if (this.camMode === 'cockpit' && this.frame % 3 === 0) m.drawGauges({ rpm: v.engine.rpm, kmh: Math.abs(v.kmh), gear: v.gearLabel, kw: v.kw, info: v.ev ? `${Math.round(v.battery * 100)}%` : (this.settings.etc ? 'ETC' : ''), warn: !v.engine.running ? 'ENGINE OFF' : v.handbrakeOn ? '(P)' : '', boost: v.engine.boost, fuel: v.ev ? v.battery : v.fuel, running: v.engine.running, night: this.env?.night ?? 1, ctl: v.ctl, hb: v.handbrakeOn, ax: v.ax, ay: v.ay, odo: v.odometer });
     // engine sound
     const openness = clamp(m.parts.doors.reduce((a, d) => a + d.open, 0) * 0.6 + m.parts.windows.reduce((a, d) => a + (d.winOpen || 0), 0) * 0.5 + (v.car.open ? 0.6 : 0), 0, 1);
     this.openness = openness;
@@ -475,29 +476,57 @@ class Game {
     if (I.key('look')) this.lookYaw = Math.PI; // look back
     const speedK = clamp(v.speed / 50, 0, 1);
     let fov = 60 + speedK * 12;
-    if (this.camMode === 'cockpit' || this.camMode === 'hood') {
-      const eye = this.camMode === 'cockpit' ? this.model.parts.eye.clone() : new THREE.Vector3(0, H + 0.05, L * 0.12);
-      const world = eye.applyAxisAngle(up, v.yaw).add(v.pos); world.y += -Math.atan(v.grade || 0) * eye.z * 0;
+    const ck = this.camMode === 'cockpit';
+    this.model.setCockpitView?.(ck); // real-model cars swap in the detailed cabin for the first-person view
+    if (ck && this.model.parts.eye) {
+      // driver's eye rides on the (pitching / rolling) body; the head lags the g-forces a little
+      const hk = this.headK ||= { x: 0, y: 0, z: 0 }, kk = this.camSnap ? 1 : 1 - Math.exp(-dt * 6);
+      hk.x = lerp(hk.x, clamp(-(v.ay || 0) * 0.0032, -0.035, 0.035), kk);
+      hk.z = lerp(hk.z, clamp(-(v.ax || 0) * 0.0028, -0.03, 0.03), kk);
+      hk.y = lerp(hk.y, clamp(-Math.abs(v.ay || 0) * 0.0006 - Math.max(0, -(v.ax || 0)) * 0.0008, -0.012, 0), kk);
+      const bg = this.model.bodyG; this.model.root.updateMatrixWorld(true);
+      const eye = this.model.parts.eye.clone().add(new THREE.Vector3(hk.x, hk.y, hk.z));
+      const world = bg.localToWorld(eye);
+      cam.position.copy(world);
+      const pa = this.lookPitch - (this.model.parts.eyePitch ?? 0.07);
+      const dir = new THREE.Vector3(Math.sin(this.lookYaw) * Math.cos(pa), Math.sin(pa), Math.cos(this.lookYaw) * Math.cos(pa));
+      dir.transformDirection(bg.matrixWorld);
+      cam.up.set(0, 1, 0); cam.lookAt(world.clone().add(dir));
+      cam.rotateZ(-v.roll * 0.35 - hk.x * 0.6); // body roll partly, head tilts into the corner slightly
+      fov = 72 + speedK * 4;
+      this.camVel = null;
+      this.model.renderMirrors?.(this.renderer, this.scene, this.frame);
+    } else if (this.camMode === 'cockpit' || this.camMode === 'hood') {
+      const eye = new THREE.Vector3(0, H + 0.05, L * 0.12);
+      const world = eye.applyAxisAngle(up, v.yaw).add(v.pos);
       cam.position.copy(world);
       const dir = new THREE.Vector3(Math.sin(v.yaw + this.lookYaw) * Math.cos(this.lookPitch - 0.06), Math.sin(this.lookPitch - 0.06) + (v.grade || 0), Math.cos(v.yaw + this.lookYaw) * Math.cos(this.lookPitch - 0.06));
       cam.lookAt(world.clone().add(dir));
-      if (this.camMode === 'cockpit') { cam.rotateZ(-v.roll * 0.5); fov = 68 + speedK * 6; }
       this.camVel = null;
     } else {
       const far = this.camMode === 'far';
       const dist = (far ? 9.5 : 5.6) + L * 0.45 + (this.camMode === 'orbit' ? 3 : 0);
       const height = (far ? 3.2 : 1.7) + H * 0.35;
       // follow velocity direction a bit when drifting
-      const vdir = v.speed > 3 ? new THREE.Vector3(v.vel.x, 0, v.vel.z).normalize() : f;
+      // follow the velocity direction a bit when drifting (forward only, so reversing doesn't swing the camera)
+      const vdir = v.vx > 3 ? new THREE.Vector3(v.vel.x, 0, v.vel.z).normalize() : f;
       const heading = f.clone().lerp(vdir, 0.35).normalize();
-      const yaw = Math.atan2(heading.x, heading.z) + this.lookYaw + (this.camMode === 'orbit' ? this.orbit.yaw : 0);
+      // smooth the camera's angle around the car (not its world position) so it stays locked on at 200+ km/h
+      // instead of trailing further and further behind; slight pull-back with speed for a sense of pace
+      const yawT = Math.atan2(heading.x, heading.z);
+      if (this.camSnap || this.camYaw === undefined) this.camYaw = yawT;
+      this.camYaw += Math.atan2(Math.sin(yawT - this.camYaw), Math.cos(yawT - this.camYaw)) * (1 - Math.exp(-dt * (far ? 4 : 7)));
+      const yaw = this.camYaw + this.lookYaw + (this.camMode === 'orbit' ? this.orbit.yaw : 0);
       if (this.camMode === 'orbit') { this.orbit.yaw += dt * 0.25; }
-      const want = new THREE.Vector3(v.pos.x - Math.sin(yaw) * dist, v.pos.y + height + this.lookPitch * 4, v.pos.z - Math.cos(yaw) * dist);
+      const dist2 = dist + speedK * 0.9;
+      const want = new THREE.Vector3(v.pos.x - Math.sin(yaw) * dist2, v.pos.y + height + this.lookPitch * 4, v.pos.z - Math.cos(yaw) * dist2);
       // keep camera above ground / deck
       const gy = this.net.query(want.x, want.z, v.pos.y + 2, (x, z) => this.world.ground(x, z)).y;
       want.y = Math.max(want.y, gy + 0.6);
-      if (this.camSnap || !this.camPos) { this.camPos = want.clone(); this.camSnap = false; }
-      this.camPos.lerp(want, 1 - Math.exp(-dt * (far ? 4 : 6)));
+      const off = want.sub(v.pos); // offset relative to the car, smoothed
+      if (this.camSnap || !this.camOff) { this.camOff = off.clone(); this.camSnap = false; }
+      this.camOff.lerp(off, 1 - Math.exp(-dt * (far ? 6 : 10)));
+      this.camPos = v.pos.clone().add(this.camOff);
       cam.position.copy(this.camPos);
       const look = v.pos.clone().add(new THREE.Vector3(0, H * 0.75, 0)).addScaledVector(f, 1.5);
       cam.lookAt(look);
