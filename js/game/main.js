@@ -251,18 +251,18 @@ class Game {
   // ───────────────────────── walking ─────────────────────────
   exitCar() {
     const v = this.vehicle; if (!v || Math.abs(v.kmh) > 4) return;
-    if (v.road && v.pos.y > 1.5) { this.ui.toast(t('game.walk.noexit'), 'warn'); return; }
     v.ctl.throttle = 0; v.handbrakeOn = true;
     const side = this.model.parts.driverX > 0 ? 1 : -1;
-    const exit = this.model.parts.exitPoint.clone().applyAxisAngle(new THREE.Vector3(0, 1, 0), v.yaw).add(v.pos); exit.y = 0;
+    const exit = this.model.parts.exitPoint.clone().applyAxisAngle(new THREE.Vector3(0, 1, 0), v.yaw).add(v.pos); exit.y = v.pos.y;
     const door = this.model.parts.doors.find(d => !d.rear && (side > 0 ? d.left : !d.left));
     if (door) { door.target = 1; setTimeout(() => door.target = 0, 1400); }
     this.audio.sfx('door_open', { position: v.pos });
     setTimeout(() => this.audio.sfx('door_close', { position: v.pos }), 1300);
-    if (!this.world.canWalk(exit.x, exit.z)) { // other side
-      exit.copy(this.model.parts.exitPoint).setX(-this.model.parts.exitPoint.x).applyAxisAngle(new THREE.Vector3(0, 1, 0), v.yaw).add(v.pos); exit.y = 0;
-      if (!this.world.canWalk(exit.x, exit.z)) { this.ui.toast(t('game.walk.noexit'), 'warn'); return; }
+    if (!this.walkable(exit.x, exit.z, v.pos.y)) { // other side
+      exit.copy(this.model.parts.exitPoint).setX(-this.model.parts.exitPoint.x).applyAxisAngle(new THREE.Vector3(0, 1, 0), v.yaw).add(v.pos); exit.y = v.pos.y;
+      if (!this.walkable(exit.x, exit.z, v.pos.y)) { this.ui.toast(t('game.walk.noexit'), 'warn'); return; }
     }
+    exit.y = this.walkY(exit.x, exit.z, v.pos.y);
     const h = createHuman(this.outfit); h.object.position.copy(exit); this.scene.add(h.object);
     h.object.traverse(o => { if (o.isMesh) o.castShadow = true; });
     const tag = createNameTag(displayName()); tag.position.y = h.height + 0.25; h.object.add(tag);
@@ -278,6 +278,10 @@ class Game {
     this.audio.sfx('door_open', { position: v.pos }); setTimeout(() => this.audio.sfx('door_close', { position: v.pos }), 850);
     this.mode = 'drive'; this.ui.showHUD();
   }
+  // walkable = PA/lot walk areas, or any road deck (shoulder / stopped on the expressway) at our level
+  roadAt(x, z, y) { const q = this.net.query(x, z, y + 0.6, (a, b) => this.world.ground(a, b)); return q.onRoad && Math.abs(q.y - y) < 0.9 ? q : null; }
+  walkable(x, z, y) { return (y < 1.2 && this.world.canWalk(x, z)) || !!this.roadAt(x, z, y); }
+  walkY(x, z, y) { const q = this.roadAt(x, z, y); if (q && (y > 1.2 || !this.world.canWalk(x, z))) return q.y; return (z < -53.9 && z > -60.2) ? 0.15 : z < -60 && z > -84 && x > -55 && x < 55 ? 0.21 : 0; }
   updateWalk(dt) {
     const p = this.player, I = this.input.axes, W = this.world;
     // camera-relative movement
@@ -289,15 +293,15 @@ class Game {
       let d = ang - p.yaw; while (d > Math.PI) d -= Math.PI * 2; while (d < -Math.PI) d += Math.PI * 2;
       p.yaw += d * (1 - Math.exp(-dt * 10));
       const nx = p.pos.x + Math.sin(p.yaw) * sp * dt, nz = p.pos.z + Math.cos(p.yaw) * sp * dt;
-      const ok = (x, z) => W.canWalk(x, z) && !this.npc.blocked(x, z, 0.3) && !this.carBlocks(x, z);
+      const ok = (x, z) => this.walkable(x, z, p.pos.y) && !this.npc.blocked(x, z, 0.3) && !this.carBlocks(x, z);
       if (ok(nx, nz)) { p.pos.x = nx; p.pos.z = nz; }
       else if (ok(nx, p.pos.z)) p.pos.x = nx; else if (ok(p.pos.x, nz)) p.pos.z = nz;
-      else if (!W.canWalk(nx, nz) && !this._blockMsgT) { this.ui.toast(t('game.walk.blocked'), 'warn', 2); this._blockMsgT = 3; }
+      else if (!this.walkable(nx, nz, p.pos.y) && !this._blockMsgT) { this.ui.toast(t('game.walk.blocked'), 'warn', 2); this._blockMsgT = 3; }
     }
     this._blockMsgT = Math.max(0, (this._blockMsgT || 0) - dt) || 0;
     p.speed = sp;
     // floor height (building floor slightly raised)
-    p.pos.y = (p.pos.z < -53.9 && p.pos.z > -60.2) ? 0.15 : p.pos.z < -60 && p.pos.z > -84 && p.pos.x > -55 && p.pos.x < 55 ? 0.21 : 0;
+    p.pos.y = this.walkY(p.pos.x, p.pos.z, p.pos.y);
     p.t += dt; let action = sp > 3 ? 'run' : sp > 0.1 ? 'walk' : (p.hold || 'idle');
     if (p.action === 'exit' && p.t < 1) action = 'exit';
     p.action = action;
@@ -416,9 +420,10 @@ class Game {
     const sp = v.spin;
     const susp = v.susp;
     m.update(dt, { steer: v.steerAng, spin: [sp[0], sp[1], sp[2], sp[3]], susp, pitch: v.pitch, roll: v.roll });
-    m.root.position.copy(v.pos); m.root.rotation.y = v.yaw;
-    // align to grade
-    m.root.rotation.x = -Math.atan(v.grade || 0);
+    // align body to the road plane: yaw first, then pitch/roll in the car's own frame (YXZ), so slopes tilt the nose, not the side
+    m.root.position.copy(v.pos); m.root.rotation.order = 'YXZ'; m.root.rotation.y = v.yaw;
+    this._gs = lerp(this._gs ?? 0, -Math.atan(v.grade || 0), 1 - Math.exp(-dt * 14)); this._bs = lerp(this._bs ?? 0, Math.atan(v.bank || 0), 1 - Math.exp(-dt * 14));
+    m.root.rotation.x = this._gs; m.root.rotation.z = this._bs;
     // gauges in cockpit
     if (this.camMode === 'cockpit' && this.frame % 3 === 0) m.drawGauges({ rpm: v.engine.rpm, kmh: Math.abs(v.kmh), gear: v.gearLabel, kw: v.kw, info: v.ev ? `${Math.round(v.battery * 100)}%` : (this.settings.etc ? 'ETC' : ''), warn: !v.engine.running ? 'ENGINE OFF' : v.handbrakeOn ? '(P)' : '', boost: v.engine.boost, fuel: v.ev ? v.battery : v.fuel, running: v.engine.running, night: this.env?.night ?? 1, ctl: v.ctl, hb: v.handbrakeOn, ax: v.ax, ay: v.ay, odo: v.odometer });
     // engine sound

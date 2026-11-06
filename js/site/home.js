@@ -63,9 +63,10 @@ const FEATURED = ['r34', 'r32', 'jza80', 'fd3s', 'na1', 'ae86', 'gr86', 'ap1', '
 const ROADMAP = [
   ['0.1', 'done', ['pa', 'cars', 'life', 'online']],
   ['0.2', 'done', ['bay', 'aqua', 'models3d']],
-  ['0.3', 'now', ['02.models', '02.perf']],
-  ['0.4', 'next', ['c1', '03.areas']],
-  ['Later', 'later', ['03.events', '03.tuning']],
+  ['0.3', 'done', ['handling', 'cockpit', 'paint', 'map']],
+  ['0.4', 'now', ['roadside', 'places', 'traffic', 'konbini']],
+  ['0.5', 'next', ['03.c1', '05.landmarks', '03.areas']],
+  ['Later', 'later', ['03.events', '03.tuning', '02.perf']],
 ];
 
 // ── Controls. Keep in sync with the game's input map. Values: keyboard keys (array → <kbd>), gamepad, touch i18n key.

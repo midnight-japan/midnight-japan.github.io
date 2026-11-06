@@ -6,6 +6,7 @@ import { CARS, CAR_BY_ID } from '../../data/cars.js';
 import { buildCarAuto } from './carfactory.js';
 import { PA_RECT, PA, PA_LAYOUT } from './roads.js';
 
+const _pa = new THREE.Vector3(), _pb = new THREE.Vector3();
 const clamp = (x, a, b) => Math.max(a, Math.min(b, x));
 const lerp = (a, b, t) => a + (b - a) * t;
 const MEET_POOL = ['r34', 'r32', 'r33', 'r35', 's15', 'rps13', 'z33', 'gr86', 'ae86', 'jza80', 'a90', 'jzx100', 'fd3s', 'nd', 'na1', 'ek9', 'fl5', 'ap1', 'evo9', 'gdb', 'lfa', 'copen', 's660', 'altow', 'p911', 'e46', 'mustang', 'model3'];
@@ -51,7 +52,7 @@ export function mergeModel(model) {
 export class Traffic {
   constructor(game) {
     this.g = game; this.net = game.net; this.world = game.world; this.scene = game.scene;
-    this.cars = []; this.max = { low: 10, medium: 22, high: 34, ultra: 46 }[game.quality] ?? 22;
+    this.cars = []; this.max = { low: 18, medium: 38, high: 56, ultra: 76 }[game.quality] ?? 22;
     this.meetMax = { low: 12, medium: 22, high: 32, ultra: 44 }[game.quality] ?? 22;
     this.t = 0; this.spawnT = 0; this.paClosed = false;
     this.headPool = this.makeHeadPool();
@@ -154,7 +155,11 @@ export class Traffic {
       else if (ai.mode === 'parked') this.parked(ai, dt);
       // write transform
       const m = ai.model;
-      m.root.position.copy(ai.pos); m.root.rotation.y = ai.yaw;
+      m.root.position.copy(ai.pos); m.root.rotation.order = 'YXZ'; m.root.rotation.y = ai.yaw;
+      if (ai.mode === 'road' && ai.near && ai.road) { // pitch with the road grade (ramps, bridges)
+        const r = ai.road, a = r.at(Math.min(r.length, ai.s + 2), ai.lat, _pa), b = r.at(Math.max(0, ai.s - 2), ai.lat, _pb);
+        m.root.rotation.x = -Math.atan2((a.y - b.y) * ai.dir, Math.hypot(a.x - b.x, a.z - b.z) || 1);
+      } else m.root.rotation.x = 0;
       ai.spin += ai.v / 0.32 * dt;
       const L = m.lights;
       L.head = night > 0.45 && ai.mode !== 'parked';
@@ -166,7 +171,7 @@ export class Traffic {
     }
     // spawn management
     this.spawnT -= dt;
-    if (this.spawnT <= 0) { this.spawnT = 2.5; this.manage(); }
+    if (this.spawnT <= 0) { this.spawnT = 1.2; this.manage(); }
     if (this.g.police) this.g.police.update(dt);
   }
 
@@ -331,6 +336,20 @@ export class Traffic {
       if (this.g.npc && ai.driver) this.g.npc.recallDriver(ai, ready); else ready();
     }
   }
+  // fill the expressways around the player too (not only at the far ends of the Bayshore Route)
+  spawnNear() {
+    const f = this.g.focus; if (!f) return;
+    const roads = this.net.roads.filter(r => r.kind !== 'local' && r.kind !== 'ramp' && r.lanes?.length && r.length > 300);
+    for (let tries = 0; tries < 6; tries++) {
+      const r = roads[Math.floor(Math.random() * roads.length)]; if (!r) return;
+      const s = 20 + Math.random() * (r.length - 40), p = r.at(s, 0, _pa), d = Math.hypot(p.x - f.x, p.z - f.z);
+      if (d < 180 || d > 900) continue; // out of sight, but close enough to meet
+      const lane = r.lanes[Math.floor(Math.random() * r.lanes.length)];
+      if (this.cars.some(c => c.road === r && c.lane === lane && Math.abs(c.s - s) < 30)) continue;
+      const ai = this.createAI(Math.random() < 0.3 ? MEET_POOL[Math.floor(Math.random() * MEET_POOL.length)] : TRAFFIC_POOL[Math.floor(Math.random() * TRAFFIC_POOL.length)]);
+      this.placeOnRoad(ai, r, lane, s); return;
+    }
+  }
   manage() {
     // keep highway population
     const roadCars = this.cars.filter(c => c.mode === 'road' && !c.police).length;
@@ -340,6 +359,7 @@ export class Traffic {
       const s = lane.dir === 1 ? 0 : bay.length;
       const ai = this.createAI(Math.random() < 0.35 ? MEET_POOL[Math.floor(Math.random() * MEET_POOL.length)] : TRAFFIC_POOL[Math.floor(Math.random() * TRAFFIC_POOL.length)]);
       this.placeOnRoad(ai, bay, lane, s);
+      this.spawnNear();
     }
     // mark near cars for full-rate updates
     for (const ai of this.cars) ai.near = ai.pos.distanceToSquared(this.g.focus) < 120 * 120;

@@ -4,7 +4,7 @@
 // (Map data © OpenStreetMap contributors, ODbL 1.0 — https://www.openstreetmap.org/copyright).
 import * as THREE from 'three';
 import { mergeGeometries } from 'three/addons/utils/BufferGeometryUtils.js';
-import { surface } from './textures.js';
+import { surface, weather } from './textures.js';
 import { MAP } from '../../data/map-daikoku.js';
 
 const LANE = 3.5;
@@ -437,15 +437,33 @@ export function buildRoadMeshes(net, opts = {}) {
   const group = new THREE.Group(); group.name = 'roads';
   const asphalt = surface('asphalt', { tile: 5, tint: 0x8a8a8a });
   const asphaltOld = surface('asphalt_worn', { tile: 6, tint: 0x8a8a8a });
-  const concrete = surface('concrete', { tile: 3 });
-  const concreteOld = surface('pier', { tile: 4 });
+  const concrete = weather(surface('concrete', { tile: 3 }), 0.55);   // decades of exhaust soot on the parapets
+  const concreteOld = weather(surface('pier', { tile: 4 }), 1.0);    // rain-streaked piers & soffits
   const sidewalk = surface('sidewalk', { tile: 2 });
   const white = new THREE.MeshStandardMaterial({ color: 0xe9e9e4, roughness: 0.65, polygonOffset: true, polygonOffsetFactor: -4, polygonOffsetUnits: -4 });
   const yellow = new THREE.MeshStandardMaterial({ color: 0xe8b400, roughness: 0.65, polygonOffset: true, polygonOffsetFactor: -4, polygonOffsetUnits: -4 });
   const span = bridgeSpan(net);
   // keep piers off the PA lot and out of its main building (the viaducts span over them)
   const noPier = (x, z) => PA.inLot(x, z, 2) || (() => { const [lx, lz] = PA.toLocal(x, z); return lx > -112 && lx < -84 && Math.abs(lz) < 46; })();
-  const geoms = { asphalt: [], asphaltOld: [], concrete: [], concreteOld: [], sidewalk: [], white: [], yellow: [] };
+  const geoms = { asphalt: [], asphaltOld: [], concrete: [], concreteOld: [], sidewalk: [], white: [], yellow: [], wallSteel: [], wallClear: [] };
+  // 防音壁 (Shutoko noise barriers): galvanised lower panel + clear acrylic upper panel curving inwards, H-posts every 4 m.
+  // Only where an elevated expressway runs over land (not over the sea / on the long bridges).
+  const steelPanel = [[0.36, 1.05], [0.36, 2.15], [0.44, 2.15], [0.44, 1.05]];
+  const clearPanel = [[0.40, 2.15], [0.40, 3.45], [0.12, 3.85]];
+  const wallPosts = [], reflectors = [];
+  const landRuns = (r, runs) => {
+    if (!opts.isLand || r.kind === 'ramp' || r.kind === 'local') return [];
+    const out = [];
+    for (const [a, b] of runs) {
+      let s0 = null;
+      for (let q = a; q <= b + 0.01; q += 12) {
+        const p = r.at(Math.min(q, b)); const ok = p.y > 5 && opts.isLand(p.x, p.z) && !(span && r === span.road && q > span.s0 && q < span.s1);
+        if (ok && s0 === null) s0 = q;
+        if ((!ok || q + 12 > b) && s0 !== null) { const e = ok ? b : q; if (e - s0 > 40) out.push([s0, e]); s0 = null; }
+      }
+    }
+    return out;
+  };
   const jersey = [[0, 0], [0.18, 0.08], [0.25, 0.32], [0.3, 1.05], [0.48, 1.05], [0.5, 0], [0.5, -2.0]]; // inner face → top → outer face → girder
   const pierSpots = [];
 
@@ -478,8 +496,18 @@ export function buildRoadMeshes(net, opts = {}) {
     }
     if (!local) {
       // jersey barriers along both edges (gaps wherever the edge runs over another deck: merges / diverges) + girder skirt
-      for (const [s0, s1] of freeRuns(net, r, r.edgeL + 0.3)) geoms.concrete.push(sweep(r, jersey, r.edgeL, yo, 1, s0, s1));
-      for (const [s0, s1] of freeRuns(net, r, r.edgeR - 0.3)) geoms.concrete.push(sweep(r, jersey, r.edgeR, yo, -1, s0, s1));
+      const runL = freeRuns(net, r, r.edgeL + 0.3), runR = freeRuns(net, r, r.edgeR - 0.3);
+      for (const [s0, s1] of runL) geoms.concrete.push(sweep(r, jersey, r.edgeL, yo, 1, s0, s1));
+      for (const [s0, s1] of runR) geoms.concrete.push(sweep(r, jersey, r.edgeR, yo, -1, s0, s1));
+      for (const [side, edge, runs] of [[1, r.edgeL, runL], [-1, r.edgeR, runR]]) {
+        for (const [s0, s1] of landRuns(r, runs)) {
+          geoms.wallSteel.push(sweep(r, steelPanel, edge, yo, side, s0, s1));
+          geoms.wallClear.push(sweep(r, clearPanel, edge, yo, side, s0, s1));
+          for (let q = s0; q <= s1; q += 4) { const p = r.at(q, edge + 0.4 * side); const t = r.dirAt(q); wallPosts.push(p.x, p.y + yo, p.z, Math.atan2(t.x, t.z)); }
+        }
+        // 視線誘導標 delineators on the parapet every 10 m (white on the left edge, amber on the right/median side)
+        for (const [s0, s1] of runs) for (let q = s0 + 5; q < s1; q += 10) { const p = r.at(q, edge + 0.39 * side); const t = r.dirAt(q); reflectors.push(p.x, p.y + yo + 1.12, p.z, Math.atan2(t.x, t.z), side > 0 ? 0 : 1); }
+      }
       if (r.median > 0) geoms.concrete.push(sweep(r, [[-0.3, 0], [-0.12, 0.3], [-0.08, 0.9], [0.08, 0.9], [0.12, 0.3], [0.3, 0]], 0, yo, 1));
       // deck underside
       geoms.concreteOld.push(ribbon(r, r.edgeL + 0.5, r.edgeR - 0.5, yo - 2.0, { segs: 2 })); // latA > latB → faces down (soffit)
@@ -504,13 +532,27 @@ export function buildRoadMeshes(net, opts = {}) {
       if (r.median > 0) for (const [s0, s1] of freeRuns(net, r, 0)) geoms.concrete.push(sweep(r, [[-r.median / 2 + 0.2, 0], [-r.median / 2 + 0.2, 0.18], [r.median / 2 - 0.2, 0.18], [r.median / 2 - 0.2, 0]], 0, yo, 1, s0, s1));
     }
   });
-  const M = { asphalt, asphaltOld, concrete, concreteOld, sidewalk, white, yellow };
+  const wallSteel = surface('metal_galvanized', { tile: 2, tint: 0xb9bec2, metalness: 0.6, roughness: 0.55 }).clone(); wallSteel.side = THREE.DoubleSide;
+  const wallClear = new THREE.MeshStandardMaterial({ color: 0xbfd8d6, roughness: 0.08, metalness: 0.1, transparent: true, opacity: 0.28, side: THREE.DoubleSide, depthWrite: false });
+  const M = { asphalt, asphaltOld, concrete, concreteOld, sidewalk, white, yellow, wallSteel, wallClear };
   for (const k in geoms) if (geoms[k].length) {
     const mesh = new THREE.Mesh(mergeGeometries(geoms[k]), M[k]);
     mesh.receiveShadow = true; mesh.castShadow = k === 'concrete';
     mesh.name = 'road_' + k;
     group.add(mesh);
   }
+  // noise-barrier H-posts + delineators (instanced)
+  const inst = (geo, mat, arr, stride, place) => {
+    const n = arr.length / stride; if (!n) return;
+    const im = new THREE.InstancedMesh(geo, mat, n); const o = new THREE.Object3D();
+    for (let i = 0; i < n; i++) { place(o, arr, i * stride); o.updateMatrix(); im.setMatrixAt(i, o.matrix); }
+    im.castShadow = mat !== null; group.add(im); return im;
+  };
+  inst(new THREE.BoxGeometry(0.18, 2.85, 0.14).translate(0, 1.05 + 1.42, 0), new THREE.MeshStandardMaterial({ color: 0x7d8487, metalness: 0.7, roughness: 0.45 }), wallPosts, 4, (o, a, k) => { o.position.set(a[k], a[k + 1], a[k + 2]); o.rotation.set(0, a[k + 3], 0); });
+  const refl = [0, 1].map(c => new THREE.MeshStandardMaterial({ color: c ? 0xffa21a : 0xf4f4f0, emissive: c ? 0x6a3a00 : 0x3a3a3a, roughness: 0.3 }));
+  for (const c of [0, 1]) { const arr = []; for (let k = 0; k < reflectors.length; k += 5) if (reflectors[k + 4] === c) arr.push(reflectors[k], reflectors[k + 1], reflectors[k + 2], reflectors[k + 3]);
+    const im = inst(new THREE.CylinderGeometry(0.05, 0.05, 0.02, 10).rotateX(Math.PI / 2), refl[c], arr, 4, (o, a, k) => { o.position.set(a[k], a[k + 1], a[k + 2]); o.rotation.set(0, a[k + 3], 0); });
+    if (im) im.castShadow = false; }
   if (opts.isLand) group.add(buildTunnels(net, opts.isLand, opts.tunnelLamps));
   // piers (instanced): column + cap. Every leg footprint is checked against all lower roads/tunnels (incl. kerbs and
   // sidewalks): a leg never stands on a carriageway. If the default layout is blocked, the legs are pushed outwards into a

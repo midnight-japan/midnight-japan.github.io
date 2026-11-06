@@ -584,7 +584,7 @@ input[type="color"] { width: 54px; height: 36px; padding: 2px; border-radius: 8p
 /* ── roadmap ── */
 .road { grid-template-columns: 1fr; }
 @media (min-width: 680px) { .road { grid-template-columns: repeat(2, 1fr); } }
-@media (min-width: 1100px) { .road { grid-template-columns: repeat(5, 1fr); } }
+@media (min-width: 1100px) { .road { grid-template-columns: repeat(3, 1fr); } }
 @media (min-width: 680px) and (max-width: 1099px) { .road .road-col:last-child:nth-child(odd) { grid-column: 1 / -1; } }
 .road-col { border-top: 3px solid #45516e; }
 .road-col.done { border-top-color: var(--green); }

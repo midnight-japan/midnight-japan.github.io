@@ -148,3 +148,40 @@ export function glowTexture() {
 
 export function hdriList() { return manifest?.hdri || {}; }
 export const assetURL = p => new URL(p.replace(/^assets\//, ''), BASE).href;
+
+// ───────── weathering (aged Tokyo concrete & facades) ─────────
+// Adds world-space grime to any MeshStandardMaterial: vertical rain streaks running down from ledges, damp dark bases,
+// soot blotches and a faint rust-brown tint. No extra textures — pure shader, so it costs nothing to load.
+export function weather(mat, amt = 1) {
+  if (!mat || mat.userData.weathered) return mat;
+  mat.userData.weathered = true;
+  const prev = mat.onBeforeCompile;
+  mat.onBeforeCompile = (sh, r) => {
+    prev?.call(mat, sh, r);
+    sh.uniforms.uAge = { value: amt };
+    sh.vertexShader = sh.vertexShader.replace('#include <common>', '#include <common>\nvarying vec3 vAgeW;')
+      .replace('#include <project_vertex>', `#include <project_vertex>
+      { vec4 aw = vec4(transformed, 1.0);
+      #ifdef USE_INSTANCING
+        aw = instanceMatrix * aw;
+      #endif
+        vAgeW = (modelMatrix * aw).xyz; }`);
+    sh.fragmentShader = sh.fragmentShader.replace('#include <common>', `#include <common>
+      varying vec3 vAgeW; uniform float uAge;
+      float ahash(vec2 p) { return fract(sin(dot(p, vec2(127.1, 311.7))) * 43758.5453); }
+      float anoise(vec2 p) { vec2 i = floor(p), f = fract(p); f = f * f * (3.0 - 2.0 * f);
+        return mix(mix(ahash(i), ahash(i + vec2(1, 0)), f.x), mix(ahash(i + vec2(0, 1)), ahash(i + vec2(1, 1)), f.x), f.y); }`)
+      .replace('#include <map_fragment>', `#include <map_fragment>
+      { vec3 w = vAgeW; float hz = w.x + w.z;
+        float streak = anoise(vec2(hz * 1.7, w.y * 0.04)) * anoise(vec2(hz * 0.35, w.y * 0.015 + 3.1));   // long vertical runs
+        float blot = anoise(w.xz * 0.045 + w.y * 0.03) * 0.6 + anoise(vec2(hz, w.y) * 0.21) * 0.4;     // soot / patch repairs
+        float base = 1.0 - smoothstep(0.0, 2.2, w.y);                                                   // damp splash zone
+        float g = clamp(streak * 1.25 + base * 0.55 + (blot - 0.45) * 0.5, 0.0, 1.0) * uAge;
+        diffuseColor.rgb = mix(diffuseColor.rgb, diffuseColor.rgb * vec3(0.66, 0.63, 0.58), g);
+        diffuseColor.rgb = mix(diffuseColor.rgb, diffuseColor.rgb * vec3(1.04, 0.96, 0.86), smoothstep(0.62, 0.9, blot) * 0.35 * uAge); }`);
+  };
+  const key = mat.customProgramCacheKey?.bind(mat);
+  mat.customProgramCacheKey = () => (key ? key() : '') + '|age';
+  mat.needsUpdate = true;
+  return mat;
+}

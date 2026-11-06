@@ -4,7 +4,7 @@
 // Positions come from OpenStreetMap (data/map-daikoku.js → MAP.umihotaru / MAP.landmarks; © OSM contributors, ODbL);
 // structures are simplified procedural models at real scale.
 import * as THREE from 'three';
-import { surface, windowTexture, glowTexture } from './textures.js';
+import { surface, windowTexture, glowTexture, weather } from './textures.js';
 import { MAP, UMI_LOTS } from './roads.js';
 
 const lerp = (a, b, t) => a + (b - a) * t;
@@ -238,7 +238,7 @@ function buildTokyo(W, far) {
       const a = rand() * Math.PI * 2, rr = Math.sqrt(rand()) * b.r, x = b.cx + Math.cos(a) * rr, z = b.cz + Math.sin(a) * rr;
       if (!W.isLand(x, z)) continue;
       const h = b.h[0] + rand() * (b.h[1] - b.h[0]), w = 25 + rand() * 30, d = 25 + rand() * 30;
-      const m = new THREE.MeshStandardMaterial({ color: 0x6b7076, roughness: 0.6, metalness: 0.3, emissive: 0xffffff, emissiveMap: windowTexture(seed++, 0.25 + rand() * 0.3, Math.round(w / 3), Math.round(h / 3.6)), emissiveIntensity: 0 });
+      const m = weather(new THREE.MeshStandardMaterial({ color: 0x6b7076, roughness: 0.6, metalness: 0.3, emissive: 0xffffff, emissiveMap: windowTexture(seed++, 0.25 + rand() * 0.3, Math.round(w / 3), Math.round(h / 3.6)), emissiveIntensity: 0 }), 0.6);
       W.night(m, 0, 1.3);
       const g = new THREE.BoxGeometry(w, h, d); g.translate(0, h / 2, 0); add(new THREE.Mesh(g, [m, m, dark, dark, m, m]), x, 0, z);
       if (h > 150) W.blink.push(W.warnLight(x, h + 2, z));

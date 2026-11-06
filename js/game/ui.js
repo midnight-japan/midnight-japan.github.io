@@ -9,6 +9,7 @@ import { PLATE_REGIONS, PLATE_KANA, PLATE_TYPES, plateCanvas, formatNumber } fro
 import { STROBE_MODES } from './carmodel.js';
 import { OUTFIT_OPTIONS } from './humans.js';
 import { PA_RECT, MAP } from './roads.js';
+import { PLACES } from '../../data/places.js';
 import { ASSIST_SETTING_KEYS, assistsFromSettings, applyDifficulty } from './vehicle.js';
 
 const $ = (s, r = document) => r.querySelector(s);
@@ -561,6 +562,12 @@ export class UI {
     const lab = (txt, x, z, size, col = '#fff') => { const [a, b] = P(x, z); if (a < -200 || b < -50 || a > W + 200 || b > H + 50) return; c.font = `700 ${size * dpr}px "Hiragino Sans","Noto Sans JP",system-ui,sans-serif`; c.lineWidth = 3 * dpr; c.strokeStyle = 'rgba(0,0,0,.8)'; c.strokeText(txt, a, b); c.fillStyle = col; c.fillText(txt, a, b); };
     const seen = new Set();
     for (const r of roads) { if (!r.name || seen.has(r.name)) continue; if (r.kind !== 'expressway' && k < (r.kind === 'ramp' ? 0.6 : 1.2)) continue; seen.add(r.name); const q = r.samples[r.samples.length >> 1].p; lab(r.name.replace(/（.*?）/g, ''), q.x, q.z, r.kind === 'expressway' ? 13 : 11, r.kind === 'expressway' ? '#b6f5cf' : '#dde4ee'); }
+    // place names: wards always, towns/wharves from mid zoom, JCTs/spots when zoomed in
+    for (const pl of PLACES) {
+      const need = pl.kind === 'ward' || pl.kind === 'water' ? 0 : pl.kind === 'jct' || pl.kind === 'spot' ? 0.15 * dpr : 0.05 * dpr;
+      if (k < need) continue;
+      lab(pl.kind === 'jct' ? '⬡ ' + pl.name : pl.name, pl.x, pl.z, pl.kind === 'ward' ? 14 : 11, pl.kind === 'water' ? '#8fc8ff' : pl.kind === 'jct' ? '#b6f5cf' : pl.kind === 'ward' ? '#ffffff' : '#c9d2de');
+    }
     for (const l of MAP.landmarks || []) lab('◆ ' + l.name, l.x, l.z, 12, '#ffd38a');
     lab('大黒PA', (PA_RECT.x0 + PA_RECT.x1) / 2, (PA_RECT.z0 + PA_RECT.z1) / 2, 15, '#ffb347');
     // player

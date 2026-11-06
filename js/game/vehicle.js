@@ -469,13 +469,18 @@ export class Vehicle {
     if (target < this.pos.y - 0.6) { // falling
       this.vy -= G * dt; this.pos.y += this.vy * dt; this.airborne += dt;
       if (this.pos.y <= target) { this.pos.y = target; if (this.vy < -6) this.events.push('crash'); this.vy = 0; }
-    } else { this.pos.y = lerp(this.pos.y, target, 1 - Math.exp(-dt * 25)); this.vy = 0; this.airborne = 0; }
+    } else { this.pos.y = this.pos.y < target ? target : lerp(this.pos.y, target, 1 - Math.exp(-dt * 40)); this.vy = 0; this.airborne = 0; } // never sink below the surface
     this.onRoad = q.onRoad; this.road = q.road; this.surface = q;
     // grade along heading (from two-point sample)
     const f = this.forward;
     const qa = net.query(this.pos.x + f.x * 1.3, this.pos.z + f.z * 1.3, this.pos.y + 0.6, (x, z) => world.ground(x, z)).y;
     const qb = net.query(this.pos.x - f.x * 1.3, this.pos.z - f.z * 1.3, this.pos.y + 0.6, (x, z) => world.ground(x, z)).y;
     this.grade = clamp((qa - qb) / 2.6, -0.15, 0.15);
+    // cross-slope (camber / banked ramps): sample the body's left and right edge
+    const lx = Math.cos(this.yaw), lz = -Math.sin(this.yaw), hw = 0.8;
+    const ql = net.query(this.pos.x + lx * hw, this.pos.z + lz * hw, this.pos.y + 0.6, (x, z) => world.ground(x, z)).y;
+    const qr = net.query(this.pos.x - lx * hw, this.pos.z - lz * hw, this.pos.y + 0.6, (x, z) => world.ground(x, z)).y;
+    this.bank = clamp((ql - qr) / (hw * 2), -0.12, 0.12);
     this.surfaceMu = q.onRoad || world.isLand(this.pos.x, this.pos.z) ? 1 : 0.6;
     // barriers on elevated / ramp roads
     if (q.hit && q.road.kind !== 'local' && q.y > 0.5) {

@@ -1,8 +1,26 @@
 // Shared game metadata: version, changelog, regions. Update VERSION + CHANGELOG on every release.
-export const GAME = { title: 'MIDNIGHT JAPAN', titleJa: 'ミッドナイト・ジャパン', version: '0.3.5', build: '2026.11.06' };
+export const GAME = { title: 'MIDNIGHT JAPAN', titleJa: 'ミッドナイト・ジャパン', version: '0.4.0', build: '2026.11.06' };
 
 // Newest first. type: new | change | fix | known
 export const CHANGELOG = [
+  {
+    version: '0.4.0', date: '2026-11-06', codename: 'Roadside',
+    summary: {
+      ko: '도로와 수평으로 기우는 차체, 교통량 2배, 고속도로 위 하차, 방음벽·시선유도표, 세월이 묻은 도시, 세밀한 지명, 인쇄물까지 그린 편의점, 실제 버전에 맞춘 로드맵.',
+      ja: '路面に沿って傾く車体、交通量2倍、高速道路上での降車、防音壁・視線誘導標、年季の入った街並み、詳しい地名、印刷物まで描いたコンビニ、実際の版に合わせたロードマップ。',
+      en: 'Cars sit level with the road, twice the traffic, step out on the expressway, noise barriers and delineators, a weathered city, detailed place names, a konbini with printed goods, and a roadmap that matches the real releases.'
+    },
+    items: [
+      { type: 'fix', ko: '오르막·내리막·편경사에서 차체가 도로면과 평행하게 기울도록 수정(동서 방향 경사에서 차가 옆으로 기울던 회전 순서 버그), 차가 노면 아래로 가라앉지 않게 접지 보정, NPC 차량도 경사에 맞춰 기울어짐', ja: '上り・下り・横断勾配で車体が路面と平行に傾くよう修正（東西方向の坂で車が横に傾いていた回転順のバグ）、車が路面に沈まないよう接地を補正、NPC車両も勾配に合わせて傾く', en: 'Bodies now pitch and roll with the road on climbs, descents and camber (fixed a rotation-order bug that tilted cars sideways on east–west slopes); cars never sink below the surface; NPC cars pitch with the grade too' },
+      { type: 'new', ko: '정차하면 갓길·고가도로 위 어디서든 하차해 노면 위를 걸을 수 있음', ja: '停車すれば路肩でも高架の上でも降車して路面を歩ける', en: 'Stop anywhere — shoulder or elevated expressway — and step out to walk on the deck' },
+      { type: 'change', ko: 'NPC 교통량 약 2배(품질별 18~76대), 내 주변 고속도로 전체에 차량이 생성', ja: 'NPC交通量を約2倍（品質別18〜76台）、周囲の高速道路全体に車両が出現', en: 'About twice the NPC traffic (18–76 cars by quality), spawning on every expressway around you' },
+      { type: 'new', ko: '수도고식 방음벽(아연도금 하부 패널+안쪽으로 휜 투명 아크릴, H형 지주 4m 간격)을 육상 고가 구간에, 방호벽 위 시선유도표(좌측 흰색·우측 주황) 10m 간격', ja: '首都高型の防音壁（亜鉛めっき下部パネル＋内側に曲がる透明アクリル、H形支柱4m間隔）を陸上の高架区間に、防護柵上に視線誘導標（左白・右橙）を10m間隔で', en: 'Shuto-style noise barriers (galvanised lower panel, inward-curving clear acrylic, H-posts every 4 m) on elevated sections over land; delineators every 10 m (white left, amber right)' },
+      { type: 'new', ko: '도시 풍화 표현: 빗물 자국·그을음·하단 습기 얼룩을 건물·교각·방호벽·스카이라인에', ja: '街の経年表現：雨だれ・煤・足元の湿り染みを建物・橋脚・防護柵・スカイラインに', en: 'Weathering: rain streaks, soot and damp bases on buildings, piers, parapets and the skyline' },
+      { type: 'new', ko: '세밀한 지명 59곳(나마무기·末広町·扇島·浮島町·大井ふ頭 등): HUD에 "노선 · 지명", 전체 지도에 확대 단계별 표시', ja: '詳しい地名59か所（生麦・末広町・扇島・浮島町・大井ふ頭など）：HUDに「路線・地名」、全体マップに拡大段階ごとに表示', en: '59 detailed place names (Namamugi, Suehiro-chō, Ōgishima, Ukishima-chō, Ōi Wharf…): "route · place" on the HUD and zoom-dependent labels on the full map' },
+      { type: 'new', ko: '편의점: 상품명·용량·가격이 인쇄된 포장(3개씩 진열), 잡지 표지·신문, 선반 가격표(세금 포함가)', ja: 'コンビニ：商品名・容量・価格を印刷したパッケージ（3フェイス陳列）、雑誌の表紙・新聞、棚の値札（税込価格）', en: 'Konbini: packaging printed with names, sizes and prices (faced in threes), magazine covers and a newspaper, shelf price tags with tax-in prices' },
+      { type: 'change', ko: '웹사이트 로드맵을 실제 출시 내용에 맞게 정리: 0.3 출시됨, 0.4 현재, 0.5 C1·랜드마크 정밀 모델', ja: 'サイトのロードマップを実際のリリースに合わせて整理：0.3リリース済み、0.4現在、0.5でC1・ランドマーク精密モデル', en: 'Website roadmap now matches the real releases: 0.3 released, 0.4 now, 0.5 C1 and detailed landmark models' },
+    ]
+  },
   {
     version: '0.3.5', date: '2026-11-06', codename: 'Polish',
     summary: {
