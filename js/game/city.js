@@ -248,7 +248,7 @@ function treeGeometry(kind) {
   };
   const trunk = (h, r) => { const g = new THREE.CylinderGeometry(r * 0.7, r, h, 7); g.translate(0, h / 2, 0); return finish(g, [0.3, 0.24, 0.19], 0.15, false); };
   if (kind === 3) { // distant tree: one blob
-    parts.push(trunk(3, 0.25)); const g = blob(2.6, 1, 0.25); g.translate(0, 4.6, 0); parts.push(finish(g, [0.26, 0.38, 0.18], 0.2, true));
+    parts.push(trunk(3, 0.25)); const g = blob(2.6, 0, 0.2); g.translate(0, 4.6, 0); parts.push(finish(g, [0.26, 0.38, 0.18], 0.2, true));
   } else if (kind === 2) { // black pine (kuromatsu)
     parts.push(trunk(5.5, 0.22));
     for (let k = 0; k < 4; k++) { const g = blob(1.5 - k * 0.12, 1, 0.3); g.scale(1.45, 0.5, 1.45); g.translate((Math.random() - 0.5) * 1.4, 3.4 + k * 1.15, (Math.random() - 0.5) * 1.4); parts.push(finish(g, [0.17, 0.29, 0.17], 0.25, true)); }
@@ -286,6 +286,7 @@ export class City {
     this.wgrid = new Map(); this.WG = 50;   // water grid
     this.queue = []; this.busy = 0; this.reqId = 0; this.cb = new Map();
     this.net = new CityNet(this);
+    this.rail = new RailNet();
   }
   async init() {
     try { const r = await fetch(new URL('../../data/city/index.json', import.meta.url)); if (!r.ok) return false; this.index = await r.json(); } catch { return false; }
@@ -315,7 +316,7 @@ export class City {
     const g = (role, tile, tint) => { const s = surface(role, { tile, tint }); const m = s.clone(); m.polygonOffset = true; m.polygonOffsetFactor = -0.5; m.polygonOffsetUnits = -0.5; return m; };
     const water = new THREE.MeshStandardMaterial({ color: 0x0d2230, roughness: 0.12, metalness: 0.2, envMapIntensity: 0.5 });
     if (this.world.sea?.material.normalMap) { water.normalMap = this.world.sea.material.normalMap; water.normalScale = new THREE.Vector2(0.25, 0.25); }
-    this.mGround = { 0: g('grass', 3, 0x9fb27a), 1: g('concrete_old', 5, 0xb0b0ac), 2: g('gravel', 3, 0xc7b08a), 3: water, 4: g('parking', 5, 0xffffff), 5: g('pavement', 4, 0xffffff), 6: g('pavement', 4, 0xffffff), 7: g('gravel', 2, 0x9a948c), 8: g('concrete_old', 5, 0xa8a8a4), 9: g('sand', 3, 0xffffff), 10: g('grass', 3, 0x6f8a52), 11: g('grass', 2.5, 0x9cc070) };
+    this.mGround = { 12: g('concrete', 6, 0xb8b8b2), 0: g('grass', 3, 0x9fb27a), 1: g('concrete_old', 5, 0xb0b0ac), 2: g('gravel', 3, 0xc7b08a), 3: water, 4: g('parking', 5, 0xffffff), 5: g('pavement', 4, 0xffffff), 6: g('pavement', 4, 0xffffff), 7: g('gravel', 2, 0x9a948c), 8: g('concrete_old', 5, 0xa8a8a4), 9: g('sand', 3, 0xffffff), 10: g('grass', 3, 0x6f8a52), 11: g('grass', 2.5, 0x9cc070) };
     this.mLand = surface('concrete', { tile: 6, tint: 0xc9c6bf });
     this.treeGeo = [0, 1, 2, 3].map(treeGeometry);
     this.mTree = new THREE.MeshStandardMaterial({ vertexColors: true, roughness: 0.85 });
@@ -401,10 +402,13 @@ export class City {
     // colliders → grid (world coords)
     t.cols = o.cols.map(([x, z, hx, hz, ry, y0, y1]) => ({ x: x + ox, z: z + oz, hx, hz, c: Math.cos(ry), s: Math.sin(ry), y0, y1, kind: 'city' }));
     for (const c of t.cols) { const r = Math.max(c.hx, c.hz); for (let i = Math.floor((c.x - r) / this.CG); i <= Math.floor((c.x + r) / this.CG); i++) for (let j = Math.floor((c.z - r) / this.CG); j <= Math.floor((c.z + r) / this.CG); j++) { const kk = i * 100003 + j; let a = this.cgrid.get(kk); if (!a) this.cgrid.set(kk, a = []); a.push(c); } }
+    t.runways = o.runways.map(([ax, az, bx, bz, w]) => [ax + ox, az + oz, bx + ox, bz + oz, w]);
+    t.gates = []; for (let q = 0; q < o.gates.length; q += 3) t.gates.push([o.gates[q] + ox, o.gates[q + 1] + oz, o.gates[q + 2]]);
     t.sigs = []; for (let q = 0; q < o.sigs.length; q += 3) t.sigs.push([o.sigs[q] + ox, o.sigs[q + 1] + oz, o.sigs[q + 2]]);
     t.lamps = o.lamps.map(([x, y, z]) => new THREE.Vector3(x + ox, y, z + oz));
     t.water = o.water.map(p => { const pts = p.map(([x, z]) => [x + ox, z + oz]); let x0 = 1e9, x1 = -1e9, z0 = 1e9, z1 = -1e9; for (const [x, z] of pts) { x0 = Math.min(x0, x); x1 = Math.max(x1, x); z0 = Math.min(z0, z); z1 = Math.max(z1, z); } return { pts, x0, x1, z0, z1 }; });
     if (this.net) { this.net.remove(k); if (o.net.length) this.net.add(k, o.net, o.sigs, ox, oz); }
+    this.rail.remove(k); if (o.rails.length) this.rail.add(k, o.rails, o.stations, ox, oz);
     t.bridges = o.bridges.map(([ax, az, bx, bz, hw]) => [ax + ox, az + oz, bx + ox, bz + oz, hw]);
     for (const w of t.water) for (let i = Math.floor(w.x0 / this.WG); i <= Math.floor(w.x1 / this.WG); i++) for (let j = Math.floor(w.z0 / this.WG); j <= Math.floor(w.z1 / this.WG); j++) { const kk = i * 100003 + j; let a = this.wgrid.get(kk); if (!a) this.wgrid.set(kk, a = { w: [], b: [] }); a.w.push(w); }
     for (const b of t.bridges) { const x0 = Math.min(b[0], b[2]) - b[4], x1 = Math.max(b[0], b[2]) + b[4], z0 = Math.min(b[1], b[3]) - b[4], z1 = Math.max(b[1], b[3]) + b[4]; for (let i = Math.floor(x0 / this.WG); i <= Math.floor(x1 / this.WG); i++) for (let j = Math.floor(z0 / this.WG); j <= Math.floor(z1 / this.WG); j++) { const kk = i * 100003 + j; let a = this.wgrid.get(kk); if (!a) this.wgrid.set(kk, a = { w: [], b: [] }); a.b.push(b); } }
@@ -417,7 +421,7 @@ export class City {
   unload(k) {
     const t = this.tiles.get(k); if (!t) return;
     if (t.group) { this.group.remove(t.group); disposeGroup(t.group); }
-    this.unindex(t); this.tiles.delete(k); this.net?.remove(k);
+    this.unindex(t); this.tiles.delete(k); this.net?.remove(k); this.rail.remove(k);
     this.queue = this.queue.filter(e => e.k !== k);
   }
 
@@ -439,6 +443,8 @@ export class City {
     const chime = tt >= 30 && tt < 48 ? 1 : tt < 18 ? 2 : 0;
     return { chime, vol: Math.max(0, 1 - best.d / 45) };
   }
+  // airport data of the loaded tiles (for js/game/planes.js)
+  airport() { const rw = [], gt = []; for (const t of this.tiles.values()) { if (t.runways) rw.push(...t.runways); if (t.gates && t.lod <= 1) gt.push(...t.gates); } return { runways: rw, gates: gt }; }
   lampsNear(p, r = 260) {
     const out = [];
     for (const t of this.tiles.values()) { if (!t.lamps || t.lod !== 0) continue; for (const l of t.lamps) if (Math.abs(l.x - p.x) < r && Math.abs(l.z - p.z) < r) out.push(l); }
@@ -451,6 +457,40 @@ export class City {
   }
 }
 const EMPTY = [];
+
+// ── railway graph (for trains): chains joined where their end points meet ──
+export class RailNet {
+  constructor() { this.chains = new Map(); this.byTile = new Map(); this.ends = new Map(); this.stations = []; this.id = 0; }
+  key(x, z) { return Math.round(x) + ',' + Math.round(z); }
+  add(tk, rails, stations, ox, oz) {
+    const ids = [];
+    for (const a of rails) {
+      const pts = []; for (let k = 2; k < a.length; k += 2) pts.push([a[k] + ox, a[k + 1] + oz]);
+      const cum = [0]; for (let k = 1; k < pts.length; k++) cum.push(cum[k - 1] + Math.hypot(pts[k][0] - pts[k - 1][0], pts[k][1] - pts[k - 1][1]));
+      const c = { id: ++this.id, tk, cls: a[0], deck: a[1], pts, cum, len: cum[cum.length - 1] };
+      if (c.len < 2) continue;
+      c.k0 = this.key(...pts[0]); c.k1 = this.key(...pts[pts.length - 1]);
+      for (const k of [c.k0, c.k1]) { let e = this.ends.get(k); if (!e) this.ends.set(k, e = []); e.push(c); }
+      this.chains.set(c.id, c); ids.push(c.id);
+    }
+    this.byTile.set(tk, { ids, st: (() => { const o = []; for (let k = 0; k < stations.length; k += 2) o.push([stations[k] + ox, stations[k + 1] + oz]); return o; })() });
+    this.stations = [...this.byTile.values()].flatMap(v => v.st);
+  }
+  remove(tk) {
+    const v = this.byTile.get(tk); if (!v) return;
+    for (const id of v.ids) { const c = this.chains.get(id); if (!c) continue; c.dead = true; for (const k of [c.k0, c.k1]) { const e = this.ends.get(k); if (!e) continue; const r = e.filter(x => x !== c); if (r.length) this.ends.set(k, r); else this.ends.delete(k); } this.chains.delete(id); }
+    this.byTile.delete(tk); this.stations = [...this.byTile.values()].flatMap(v2 => v2.st);
+  }
+  // point + heading at arc length s on chain c
+  at(c, s) { s = Math.max(0, Math.min(c.len, s)); let i = 0; while (i < c.pts.length - 2 && c.cum[i + 1] < s) i++; const a = c.pts[i], b = c.pts[i + 1], L = c.cum[i + 1] - c.cum[i] || 1e-6, t = (s - c.cum[i]) / L; return { x: a[0] + (b[0] - a[0]) * t, z: a[1] + (b[1] - a[1]) * t, dx: (b[0] - a[0]) / L, dz: (b[1] - a[1]) / L }; }
+  // continue from the end of chain c (atEnd: 1 = its last point, 0 = its first point) → { c, dir, s }
+  next(c, atEnd) {
+    const k = atEnd ? c.k1 : c.k0; const p = this.at(c, atEnd ? c.len : 0); const hx = p.dx * (atEnd ? 1 : -1), hz = p.dz * (atEnd ? 1 : -1);
+    let best = null;
+    for (const c2 of this.ends.get(k) || []) { if (c2 === c || c2.dead) continue; const start = c2.k0 === k; const q = this.at(c2, start ? 0 : c2.len); const dot = (start ? q.dx : -q.dx) * hx + (start ? q.dz : -q.dz) * hz; if (dot > 0.6 && (!best || dot > best.dot)) best = { c: c2, dir: start ? 1 : -1, s: start ? 0 : c2.len, dot }; }
+    return best;
+  }
+}
 
 // ── drivable street graph for city traffic (built from the streamed tiles' street centrelines) ──
 export class CityNet {

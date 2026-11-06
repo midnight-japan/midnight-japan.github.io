@@ -20,6 +20,9 @@ import { buildCarAuto, requestGlb, loadManifest, hasGlb, glbEntry } from './carf
 import { Vehicle, assistsFromSettings } from './vehicle.js';
 import { Input } from './input.js';
 import { Traffic } from './traffic.js';
+import { Trains } from './trains.js';
+import { Walkers } from './walkers.js';
+import { Planes } from './planes.js';
 import { NPCs, CHATTER } from './npc.js';
 import { Online } from './online.js';
 import { Accidents } from './accident.js';
@@ -146,6 +149,9 @@ class Game {
     this.traffic = new Traffic(this);
     this.police = new Police(this);
     this.traffic.init();
+    this.trains = new Trains(this);
+    this.walkers = new Walkers(this);
+    this.planes = new Planes(this);
     this.toll = new TollPlaza(this);
     this.online = new Online(this);
     this.accidents = new Accidents(this);
@@ -203,7 +209,7 @@ class Game {
       if (region === 'bay') { const r = net.byId.bayshore, sp = this.world.bridgeSpan; const s = sp ? Math.max(50, sp.s0 - 250) : r.length * 0.2; const L = r.lanes.filter(l => l.dir === 1).sort((a, b) => b.lat - a.lat)[0]; return at(r, s, L.lat); }
       if (region === 'umi') { const r = net.byId.umi_in_e || net.byId.umi_in_w; return at(r, Math.max(2, r.length - 10), 0); }
       // city streets (real OpenStreetMap roads): keep to the left lane
-      const CITY_SPAWN = { mm: [-3949.7, 1257.2, 1.01, 14], chinatown: [-2987.3, 2310, -1.04, 7.5], tsurumi: [-2109.4, -2792.6, -0.93, 7.5], kawasaki: [2598.8, -5144.9, -0.91, 7.5] };
+      const CITY_SPAWN = { mm: [-3949.7, 1257.2, 1.01, 14], chinatown: [-2987.3, 2310, -1.04, 7.5], tsurumi: [-2109.4, -2792.6, -0.93, 7.5], kawasaki: [2598.8, -5144.9, -0.91, 7.5], haneda: [7756.1, -9056.3, 1.02, 7.5] };
       if (CITY_SPAWN[region]) { const [x, z, yaw, w] = CITY_SPAWN[region]; const o = w / 4; return { pos: new THREE.Vector3(x + Math.cos(yaw) * o, 0.3, z - Math.sin(yaw) * o), yaw }; }
       if (region === 'futo') { const r = net.byId.futo_5 || net.roads.find(x => x.kind === 'local'); const L = r.lanes.filter(l => l.dir === 1).sort((a, b) => b.lat - a.lat)[0] || r.lanes[0]; return at(r, r.length * 0.5, L.lat); }
     } catch (e) { console.warn('spawn', e); }
@@ -577,6 +583,9 @@ class Game {
       if (this.mode === 'drive') this.updateDrive(dt);
       else if (this.mode === 'walk') { this.updateWalk(dt); this.idleVehicle(dt); }
       this.traffic.update(dt, this.env || { night: 1 });
+      try { this.trains?.update(dt, this.focus, this.env?.night ?? 1); } catch (e) { console.warn('trains', e); this.trains = null; }
+      try { this.walkers?.update(dt, this.focus, this.env?.night ?? 1); } catch (e) { console.warn('walkers', e); this.walkers = null; }
+      try { this.planes?.update(dt, this.focus, this.env?.night ?? 1); } catch (e) { console.warn('planes', e); this.planes = null; }
       this.npc.update(dt);
       this.toll.update(dt);
       this.online.update(dt);

@@ -46,7 +46,7 @@ export class UI {
         <label class="spawn-sel"><span data-i18n="game.spawn.label"></span> <select id="t-spawn">
           <option value="pa" data-i18n="game.spawn.pa"></option><option value="bay" data-i18n="game.spawn.bay"></option>
           <option value="umi" data-i18n="game.spawn.umi"></option><option value="futo" data-i18n="game.spawn.futo"></option>
-          <option value="mm" data-i18n="game.spawn.mm"></option><option value="chinatown" data-i18n="game.spawn.chinatown"></option><option value="tsurumi" data-i18n="game.spawn.tsurumi"></option><option value="kawasaki" data-i18n="game.spawn.kawasaki"></option></select></label>
+          <option value="mm" data-i18n="game.spawn.mm"></option><option value="chinatown" data-i18n="game.spawn.chinatown"></option><option value="tsurumi" data-i18n="game.spawn.tsurumi"></option><option value="kawasaki" data-i18n="game.spawn.kawasaki"></option><option value="haneda" data-i18n="game.spawn.haneda"></option></select></label>
         <div class="lobby-online" id="lobby-online"></div>
         <div class="lobby-row"><button class="btn sm" data-a="settings">⚙ <span data-i18n="game.menu.settings"></span></button>
         <button class="btn sm" data-a="controls">🎮 <span data-i18n="game.menu.controls"></span></button>

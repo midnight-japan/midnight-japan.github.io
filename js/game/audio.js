@@ -1731,6 +1731,23 @@ export class GameAudio {
       for (let i = 0; i < k; i++) tn(this, d, t + i * 0.065, { f, gain: 1, attack: 0.004, hold: 0.02, decay: 0.006 });
     }
   }
+  // jet roar from js/game/planes.js (0..1 by distance to the nearest aircraft)
+  setJet(level) {
+    try {
+      const A = this.amb; if (!A || !this.ctx) return;
+      const ctx = this.ctx, t = ctx.currentTime;
+      if (!A.jet) {
+        const lp = ctx.createBiquadFilter(); lp.type = 'lowpass'; lp.frequency.value = 700; lp.Q.value = 0.5;
+        const hp = ctx.createBiquadFilter(); hp.type = 'bandpass'; hp.frequency.value = 2400; hp.Q.value = 0.8;
+        const g = ctx.createGain(); g.gain.value = 0; const g2 = ctx.createGain(); g2.gain.value = 0.25;
+        const s1 = ctx.createBufferSource(); s1.buffer = this.noise.brown; s1.loop = true; s1.start(t);
+        const s2 = ctx.createBufferSource(); s2.buffer = this.noise.pink; s2.loop = true; s2.start(t, 1.3);
+        s1.connect(lp); lp.connect(g); s2.connect(hp); hp.connect(g2); g2.connect(g); g.connect(A.out); A.jet = g; A.jetLP = lp;
+      }
+      const L = clamp(num(level, 0), 0, 1);
+      sp(A.jet.gain, L * 0.5, t, 0.4); sv(A.jetLP.frequency, 500 + 900 * L, 0.05);
+    } catch (e) { this._err(e); }
+  }
   _chime(kind, vol) {
     const ctx = this.ctx, t = ctx.currentTime + 0.01, d = this._ambDest(0, 6000, 0.05 * vol);
     if (kind === 1) { // ピヨ: a quick falling chirp, twice

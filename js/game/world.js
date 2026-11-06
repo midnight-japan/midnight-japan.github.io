@@ -430,6 +430,7 @@ export class World {
     for (let x = -17; x < 5; x += 5) for (let z = -78; z < -64; z += 5) { B.add(boxGeo(1.4, 0.05, 0.9), tableMat, x, 0.75, z); B.add(new THREE.CylinderGeometry(0.06, 0.06, 0.72, 8), surface('metal'), x, 0.38, z); for (const dz of [-0.8, 0.8]) B.add(boxGeo(0.45, 0.45, 0.45), new THREE.MeshStandardMaterial({ color: 0x8a2b2b }), x, 0.45, z + dz); }
     B.add(boxGeo(16, 1.1, 1.0), counterMat, -7, 0.6, -82); // kitchen counter
     this.interact.push({ pos: B.v(-7, 0, -80.5), r: 2.5, type: 'food' });
+    this.buildInteriors(B, { z0, z1, H, counterMat, shelfMat });
     // toilets entrance signage
     B.sign('pa_facility', { type: 'toilet' }, -30, 4.4, z1 + 0.3, 0, 1);
     B.sign('pa_facility', { type: 'food_court' }, -7, 4.4, z1 + 0.3, 0, 1);
@@ -469,6 +470,64 @@ export class World {
       P.add(boxGeo(16, 2.6, 0.1), lit, 48, 1.6, -54.0);
       P.sign('pa_facility', { type: 'toilet' }, 40, 3.4, -53.9, 0, 1);
     }
+  }
+
+  // ── walk-in interiors of the PA building: food court, toilets, highway info corner ──
+  buildInteriors(B, { z0, z1, H, counterMat, shelfMat }) {
+    const steel = new THREE.MeshStandardMaterial({ color: 0xc8ccd0, roughness: 0.3, metalness: 0.8 });
+    const white = new THREE.MeshStandardMaterial({ color: 0xf2f2ef, roughness: 0.4 });
+    const dark = new THREE.MeshStandardMaterial({ color: 0x1d1f22, roughness: 0.4, metalness: 0.3 });
+    const canvasMat = (w, h, draw, glow = 0.9) => { const c = document.createElement('canvas'); c.width = w; c.height = h; draw(c.getContext('2d'), w, h); const t = new THREE.CanvasTexture(c); t.colorSpace = THREE.SRGBColorSpace; t.anisotropy = 4; return this.night(new THREE.MeshStandardMaterial({ map: t, emissive: 0xffffff, emissiveMap: t, emissiveIntensity: glow * 0.6, roughness: 0.5 }), glow * 0.6, glow * 1.2); };
+    const JP = '"Hiragino Sans","Hiragino Kaku Gothic ProN","Yu Gothic","Noto Sans JP",sans-serif';
+    // food court kitchen: back wall equipment, lit menu board, pick-up display, ticket machine, water, tray return
+    B.add(boxGeo(16, 2.4, 0.6), steel, -7, 1.2, z0 + 0.6);                                 // kitchen line behind the counter
+    for (let k = 0; k < 4; k++) B.add(boxGeo(1.6, 0.9, 0.8), steel, -13 + k * 3.8, 0.95, -82.9);
+    B.add(boxGeo(15, 0.05, 1.6), white, -7, 1.16, -82);                                       // counter top
+    const MENU = [['ラーメン', '850'], ['醤油ラーメン', '900'], ['カレーライス', '780'], ['かつ丼', '950'], ['かけうどん', '600'], ['唐揚げ定食', '980'], ['海鮮丼', '1,280'], ['ソフトクリーム', '400']];
+    const menu = canvasMat(1024, 256, (g, w, h) => {
+      g.fillStyle = '#1b130c'; g.fillRect(0, 0, w, h); g.fillStyle = '#f2b33d'; g.font = `800 34px ${JP}`; g.fillText('大黒PA フードコート  MENU', 20, 42);
+      MENU.forEach(([n, p], i) => { const x = 20 + (i % 4) * 250, y = 110 + Math.floor(i / 4) * 92; g.fillStyle = '#3a2a1b'; g.fillRect(x - 6, y - 52, 236, 82); g.fillStyle = '#fff'; g.font = `700 30px ${JP}`; g.fillText(n, x, y - 10); g.fillStyle = '#ffcf6b'; g.font = `800 28px ${JP}`; g.fillText('¥' + p, x, y + 22); });
+    }, 1);
+    B.add(new THREE.PlaneGeometry(14, 3.5), menu, -7, 4.0, z0 + 0.95);
+    const pick = canvasMat(256, 128, (g, w, h) => { g.fillStyle = '#050505'; g.fillRect(0, 0, w, h); g.fillStyle = '#ff5a2a'; g.font = `700 22px ${JP}`; g.fillText('お呼び出し番号', 14, 30); g.fillStyle = '#ffd34a'; g.font = '700 64px "Courier New",monospace'; g.fillText('127', 40, 104); g.fillText('128', 150, 104); }, 1.2);
+    B.add(boxGeo(1.7, 0.9, 0.08), dark, 2, 2.6, -81.3); B.add(new THREE.PlaneGeometry(1.6, 0.8), pick, 2, 2.6, -81.25);
+    // meal-ticket machine (食券機) by the entrance
+    const tick = canvasMat(256, 512, (g, w, h) => { g.fillStyle = '#e9e9e4'; g.fillRect(0, 0, w, h); g.fillStyle = '#20232a'; g.fillRect(10, 10, w - 20, 60); g.fillStyle = '#7dfc9b'; g.font = `700 26px ${JP}`; g.fillText('食券をお求め下さい', 20, 50);
+      for (let i = 0; i < 16; i++) { const x = 16 + (i % 4) * 58, y = 90 + Math.floor(i / 4) * 70; g.fillStyle = i % 5 === 0 ? '#ffd166' : '#fff'; g.fillRect(x, y, 52, 58); g.strokeStyle = '#999'; g.strokeRect(x, y, 52, 58); g.fillStyle = '#222'; g.font = `700 13px ${JP}`; g.fillText((MENU[i % MENU.length][0]).slice(0, 4), x + 4, y + 26); g.fillStyle = '#c0392b'; g.fillText(MENU[i % MENU.length][1], x + 6, y + 48); }
+      g.fillStyle = '#333'; g.fillRect(40, 400, 70, 20); g.fillRect(140, 400, 70, 20); }, 0.8);
+    B.add(boxGeo(1.0, 1.8, 0.7), white, -17.5, 0.95, -61.6); B.add(new THREE.PlaneGeometry(0.9, 1.5), tick, -17.5, 1.1, -61.96, Math.PI); B.col(-17.5, -61.6, 0.55, 0.4, 0, -1, 2);
+    this.interact.push({ pos: B.v(-17.5, 0, -60.6), r: 1.5, type: 'food' });
+    // water / tea dispenser + tray return + TV
+    B.add(boxGeo(0.6, 1.3, 0.5), steel, 4.6, 0.8, -70); B.add(boxGeo(0.5, 0.06, 0.4), dark, 4.6, 1.0, -69.8);
+    B.add(boxGeo(1.8, 1.6, 0.6), steel, 4.4, 0.95, -78); for (let k = 0; k < 4; k++) B.add(boxGeo(1.7, 0.03, 0.5), dark, 4.4, 0.4 + k * 0.35, -78);
+    const tv = canvasMat(512, 288, (g, w, h) => { const gr = g.createLinearGradient(0, 0, w, h); gr.addColorStop(0, '#1d4f91'); gr.addColorStop(1, '#0b1f3a'); g.fillStyle = gr; g.fillRect(0, 0, w, h); g.fillStyle = '#fff'; g.font = `800 34px ${JP}`; g.fillText('首都高 交通情報', 24, 54); g.font = `600 24px ${JP}`; g.fillStyle = '#ffd34a'; g.fillText('湾岸線 東行  大井JCT付近 渋滞 3km', 24, 120); g.fillStyle = '#9fe0ff'; g.fillText('K5大黒線  順調', 24, 166); g.fillText('アクアライン  順調', 24, 206); g.fillStyle = '#ff6b6b'; g.fillText('C1 都心環状線  事故 車線規制', 24, 246); }, 1);
+    B.add(boxGeo(2.6, 1.5, 0.08), dark, 5.6, 3.6, -71); B.add(new THREE.PlaneGeometry(2.45, 1.38), tv, 5.54, 3.6, -71, -Math.PI / 2);
+    // stools at the window counter
+    B.add(boxGeo(20, 0.06, 0.5), counterMat, -7, 1.05, z1 - 0.6); for (let x = -16; x < 4; x += 1.4) { B.add(new THREE.CylinderGeometry(0.2, 0.2, 0.06, 12), dark, x, 0.72, z1 - 1.2); B.add(new THREE.CylinderGeometry(0.04, 0.04, 0.7, 6), steel, x, 0.37, z1 - 1.2); }
+    // ── toilets (x −40..−20): men | women, stalls, urinals, sinks + mirrors ──
+    const tileW = surface('tiles', { tile: 0.6, tint: 0xe9eef2 });
+    B.add(boxGeo(19.4, 0.08, 23.4), tileW, -30, 0.22, (z0 + z1) / 2);
+    B.add(boxGeo(0.15, 2.6, 14), white, -30, 1.3, -77); B.col(-30, -77, 0.12, 7, 0, -1, 3);                       // men | women divider
+    const stallMat = new THREE.MeshStandardMaterial({ color: 0x8aa7b8, roughness: 0.4 });
+    for (const [xa, n] of [[-39.2, 3], [-29.2, 4]]) for (let k = 0; k < n; k++) { const x = xa + 0.8 + k * 1.9; B.add(boxGeo(0.05, 2.1, 1.6), stallMat, x - 0.9, 1.15, -82.6); B.add(boxGeo(1.75, 2.0, 0.05), stallMat, x + 0.05, 1.1, -81.75); B.add(boxGeo(0.45, 0.42, 0.65), white, x, 0.45, -83.3); }
+    B.col(-34, -82.6, 5.6, 1.2, 0, -1, 2.2); B.col(-24.7, -82.6, 4.5, 1.2, 0, -1, 2.2);
+    for (let k = 0; k < 5; k++) B.add(boxGeo(0.45, 0.8, 0.35), white, -38.6 + k * 1.1, 1.0, -73.6, Math.PI / 2);          // urinals on the side wall
+    const mirror = new THREE.MeshStandardMaterial({ color: 0xdfe6ea, roughness: 0.02, metalness: 1 });
+    for (const xa of [-39, -29]) { B.add(boxGeo(7, 0.85, 0.6), white, xa + 4, 0.85, -61.2 - 1.4); B.add(boxGeo(7, 1.0, 0.03), mirror, xa + 4, 1.85, -63.25); for (let k = 0; k < 4; k++) B.add(new THREE.CylinderGeometry(0.03, 0.03, 0.25, 6), steel, xa + 1.3 + k * 1.8, 1.4, -62.8); B.col(xa + 4, -62.6, 3.5, 0.35, 0, -1, 1.2); }
+    B.sign('pa_facility', { type: 'toilet' }, -35, 2.6, -64.2, 0, 0.6); B.sign('pa_facility', { type: 'toilet' }, -25, 2.6, -64.2, 0, 0.6);
+    // ── highway information corner + souvenirs (x 32..40) ──
+    const map = canvasMat(512, 512, (g, w, h) => {
+      g.fillStyle = '#0e1622'; g.fillRect(0, 0, w, h); g.fillStyle = '#fff'; g.font = `800 30px ${JP}`; g.fillText('ハイウェイ情報ターミナル', 18, 44);
+      g.lineWidth = 9; const R = (pts, c) => { g.strokeStyle = c; g.beginPath(); pts.forEach(([x, y], i) => (i ? g.lineTo(x, y) : g.moveTo(x, y))); g.stroke(); };
+      R([[40, 460], [140, 380], [260, 300], [380, 220], [470, 120]], '#3ddc84'); R([[140, 380], [120, 250], [150, 120]], '#3ddc84'); R([[380, 220], [420, 300], [480, 420]], '#ffb020'); R([[260, 300], [300, 200], [330, 90]], '#ff4d4d');
+      g.fillStyle = '#ffd34a'; g.beginPath(); g.arc(200, 340, 12, 0, 7); g.fill(); g.fillStyle = '#fff'; g.font = `700 22px ${JP}`; g.fillText('現在地 大黒PA', 218, 348); g.fillText('羽田', 400, 140); g.fillText('横浜', 40, 430); g.fillText('川崎', 300, 260);
+    }, 1);
+    B.add(boxGeo(0.08, 2.6, 2.6), dark, 39.6, 2.2, -72); B.add(new THREE.PlaneGeometry(2.4, 2.4), map, 39.54, 2.2, -72, -Math.PI / 2);
+    const gifts = [0xc0392b, 0x2e86c1, 0xf1c40f, 0x27ae60, 0x8e44ad, 0xe67e22, 0xecf0f1];
+    for (let i = 0; i < 2; i++) { const sx = 34.5 + i * 2.6; B.add(boxGeo(1.0, 1.2, 6), shelfMat, sx, 0.65, -76); B.col(sx, -76, 0.6, 3.1, 0, -1, 1.5); for (let k = 0; k < 18; k++) for (const lv of [0, 1]) B.add(boxGeo(0.34, 0.12, 0.26), new THREE.MeshStandardMaterial({ color: gifts[(k + i + lv) % gifts.length], roughness: 0.4 }), sx + (k % 2 ? 0.25 : -0.25), 1.3 + lv * 0.16, -78.6 + Math.floor(k / 2) * 0.6); }
+    this.walkRects.push(B.rect(32.5, 39.5, z0 + 0.6, z1 + 0.2));
+    // interior lighting: these points join the dynamic light pool (always on, like tunnel lights) when you are inside
+    for (const [x, z] of [[-12, -72], [0, -72], [-30, -70], [-30, -79], [19, -72], [36, -72]]) this.tunnelHeads.push(B.v(x, H - 0.6, z));
   }
 
   // 神奈川県警察 高速道路交通警察隊 (fictionalised post, next to the main building) — fenced, no public entry

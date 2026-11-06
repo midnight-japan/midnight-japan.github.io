@@ -1,8 +1,23 @@
 // Shared game metadata: version, changelog, regions. Update VERSION + CHANGELOG on every release.
-export const GAME = { title: 'MIDNIGHT JAPAN', titleJa: 'ミッドナイト・ジャパン', version: '0.5.0', build: '2026.11.06' };
+export const GAME = { title: 'MIDNIGHT JAPAN', titleJa: 'ミッドナイト・ジャパン', version: '0.6.0', build: '2026.11.06' };
 
 // Newest first. type: new | change | fix | known
 export const CHANGELOG = [
+  {
+    version: '0.6.0', date: '2026-11-06', codename: 'Rush Hour',
+    summary: {
+      ko: '도시가 움직이기 시작했어요 — 실제 노선을 달리는 전철, 인도를 걷는 사람들, 하네다 공항에 내리고 뜨는 여객기, 걸어 들어갈 수 있는 PA 실내.',
+      ja: '街が動き出す——実際の路線を走る電車、歩道を歩く人々、羽田空港に離着陸する旅客機、歩いて入れるPAの屋内。',
+      en: 'The city comes alive: trains on the real lines, people on the sidewalks, airliners landing and taking off at Haneda, and walk-in PA interiors.'
+    },
+    items: [
+      { type: 'new', ko: '전철: OpenStreetMap의 실제 철도 노선을 따라 4~10량 편성이 달리고(타일 경계를 넘어 연속 주행), 역에서 정차, 밤에는 객실 조명, 가까이 지나가면 철로 소리', ja: '電車：OpenStreetMapの実際の路線に沿って4〜10両編成が走り（タイル境界を越えて連続走行）、駅で停車、夜は車内灯、近くを通ると走行音', en: 'Trains: 4–10 car sets run along the real OpenStreetMap rail lines (seamlessly across tiles), stop at stations, light up at night and rumble past' },
+      { type: 'new', ko: '보행자: 시내 인도를 따라 걷고 교차로에서 방향을 바꾸며, 밤에는 줄어들고 다가오는 차를 피함', ja: '歩行者：市街地の歩道を歩き、交差点で曲がり、夜は少なくなり、近づく車を避ける', en: 'Pedestrians walk the city sidewalks, turn at junctions, thin out late at night and step aside for cars' },
+      { type: 'new', ko: '하네다 공항: 실제 활주로·유도로(표시선·끝단 줄무늬·활주로등·청색 유도로등), 계류장, 510개 실제 주기장 중 가까운 곳에 여객기, 3° 진입각 착륙과 이륙(착륙등·충돌방지등·항법등, 제트 소음), 하네다 스폰', ja: '羽田空港：実際の滑走路・誘導路（標識・末端標識・滑走路灯・青い誘導路灯）、エプロン、実在の510スポットのうち近くに旅客機、3°の進入角での着陸と離陸（着陸灯・衝突防止灯・航法灯、ジェット音）、羽田スポーン', en: 'Haneda Airport: the real runways and taxiways (markings, threshold bars, edge lights, blue taxiway lights), aprons, airliners at the nearest of 510 real stands, 3° approaches and take-offs with landing, strobe and nav lights and jet noise; Haneda spawn' },
+      { type: 'new', ko: 'PA 실내: 푸드코트(식권 발매기·조명 메뉴판·호출 번호판·주방·급수기·교통정보 TV·창가 스툴), 화장실(칸·소변기·세면대·거울), 하이웨이 정보 코너(노선 지도·기념품)', ja: 'PAの屋内：フードコート（食券機・電照メニュー・呼び出し番号表示・厨房・給水機・交通情報TV・窓際の椅子）、トイレ（個室・小便器・洗面台・鏡）、ハイウェイ情報コーナー（路線図・お土産）', en: 'PA interiors: food court (meal-ticket machine, lit menu board, call-number display, kitchen, water station, traffic-info TV, window stools), toilets (stalls, urinals, sinks, mirrors), highway info corner (route map, souvenirs)' },
+      { type: 'change', ko: '실내에 들어가면 조명이 따라와 밝아짐', ja: '屋内に入ると照明が追従して明るく', en: 'Interior lights follow you inside' },
+    ]
+  },
   {
     version: '0.5.0', date: '2026-11-06', codename: 'Metropolis',
     summary: {
