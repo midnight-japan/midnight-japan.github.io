@@ -309,7 +309,7 @@ export class City {
     this.mSign = new THREE.MeshStandardMaterial({ map: this.atlas, emissiveMap: this.atlas, emissive: 0xffffff, emissiveIntensity: 0.25, roughness: 0.5 });
     const road = surface('asphalt_worn', { tile: 6 });
     this.mRoad = road.clone(); this.mRoad.vertexColors = true; this.mRoad.polygonOffset = true; this.mRoad.polygonOffsetFactor = -1; this.mRoad.polygonOffsetUnits = -1;
-    const walk = surface('sidewalk', { tile: 1.6, tint: 0xb5aba3 });
+    const walk = surface('sidewalk', { tile: 1.6, tint: 0xaab3bd });
     this.mWalk = walk.clone(); this.mWalk.vertexColors = true; this.mWalk.polygonOffset = true; this.mWalk.polygonOffsetFactor = -0.5; this.mWalk.polygonOffsetUnits = -0.5;
     this.mPaint = new THREE.MeshStandardMaterial({ vertexColors: true, roughness: 0.65, polygonOffset: true, polygonOffsetFactor: -4, polygonOffsetUnits: -4 });
     this.mWire = new THREE.LineBasicMaterial({ color: 0x1a1a1a, transparent: true, opacity: 0.85 });

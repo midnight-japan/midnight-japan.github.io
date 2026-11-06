@@ -22,7 +22,7 @@ const ROLE = {
   concrete: ['concrete_barrier', 'concrete_smooth', 'concrete', 'concrete_wall', 'concrete_weathered'],
   concrete_old: ['concrete_weathered', 'concrete_wall', 'concrete_old', 'concrete_smooth'],
   pavement: ['concrete_floor', 'concrete_pavement', 'concrete_tiles', 'paving_tiles', 'concrete_smooth'],
-  sidewalk: ['paving_brick', 'paving_bricks', 'interlocking_paving', 'paving_tiles', 'sidewalk'],
+  sidewalk: ['paving_square', 'paving_small_tiles', 'interlocking_paving', 'paving_tiles', 'sidewalk'],
   metal: ['metal_galvanized', 'metal_plate', 'steel_plate', 'metal_painted', 'metal'],
   corrugated: ['metal_corrugated', 'corrugated_metal', 'corrugated_iron', 'metal_painted'],
   rust: ['metal_rusty', 'rusty_metal', 'rust'],

@@ -1,8 +1,21 @@
 // Shared game metadata: version, changelog, regions. Update VERSION + CHANGELOG on every release.
-export const GAME = { title: 'MIDNIGHT JAPAN', titleJa: 'ミッドナイト・ジャパン', version: '0.8.0', build: '2026.11.06' };
+export const GAME = { title: 'MIDNIGHT JAPAN', titleJa: 'ミッドナイト・ジャパン', version: '0.8.1', build: '2026.11.06' };
 
 // Newest first. type: new | change | fix | known
 export const CHANGELOG = [
+  {
+    version: '0.8.1', date: '2026-11-06', codename: 'Pavement',
+    summary: {
+      ko: '일본 거리다운 회색 보도블록(상점가 일부는 적갈색 블록), 지역 페이지에 K1 요코하마 루프·요코하마 시가지·쓰루미·가와사키·하네다 추가, README·사이트 수치 최신화.',
+      ja: '日本の街らしいグレーの歩道ブロック（商店街の一部はえんじ色）、地域ページにK1横浜ループ・横浜市街・鶴見・川崎・羽田を追加、README・サイトの数値を最新に。',
+      en: 'Grey interlocking pavements as on most Japanese streets (brown-red blocks on some shopping streets), the K1 Yokohama loop, Yokohama city, Tsurumi & Kawasaki and Haneda on the regions page, and up-to-date figures on the site and README.'
+    },
+    items: [
+      { type: 'change', ko: '시내 인도를 붉은 벽돌에서 일본에서 흔한 회색 사각 보도블록으로 — 거리마다 일부는 적갈색·청회색 블록', ja: '市街地の歩道を赤レンガから日本でよく見るグレーの角形ブロックに——通りによってはえんじ色・青みのグレー', en: 'City pavements switch from red brick to the grey square blocks common in Japan, with brown-red or blue-grey blocks on some streets' },
+      { type: 'change', ko: '지역 페이지: 베이브리지 「구현 완료」, K1 요코하마 루프·요코하마 시가지·쓰루미·가와사키·하네다 공항 추가, 지도에 루프 노선 표시', ja: '地域ページ：ベイブリッジを「実装済み」に、K1横浜ループ・横浜市街・鶴見・川崎・羽田空港を追加、地図にループ路線を表示', en: 'Regions page: the Bay Bridge is now complete; the K1 Yokohama loop, Yokohama city, Tsurumi & Kawasaki and Haneda Airport are added, with the loop drawn on the map' },
+      { type: 'change', ko: '사이트 소개·특징·README의 도시 수치를 최신으로(건물 42만 채, 도로 5만 3천 개), README에 K1 루프·날씨·하네다 소개 추가', ja: 'サイト紹介・特徴・READMEの街の数値を最新に（建物42万棟、道路5万3千本）、READMEにK1ループ・天気・羽田の紹介を追加', en: 'City figures on the site and README updated (421,000 buildings, 53,000 streets); the README now introduces the K1 loop, weather and Haneda' },
+    ]
+  },
   {
     version: '0.8.0', date: '2026-11-06', codename: 'Yokohama Loop',
     summary: {
@@ -300,8 +313,16 @@ export const REGIONS = [
     desc: { ko: '만안선과 K5 다이코쿠선이 만나는 나선형 루프 분기점.', ja: '湾岸線とK5大黒線が交わるループ状のジャンクション。', en: 'The spiral junction where the Bayshore Route meets the K5 Daikoku Line.' } },
   { id: 'daikoku_futo', status: 'partial', name: { ko: '다이코쿠 부두', ja: '大黒ふ頭', en: 'Daikoku-futō' }, pref: '横浜港',
     desc: { ko: '컨테이너 야드·자동차 수출 선적장·창고가 늘어선 매립지. 출입구 톨게이트 포함.', ja: 'コンテナヤード・自動車積出し埠頭・倉庫が並ぶ埋立地。出入口料金所あり。', en: 'Reclaimed port island of container yards, car-export berths and warehouses, with its toll gate.' } },
-  { id: 'baybridge', status: 'partial', name: { ko: '요코하마 베이브리지', ja: '横浜ベイブリッジ', en: 'Yokohama Bay Bridge' }, pref: '首都高速 湾岸線',
-    desc: { ko: '사장교 진입부까지 구현. 혼모쿠 방면은 다음 업데이트.', ja: '斜張橋の取付部まで。本牧方面は次回。', en: 'Built up to the cable-stayed span; Honmoku side comes later.' } },
+  { id: 'baybridge', status: 'live', name: { ko: '요코하마 베이브리지', ja: '横浜ベイブリッジ', en: 'Yokohama Bay Bridge' }, pref: '首都高速 湾岸線',
+    desc: { ko: '높이 55m의 사장교 상판. K3에서 혼모쿠 JCT를 지나 바로 진입해 다이코쿠로 돌아오는 요코하마 루프의 마지막 구간.', ja: '高さ55mの斜張橋の上層。K3から本牧JCTを経て渡り、大黒へ戻る横浜ループの最終区間。', en: 'The cable-stayed upper deck, 55 m above the water — the last leg of the Yokohama loop, entered from the K3 via Honmoku JCT and back to Daikoku.' } },
+  { id: 'k1loop', status: 'live', name: { ko: 'K1 요코하마 루프', ja: 'K1 横浜ループ', en: 'K1 Yokohama Loop' }, pref: '首都高速 K5・K1・K3',
+    desc: { ko: '나마무기 JCT → 요코하마역 앞 고가 → 이시카와초 지하 → K3 가리바선 → 혼모쿠 JCT. 약 17km의 실제 노선.', ja: '生麦JCT→横浜駅前の高架→石川町の地下→K3狩場線→本牧JCT。約17kmの実在路線。', en: 'Namamugi JCT → the viaduct past Yokohama Station → underground at Ishikawachō → K3 Kariba Line → Honmoku JCT. About 17 km of real route.' } },
+  { id: 'yokohama', status: 'live', name: { ko: '요코하마 시가지', ja: '横浜市街', en: 'Yokohama city' }, pref: '神奈川県横浜市 西区・中区',
+    desc: { ko: '미나토미라이·차이나타운·야마시타 공원의 실제 거리. 코스모클록 21, 마린타워, 히카와마루.', ja: 'みなとみらい・中華街・山下公園の実在の街並み。コスモクロック21、マリンタワー、氷川丸。', en: 'The real streets of Minato Mirai, Chinatown and Yamashita Park, with Cosmo Clock 21, Marine Tower and the Hikawa Maru.' } },
+  { id: 'kawasaki', status: 'live', name: { ko: '쓰루미·가와사키', ja: '鶴見・川崎', en: 'Tsurumi & Kawasaki' }, pref: '神奈川県横浜市鶴見区・川崎市',
+    desc: { ko: '주택가·상점가·공장 지대와 철도 노선이 촘촘한 실제 시가지.', ja: '住宅街・商店街・工場地帯と鉄道が密集する実在の市街地。', en: 'Real neighbourhoods, shopping streets, factory districts and dense rail lines.' } },
+  { id: 'haneda', status: 'live', name: { ko: '하네다 공항', ja: '羽田空港', en: 'Haneda Airport' }, pref: '東京都大田区',
+    desc: { ko: '실제 활주로와 주기장, 이착륙하는 여객기. 만안선 다마가와 터널로 연결.', ja: '実在の滑走路とスポット、離着陸する旅客機。湾岸線の多摩川トンネルで接続。', en: 'The real runways and stands with airliners landing and taking off, reached through the Bayshore’s Tama River Tunnel.' } },
   { id: 'tsubasa', status: 'live', name: { ko: '츠루미 츠바사 다리', ja: '鶴見つばさ橋', en: 'Tsurumi Tsubasa Bridge' }, pref: '首都高速 湾岸線', desc: { ko: '하네다로 이어지는 완간선의 1주 사장교. 밤이면 케이블 조명이 바다 위에 떠요.', ja: '羽田へ続く湾岸線の一本柱斜張橋。夜はケーブルの照明が海に浮かぶ。', en: 'The single-tower cable-stayed bridge on the Bayshore Route toward Haneda; its cables glow over the sea at night.' } },
   { id: 'tatsumi', status: 'planned', name: { ko: '타츠미 PA', ja: '辰巳第一PA', en: 'Tatsumi PA' }, pref: '東京都江東区', desc: { ko: '예정', ja: '予定', en: 'Planned' } },
   { id: 'shibaura', status: 'planned', name: { ko: '시바우라 PA', ja: '芝浦PA', en: 'Shibaura PA' }, pref: '東京都港区', desc: { ko: '예정', ja: '予定', en: 'Planned' } },

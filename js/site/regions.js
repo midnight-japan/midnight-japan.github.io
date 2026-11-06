@@ -7,8 +7,9 @@ import { initSite, onLang, esc } from './common.js';
 const POS = {
   daikoku_pa: [128, 318], daikoku_jct: [140, 306], daikoku_futo: [146, 330], baybridge: [118, 346],
   tsubasa: [168, 290], tatsumi: [262, 94], shibaura: [222, 106], umihotaru: [325, 315],
+  k1loop: [110, 279], haneda: [230, 210],
 };
-const LABEL_SIDE = { daikoku_pa: 'l', daikoku_jct: 'r', daikoku_futo: 'r', baybridge: 'r', tsubasa: 'r', tatsumi: 'r', shibaura: 'l', umihotaru: 'r' };
+const LABEL_SIDE = { daikoku_pa: 'l', daikoku_jct: 'r', daikoku_futo: 'r', baybridge: 'r', tsubasa: 'r', tatsumi: 'r', shibaura: 'l', umihotaru: 'r', k1loop: 'l', yokohama: 'l', kawasaki: 'l', haneda: 'r' };
 
 const WATER = 'M216 100 L262 98 L300 112 L350 112 L392 80 L432 58 L470 96 L520 130 L552 162 L540 205 L522 246 L486 284 L452 322 L400 370 L352 418 L336 456 L292 478 L252 504 L292 528 L316 600 L160 600 L184 578 L148 560 L120 541 L128 470 L132 420 L124 372 L102 350 L96 336 L118 326 L134 312 L150 292 L190 276 L226 262 L248 236 L256 214 L238 186 L214 168 L204 148 L210 122 Z';
 
@@ -46,7 +47,9 @@ function map() {
   <path class="rt" d="M330 60 L300 84 L262 96 L222 106 L208 140 L232 186 L244 214 L226 258 L190 272 L168 290 L140 306 L128 318 L118 346 L126 380 L124 440 L120 520" stroke="#2fbf71" stroke-width="3.5"/>
   <path class="rt" d="M226 258 L325 315 L360 400" stroke="#2fbf71" stroke-width="3" stroke-dasharray="7 5"/>
   <path class="rt" d="M140 306 L120 270 L150 230 L200 150 L222 106" stroke="#2fbf71" stroke-width="2" stroke-opacity=".5"/>
-  ${place(150, 70, 'tokyo', 14)}${place(70, 250, 'kawasaki')}${place(30, 300, 'yokohama', 13)}${place(470, 60, 'chiba')}${place(400, 440, 'kisarazu')}
+  <!-- K1 Yokohama loop (driveable since v0.8): Namamugi → Yokohama Stn → Ishikawachō → K3 → Honmoku → Bay Bridge -->
+  <path class="rt" d="M120 270 L96 292 L84 322 L88 352 L106 356 L118 346" stroke="#2fbf71" stroke-width="3"/>
+  ${place(150, 70, 'tokyo', 14)}${place(70, 250, 'kawasaki')}${place(26, 336, 'yokohama', 13)}${place(470, 60, 'chiba')}${place(400, 440, 'kisarazu')}
   ${place(272, 230, 'haneda', 11)}${place(22, 392, 'minatomirai', 10)}${place(300, 280, 'aqualine', 9)}
   <text x="460" y="250" class="pl" font-size="18" style="letter-spacing:.5em;fill:#3e5784">東京湾</text>
   ${ids.map(pt).join('')}

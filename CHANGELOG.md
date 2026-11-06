@@ -1,9 +1,10 @@
 # 📜 MIDNIGHT JAPAN 업데이트 기록 · Changelog
 
-현재 버전 · Current: **v0.8.0** · [▶ 웹에서 플레이](https://midnight-japan.github.io/) · [🌐 업데이트 페이지](https://midnight-japan.github.io/changelog.html)
+현재 버전 · Current: **v0.8.1** · [▶ 웹에서 플레이](https://midnight-japan.github.io/) · [🌐 업데이트 페이지](https://midnight-japan.github.io/changelog.html)
 
 | 버전 | 날짜 | 이름 | 요약 |
 |---|---|---|---|
+| [v0.8.1](#v081--pavement-2026-11-06) | 2026-11-06 | Pavement | 일본 거리다운 회색 보도블록(상점가 일부는 적갈색 블록), 지역 페이지에 K1 요코하마 루프·요코하마 시가지·쓰루미·가와사키·하네다 추가, README·사이트 수치 최신화. |
 | [v0.8.0](#v080--yokohama-loop-2026-11-06) | 2026-11-06 | Yokohama Loop | 요코하마 루프 개통 — 다이코쿠 JCT에서 K5를 타고 나마무기 JCT로, K1 요코하네선으로 요코하마역·미나토미라이를 지나 지하로 내려간 뒤, K3 가리바선과 혼모쿠 JCT를 거쳐 베이브리지로 돌아오는 약 17km의 실제 수도고 루프를 달릴 수 있어요. |
 | [v0.7.2](#v072--umbrella-2026-11-06) | 2026-11-06 | Umbrella | 비 오는 날 보행자들이 우산을 써요(투명 편의점 우산이 가장 많아요). 달리는 중에 하차 키를 누르면 안내가 나와요. |
 | [v0.7.1](#v071--shakedown-2026-11-06) | 2026-11-06 | Shakedown | 버그 수정 — PA에서 시작하면 바로 출발할 수 있고, 여객기 자세·전철 정차·보행자 회피가 자연스러워졌어요. |
@@ -21,6 +22,19 @@
 | [v0.2.0](#v020--bayshore-2026-11-05) | 2026-11-05 | Bayshore | 수도고속 완간선을 따라 하네다까지, 도쿄만 아쿠아라인 해저터널을 지나 우미호타루 PA까지. 실제 3D 차량 모델과 열리는 보닛도 들어왔어요. |
 | [v0.1.1](#v011--one-click-2026-11-04) | 2026-11-04 | One Click | 링크 하나로 바로 플레이. 크롬에서 공식 사이트 주소만 열면 설치 없이 실행돼요. |
 | [v0.1.0](#v010--first-meet-2026-11-04) | 2026-11-04 | First Meet | 첫 공개 버전. 다이코쿠 JCT·PA와 다이코쿠 부두 일대를 3D로 구현했습니다. |
+
+---
+
+## v0.8.1 — Pavement (2026-11-06)
+
+> 일본 거리다운 회색 보도블록(상점가 일부는 적갈색 블록), 지역 페이지에 K1 요코하마 루프·요코하마 시가지·쓰루미·가와사키·하네다 추가, README·사이트 수치 최신화.
+> Grey interlocking pavements as on most Japanese streets (brown-red blocks on some shopping streets), the K1 Yokohama loop, Yokohama city, Tsurumi & Kawasaki and Haneda on the regions page, and up-to-date figures on the site and README.
+
+**🔧 변경 · Changed**
+
+- 시내 인도를 붉은 벽돌에서 일본에서 흔한 회색 사각 보도블록으로 — 거리마다 일부는 적갈색·청회색 블록<br><sub>City pavements switch from red brick to the grey square blocks common in Japan, with brown-red or blue-grey blocks on some streets</sub>
+- 지역 페이지: 베이브리지 「구현 완료」, K1 요코하마 루프·요코하마 시가지·쓰루미·가와사키·하네다 공항 추가, 지도에 루프 노선 표시<br><sub>Regions page: the Bay Bridge is now complete; the K1 Yokohama loop, Yokohama city, Tsurumi & Kawasaki and Haneda Airport are added, with the loop drawn on the map</sub>
+- 사이트 소개·특징·README의 도시 수치를 최신으로(건물 42만 채, 도로 5만 3천 개), README에 K1 루프·날씨·하네다 소개 추가<br><sub>City figures on the site and README updated (421,000 buildings, 53,000 streets); the README now introduces the K1 loop, weather and Haneda</sub>
 
 ---
 

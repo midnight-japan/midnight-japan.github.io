@@ -183,6 +183,9 @@ function buildTile(T, lod, opts) {
     const { pts, w, cls } = st; const hw = w / 2;
     const y = 0.035 + (6 - cls) * 0.003;
     const swW = (st.flags & 8) && cls <= S.TERTIARY ? (cls <= S.PRIMARY ? 3.5 : 2.5) : 0;
+    // grey interlocking blocks as on most Japanese pavements; some streets (shopping streets, station approaches) get the
+    // brown-red colour blocks — chosen per street from its position so it never flickers between rebuilds
+    const h0 = Math.abs(Math.sin(pts[0][0] * 12.9898 + pts[0][1] * 78.233) * 43758.5453) % 1; const wc = h0 < 0.2 ? [1.08, 0.8, 0.7] : h0 < 0.3 ? [0.92, 0.95, 0.98] : [1, 1, 1];
     // per-vertex offsets (miter, clamped)
     const N = pts.map((p, k) => {
       const a = pts[Math.max(0, k - 1)], b = pts[Math.min(pts.length - 1, k + 1)];
@@ -195,7 +198,7 @@ function buildTile(T, lod, opts) {
       const a = pts[k], b = pts[k + 1], na = N[k], nb = N[k + 1];
       const A = (p, n, o, yy) => [p[0] + n[0] * o, yy, p[1] + n[1] * o];
       road.quad(A(a, na, hw, y), A(b, nb, hw, y), A(b, nb, -hw, y), A(a, na, -hw, y), asphaltCol(cls));
-      if (swW && mid) for (const sd of [1, -1]) walk.quad(A(a, na, sd * hw, 0.03), A(b, nb, sd * hw, 0.03), A(b, nb, sd * (hw + swW), 0.03), A(a, na, sd * (hw + swW), 0.03), [1, 1, 1]);
+      if (swW && mid) for (const sd of [1, -1]) walk.quad(A(a, na, sd * hw, 0.03), A(b, nb, sd * hw, 0.03), A(b, nb, sd * (hw + swW), 0.03), A(a, na, sd * (hw + swW), 0.03), wc);
     }
     if (!mid) continue;
     // lane paint: centre line + edge lines (cut at junctions)
