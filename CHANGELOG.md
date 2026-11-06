@@ -1,9 +1,10 @@
 # 📜 MIDNIGHT JAPAN 업데이트 기록 · Changelog
 
-현재 버전 · Current: **v0.6.1** · [▶ 웹에서 플레이](https://midnight-japan.github.io/) · [🌐 업데이트 페이지](https://midnight-japan.github.io/changelog.html)
+현재 버전 · Current: **v0.7.0** · [▶ 웹에서 플레이](https://midnight-japan.github.io/) · [🌐 업데이트 페이지](https://midnight-japan.github.io/changelog.html)
 
 | 버전 | 날짜 | 이름 | 요약 |
 |---|---|---|---|
+| [v0.7.0](#v070--downpour-2026-11-06) | 2026-11-06 | Downpour | 날씨가 생겼어요 — 비 오는 밤의 젖은 노면이 불빛을 반사하고, 그립이 줄고, 빗소리가 들려요. 도시는 고속도로 주변 5km(건물 35만 8천 채)로 넓어졌어요. |
 | [v0.6.1](#v061--faces-2026-11-06) | 2026-11-06 | Faces | 사람 얼굴 조형, 실제 3D 모델만 쓰는 NPC 차량, 기본 그래픽(높음)에서 프레임 약 35% 향상. |
 | [v0.6.0](#v060--rush-hour-2026-11-06) | 2026-11-06 | Rush Hour | 도시가 움직이기 시작했어요 — 실제 노선을 달리는 전철, 인도를 걷는 사람들, 하네다 공항에 내리고 뜨는 여객기, 걸어 들어갈 수 있는 PA 실내. |
 | [v0.5.0](#v050--metropolis-2026-11-06) | 2026-11-06 | Metropolis | 고속도로 밖으로 — OpenStreetMap 실제 데이터로 만든 요코하마·가와사키 시가지 전체(건물 23만 6천 채)를 달릴 수 있게 됐어요. 신호를 지키는 시내 교통, 랜드마크, 튜닝 프리셋, 도시 환경음까지. |
@@ -17,6 +18,23 @@
 | [v0.2.0](#v020--bayshore-2026-11-05) | 2026-11-05 | Bayshore | 수도고속 완간선을 따라 하네다까지, 도쿄만 아쿠아라인 해저터널을 지나 우미호타루 PA까지. 실제 3D 차량 모델과 열리는 보닛도 들어왔어요. |
 | [v0.1.1](#v011--one-click-2026-11-04) | 2026-11-04 | One Click | 링크 하나로 바로 플레이. 크롬에서 공식 사이트 주소만 열면 설치 없이 실행돼요. |
 | [v0.1.0](#v010--first-meet-2026-11-04) | 2026-11-04 | First Meet | 첫 공개 버전. 다이코쿠 JCT·PA와 다이코쿠 부두 일대를 3D로 구현했습니다. |
+
+---
+
+## v0.7.0 — Downpour (2026-11-06)
+
+> 날씨가 생겼어요 — 비 오는 밤의 젖은 노면이 불빛을 반사하고, 그립이 줄고, 빗소리가 들려요. 도시는 고속도로 주변 5km(건물 35만 8천 채)로 넓어졌어요.
+> Weather arrives: on rainy nights the wet asphalt mirrors the lights, grip drops and you hear the rain. The city now reaches 5 km around the expressways (358,000 buildings).
+
+**✨ 추가 · New**
+
+- 날씨: 자동(변화)·맑음·흐림·비 — 카메라 주변 빗줄기, 짙어지는 회색 안개, 흐린 하늘과 약해지는 햇빛<br><sub>Weather: automatic, clear, cloudy or rain — rain streaks around the camera, thicker grey fog, overcast skies and weaker sunlight</sub>
+- 젖은 노면: 도로·보도·지면이 젖으면 광택이 생겨 가로등과 헤드라이트를 반사하고, 비가 그친 뒤에도 한동안 젖어 있음<br><sub>Wet roads: asphalt, pavements and ground turn glossy and reflect street lights and headlights, and stay wet for a while after the rain</sub>
+- 비 오는 날 타이어 그립 약 20% 감소, 빗소리(차 안에서는 지붕 두드리는 소리)<br><sub>About 20% less tyre grip in the wet; the sound of rain (drumming on the roof from inside the car)</sub>
+
+**🔧 변경 · Changed**
+
+- 도시 범위를 고속도로 주변 3.2km → 5km로 확장: 건물 35만 8천 채, 도로 4만 5천 개, 철도 2,300개 노선<br><sub>The city now reaches 5 km (was 3.2 km) around the expressways: 358,000 buildings, 45,000 streets, 2,300 rail lines</sub>
 
 ---
 

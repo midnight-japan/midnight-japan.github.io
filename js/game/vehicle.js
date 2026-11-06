@@ -515,7 +515,7 @@ export class Vehicle {
     const ql = net.query(this.pos.x + lx * hw, this.pos.z + lz * hw, this.pos.y + 0.6, (x, z) => world.ground(x, z)).y;
     const qr = net.query(this.pos.x - lx * hw, this.pos.z - lz * hw, this.pos.y + 0.6, (x, z) => world.ground(x, z)).y;
     this.bank = clamp((ql - qr) / (hw * 2), -0.12, 0.12);
-    this.surfaceMu = q.onRoad || world.isLand(this.pos.x, this.pos.z) ? 1 : 0.6;
+    this.surfaceMu = (q.onRoad || world.isLand(this.pos.x, this.pos.z) ? 1 : 0.6) * (world.wetGrip ?? 1);
     // barriers on elevated / ramp roads
     if (q.hit && q.road.kind !== 'local' && q.y > 0.5) {
       const hRoad = q.hit; const edge = hRoad.lat > 0 ? hRoad.road.edgeL - 0.95 : hRoad.road.edgeR + 0.95;

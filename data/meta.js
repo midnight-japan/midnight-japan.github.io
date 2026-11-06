@@ -1,8 +1,22 @@
 // Shared game metadata: version, changelog, regions. Update VERSION + CHANGELOG on every release.
-export const GAME = { title: 'MIDNIGHT JAPAN', titleJa: 'ミッドナイト・ジャパン', version: '0.6.1', build: '2026.11.06' };
+export const GAME = { title: 'MIDNIGHT JAPAN', titleJa: 'ミッドナイト・ジャパン', version: '0.7.0', build: '2026.11.06' };
 
 // Newest first. type: new | change | fix | known
 export const CHANGELOG = [
+  {
+    version: '0.7.0', date: '2026-11-06', codename: 'Downpour',
+    summary: {
+      ko: '날씨가 생겼어요 — 비 오는 밤의 젖은 노면이 불빛을 반사하고, 그립이 줄고, 빗소리가 들려요. 도시는 고속도로 주변 5km(건물 35만 8천 채)로 넓어졌어요.',
+      ja: '天気が登場——雨の夜、濡れた路面が灯りを映し、グリップが落ち、雨音が聞こえる。街は高速道路の周囲5km（建物35万8千棟）に拡大。',
+      en: 'Weather arrives: on rainy nights the wet asphalt mirrors the lights, grip drops and you hear the rain. The city now reaches 5 km around the expressways (358,000 buildings).'
+    },
+    items: [
+      { type: 'new', ko: '날씨: 자동(변화)·맑음·흐림·비 — 카메라 주변 빗줄기, 짙어지는 회색 안개, 흐린 하늘과 약해지는 햇빛', ja: '天気：自動（変化）・晴れ・くもり・雨——カメラ周囲の雨筋、濃くなる灰色の霧、曇り空と弱まる日差し', en: 'Weather: automatic, clear, cloudy or rain — rain streaks around the camera, thicker grey fog, overcast skies and weaker sunlight' },
+      { type: 'new', ko: '젖은 노면: 도로·보도·지면이 젖으면 광택이 생겨 가로등과 헤드라이트를 반사하고, 비가 그친 뒤에도 한동안 젖어 있음', ja: '濡れた路面：道路・歩道・地面が濡れると艶が出て街灯やヘッドライトを映し、雨が止んでもしばらく濡れたまま', en: 'Wet roads: asphalt, pavements and ground turn glossy and reflect street lights and headlights, and stay wet for a while after the rain' },
+      { type: 'new', ko: '비 오는 날 타이어 그립 약 20% 감소, 빗소리(차 안에서는 지붕 두드리는 소리)', ja: '雨の日はタイヤのグリップが約20%低下、雨音（車内では屋根を叩く音）', en: 'About 20% less tyre grip in the wet; the sound of rain (drumming on the roof from inside the car)' },
+      { type: 'change', ko: '도시 범위를 고속도로 주변 3.2km → 5km로 확장: 건물 35만 8천 채, 도로 4만 5천 개, 철도 2,300개 노선', ja: '街の範囲を高速道路の周囲3.2km→5kmに拡大：建物35万8千棟、道路4万5千本、鉄道2,300路線', en: 'The city now reaches 5 km (was 3.2 km) around the expressways: 358,000 buildings, 45,000 streets, 2,300 rail lines' },
+    ]
+  },
   {
     version: '0.6.1', date: '2026-11-06', codename: 'Faces',
     summary: {

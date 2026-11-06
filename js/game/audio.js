@@ -1313,7 +1313,7 @@ export class GameAudio {
     this.ctx = null;
     this._offline = false;
     this._vol = { master: 0.9, engine: 0.8, sfx: 0.8, ambient: 0.6, radio: 0.7 };
-    this._env = { night: 1, inPA: false, nearSea: false, speedWind: 0, inCity: 0, chime: 0, chimeVol: 0 };
+    this._env = { night: 1, inPA: false, nearSea: false, speedWind: 0, inCity: 0, chime: 0, chimeVol: 0, rain: 0, inside: false };
     this._L = { pos: { x: 0, y: 0, z: 0 }, fwd: { x: 0, y: 0, z: -1 }, up: { x: 0, y: 1, z: 0 } };
     this.engines = new Set(); this.sirens = new Set(); this.radios = new Set();
     this._errors = [];
@@ -1462,6 +1462,8 @@ export class GameAudio {
       if (e.nearSea !== undefined) E.nearSea = !!e.nearSea;
       if (e.speedWind !== undefined) E.speedWind = Math.abs(num(e.speedWind, 0));
       if (e.inCity !== undefined) E.inCity = clamp(num(e.inCity, 0), 0, 1);
+      if (e.rain !== undefined) E.rain = clamp(num(e.rain, 0), 0, 1);
+      if (e.inside !== undefined) E.inside = !!e.inside;
       if (e.chime !== undefined) { E.chime = e.chime | 0; E.chimeVol = clamp(num(e.chimeVol, 0), 0, 1); }
     } catch (x) { this._err(x); }
   }
@@ -1627,6 +1629,9 @@ export class GameAudio {
     NS('white').connect(A.windBP); A.windBP.connect(A.wind); A.wind.connect(A.out);
     A.rumLP = F('lowpass', 120, 0.6); A.rum = G(0);
     NS('brown', 1.3).connect(A.rumLP); A.rumLP.connect(A.rum); A.rum.connect(A.out);
+    // rain: broadband hiss outside, muffled drumming on the roof from inside the car
+    A.rainHP = F('highpass', 900, 0.4); A.rain = G(0); NS('pink', 1.1).connect(A.rainHP); A.rainHP.connect(A.rain); A.rain.connect(A.out);
+    A.roofBP = F('bandpass', 350, 0.6); A.roof = G(0); NS('white', 0.7).connect(A.roofBP); A.roofBP.connect(A.roof); A.roof.connect(A.out);
     // city bed: many distant streets — a mid-band roar that is denser than the expressway hum
     A.cityBP = F('bandpass', 420, 0.35); A.city = G(0);
     NS('pink', 0.9).connect(A.cityBP); A.cityBP.connect(A.city); A.city.connect(A.out);
@@ -1670,6 +1675,7 @@ export class GameAudio {
     sp(A.wind.gain, wTot * (A.windS ? 0.35 : 1), t, 0.15);
     sv(A.windBP.frequency, 350 + 900 * Math.min(w, 1) + A.gust * 200, 0.03);
     sp(A.rum.gain, Math.min(0.35, 0.22 * w * w) * (1 + A.gust), t, 0.15);
+    sp(A.rain.gain, E.rain * (E.inside ? 0.05 : 0.2), t, 0.5); sp(A.roof.gain, E.rain * (E.inside ? 0.12 : 0.02), t, 0.5);
     const ci = E.inCity;
     sp(A.city.gain, ci * (0.05 * (1 - 0.45 * n) + 0.012) * (1 + A.swell * 0.6), t, 0.6);
     sp(A.cityLow.gain, ci * (0.08 * (1 - 0.4 * n) + 0.02), t, 0.6);

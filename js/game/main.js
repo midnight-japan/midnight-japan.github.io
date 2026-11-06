@@ -23,6 +23,7 @@ import { Traffic } from './traffic.js';
 import { Trains } from './trains.js';
 import { Walkers } from './walkers.js';
 import { Planes } from './planes.js';
+import { Weather } from './weather.js';
 import { NPCs, CHATTER } from './npc.js';
 import { Online } from './online.js';
 import { Accidents } from './accident.js';
@@ -45,7 +46,7 @@ const isMobile = /Android|iPhone|iPad|iPod|Mobile|SamsungBrowser/i.test(navigato
 export const DEFAULT_SETTINGS = {
   quality: isMobile ? 'low' : 'high', resScale: isMobile ? 0.75 : 1, transmission: 'auto', assist: true, units: 'kmh', etc: true,
   difficulty: 'standard', steerAssist: 'standard', stm: 'sport', tcs: 'sport', abs: true, police: 'normal',
-  master: 0.8, engine: 0.85, sfx: 0.8, ambient: 0.6, radio: 0.7, dj: true, spawn: 'pa', tilt: false, shake: true, fps: true, timeSpeed: 1, bloom: true, online: true, touch: isMobile ? 'on' : 'auto',
+  master: 0.8, engine: 0.85, sfx: 0.8, ambient: 0.6, radio: 0.7, dj: true, spawn: 'pa', weather: 'auto', tilt: false, shake: true, fps: true, timeSpeed: 1, bloom: true, online: true, touch: isMobile ? 'on' : 'auto',
 };
 
 class Game {
@@ -152,6 +153,7 @@ class Game {
     this.trains = new Trains(this);
     this.walkers = new Walkers(this);
     this.planes = new Planes(this);
+    this.weather = new Weather(this);
     this.toll = new TollPlaza(this);
     this.online = new Online(this);
     this.accidents = new Accidents(this);
@@ -595,6 +597,7 @@ class Game {
     if (I.act('photo')) this.ui.togglePhoto();
     this.updateCamera(dt);
     this.env = this.tod.update(paused ? 0 : dt, this.focus);
+    if (this.weather) { try { const w = this.weather.update(paused ? 0 : dt, this.camera, this.env); this.env.rain = w.rain; this.env.wet = w.wet; } catch (e) { console.warn('weather', e); this.weather = null; } }
     this.world.update(dt, this.env);
     this.world.updateDynamicLights(dt, this.focus, this.env.night);
     this.world.city?.update(dt, this.focus, this.env.night);
@@ -606,7 +609,7 @@ class Game {
       const city = this.world.city, onLand = this.world.isLand(this.focus.x, this.focus.z);
       const inCity = city && onLand && !inPA && this.focus.y < 8 && Math.hypot(this.focus.x - 150, this.focus.z + 100) > 900 ? 1 : 0;
       const ch = inCity ? city.chimeAt(this.focus) : { chime: 0, vol: 0 };
-      this.audio.setEnvironment({ night: this.env.night, inPA, inCity, chime: ch.chime, chimeVol: ch.vol, nearSea: !onLand || this.focus.y > 10, speedWind: this.mode === 'drive' ? this.vehicle.speed * (this.vehicle.car.open ? 1 : 0.3) : 0 });
+      this.audio.setEnvironment({ night: this.env.night, rain: this.env.rain || 0, inside: this.camMode === 'cockpit' && this.mode === 'drive', inPA, inCity, chime: ch.chime, chimeVol: ch.vol, nearSea: !onLand || this.focus.y > 10, speedWind: this.mode === 'drive' ? this.vehicle.speed * (this.vehicle.car.open ? 1 : 0.3) : 0 });
       if (this.radio && this.vehicle) this.radio.update({ position: this.vehicle.pos, interior: this.mode === 'drive' && (this.camMode === 'cockpit' || this.camMode === 'hood' || this.camMode === 'chase'), openness: this.openness ?? 0, speed: this.vehicle.speed });
       this.audio.update(dt);
     }
