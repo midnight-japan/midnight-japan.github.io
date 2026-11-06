@@ -20,7 +20,7 @@ export class Accidents {
       .sort((a, b) => a.pos.distanceToSquared(g.vehicle.pos) - b.pos.distanceToSquared(g.vehicle.pos))[0];
     if (!ai || impact < 3) return;
     this.cool = 4;
-    const inc = { ai, t: 0, stage: 'stop', impact, pos: ai.pos.clone(), driver: null, officer: null, unit: null, said: {} };
+    const inc = { ai, t: 0, stage: 'stop', impact, pos: ai.pos.clone(), driver: null, officer: null, unit: null, said: {}, voice: { role: Math.random() < 0.55 ? 'male' : 'female', seed: Math.random() * 10 }, mood: 50 };
     ai.incident = inc; ai.model.lights.hazard = true;
     ai.vDesSaved = ai.vDes; ai.vDes = 0;
     if (ai.mode === 'road') ai.stopAt = ai.s + ai.dir * 2;
@@ -43,9 +43,9 @@ export class Accidents {
     const me = g.mode === 'walk' && g.player ? g.player.pos : v?.pos;
     const dMe = me ? me.distanceTo(ai.pos) : 999;
     // hit and run
-    if (inc.stage !== 'done' && dMe > 320 && g.mode === 'drive') {
+    if (inc.stage !== 'done' && inc.stage !== 'leave' && dMe > 320 && g.mode === 'drive') {
       g.ui.toast(t('game.acc.hitrun'), 'police', 6);
-      g.audio?.speak('当て逃げの車両、止まりなさい！', 'ja-JP');
+      g.audio?.speak('当て逃げの車両、止まりなさい！', 'ja-JP', { role: 'police' });
       if (g.police && g.police.state === 'patrol') g.police.startPursuit(45);
       return this.finish(inc);
     }
@@ -56,14 +56,20 @@ export class Accidents {
       case 'check': {
         inc.st += dt;
         const d = inc.driver; this.walkTo(d, me && dMe < 40 ? me : ai.pos, dt, 1.4, 2.2);
-        if (inc.st > 2 && !inc.said.ok) { inc.said.ok = 1; g.audio?.speak('大丈夫ですか！？お怪我はありませんか？', 'ja-JP'); g.ui.toast(t('game.acc.driver1'), 'info', 5); }
-        if (inc.st > 7 && !inc.said.call) { inc.said.call = 1; d.action = 'phone'; g.audio?.speak('今、警察に電話しますね。', 'ja-JP'); g.ui.toast(t('game.acc.call'), 'police', 5); this.dispatch(inc); inc.stage = 'wait'; }
+        if (inc.st > 2 && !inc.said.ok) { inc.said.ok = 1; g.audio?.speak('大丈夫ですか！？お怪我はありませんか？', 'ja-JP', inc.voice); g.ui.toast(t('game.acc.driver1'), 'info', 5); }
+        // stopped next to them (or on foot) → talk it out (choices); otherwise they call the police themselves
+        if (!inc.talked && d && me && d.pos.distanceTo(me) < 5 && (g.mode === 'walk' || Math.abs(v?.kmh ?? 0) < 3) && g.dialog && !g.dialog.open) {
+          inc.talked = true; inc.stage = 'talk'; d.action = 'talk'; d.speed = 0; this.face(d, me);
+          g.dialog.accident(inc, res => this.resolve(inc, res)); break;
+        }
+        if (inc.st > 12 && !inc.said.call) { inc.said.call = 1; d.action = 'phone'; g.audio?.speak('今、警察に電話しますね。', 'ja-JP', inc.voice); g.ui.toast(t('game.acc.call'), 'police', 5); this.dispatch(inc); inc.stage = 'wait'; }
         break;
       }
+      case 'talk': { const d = inc.driver; if (d) { d.speed = 0; d.action = 'talk'; if (me) this.face(d, me); } break; }
       case 'wait': {
         const d = inc.driver; d.speed = 0; d.action = inc.t % 20 < 8 ? 'phone' : 'idle';
         const arrived = this.policeStep(inc, dt);
-        if (arrived) { inc.stage = 'report'; inc.st = 0; g.audio?.speak('神奈川県警です。事故の状況を確認します。', 'ja-JP'); g.ui.toast(t('game.acc.police'), 'police', 6); }
+        if (arrived) { inc.stage = 'report'; inc.st = 0; g.audio?.speak('神奈川県警です。事故の状況を確認します。', 'ja-JP', { role: 'police', megaphone: false, seed: 3 }); g.ui.toast(t('game.acc.police'), 'police', 6); }
         break;
       }
       case 'report': {
@@ -71,10 +77,10 @@ export class Accidents {
         if (inc.officer) { inc.officer.action = 'talk'; inc.officer.speed = 0; this.face(inc.officer, me || ai.pos); }
         if (inc.driver) { inc.driver.action = 'talk'; }
         if (inc.st > 10) {
-          const fine = inc.impact > 12 ? 12000 : 0; // 安全運転義務違反 (approx.) for a hard hit
+          const fine = inc.assault ? 300000 : inc.mood > 65 ? 0 : inc.impact > 12 ? 12000 : 0; // 暴行 / 安全運転義務違反 (approx.)
           if (fine) { g.money -= fine; }
           g.ui.toast(t(fine ? 'game.acc.doneFine' : 'game.acc.done', { fine: fine.toLocaleString('ja-JP') }), 'police', 7);
-          g.audio?.speak('事故証明の手続きをしました。この後も安全運転でお願いします。', 'ja-JP');
+          g.audio?.speak('事故証明の手続きをしました。この後も安全運転でお願いします。', 'ja-JP', { role: 'police', megaphone: false, seed: 3 });
           g.stats.accidents = (g.stats.accidents || 0) + 1;
           inc.stage = 'leave'; inc.st = 0;
         }
@@ -95,6 +101,14 @@ export class Accidents {
     for (const h of [inc.driver, inc.officer]) if (h) { h.h.update(dt, { speed: h.speed, action: h.action }); h.h.object.position.copy(h.pos); h.h.object.rotation.y = h.yaw; }
   }
 
+  // outcome of the conversation with the other driver
+  resolve(inc, r) {
+    const g = this.g; inc.mood = r.mood ?? inc.mood;
+    if (r.kind === 'settled') { g.ui.toast(t('game.acc.settled', { amt: r.amount.toLocaleString('ja-JP') }), 'info', 6); inc.stage = 'leave'; inc.st = 0; g.stats.accidents = (g.stats.accidents || 0) + 1; return; }
+    if (r.kind === 'leave') { inc.stage = 'check'; inc.st = 8; return; } // they call the police; driving off = hit and run
+    if (r.kind === 'assault') { inc.assault = true; g.ui.toast(t('game.acc.assault'), 'police', 6); }
+    inc.said.call = 1; if (inc.driver) inc.driver.action = 'phone'; this.dispatch(inc); inc.stage = 'wait';
+  }
   spawnDriver(inc) {
     const ai = inc.ai, side = new THREE.Vector3(Math.cos(ai.yaw), 0, -Math.sin(ai.yaw)); // driver side (RHD → right)
     const pos = ai.pos.clone().addScaledVector(side, -(ai.radius + 0.6)); pos.y = ai.pos.y;

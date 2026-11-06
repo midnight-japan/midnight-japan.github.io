@@ -52,12 +52,12 @@ export class TollPlaza {
           const fare = FARES.etc[kei ? 'kei' : 'std'];
           L.target = 1; L.closeT = 3; L.state = 'passed';
           g.money -= fare; g.stats.tolls += fare;
-          g.audio?.speak(`料金は、${fare}円です。`, 'ja-JP');
+          g.audio?.speak(`料金は、${fare}円です。`, 'ja-JP', { role: 'female', seed: 2 });
           g.ui.toast(t('game.toll.etc', { fare: fare.toLocaleString('ja-JP') }), 'toll');
           if (v.kmh > 25) g.ui.toast(t('game.toll.slow'), 'warn');
         } else if (L.type === 'etc') {
           L.state = 'blocked';
-          g.audio?.speak('ETCカードが確認できません。', 'ja-JP');
+          g.audio?.speak('ETCカードが確認できません。', 'ja-JP', { role: 'female', seed: 2 });
           g.ui.toast(t('game.toll.nocard'), 'warn', 5);
         } else { L.state = 'cash'; }
       }
@@ -67,7 +67,7 @@ export class TollPlaza {
         if (g.input.act('interact') || L.waitT > 6) {
           const fare = FARES.cash[kei ? 'kei' : 'std'];
           g.money -= fare; g.stats.tolls += fare; L.waitT = 0;
-          g.audio?.sfx('coin'); g.audio?.speak('ありがとうございました。お気をつけて。', 'ja-JP');
+          g.audio?.sfx('coin'); g.audio?.speak('ありがとうございました。お気をつけて。', 'ja-JP', { role: 'female', seed: 2 });
           L.target = 1; L.closeT = 4; L.state = 'passed';
           g.ui.toast(t('game.toll.paid', { fare: fare.toLocaleString('ja-JP') }), 'toll');
         }

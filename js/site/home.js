@@ -67,8 +67,9 @@ const ROADMAP = [
   ['0.5', 'done', ['city', 'citytraffic', 'landmarks', 'tuning']],
   ['0.6', 'done', ['trains', 'people', 'haneda', 'interiors']],
   ['0.7', 'done', ['weather', 'bigcity', 'faces']],
-  ['0.8', 'now', ['loop', 'walls', 'umbrella']],
-  ['0.9', 'next', ['03.c1', '07.cars', '06.touge']],
+  ['0.8', 'done', ['loop', 'walls', 'umbrella']],
+  ['0.9', 'now', ['nav', 'damage', 'talk', 'fuel']],
+  ['1.0', 'next', ['03.c1', '07.cars', '06.touge']],
   ['Later', 'later', ['03.events', '02.perf']],
 ];
 

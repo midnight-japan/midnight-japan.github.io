@@ -571,6 +571,8 @@ export class Vehicle {
    * stop the car with a small bounce instead of sticking or ricocheting.
    */
   wallHit(nx, nz, vin) {
+    // contact point on the body (for damage): the side of the car facing the wall
+    if (vin > 1.5) this.lastHit = { x: this.pos.x - nx * this.car.W / 2000, z: this.pos.z - nz * this.car.W / 2000, y: this.pos.y + 0.6, vin, t: performance.now() };
     const v = this.vel, sp = Math.hypot(v.x, v.z) || 1;
     const sinA = clamp(vin / sp, 0, 1); // 0 = parallel graze, 1 = head-on
     const e = 0.12 + 0.1 * sinA;        // restitution

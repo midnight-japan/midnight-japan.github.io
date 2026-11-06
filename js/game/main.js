@@ -13,7 +13,10 @@ import { detectLang, setLang, t } from '../i18n.js';
 import { displayName, currentUser, updateUser } from '../account.js';
 import { initTextures } from './textures.js';
 import { setSignAnisotropy } from './signs.js';
-import { RoadNet, PA_RECT } from './roads.js';
+import { RoadNet, PA_RECT, PA } from './roads.js';
+import { Fx } from './fx.js';
+import { Nav } from './nav.js';
+import { Dialog } from './dialog.js';
 import { World } from './world.js';
 import { TimeOfDay } from './sky.js';
 import { buildCarAuto, requestGlb, loadManifest, hasGlb, glbEntry } from './carfactory.js';
@@ -46,7 +49,7 @@ const isMobile = /Android|iPhone|iPad|iPod|Mobile|SamsungBrowser/i.test(navigato
 export const DEFAULT_SETTINGS = {
   quality: isMobile ? 'low' : 'high', resScale: isMobile ? 0.75 : 1, transmission: 'auto', assist: true, units: 'kmh', etc: true,
   difficulty: 'standard', steerAssist: 'standard', stm: 'sport', tcs: 'sport', abs: true, police: 'normal',
-  master: 0.8, engine: 0.85, sfx: 0.8, ambient: 0.6, radio: 0.7, dj: true, spawn: 'pa', weather: 'auto', tilt: false, shake: true, fps: true, timeSpeed: 1, bloom: true, online: true, touch: isMobile ? 'on' : 'auto',
+  master: 0.8, engine: 0.85, sfx: 0.8, ambient: 0.6, radio: 0.7, dj: true, spawn: 'pa', weather: 'auto', damage: true, tilt: false, shake: true, fps: true, timeSpeed: 1, bloom: true, online: true, touch: isMobile ? 'on' : 'auto',
 };
 
 class Game {
@@ -154,6 +157,9 @@ class Game {
     this.walkers = new Walkers(this);
     this.planes = new Planes(this);
     this.weather = new Weather(this);
+    this.fx = new Fx(this);
+    this.nav = new Nav(this);
+    this.dialog = new Dialog(this);
     this.toll = new TollPlaza(this);
     this.online = new Online(this);
     this.accidents = new Accidents(this);
@@ -335,7 +341,7 @@ class Game {
     if (prompt) this.ui.prompt(...prompt); else this.ui.prompt(null);
     // konbini chime
     const inStore = W.konbini && p.pos.x > W.konbini.x0 && p.pos.x < W.konbini.x1 && p.pos.z > W.konbini.z0 && p.pos.z < W.konbini.z1;
-    if (inStore && !this._inStore) { this.audio.sfx('store_chime'); this.audio.speak('いらっしゃいませー。', 'ja-JP'); }
+    if (inStore && !this._inStore) { this.audio.sfx('store_chime'); this.audio.speak('いらっしゃいませー。', 'ja-JP', { role: 'female', seed: 5 }); }
     this._inStore = inStore;
   }
   carBlocks(x, z) {
@@ -351,7 +357,7 @@ class Game {
     const c = CHATTER[Math.floor(Math.random() * CHATTER.length)];
     n.state = 'idle'; n.action = 'talk'; n.wait = 6; n.focus = { pos: this.player.pos };
     this.ui.toast(`「${c.ja}」 — ${t(c.k)}`, 'chat', 5);
-    this.audio.speak(c.ja, 'ja-JP', { rate: 1.05, pitch: 0.9 + Math.random() * 0.4 });
+    this.audio.speak(c.ja, 'ja-JP', { rate: 1.05, role: Math.random() < 0.5 ? 'male' : 'female', seed: Math.random() * 10 });
   }
 
   // ───────────────────────── driving ─────────────────────────
@@ -387,7 +393,7 @@ class Game {
     // lights & misc
     const L = m.lights;
     if (I.act('lights')) { if (!L.head) L.head = true; else if (!L.high) L.high = true; else { L.head = false; L.high = false; } this.audio.sfx('ui_click'); }
-    if (I.act('horn')) { this.engineSnd?.horn(true); this._hornT = 0.35; }
+    if (I.act('horn')) { this.engineSnd?.horn(true); this._hornT = 0.35; this.traffic.honk(v.pos, v.forward); }
     if (this._hornT > 0) { this._hornT -= dt; if (I.key('horn')) this._hornT = 0.1; if (this._hornT <= 0) this.engineSnd?.horn(false); }
     if (I.act('signalL')) { L.left = !L.left; L.right = false; L.hazard = false; }
     if (I.act('signalR')) { L.right = !L.right; L.left = false; L.hazard = false; }
@@ -420,7 +426,7 @@ class Game {
         case 'shift': this.engineSnd?.shift(); break;
         case 'blowoff': this.engineSnd?.blowOff(); break;
         case 'backfire': this.engineSnd?.backfire(); break;
-        case 'crash': if (!this._crashT) this.accidents.onCrash(v.speed); if (!this._crashT) { this.audio.sfx('crash', { position: v.pos, volume: clamp(v.speed / 20, 0.3, 1) }); this._crashT = 0.5; this.shake = Math.min(1, v.speed / 15); } break;
+        case 'crash': if (!this._crashT && v.lastHit && performance.now() - v.lastHit.t < 300) this.fx?.damage(this.model, v.lastHit, v.lastHit.vin); if (!this._crashT) this.accidents.onCrash(v.speed); if (!this._crashT) { this.audio.sfx('crash', { position: v.pos, volume: clamp(v.speed / 20, 0.3, 1) }); this._crashT = 0.5; this.shake = Math.min(1, v.speed / 15); } break;
       }
     }
     v.events.length = 0;
@@ -469,10 +475,40 @@ class Game {
     v.place(p, yaw); v.vel.copy(new THREE.Vector3(Math.sin(yaw), 0, Math.cos(yaw)).multiplyScalar(Math.max(8, Math.abs(v.vx) * 0.5)));
     this.ui.toast(t('game.area.edge'), 'info', 4); this.camSnap = true;
   }
+  // teleport (full map): onto the nearest expressway lane when one is close, otherwise onto the city street nearest
+  // the point once its tiles have streamed in (the car waits on the spot with the handbrake on until then)
+  teleport(x, z) {
+    if (!this.world.isLand(x, z) && !this.net.hits(x, z).some(h => h.inside)) {
+      let best = null; for (const r of this.net.roads) for (const q of r.samples) { const d = (q.p.x - x) ** 2 + (q.p.z - z) ** 2; if (!best || d < best.d) best = { d, q }; }
+      if (!best || best.d > 400 * 400) { this.ui.toast(t('game.map.tpSea'), 'warn', 3); return; }
+      x = best.q.p.x; z = best.q.p.z;
+    }
+    if (this.mode === 'walk') this.enterCar();
+    const v = this.vehicle; if (!v) return;
+    if (this.mySpot) { this.mySpot.taken = false; this.mySpot = null; }
+    // nearest expressway lane within 60 m
+    let best = null; for (const r of this.net.roads) for (let i = 0; i < r.samples.length; i += 2) { const q = r.samples[i]; const d = (q.p.x - x) ** 2 + (q.p.z - z) ** 2; if (!best || d < best.d) best = { d, r, s: q.s }; }
+    if (best && best.d < 60 * 60) {
+      const r = best.r, L = r.lanes.filter(l => l.dir === 1).sort((a, b) => b.lat - a.lat)[0] || r.lanes[0];
+      const p = r.at(best.s, L.lat), d = r.dirAt(best.s); v.place(p.clone().setY(p.y + 0.3), Math.atan2(d.x * L.dir, d.z * L.dir));
+    } else { v.place(new THREE.Vector3(x, this.world.ground(x, z) + 0.4, z), v.yaw); this._snap = { x, z, t: 12 }; }
+    v.handbrakeOn = true; this.camSnap = true; this.ui.toast(t('game.map.tpDone'), 'info', 2);
+  }
+  snapUpdate(dt) {
+    const S = this._snap; if (!S) return; S.t -= dt; const N = this.world.city?.net; const v = this.vehicle;
+    if (!v || S.t <= 0) { this._snap = null; return; }
+    if (!N) return;
+    let best = null; for (const c of N.chains.values()) { if (c.dead || c.cls > 5 || c.bb[0] > S.x + 150 || c.bb[2] < S.x - 150 || c.bb[1] > S.z + 150 || c.bb[3] < S.z - 150) continue; for (let i = 0; i < c.pts.length - 1; i++) { const p = c.pts[i]; const d = (p[0] - S.x) ** 2 + (p[1] - S.z) ** 2; if (!best || d < best.d) best = { d, c, i }; } }
+    if (!best) return;
+    const { c, i } = best, a = c.pts[i], b = c.pts[i + 1], L = Math.hypot(b[0] - a[0], b[1] - a[1]) || 1, tx = (b[0] - a[0]) / L, tz = (b[1] - a[1]) / L, off = c.w / 4;
+    const px = (a[0] + b[0]) / 2 + tz * off, pz = (a[1] + b[1]) / 2 - tx * off; // keep left
+    if (this.cityBlocked(px, pz)) return;
+    v.place(new THREE.Vector3(px, this.world.ground(px, pz) + 0.3, pz), Math.atan2(tx, tz)); this.camSnap = true; this._snap = null;
+  }
   respawnPA() {
     const v = this.vehicle; if (!v) return;
     if (this.mySpot) this.mySpot.taken = false;
-    const s = this.spawnPoint(); v.place(s.pos.clone(), s.yaw); v.handbrakeOn = true; this.camSnap = true;
+    const s = this.spawnPoint(); v.place(s.pos.clone(), s.yaw); v.handbrakeOn = true; this.camSnap = true; this.fx?.repair(this.model);
   }
 
   // ───────────────────────── camera ─────────────────────────
@@ -608,6 +644,8 @@ class Game {
     if (I.act('photo')) this.ui.togglePhoto();
     this.updateCamera(dt);
     this.env = this.tod.update(paused ? 0 : dt, this.focus);
+    if (this.fx && !paused) { try { this.fx.update(dt); } catch (e) { console.warn('fx', e); } }
+    if (this.nav && !paused) { try { this.nav.update(dt); this.snapUpdate(dt); } catch (e) { console.warn('nav', e); } }
     if (this.weather) { try { const w = this.weather.update(paused ? 0 : dt, this.camera, this.env); this.env.rain = w.rain; this.env.wet = w.wet; } catch (e) { console.warn('weather', e); this.weather = null; } }
     this.world.update(dt, this.env);
     this.world.updateDynamicLights(dt, this.focus, this.env.night);
@@ -651,6 +689,8 @@ class Game {
 
   // ───────────────────────── garage ─────────────────────────
   openGarage() {
+    // the garage opens wherever you have stopped (not only in the PA): the new car is set down in the same place
+    const v = this.vehicle; this.garageAt = v ? { pos: v.pos.clone(), yaw: v.yaw } : null;
     this.mode = 'garage';
     if (this.vehicle) { this.scene.remove(this.model.root); }
     this.engineSnd?.update({ rpm: 0, throttle: 0, load: 0, running: false, cranking: false, boost: 0, speed: 0, slip: 0, position: this.focus, interior: false, openness: 0 });
@@ -660,7 +700,8 @@ class Game {
   previewCar(id) {
     if (this.preview) { this.scene.remove(this.preview.root); this.preview.dispose(); }
     this.preview = this.buildPlayerCar(id);
-    this.preview.root.position.set(96, 0, -46); this.preview.root.rotation.y = -0.5;
+    const at = this.garageAt && !PA.inLot(this.garageAt.pos.x, this.garageAt.pos.z, 0) ? this.garageAt : null;
+    if (at) { this.preview.root.position.copy(at.pos); this.preview.root.rotation.y = at.yaw; } else { this.preview.root.position.set(96, 0, -46); this.preview.root.rotation.y = -0.5; }
     this.preview.lights.head = this.env?.night > 0.4; this.preview.update(0.016, {});
     this.scene.add(this.preview.root);
     this.previewId = id;
@@ -679,7 +720,8 @@ class Game {
   quickStart() { this.unlockAudio(); this.startDrive(CAR_BY_ID[this.garage.car] ? this.garage.car : 'r34'); }
   closeGarage(drive) {
     if (this.preview) { this.scene.remove(this.preview.root); this.preview.dispose(); this.preview = null; }
-    if (drive) { if (this.mySpot) this.mySpot.taken = false; this.startDrive(this.previewId); }
+    const away = this.garageAt && !PA.inLot(this.garageAt.pos.x, this.garageAt.pos.z, 0);
+    if (drive) { if (!away && this.mySpot) this.mySpot.taken = false; this.startDrive(this.previewId, !!away); }
     else if (this.vehicle) { this.scene.add(this.model.root); this.mode = 'drive'; this.ui.showHUD(); }
     else { this.mode = 'title'; this.ui.showTitle(); }
   }

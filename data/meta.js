@@ -1,8 +1,34 @@
 // Shared game metadata: version, changelog, regions. Update VERSION + CHANGELOG on every release.
-export const GAME = { title: 'MIDNIGHT JAPAN', titleJa: 'ミッドナイト・ジャパン', version: '0.8.1', build: '2026.11.06' };
+export const GAME = { title: 'MIDNIGHT JAPAN', titleJa: 'ミッドナイト・ジャパン', version: '0.9.0', build: '2026.11.06' };
 
 // Newest first. type: new | change | fix | known
 export const CHANGELOG = [
+  {
+    version: '0.9.0', date: '2026-11-06', codename: 'Real Drive',
+    summary: {
+      ko: '대규모 업데이트 — 차체 파손, 스키드마크·타이어 연기, 내비게이션과 텔레포트, 사고 상대·경찰과의 선택형 대화, 일본식 차선 주행과 시간대별 교통량, 터널 갱문과 표지판, 주유소 165곳, 지명 병기.',
+      ja: '大型アップデート——車体の損傷、スキッドマークとタイヤスモーク、ナビとテレポート、事故の相手・警察との選択式の会話、日本式の車線走行と時間帯別の交通量、トンネル坑門と標識、ガソリンスタンド165か所、地名の併記。',
+      en: 'A big one: body damage, skid marks and tyre smoke, GPS navigation and teleport, choice-based conversations with other drivers and the police, Japanese lane discipline and traffic that follows the clock, tunnel portals and signs, 165 fuel stations and bilingual place names.'
+    },
+    items: [
+      { type: "new", ko: "차체 파손: 충돌 지점이 실제로 찌그러짐(NPC 차량은 항상, 내 차는 설정에서 켜기/끄기), 일시정지 메뉴 「수리」", ja: "車体の損傷：ぶつけた所が実際にへこむ（NPC車は常に、自分の車は設定でオン／オフ）、ポーズメニューに「修理」", en: "Body damage: panels really dent where you hit (AI cars always; your own car on/off in settings), plus Repair in the pause menu" },
+      { type: "new", ko: "스키드마크와 타이어 연기: 드리프트·휠스핀·사이드브레이크·잠긴 바퀴에서 노면에 자국이 남고 연기가 피어오름", ja: "スキッドマークとタイヤスモーク：ドリフト・ホイールスピン・サイドブレーキ・ロックで路面に跡が残り煙が上がる", en: "Skid marks and tyre smoke from drifts, wheelspin, the handbrake and locked wheels" },
+      { type: "new", ko: "내비게이션: 지도에서 목적지를 누르면 고속도로망(진행 방향·분기 반영)과 시내 도로(일방통행 반영)로 경로 탐색, 미니맵 경로선·거리·방향 화살표·목적지 빛기둥", ja: "ナビ：地図で目的地を押すと高速道路網（進行方向・分岐）と市街地（一方通行）で経路探索、ミニマップのルート線・距離・矢印・目的地の光の柱", en: "GPS navigation: tap a destination on the map for a route over the expressways (direction and junctions) or city streets (one-way streets), shown on the minimap with distance, a turn arrow and a light beam at the destination" },
+      { type: "new", ko: "텔레포트: 지도에서 고른 곳의 가장 가까운 도로로 즉시 이동(일시정지 메뉴 「텔레포트」)", ja: "テレポート：地図で選んだ場所の最寄りの道路へ瞬時に移動（ポーズメニュー「テレポート」）", en: "Teleport to the nearest road at any place you pick on the map (pause menu → Teleport)" },
+      { type: "new", ko: "사고 상대와 대화: 기분 게이지, 사과·안부·보험 교환·합의금 협상·상대 탓·뺨 때리기·자리 뜨기 선택지(크고 명확한 카드, 숫자키 1–8)", ja: "事故の相手と会話：機嫌ゲージ、謝罪・気遣い・保険交換・示談金交渉・相手のせい・平手打ち・立ち去るの選択肢（大きく明確なカード、数字キー1–8）", en: "Talk to the other driver after a crash: a mood meter and big, clear choices — apologise, check on them, swap insurance, negotiate a settlement, blame them, slap them or leave (keys 1–8)" },
+      { type: "new", ko: "경찰 단속 대화: 면허증 제시·사정 설명·제시 거부·도주 중 선택, 추격 중 경찰 거리·사고 출동 도착 예상 시간·놓쳤을 때 마지막 목격 위치(지도) 표시", ja: "警察の取り締まり：免許証提示・事情説明・提示拒否・逃走を選択、追跡中の距離・事故出動の到着予想・逃げ切った後の最終目撃位置（地図）を表示", en: "Police stops: show your licence, explain, refuse or run; the HUD shows the police distance in a chase, the ETA of a unit coming to your accident, and where they last saw you after you lose them" },
+      { type: "new", ko: "터널 입구: 콘크리트 갱문과 터널명 명판, 진입 150m 전 「トンネル内 ライト点灯」「ラジオ再放送 1620kHz」 표지판", ja: "トンネル坑口：コンクリートの坑門とトンネル名の銘板、手前150mに「トンネル内 ライト点灯」「ラジオ再放送 1620kHz」", en: "Tunnel mouths: concrete portals with the tunnel’s name plate, and “Headlights on” / “Tunnel radio 1620 kHz” boards 150 m before each entrance" },
+      { type: "new", ko: "주유소 165곳: 실제 위치(OSM)에 조명 캐노피·주유기 아일랜드·가격 표시 기둥, 차로 진입 가능", ja: "ガソリンスタンド165か所：実在の位置（OSM）に照明付きキャノピー・給油機アイランド・価格表示ポール、車で入れる", en: "165 fuel stations at their real (OSM) locations: lit canopies, pump islands and price poles — you can drive in" },
+      { type: "new", ko: "지명·도로명을 일본어와 함께 현재 언어로 병기(지도·화면 위치 표시)", ja: "地名・道路名を日本語と現在の言語で併記（地図・画面の現在地表示）", en: "Place and road names shown in Japanese together with your language (map and on-screen location)" },
+      { type: "change", ko: "교통: 일본식 주행(왼쪽 주행차로, 오른쪽 추월 후 복귀), 경적을 울리면 앞차가 비켜 줌, 시간대별 교통량(새벽 적고 출퇴근 시간 많음)", ja: "交通：日本式の走り方（左の走行車線、右から追い越して戻る）、クラクションで前の車が譲る、時間帯で交通量が変化（深夜少なく通勤時間に多い）", en: "Traffic: Japanese lane discipline (keep left, overtake on the right and move back), cars move over when you sound the horn, and volume follows the clock (quiet before dawn, busy at rush hour)" },
+      { type: "change", ko: "음성: 경찰은 남성 목소리에 확성기 효과, 사고 상대·점원 등은 사람마다 다른 목소리와 높낮이", ja: "音声：警察は男性の声とメガホン効果、事故の相手や店員は人ごとに違う声と高さ", en: "Voices: police in a male voice through a loud-hailer, other drivers and staff each with their own voice and pitch" },
+      { type: "change", ko: "어디서든 차량 변경: 멈춘 곳에서 차고를 열고 그 자리에서 바꾼 차로 출발", ja: "どこでも車両変更：止まった場所でガレージを開き、その場で乗り換え", en: "Change cars anywhere: open the garage wherever you have stopped and drive off from the same spot" },
+      { type: "fix", ko: "차량과 3D 모델 불일치 수정: S14 실비아, 1세대 86(ZN6), 크라운 택시, H50 하이에이스, 후소 캔터, 후소 로사 — 이름·제원·크기를 실제 모델에 맞춤(트럭·버스 충돌 크기가 모델의 2배이던 문제 포함)", ja: "車種と3Dモデルの不一致を修正：S14シルビア、初代86（ZN6）、クラウンタクシー、H50ハイエース、ふそうキャンター、ふそうローザ——名前・諸元・サイズをモデルに合わせた（トラック・バスの当たり判定がモデルの2倍だった問題含む）", en: "Cars now match their 3D models: S14 Silvia, first-gen 86 (ZN6), Crown taxi, H50 HiAce, Fuso Canter and Fuso Rosa — names, specs and sizes (the truck and bus collision boxes were twice the model size)" },
+      { type: "fix", ko: "경찰 사이렌: 긴급 상황(추격·사고 출동)에서만, 그리고 경찰차가 700m 이내일 때만 울림", ja: "パトカーのサイレン：緊急時（追跡・事故出動）だけ、700m以内のときだけ鳴る", en: "Police sirens sound only in an emergency (a chase or an accident call) and only within 700 m" },
+      { type: "fix", ko: "AI 차량의 차선 변경 방향지시등이 반대로 켜지던 문제", ja: "AI車の車線変更でウインカーが逆に点いていた問題", en: "AI cars no longer signal the wrong way when changing lanes" },
+      { type: "fix", ko: "미니맵에 시내 도로가 표시되지 않던 문제", ja: "ミニマップに市街地の道路が表示されなかった問題", en: "City streets now appear on the minimap" }
+    ]
+  },
   {
     version: '0.8.1', date: '2026-11-06', codename: 'Pavement',
     summary: {

@@ -200,3 +200,31 @@ body.photo .online-pill,body.photo .chat{display:none}
 /* tuning presets */
 .gsec.tune .presets{display:flex;flex-wrap:wrap;gap:6px;margin:4px 0 10px}.gsec.tune .presets button{padding:6px 11px;border-radius:20px;border:1px solid var(--line);background:none;color:var(--muted);font:600 12px var(--font);cursor:pointer;transition:background .15s,color .15s}.gsec.tune .presets button.on{background:var(--sodium);color:#1a0d00;border-color:transparent}.gsec.tune .presets button:hover{color:var(--text,#fff)}
 .gsec.tune select{background:rgba(255,255,255,.06);color:inherit;border:1px solid var(--line);border-radius:8px;padding:4px 6px;font:500 12px var(--font)}
+
+/* ── v0.9: dialogue cards, GPS, police HUD, map pick ── */
+.dlg{position:fixed;inset:auto 0 0 0;display:flex;justify-content:center;padding:0 16px 22px;z-index:60;pointer-events:none}
+.dlg[hidden]{display:none}
+.dlg-card{pointer-events:auto;width:min(760px,100%);background:linear-gradient(180deg,rgba(12,18,32,.96),rgba(8,12,22,.97));border:1px solid rgba(255,255,255,.14);border-radius:18px;padding:18px 20px 16px;box-shadow:0 18px 60px rgba(0,0,0,.55);color:#f1f4fa;font-family:"Pretendard","Hiragino Sans","Noto Sans JP",system-ui,sans-serif}
+.dlg-top{display:flex;justify-content:space-between;align-items:center;gap:14px;margin-bottom:8px}
+.dlg-who{font-weight:800;font-size:15px;letter-spacing:.02em;color:#ffb347}
+.dlg-mood{display:flex;align-items:center;gap:10px;font-size:13px;color:#c9d2de}
+.dlg-mood[hidden]{display:none}
+.dlg-bar{width:140px;height:9px;border-radius:9px;background:rgba(255,255,255,.12);overflow:hidden}
+.dlg-bar i{display:block;height:100%;border-radius:9px;transition:width .35s,background .35s}
+.dlg-text{white-space:pre-line;font-size:19px;line-height:1.5;font-weight:600;margin:6px 0 14px}
+.dlg-opts{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:8px}
+.dlg-opt{display:flex;align-items:center;gap:10px;text-align:left;padding:12px 14px;border-radius:12px;border:1px solid rgba(255,255,255,.14);background:rgba(255,255,255,.06);color:#fff;font-size:15px;font-weight:600;cursor:pointer}
+.dlg-opt:hover,.dlg-opt:focus-visible{background:rgba(255,179,71,.18);border-color:#ffb347}
+.dlg-opt kbd{flex:none;width:24px;height:24px;display:grid;place-items:center;border-radius:6px;background:rgba(255,255,255,.14);font:700 13px system-ui}
+.dlg-opt.safe{border-color:rgba(51,194,122,.55)}
+.dlg-opt.bad{border-color:rgba(255,77,77,.5);color:#ffd0d0}
+.navhud{position:absolute;right:18px;top:194px;display:flex;align-items:center;gap:10px;padding:8px 12px;border-radius:12px;background:rgba(8,14,26,.82);border:1px solid rgba(63,182,255,.6);color:#fff;font:800 16px system-ui}
+.navhud[hidden],.pursuithud[hidden],.mapsel[hidden]{display:none}
+.nav-arrow{display:inline-block;color:#3fb6ff;font-size:22px;transition:transform .2s}
+.nav-x{background:none;border:0;color:#9fb0c8;font-size:14px;cursor:pointer}
+.pursuithud{position:absolute;left:50%;top:64px;transform:translateX(-50%);padding:8px 16px;border-radius:12px;background:rgba(60,8,8,.85);border:1px solid #ff4d4d;color:#fff;font:800 15px system-ui;animation:pursuit 1s infinite}
+@keyframes pursuit{50%{border-color:#4a8cff;box-shadow:0 0 18px rgba(74,140,255,.45)}}
+.mapsel{position:absolute;left:50%;bottom:24px;transform:translateX(-50%);display:flex;align-items:center;gap:10px;padding:10px 14px;border-radius:14px;background:rgba(8,14,26,.92);border:1px solid rgba(255,255,255,.18)}
+.mapsel .ms-t{color:#fff;font:700 14px "Hiragino Sans","Noto Sans JP",system-ui;max-width:42vw;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+@media (max-width:640px){.dlg-text{font-size:16px}.dlg-opt{font-size:14px;padding:10px 12px}.navhud{top:auto;bottom:150px;right:10px}}
+#hud .loc .loc-r{display:block;font-size:.72em;font-weight:600;opacity:.82;margin-top:2px}

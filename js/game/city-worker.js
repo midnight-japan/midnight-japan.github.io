@@ -284,11 +284,42 @@ function buildTile(T, lod, opts) {
     }
   }
 
+  // fuel station (ガソリンスタンド): open forecourt under a lit canopy on pillars, pump islands with dispensers, a brand
+  // fascia that glows at night and a tall price pole — drivable in, only the pillars / pumps / pole collide
+  function gasStation(cx, cz, tx, tz, hl, hw, seed) {
+    const H = 5.4, nx = -tz, nz = tx;
+    const at = (a, b) => [cx + tx * a + nx * b, cz + tz * a + nz * b];
+    const BR = [[0.92, 0.32, 0.08], [0.1, 0.35, 0.75], [0.85, 0.1, 0.12], [0.1, 0.55, 0.3]][seed % 4];
+    bm.box(cx, H + 0.45, cz, tx, tz, hl, hw, 0.45, [0.94, 0.94, 0.92], [PLAIN, 0, 0, 0]);          // canopy
+    gm.box(cx, H + 0.42, cz, tx, tz, hl + 0.03, hw + 0.03, 0.2, BR, [1, 0, 0, 0]);               // brand fascia band
+    gm.box(cx, H - 0.02, cz, tx, tz, hl * 0.86, hw * 0.8, 0.02, [1, 0.98, 0.94], [1, 0, 0, 0]);   // canopy downlights
+    for (const a of [-0.62, 0.62]) for (const b of [-0.5, 0.5]) { const [x, z] = at(a * hl, b * hw); pm.box(x, H / 2, z, tx, tz, 0.22, 0.22, H / 2, [0.88, 0.88, 0.86], [PLAIN, 0, 0, 0]); cols.push([x, z, 0.25, 0.25, 0, -1, H]); }
+    const islands = hl > 9 ? [-0.32, 0.32] : [0];
+    for (const a of islands) for (const b of hw > 6 ? [-0.22, 0.22] : [0]) {
+      const [x, z] = at(a * hl, b * hw);
+      pm.box(x, 0.1, z, tx, tz, 1.5, 0.45, 0.1, [0.78, 0.78, 0.76], [PLAIN, 0, 0, 0]);                 // island kerb
+      for (const d of [-0.75, 0.75]) { const px = x + tx * d, pz = z + tz * d; pm.box(px, 0.95, pz, tx, tz, 0.35, 0.28, 0.75, [0.95, 0.95, 0.95], [PLAIN, 0, 0, 0]); gm.box(px + nx * 0.29, 1.15, pz + nz * 0.29, tx, tz, 0.22, 0.01, 0.16, [0.6, 0.9, 1], [1, 0, 0, 0]); gm.box(px, 1.72, pz, tx, tz, 0.36, 0.29, 0.06, BR, [1, 0, 0, 0]); }
+      cols.push([x, z, 1.55, 0.5, Math.atan2(-tz, tx), -1, 1.8]);
+    }
+    // price pole at the street-side corner: brand panel + three lit price rows (レギュラー / ハイオク / 軽油)
+    { const [x, z] = at(hl + 1.6, -hw + 0.6); pm.cyl(x, z, 0, 7.2, 0.14, 8, [0.6, 0.62, 0.64], [PLAIN, 0, 0, 0]); cols.push([x, z, 0.2, 0.2, 0, -1, 7.2]);
+      gm.box(x, 7.6, z, nx, nz, 0.9, 0.12, 0.55, BR, [1, 0, 0, 0]);
+      for (let k = 0; k < 3; k++) { pm.box(x, 6.55 - k * 0.5, z, nx, nz, 0.9, 0.1, 0.22, [0.06, 0.06, 0.07], [PLAIN, 0, 0, 0]); gm.box(x, 6.55 - k * 0.5, z, nx, nz, 0.5, 0.115, 0.13, k === 1 ? [1, 0.25, 0.15] : [1, 0.75, 0.2], [1, 0, 0, 0]); } }
+  }
   // ── points: traffic signals + crossings, vending machines, bus stops, konbini pole signs, chimneys ──
   const P = T.p || [];
   for (let k = 0; k < P.length; k += 4) {
     const ty = P[k], x = P[k + 1] * D, z = P[k + 2] * D, hh = P[k + 3]; C(x, z);
     if (ty === PT.CHIMNEY || ty === PT.TOWER) { if (!mid) continue; const H = hh || (ty === PT.CHIMNEY ? 60 + rnd() * 60 : 30 + rnd() * 30); const red = ty === PT.CHIMNEY; for (let b = 0; b < (red ? 8 : 1); b++) bm.cyl(x, z, b * H / 8, red ? (b + 1) * H / 8 : H, red ? 2.2 - b * 0.12 : 1.4, 12, red ? (b % 2 ? [0.85, 0.22, 0.16] : [0.93, 0.93, 0.92]) : [0.7, 0.72, 0.74], [PLAIN, 0, 0, 0], b === 7, red ? 2.2 - (b + 1) * 0.12 : 1.0); cols.push([x, z, 2.2, 2.2, 0, -1, H]); gm.box(x, H + 0.6, z, 1, 0, 0.5, 0.5, 0.5, [1, 0.15, 0.1], [5, 0, 0, 0]); continue; }
+    if (ty === PT.FUEL && mid) {
+      let best = null; for (const sg of segs.near(x, z)) { const dx = sg.bx - sg.ax, dz = sg.bz - sg.az, L = Math.hypot(dx, dz) || 1; const t = Math.max(0, Math.min(1, ((x - sg.ax) * dx + (z - sg.az) * dz) / (L * L))); const px = sg.ax + dx * t, pz = sg.az + dz * t; const d = Math.hypot(x - px, z - pz); if (!best || d < best.d) best = { d, tx: dx / L, tz: dz / L, px, pz, w: sg.w }; }
+      if (best && best.d < 60) {
+        const hl = 8, hw = 5.5; let nx = (x - best.px) / (best.d || 1), nz = (z - best.pz) / (best.d || 1); if (!best.d) { nx = -best.tz; nz = best.tx; }
+        const set = Math.max(best.d, best.w / 2 + 3.5 + hw); // keep the canopy off the carriageway and the pavement
+        gasStation(best.px + nx * set, best.pz + nz * set, best.tx, best.tz, hl, hw, Math.floor(Math.abs(x * 7 + z * 13)));
+      }
+      continue;
+    }
     if (!near) continue;
     if (ty === PT.SIGNAL) {
       // find the street directions through this node
@@ -383,6 +414,9 @@ function buildTile(T, lod, opts) {
     const seedF = (seed % 997) / 997;
     const info = [kind, seedF, fh, lv];
     const cx = ob.x, cz = ob.z; C(cx, cz);
+    // ── fuel station (ガソリンスタンド): open forecourt under a lit canopy on pillars, pump islands with dispensers,
+    // a brand fascia that glows at night and a tall price pole at the kerb — drivable in, only pillars/pumps collide ──
+    if (cls === B.GAS && ob.hl > 3 && ob.hw > 3) { gasStation(cx, cz, ob.tx, ob.tz, ob.hl, ob.hw, seed); continue; }
     // ── storage tank: cylinder + dome ──
     if (cls === B.TANK) {
       const rad = Math.sqrt(A / Math.PI);

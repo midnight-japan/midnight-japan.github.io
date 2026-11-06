@@ -3,6 +3,7 @@
 import * as THREE from 'three';
 import { t } from '../i18n.js';
 import { PA_RECT } from './roads.js';
+import { L } from './dialog.js';
 
 const inPA = p => p.x > PA_RECT.x0 && p.x < PA_RECT.x1 && p.z > PA_RECT.z0 && p.z < PA_RECT.z1;
 
@@ -30,7 +31,11 @@ export class Police {
     }
     if (this.state === 'pursuit') this.pursue(dt, v, pol);
     // siren audio
-    if (this.siren) this.siren.update(pol.pos, this.state === 'pursuit' ? (pol.pos.distanceTo(v?.pos || pol.pos) < 25 ? 'yelp' : 'wail') : pol.accident ? 'wail' : 'off');
+    // siren: only in an emergency (pursuit / responding to an accident) and only within earshot of the player
+    const near = pol.pos.distanceTo(g.focus || pol.pos);
+    if (this.siren) this.siren.update(pol.pos, near > 700 ? 'off' : this.state === 'pursuit' ? (pol.pos.distanceTo(v?.pos || pol.pos) < 25 ? 'yelp' : 'wail') : pol.accident ? 'wail' : 'off');
+    if (this.lastSeen) { this.lastSeen.t -= dt; if (this.lastSeen.t <= 0) this.lastSeen = null; }
+    this.dlgCool = Math.max(0, (this.dlgCool || 0) - dt);
     // ── revving in the PA (空ぶかし)
     if (v && g.mode === 'drive' && inPA(v.pos) && Math.abs(v.kmh) < 3 && v.engine.running) {
       if (v.engine.rpm > v.car.engine.redline * 0.75) { if (!this._revHigh) { this.revCount++; this._revHigh = true; this.revT = 20; } } else this._revHigh = false;
@@ -39,7 +44,7 @@ export class Police {
     this.warnT -= dt;
     if (this.revCount >= 3 && this.warnT <= 0) {
       this.warnT = 25; this.revCount = 0;
-      g.audio?.speak('空ぶかしはやめてください。近隣の迷惑になります。', 'ja-JP');
+      g.audio?.speak('空ぶかしはやめてください。近隣の迷惑になります。', 'ja-JP', { role: 'police' });
       g.ui.toast(t('game.police.rev'), 'police');
       g.stats.warnings++;
     }
@@ -51,7 +56,7 @@ export class Police {
     this.state = 'pursuit'; this.over = over; this.stillT = 0; this.lostT = 0;
     const pol = this.unit; pol.pursuit = true; pol.vDes = 45;
     this.g.ui.toast(t('game.police.pursuit'), 'police');
-    this.g.audio?.speak('前の車、左に寄せて止まりなさい。', 'ja-JP');
+    this.g.audio?.speak('前の車、左に寄せて止まりなさい。', 'ja-JP', { role: 'police' });
     this._sayT = 12;
   }
   pursue(dt, v, pol) {
@@ -70,22 +75,42 @@ export class Police {
       } else pol.vDes = 40;
     }
     this._sayT -= dt;
-    if (this._sayT <= 0) { this._sayT = 14; this.g.audio?.speak(Math.random() < 0.5 ? '前の車、止まりなさい。' : 'そこの車、速度超過です。左に寄せて停車しなさい。', 'ja-JP'); }
-    if (Math.abs(v.kmh) < 4 && d < 35) { this.stillT += dt; if (this.stillT > 3) this.ticket(); }
+    if (this._sayT <= 0) { this._sayT = 14; this.g.audio?.speak(Math.random() < 0.5 ? '前の車、止まりなさい。' : 'そこの車、速度超過です。左に寄せて停車しなさい。', 'ja-JP', { role: 'police' }); }
+    if (Math.abs(v.kmh) < 4 && d < 35) { this.stillT += dt; if (this.stillT > 3 && !this.g.dialog?.open && !this.dlgCool) this.stopTalk(); }
     else this.stillT = 0;
     if (d > 650) { this.lostT += dt; if (this.lostT > 15) this.endPursuit(true); } else this.lostT = 0;
+  }
+  // pulled over: the officer walks up — show the licence, explain, refuse, or run
+  stopTalk() {
+    const g = this.g; if (!g.dialog) return this.ticket();
+    this.dlgCool = 25;
+    g.dialog.policeStop(this.over, r => {
+      if (r.kind === 'flee') { this.over += 10; this.stillT = -8; this.unit.vDes = 52; g.ui.toast(t('game.police.pursuit'), 'police'); return; }
+      const fine = r.fine || 0; if (fine) { g.money -= fine; g.stats.tickets++; }
+      g.ui.toast(r.kind === 'warning' || !fine ? L({ ko: '이번엔 경고로 끝났습니다.', ja: '今回は警告で済みました。', en: 'Let off with a warning.' }) : t('game.police.ticket', { fine: fine.toLocaleString('ja-JP'), over: Math.round(this.over) }), 'police', 6);
+      this.endPursuit(false);
+    });
+  }
+  // HUD line: police distance during a chase, ETA of a unit responding to your accident, or where they lost you
+  hud(pos) {
+    const pol = this.unit; if (!pol) return null;
+    const d = Math.round(pol.pos.distanceTo(pos));
+    if (this.state === 'pursuit') return L({ ko: `🚨 경찰 추적 중 · ${d} m`, ja: `🚨 追跡中・${d} m`, en: `🚨 Police pursuit · ${d} m` });
+    if (pol.accident) { const eta = Math.max(1, Math.round(d / Math.max(8, pol.v || 20))); return L({ ko: `🚓 경찰 출동 중 · 도착까지 약 ${eta}초 (${d} m)`, ja: `🚓 警察が急行中・到着まで約${eta}秒（${d} m）`, en: `🚓 Police on the way · about ${eta}s (${d} m)` }); }
+    if (this.lastSeen) return L({ ko: `👁 경찰이 마지막으로 본 위치 (지도에 표시)`, ja: `👁 警察が最後に見た位置（地図に表示）`, en: `👁 Last seen by police (shown on the map)` });
+    return null;
   }
   ticket() {
     const over = this.over;
     const fine = over >= 50 ? 100000 : over >= 40 ? 40000 : over >= 30 ? 25000 : 18000; // 反則金(普通車) approximation; ≥50 → 罰金相当
     this.g.money -= fine; this.g.stats.tickets++;
     this.g.ui.toast(t('game.police.ticket', { fine: fine.toLocaleString('ja-JP'), over: Math.round(over) }), 'police', 6);
-    this.g.audio?.speak('速度超過です。今回は反則切符を切ります。安全運転でお願いします。', 'ja-JP');
+    this.g.audio?.speak('速度超過です。今回は反則切符を切ります。安全運転でお願いします。', 'ja-JP', { role: 'police' });
     this.endPursuit(false);
   }
   endPursuit(escaped) {
     const pol = this.unit; if (pol) { pol.pursuit = false; pol.stopAt = undefined; pol.vDes = 22; }
-    if (escaped) { this.g.ui.toast(t('game.police.lost'), 'police'); this.g.stats.escapes++; }
+    if (escaped) { this.g.ui.toast(t('game.police.lost'), 'police'); this.g.stats.escapes++; const v = this.g.vehicle; if (v) this.lastSeen = { x: v.pos.x, z: v.pos.z, r: 180, t: 60 }; }
     this.state = 'patrol';
   }
 
@@ -101,7 +126,7 @@ export class Police {
     if (c.active) {
       c.t += dt;
       c.sayT = (c.sayT ?? 0) - dt;
-      if (c.sayT <= 0 && g.vehicle && inPA(g.focus)) { c.sayT = 35; g.audio?.speak('大黒パーキングエリアは閉鎖します。駐車中の車両は速やかに退出してください。', 'ja-JP'); }
+      if (c.sayT <= 0 && g.vehicle && inPA(g.focus)) { c.sayT = 35; g.audio?.speak('大黒パーキングエリアは閉鎖します。駐車中の車両は速やかに退出してください。', 'ja-JP', { role: 'police' }); }
       if (!window && c.t > 120) this.endClosure();
     }
   }

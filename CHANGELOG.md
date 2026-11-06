@@ -1,9 +1,10 @@
 # 📜 MIDNIGHT JAPAN 업데이트 기록 · Changelog
 
-현재 버전 · Current: **v0.8.1** · [▶ 웹에서 플레이](https://midnight-japan.github.io/) · [🌐 업데이트 페이지](https://midnight-japan.github.io/changelog.html)
+현재 버전 · Current: **v0.9.0** · [▶ 웹에서 플레이](https://midnight-japan.github.io/) · [🌐 업데이트 페이지](https://midnight-japan.github.io/changelog.html)
 
 | 버전 | 날짜 | 이름 | 요약 |
 |---|---|---|---|
+| [v0.9.0](#v090--real-drive-2026-11-06) | 2026-11-06 | Real Drive | 대규모 업데이트 — 차체 파손, 스키드마크·타이어 연기, 내비게이션과 텔레포트, 사고 상대·경찰과의 선택형 대화, 일본식 차선 주행과 시간대별 교통량, 터널 갱문과 표지판, 주유소 165곳, 지명 병기. |
 | [v0.8.1](#v081--pavement-2026-11-06) | 2026-11-06 | Pavement | 일본 거리다운 회색 보도블록(상점가 일부는 적갈색 블록), 지역 페이지에 K1 요코하마 루프·요코하마 시가지·쓰루미·가와사키·하네다 추가, README·사이트 수치 최신화. |
 | [v0.8.0](#v080--yokohama-loop-2026-11-06) | 2026-11-06 | Yokohama Loop | 요코하마 루프 개통 — 다이코쿠 JCT에서 K5를 타고 나마무기 JCT로, K1 요코하네선으로 요코하마역·미나토미라이를 지나 지하로 내려간 뒤, K3 가리바선과 혼모쿠 JCT를 거쳐 베이브리지로 돌아오는 약 17km의 실제 수도고 루프를 달릴 수 있어요. |
 | [v0.7.2](#v072--umbrella-2026-11-06) | 2026-11-06 | Umbrella | 비 오는 날 보행자들이 우산을 써요(투명 편의점 우산이 가장 많아요). 달리는 중에 하차 키를 누르면 안내가 나와요. |
@@ -22,6 +23,38 @@
 | [v0.2.0](#v020--bayshore-2026-11-05) | 2026-11-05 | Bayshore | 수도고속 완간선을 따라 하네다까지, 도쿄만 아쿠아라인 해저터널을 지나 우미호타루 PA까지. 실제 3D 차량 모델과 열리는 보닛도 들어왔어요. |
 | [v0.1.1](#v011--one-click-2026-11-04) | 2026-11-04 | One Click | 링크 하나로 바로 플레이. 크롬에서 공식 사이트 주소만 열면 설치 없이 실행돼요. |
 | [v0.1.0](#v010--first-meet-2026-11-04) | 2026-11-04 | First Meet | 첫 공개 버전. 다이코쿠 JCT·PA와 다이코쿠 부두 일대를 3D로 구현했습니다. |
+
+---
+
+## v0.9.0 — Real Drive (2026-11-06)
+
+> 대규모 업데이트 — 차체 파손, 스키드마크·타이어 연기, 내비게이션과 텔레포트, 사고 상대·경찰과의 선택형 대화, 일본식 차선 주행과 시간대별 교통량, 터널 갱문과 표지판, 주유소 165곳, 지명 병기.
+> A big one: body damage, skid marks and tyre smoke, GPS navigation and teleport, choice-based conversations with other drivers and the police, Japanese lane discipline and traffic that follows the clock, tunnel portals and signs, 165 fuel stations and bilingual place names.
+
+**✨ 추가 · New**
+
+- 차체 파손: 충돌 지점이 실제로 찌그러짐(NPC 차량은 항상, 내 차는 설정에서 켜기/끄기), 일시정지 메뉴 「수리」<br><sub>Body damage: panels really dent where you hit (AI cars always; your own car on/off in settings), plus Repair in the pause menu</sub>
+- 스키드마크와 타이어 연기: 드리프트·휠스핀·사이드브레이크·잠긴 바퀴에서 노면에 자국이 남고 연기가 피어오름<br><sub>Skid marks and tyre smoke from drifts, wheelspin, the handbrake and locked wheels</sub>
+- 내비게이션: 지도에서 목적지를 누르면 고속도로망(진행 방향·분기 반영)과 시내 도로(일방통행 반영)로 경로 탐색, 미니맵 경로선·거리·방향 화살표·목적지 빛기둥<br><sub>GPS navigation: tap a destination on the map for a route over the expressways (direction and junctions) or city streets (one-way streets), shown on the minimap with distance, a turn arrow and a light beam at the destination</sub>
+- 텔레포트: 지도에서 고른 곳의 가장 가까운 도로로 즉시 이동(일시정지 메뉴 「텔레포트」)<br><sub>Teleport to the nearest road at any place you pick on the map (pause menu → Teleport)</sub>
+- 사고 상대와 대화: 기분 게이지, 사과·안부·보험 교환·합의금 협상·상대 탓·뺨 때리기·자리 뜨기 선택지(크고 명확한 카드, 숫자키 1–8)<br><sub>Talk to the other driver after a crash: a mood meter and big, clear choices — apologise, check on them, swap insurance, negotiate a settlement, blame them, slap them or leave (keys 1–8)</sub>
+- 경찰 단속 대화: 면허증 제시·사정 설명·제시 거부·도주 중 선택, 추격 중 경찰 거리·사고 출동 도착 예상 시간·놓쳤을 때 마지막 목격 위치(지도) 표시<br><sub>Police stops: show your licence, explain, refuse or run; the HUD shows the police distance in a chase, the ETA of a unit coming to your accident, and where they last saw you after you lose them</sub>
+- 터널 입구: 콘크리트 갱문과 터널명 명판, 진입 150m 전 「トンネル内 ライト点灯」「ラジオ再放送 1620kHz」 표지판<br><sub>Tunnel mouths: concrete portals with the tunnel’s name plate, and “Headlights on” / “Tunnel radio 1620 kHz” boards 150 m before each entrance</sub>
+- 주유소 165곳: 실제 위치(OSM)에 조명 캐노피·주유기 아일랜드·가격 표시 기둥, 차로 진입 가능<br><sub>165 fuel stations at their real (OSM) locations: lit canopies, pump islands and price poles — you can drive in</sub>
+- 지명·도로명을 일본어와 함께 현재 언어로 병기(지도·화면 위치 표시)<br><sub>Place and road names shown in Japanese together with your language (map and on-screen location)</sub>
+
+**🔧 변경 · Changed**
+
+- 교통: 일본식 주행(왼쪽 주행차로, 오른쪽 추월 후 복귀), 경적을 울리면 앞차가 비켜 줌, 시간대별 교통량(새벽 적고 출퇴근 시간 많음)<br><sub>Traffic: Japanese lane discipline (keep left, overtake on the right and move back), cars move over when you sound the horn, and volume follows the clock (quiet before dawn, busy at rush hour)</sub>
+- 음성: 경찰은 남성 목소리에 확성기 효과, 사고 상대·점원 등은 사람마다 다른 목소리와 높낮이<br><sub>Voices: police in a male voice through a loud-hailer, other drivers and staff each with their own voice and pitch</sub>
+- 어디서든 차량 변경: 멈춘 곳에서 차고를 열고 그 자리에서 바꾼 차로 출발<br><sub>Change cars anywhere: open the garage wherever you have stopped and drive off from the same spot</sub>
+
+**🐞 수정 · Fixed**
+
+- 차량과 3D 모델 불일치 수정: S14 실비아, 1세대 86(ZN6), 크라운 택시, H50 하이에이스, 후소 캔터, 후소 로사 — 이름·제원·크기를 실제 모델에 맞춤(트럭·버스 충돌 크기가 모델의 2배이던 문제 포함)<br><sub>Cars now match their 3D models: S14 Silvia, first-gen 86 (ZN6), Crown taxi, H50 HiAce, Fuso Canter and Fuso Rosa — names, specs and sizes (the truck and bus collision boxes were twice the model size)</sub>
+- 경찰 사이렌: 긴급 상황(추격·사고 출동)에서만, 그리고 경찰차가 700m 이내일 때만 울림<br><sub>Police sirens sound only in an emergency (a chase or an accident call) and only within 700 m</sub>
+- AI 차량의 차선 변경 방향지시등이 반대로 켜지던 문제<br><sub>AI cars no longer signal the wrong way when changing lanes</sub>
+- 미니맵에 시내 도로가 표시되지 않던 문제<br><sub>City streets now appear on the minimap</sub>
 
 ---
 

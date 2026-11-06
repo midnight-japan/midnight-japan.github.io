@@ -474,6 +474,16 @@ const SFX = {
     for (let i = 0; i < 12; i++) tn(a, d, t + 0.02 + Math.random() * 0.5, { f: 3800 + Math.random() * 5000, gain: 0.04 + Math.random() * 0.04, decay: 0.03 + Math.random() * 0.08 });
     return nz(a, d, t + 0.1, { f: 1800, f2: 700, q: 1.5, gain: 0.12, attack: 0.05, hold: 0.25, decay: 0.15, sweep: 0.6 });
   },
+  // loud-hailer: key click + a short feedback whine before police announcements
+  megaphone(a, d, t) {
+    nz(a, d, t, { f: 1800, q: 2, gain: 0.35, decay: 0.04 });
+    tn(a, d, t + 0.03, { f: 2900, f2: 3050, gain: 0.05, attack: 0.06, hold: 0.25, decay: 0.2 });
+    return nz(a, d, t + 0.05, { f: 1500, q: 1.2, gain: 0.06, attack: 0.05, hold: 0.4, decay: 0.2 });
+  },
+  slap(a, d, t) {
+    nz(a, d, t, { type: 'highpass', f: 1400, gain: 1.0, decay: 0.035 });
+    return tn(a, d, t, { f: 190, f2: 120, gain: 0.35, decay: 0.05 });
+  },
   cone(a, d, t) {
     tn(a, d, t, { f: 265, f2: 240, gain: 0.3, decay: 0.05 });
     tn(a, d, t, { f: 612, gain: 0.12, decay: 0.03 });
@@ -1554,27 +1564,34 @@ export class GameAudio {
       ss.cancel();
       const u = new W.SpeechSynthesisUtterance(String(text));
       u.lang = lang;
-      const v = this._voice(lang);
+      // voices by role: police (male, lower, clipped, through a loud-hailer), narrator (male, steady), drivers / people
+      // (a voice and pitch picked per speaker so different people sound different)
+      const role = opts.role || 'narrator';
+      const v = this._voice(lang, role, opts.seed);
       if (v) u.voice = v;
-      u.rate = clamp(num(opts.rate, 1), 0.5, 2);
-      u.pitch = clamp(num(opts.pitch, 1), 0, 2);
+      const R = { police: [1.08, 0.82], narrator: [1.02, 0.9], male: [1.0, 0.95], female: [1.02, 1.08], old: [0.9, 0.8] }[role] || [1, 1];
+      const sv = opts.seed != null ? (Math.sin(opts.seed * 91.7) * 0.5 + 0.5) : 0.5;
+      u.rate = clamp(num(opts.rate, R[0]), 0.5, 2);
+      u.pitch = clamp(num(opts.pitch, R[1] * (0.9 + sv * 0.2)), 0, 2);
+      if (role === 'police' && opts.megaphone !== false) this.sfx?.('megaphone');
       const busVol = opts.channel === 'radio' ? this._vol.radio : this._vol.sfx;
       u.volume = clamp(num(opts.volume, 1) * this._vol.master * busVol, 0, 1);
       ss.speak(u);
     } catch (e) { this._err(e); }
   }
-  _voice(lang) {
+  _voice(lang, role = 'narrator', seed) {
     const ss = W.speechSynthesis;
     const vs = (ss.getVoices && ss.getVoices()) || [];
     if (!vs.length) return null;
-    this._vcache = this._vcache || {};
-    if (this._vcache[lang] !== undefined) return this._vcache[lang];
     const base = lang.split('-')[0].toLowerCase();
     const cands = vs.filter((v) => (v.lang || '').replace('_', '-').toLowerCase().startsWith(base));
-    const pref = /Kyoko|O-ren|Otoya|Google 日本語|Haruka|Ayumi|Nanami|Sayaka|Ichiro/;
-    const v = cands.find((x) => pref.test(x.name)) || cands.find((x) => (x.lang || '').toLowerCase() === lang.toLowerCase()) || cands[0] || null;
-    this._vcache[lang] = v;
-    return v;
+    if (!cands.length) return null;
+    const MALE = /Otoya|Hattori|Ichiro|Keita|Daichi|Naoki|Kenji|Takumi|Injoon|Minsu|Daniel|Alex|Fred|Tom|Aaron|Arthur|Rishi|male/i;
+    const FEMALE = /Kyoko|O-ren|Haruka|Ayumi|Nanami|Sayaka|Mizuki|Yuna|Sora|Samantha|Karen|Moira|Tessa|Victoria|female/i;
+    const male = cands.filter((v) => MALE.test(v.name) && !/female/i.test(v.name)), female = cands.filter((v) => FEMALE.test(v.name));
+    const pool = role === 'police' || role === 'narrator' || role === 'male' || role === 'old' ? (male.length ? male : cands) : role === 'female' ? (female.length ? female : cands) : cands;
+    const i = seed != null ? Math.abs(Math.floor(seed * 7919)) % pool.length : 0;
+    return pool[i] || cands[0] || null;
   }
 
   update(dt) {

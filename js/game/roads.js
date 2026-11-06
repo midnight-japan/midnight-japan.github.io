@@ -394,6 +394,24 @@ export function trenchPolys(net, isLand) {
   }
   return out;
 }
+// tunnel mouths: where a road passes from open air (or an open trench) under cover. dir = +1 if traffic along the road
+// enters here, -1 if traffic in the opposite direction (two-way roads) enters here.
+export function tunnelPortals(net, isLand) {
+  const out = [];
+  for (const r of net.roads) {
+    if (r.kind === 'local') continue;
+    for (const [i0, i1] of tunnelRuns(r)) {
+      const S = r.samples;
+      for (let i = i0; i < i1; i++) {
+        const ca = coveredAt(S[i], isLand), cb = coveredAt(S[i + 1], isLand); if (ca === cb) continue;
+        const q = ca ? S[i] : S[i + 1];
+        if (!isLand(q.p.x, q.p.z)) continue; // immersed tunnels start out at sea (artificial islands have their own buildings)
+        out.push({ r, q, i: ca ? i : i + 1, enter: cb ? 1 : -1, w: r.edgeL - r.edgeR + 1.2, top: q.p.y + TUN_H });
+      }
+    }
+  }
+  return out;
+}
 function buildTunnels(net, isLand, lampOut) {
   const pos = [], idx = [], lamps = [];
   const quad = (a, b, c, d) => { const v = pos.length / 3; pos.push(...a, ...b, ...c, ...d); idx.push(v, v + 1, v + 2, v, v + 2, v + 3); };
@@ -439,7 +457,7 @@ export function buildRoadMeshes(net, opts = {}) {
   const asphaltOld = surface('asphalt_worn', { tile: 6, tint: 0x8a8a8a });
   const concrete = weather(surface('concrete', { tile: 3 }), 0.55);   // decades of exhaust soot on the parapets
   const concreteOld = weather(surface('pier', { tile: 4 }), 1.0);    // rain-streaked piers & soffits
-  const sidewalk = surface('sidewalk', { tile: 2 });
+  const sidewalk = surface('sidewalk', { tile: 2, tint: 0xaab3bd });
   const white = new THREE.MeshStandardMaterial({ color: 0xe9e9e4, roughness: 0.65, polygonOffset: true, polygonOffsetFactor: -4, polygonOffsetUnits: -4 });
   const yellow = new THREE.MeshStandardMaterial({ color: 0xe8b400, roughness: 0.65, polygonOffset: true, polygonOffsetFactor: -4, polygonOffsetUnits: -4 });
   const span = bridgeSpan(net);

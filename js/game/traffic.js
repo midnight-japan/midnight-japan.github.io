@@ -81,6 +81,22 @@ export class Traffic {
     this.cars.push(ai);
     return ai;
   }
+  // share of the full traffic volume at the current game hour
+  density() {
+    const h = this.g.tod?.hours ?? 22;
+    const pts = [[0, 0.5], [2, 0.3], [4, 0.25], [5.5, 0.4], [7, 0.95], [8.5, 1], [10, 0.8], [13, 0.85], [16, 0.9], [18, 1], [20, 0.75], [22, 0.6], [24, 0.5]];
+    for (let i = 1; i < pts.length; i++) if (h <= pts[i][0]) { const [a, va] = pts[i - 1], [b, vb] = pts[i]; return va + (vb - va) * (h - a) / (b - a); }
+    return 0.5;
+  }
+  // the player sounded the horn: cars just ahead in the same direction move over (or at least speed up)
+  honk(pos, fwd) {
+    for (const ai of this.cars) {
+      if (ai.police || ai.incident || (ai.mode !== 'road' && ai.mode !== 'city')) continue;
+      const dx = ai.pos.x - pos.x, dz = ai.pos.z - pos.z, d = Math.hypot(dx, dz); if (d > 45 || d < 1) continue;
+      if ((dx * fwd.x + dz * fwd.z) / d < 0.75 || Math.sin(ai.yaw) * fwd.x + Math.cos(ai.yaw) * fwd.z < 0.5) continue;
+      ai.yieldT = 5; if (ai.mode === 'city') ai.v = Math.min(ai.v + 2, (ai.vDes || 12) * 1.15);
+    }
+  }
   remove(ai) {
     this.scene.remove(ai.model.root);
     ai.model.root.traverse(o => { if (o.geometry && o !== ai.beam) o.geometry.dispose(); });
@@ -198,11 +214,18 @@ export class Traffic {
     ai.braking = acc < -1;
     ai.v = Math.max(0, ai.v + acc * dt);
     ai.s += ai.v * dt * ai.dir;
-    // lane change (occasionally to overtake slow leader)
-    if (gap < 40 && vLead < ai.vDes * 0.8 && Math.random() < dt * 0.5 && !ai.police) {
-      const same = road.lanes.filter(l => l.dir === ai.dir && l !== ai.lane);
-      const target = same.find(l => Math.abs(l.lat - ai.lat) < 4);
-      if (target) { const occ = (byLane.get(road.index * 100 + target.lat) || []).some(o => Math.abs(o.s - ai.s) < 20); if (!occ) { ai.signal = target.lat > ai.lane.lat ? 1 : -1; ai.lane = target; } }
+    // lane discipline as on Japanese expressways: drive in the left (travel) lane, overtake on the right, then move back
+    // left. "Leftness" of a lane for this direction = lat · dir. Cars also move over when the player sounds the horn.
+    if (ai.yieldT > 0) ai.yieldT -= dt;
+    if (!ai.police && Math.abs(ai.lat - ai.lane.lat) < 0.5) {
+      const same = road.lanes.filter(l => l.dir === ai.dir && l !== ai.lane && Math.abs(l.lat - ai.lane.lat) < 4);
+      const lft = l => l.lat * ai.dir, free = (l, ahead, behind) => !(byLane.get(road.index * 100 + l.lat) || []).some(o => { const d = (o.s - ai.s) * ai.dir; return d < ahead && d > -behind; });
+      const right = same.find(l => lft(l) < lft(ai.lane)), left = same.find(l => lft(l) > lft(ai.lane));
+      let target = null;
+      if (ai.yieldT > 0 && Math.random() < dt * 3) target = (left && free(left, 25, 15)) ? left : (right && free(right, 25, 15)) ? right : null;
+      else if (gap < 45 && vLead < ai.vDes * 0.85 && right && Math.random() < dt * 0.6 && free(right, 30, 25)) target = right; // overtake on the right
+      else if (left && Math.random() < dt * 0.25 && free(left, 60, 25)) target = left;                                       // keep left
+      if (target) { ai.signal = lft(target) > lft(ai.lane) ? 1 : -1; ai.lane = target; if (ai.yieldT > 0) ai.yieldT = 0; }
     }
     ai.lat = lerp(ai.lat, ai.lane.lat, 1 - Math.exp(-dt * 0.9));
     if (Math.abs(ai.lat - ai.lane.lat) < 0.2) ai.signal = 0;
@@ -212,7 +235,7 @@ export class Traffic {
       if (ai.s < sDiv + 260 && ai.s > sDiv + 200) {
         ai.decided = true;
         const wantPA = !this.paClosed && !ai.police && MEET_POOL.includes(ai.car.id) && this.meetCount() < this.meetMax && Math.random() < 0.65;
-        if (wantPA) { ai.toPA = true; ai.lane = road.lanes.filter(l => l.dir === -1).sort((x, y) => x.lat - y.lat)[0]; ai.signal = -1; }
+        if (wantPA) { ai.toPA = true; ai.lane = road.lanes.filter(l => l.dir === -1).sort((x, y) => x.lat - y.lat)[0]; ai.signal = 1; }
       }
     }
     if (ai.toPA && road.id === 'bayshore' && ai.s <= (this.net.sPAin ?? 0)) { const r = this.net.byId.pa_in; this.transfer(ai, r, r.lanes[0], 0); ai.vDes = 11; ai.toPA = false; ai.toLot = true; }
@@ -363,7 +386,10 @@ export class Traffic {
   manage() {
     // keep highway population
     const roadCars = this.cars.filter(c => c.mode === 'road' && !c.police).length;
-    if (roadCars < this.max) {
+    // traffic follows the clock: quiet before dawn, busiest in the morning and evening rush
+    const dens = this.density(), maxNow = Math.round(this.max * dens);
+    if (roadCars > maxNow + 4) { const f0 = this.g.focus; const far = this.cars.find(c => c.mode === 'road' && !c.police && !c.incident && !c.pursuit && c.pos.distanceTo(f0) > 500); if (far) this.remove(far); }
+    if (roadCars < maxNow) {
       const q = Math.random(), bay = q < 0.8 ? this.net.byId.bayshore : (this.net.byId.k5 || this.net.byId.bayshore);
       const lane = bay.lanes[Math.floor(Math.random() * bay.lanes.length)];
       const s = lane.dir === 1 ? 0 : bay.length;
@@ -392,8 +418,9 @@ export class Traffic {
     // cars only appear when the player is near the city streets
     const nearStreet = net.randomNear(f.x, f.z, 0, 400);
     if (!nearStreet) return;
-    const fill = city.length < this.cityMax * 0.6;
-    for (let k = city.length; k < this.cityMax && k < city.length + (fill ? 8 : 3); k++) {
+    const cityMax = Math.round(this.cityMax * this.density());
+    const fill = city.length < cityMax * 0.6;
+    for (let k = city.length; k < cityMax && k < city.length + (fill ? 8 : 3); k++) {
       const ai = this.createAI(CITY_POOL[Math.floor(Math.random() * CITY_POOL.length)]);
       if (!this.placeCity(ai, net, f, fill ? 35 : 150)) { this.remove(ai); break; }
     }
@@ -494,7 +521,7 @@ export class Traffic {
           v.pos.x += nx * pen * heavy; v.pos.z += nz * pen * heavy;
           if (ai.mode === 'road' || ai.mode === 'city') ai.v *= 0.7; else { ai.pos.x -= nx * pen * (1 - heavy); ai.pos.z -= nz * pen * (1 - heavy); }
           const rel = (v.vel.x - af.x * ai.v) * nx + (v.vel.z - af.z * ai.v) * nz;
-          if (rel < 0) { v.vel.x -= nx * rel * 1.2; v.vel.z -= nz * rel * 1.2; v.vx = v.vel.dot(v.forward); v.vlat = v.vel.dot(v.left); if (rel < -2) v.events.push('crash'); ai.hitBy = this.t; }
+          if (rel < 0) { v.vel.x -= nx * rel * 1.2; v.vel.z -= nz * rel * 1.2; v.vx = v.vel.dot(v.forward); v.vlat = v.vel.dot(v.left); if (rel < -2) { v.events.push('crash'); const hit = { x: (px + qx) / 2, z: (pz + qz) / 2, y: v.pos.y + 0.6, vin: -rel, t: performance.now() }; v.lastHit = hit; this.g.fx?.damage(ai.model, hit, -rel, true); } ai.hitBy = this.t; }
         }
       }
     }

@@ -7,6 +7,7 @@ import { PRODUCTS, productTexture, coverTexture, priceStripTexture } from './goo
 import * as THREE from 'three';
 import { mergeGeometries } from 'three/addons/utils/BufferGeometryUtils.js';
 import { surface, chainlinkMaterial, windowTexture, glowTexture, weather } from './textures.js';
+import { buildPortals } from './portals.js';
 import { buildRoadMeshes, lampSpots, bridgeSpan, trenchPolys, PA_RECT, PA, PA_LAYOUT, MAP } from './roads.js';
 import { buildBay, noPierBay, inUmihotaru } from './bay.js';
 import { signMesh } from './signs.js';
@@ -201,6 +202,7 @@ export class World {
     const H = 4.5;
     // open tunnel approaches (trenches) are cut out of the ground so the road below stays visible
     const trenches = trenchPolys(this.net, (x, z) => this.isLand(x, z));
+    try { this.group.add(buildPortals(this)); } catch (e) { console.warn('portals', e); }
     for (const l of LAND) {
       if (l.name === '海ほたるPA') { l.skipSeawall = true; }
       const near = l.bb.x1 > -2600 && l.bb.x0 < 2600 && l.bb.z1 > -2600 && l.bb.z0 < 2600;

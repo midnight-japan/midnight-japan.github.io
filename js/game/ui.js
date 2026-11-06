@@ -3,6 +3,7 @@
 import * as THREE from 'three';
 import { CARS, CAR_BY_ID, CATEGORIES } from '../../data/cars.js';
 import { GAME, LANGS } from '../../data/meta.js';
+import { reading } from './names.js';
 import { t, pick, setLang, getLang } from '../i18n.js';
 import { displayName, currentUser } from '../account.js';
 import { PLATE_REGIONS, PLATE_KANA, PLATE_TYPES, plateCanvas, formatNumber } from './plates.js';
@@ -88,7 +89,7 @@ export class UI {
       </div></div>
       <div id="hud" class="hidden">
         <div class="tl"><div class="loc"></div><div class="clock"></div><div class="money"></div></div>
-        <canvas id="minimap" width="200" height="200"></canvas>
+        <canvas id="minimap" width="200" height="200"></canvas><div id="navhud" class="navhud" hidden><span class="nav-arrow">↑</span><span class="nav-dist"></span><button class="nav-x" data-a="navClear" aria-label="clear">✕</button></div><div id="pursuit" class="pursuithud" hidden></div>
         <div class="speedo"><canvas id="speedo" width="260" height="260"></canvas><div class="icons"></div></div>
         <div class="radio-banner"></div>
         <div class="prompt"><kbd></kbd><span></span></div>
@@ -121,6 +122,7 @@ export class UI {
         <button class="btn" data-a="settings" data-i18n="game.menu.settings"></button>
         <button class="btn" data-a="controls" data-i18n="game.menu.controls"></button>
         <div class="row center"><button class="btn sm" data-a="timeDay" data-i18n="game.menu.day"></button><button class="btn sm" data-a="timeDusk" data-i18n="game.menu.dusk"></button><button class="btn sm" data-a="timeNight" data-i18n="game.menu.night"></button></div>
+        <div class="row center"><button class="btn sm" data-a="repair" data-i18n="game.menu.repair"></button><button class="btn sm" data-a="teleport" data-i18n="game.menu.teleport"></button></div>
         <button class="btn" data-a="respawn" data-i18n="game.menu.respawn"></button>
         <div class="stats"></div>
         <a class="btn ghost" href="index.html" data-i18n="game.menu.quit"></a>
@@ -129,7 +131,7 @@ export class UI {
       <div id="controls" class="screen dim"><div class="menu wide"><h2 data-i18n="game.menu.controls"></h2><div id="c-body"></div><button class="btn primary" data-a="controlsClose" data-i18n="game.menu.back"></button></div></div>
       <div id="outfit" class="screen side"><div class="panel"><div class="ph"><h2 data-i18n="game.menu.outfit"></h2><button class="x" data-a="outfitClose">✕</button></div><div id="o-body"></div></div></div>
       <div id="shop" class="popup"><h3 id="shop-title"></h3><div id="shop-list"></div><button class="btn sm" data-a="shopClose">✕</button></div>
-      <div id="map" class="screen dim"><canvas id="bigmap"></canvas><div class="mapctl"><button class="btn sm" data-a="mapIn">＋</button><button class="btn sm" data-a="mapOut">－</button><button class="btn sm" data-a="mapMe">◎</button><button class="btn sm" data-a="mapAll">⤢</button></div><div class="maphint">M · Wheel / Pinch · Drag</div><button class="btn sm mapx" data-a="mapClose">✕</button></div>
+      <div id="map" class="screen dim"><canvas id="bigmap"></canvas><div class="mapctl"><button class="btn sm" data-a="mapIn">＋</button><button class="btn sm" data-a="mapOut">－</button><button class="btn sm" data-a="mapMe">◎</button><button class="btn sm" data-a="mapAll">⤢</button></div><div class="maphint" data-i18n="game.map.hint2"></div><div class="mapsel" id="mapsel" hidden><span class="ms-t"></span><button class="btn sm primary" data-a="mapNav" data-i18n="game.map.route"></button><button class="btn sm" data-a="mapTp" data-i18n="game.map.tp"></button></div><button class="btn sm mapx" data-a="mapClose">✕</button></div>
       <div id="touch" class="hidden">
         <div class="t-drive">
           <div class="t-steer"><button data-t="left">◀</button><button data-t="right">▶</button></div>
@@ -169,8 +171,8 @@ export class UI {
       case 'pause': this.togglePause(); break;
       case 'resume': this.togglePause(false); break;
       case 'garage': {
-        const v = g.vehicle; const inPA = v && v.pos.x > PA_RECT.x0 && v.pos.x < PA_RECT.x1 && v.pos.z > PA_RECT.z0 && v.pos.z < PA_RECT.z1;
-        if (!inPA || Math.abs(v.kmh) > 3) { this.toast(t('game.garage.onlyPA'), 'warn'); break; }
+        const v = g.vehicle;
+        if (v && Math.abs(v.kmh) > 3) { this.toast(t('game.walk.stopfirst'), 'warn'); break; }
         if (g.mode === 'walk') g.enterCar();
         this.paused = false; g.openGarage(); break;
       }
@@ -184,9 +186,14 @@ export class UI {
       case 'timeDusk': g.tod.setHours(17.6); break;
       case 'timeNight': g.tod.setHours(22); break;
       case 'respawn': if (g.mode === 'walk') g.enterCar(); g.respawnPA(); this.togglePause(false); break;
+      case 'repair': if (g.model) { g.fx?.repair(g.model); this.toast(t('game.car.repaired'), 'info', 2); } this.togglePause(false); break;
+      case 'teleport': this.togglePause(false); this.toggleMap(true); this.toast(t('game.map.tpHint'), 'info', 5); break;
       case 'closeCar': $('#carmenu').classList.remove('show'); break;
       case 'shopClose': $('#shop').classList.remove('show'); break;
       case 'mapClose': this.toggleMap(false); break;
+      case 'mapNav': if (this.mapSel) { g.nav.set(this.mapSel.x, this.mapSel.z); this.toggleMap(false); this.toast(t('game.nav.set'), 'info', 3); } break;
+      case 'mapTp': if (this.mapSel) { this.toggleMap(false); g.teleport(this.mapSel.x, this.mapSel.z); } break;
+      case 'navClear': g.nav.clear(); break;
       case 'mapIn': this.mapZoom(1.6); break;
       case 'mapOut': this.mapZoom(1 / 1.6); break;
       case 'mapMe': this.mapCenterMe(); break;
@@ -283,7 +290,7 @@ export class UI {
       sel('touch', [['auto', t('game.set.auto')], ['on', 'ON'], ['off', 'OFF']], 'game.set.touch') +
       sel('timeSpeed', [[1, t('game.set.time1')], [0.25, t('game.set.time025')], [0, t('game.set.time0')]], 'game.set.time') +
       sel('weather', [['auto', t('game.weather.auto')], ['clear', t('game.weather.clear')], ['cloudy', t('game.weather.cloudy')], ['rain', t('game.weather.rain')]], 'game.set.weather') +
-      chk('online', 'game.set.online') + chk('assist', 'game.set.assist') + chk('etc', 'game.set.etc') + chk('dj', 'game.set.dj') + chk('tilt', 'game.set.tilt') + chk('shake', 'game.set.shake') + chk('bloom', 'game.set.bloom') + chk('fps', 'game.set.fps') +
+      chk('online', 'game.set.online') + chk('assist', 'game.set.assist') + chk('etc', 'game.set.etc') + chk('dj', 'game.set.dj') + chk('tilt', 'game.set.tilt') + chk('shake', 'game.set.shake') + chk('damage', 'game.set.damage') + chk('bloom', 'game.set.bloom') + chk('fps', 'game.set.fps') +
       rng('master', 'game.set.master') + rng('engine', 'game.set.engine') + rng('sfx', 'game.set.sfx') + rng('ambient', 'game.set.ambient') + rng('radio', 'game.set.radio');
     $('#s-lang').onchange = e => setLang(e.target.value).then(() => this.buildSettings());
     $('#s-grid').querySelectorAll('[data-s]').forEach(i => i.onchange = i.oninput = () => {
@@ -376,7 +383,7 @@ export class UI {
       const x = list.find(i => i.id === b.dataset.buy);
       if (g.money < x.price) { this.toast(t('game.shop.nomoney'), 'warn'); return; }
       g.money -= x.price; g.audio.sfx(it.type === 'vending' ? 'vending' : 'coin');
-      if (it.type === 'shop') g.audio.speak('ありがとうございましたー。', 'ja-JP');
+      if (it.type === 'shop') g.audio.speak('ありがとうございましたー。', 'ja-JP', { role: 'female', seed: 5 });
       this.toast(t('game.shop.bought', { item: x.ja }), 'info');
       if (g.player) { g.player.hold = 'drink'; clearTimeout(this._holdT); this._holdT = setTimeout(() => { if (g.player) g.player.hold = null; }, 9000); }
       $('#shop').classList.remove('show');
@@ -396,8 +403,14 @@ export class UI {
   wireMap(cv) {
     const pts = new Map(); let pinch = 0;
     cv.addEventListener('wheel', e => { e.preventDefault(); const r = cv.getBoundingClientRect(), d = cv.width / r.width; this.mapZoom(Math.exp(-e.deltaY * 0.0015), (e.clientX - r.left) * d, (e.clientY - r.top) * d); }, { passive: false });
-    cv.addEventListener('pointerdown', e => { cv.setPointerCapture(e.pointerId); pts.set(e.pointerId, [e.clientX, e.clientY]); });
-    cv.addEventListener('pointerup', e => { pts.delete(e.pointerId); pinch = 0; });
+    let down = null;
+    cv.addEventListener('pointerdown', e => { cv.setPointerCapture(e.pointerId); pts.set(e.pointerId, [e.clientX, e.clientY]); down = [e.clientX, e.clientY]; });
+    cv.addEventListener('pointerup', e => {
+      pts.delete(e.pointerId); pinch = 0;
+      // a tap (no drag) picks a point: route there or teleport
+      if (down && Math.hypot(e.clientX - down[0], e.clientY - down[1]) < 6) { const r = cv.getBoundingClientRect(), d = cv.width / r.width; const x = this.mv.x + ((e.clientX - r.left) * d - cv.width / 2) / this.mv.k, z = this.mv.z + ((e.clientY - r.top) * d - cv.height / 2) / this.mv.k; this.mapSel = { x, z }; const box = $('#mapsel'); box.hidden = false; box.querySelector('.ms-t').textContent = this.g.world.zoneAt(x, z, 0) || ''; this.drawBigMap(); }
+      down = null;
+    });
     cv.addEventListener('pointercancel', e => { pts.delete(e.pointerId); pinch = 0; });
     cv.addEventListener('pointermove', e => {
       const prev = pts.get(e.pointerId); if (!prev) return; const r = cv.getBoundingClientRect(), d = cv.width / r.width;
@@ -483,12 +496,18 @@ export class UI {
     this._acc = (this._acc || 0) + dt; if (this._acc < 1 / 20) return; const step = this._acc; this._acc = 0;
     const v = g.vehicle;
     const pos = g.mode === 'walk' ? g.player.pos : v.pos;
-    $('#hud .loc').textContent = g.world.zoneAt(pos.x, pos.z, pos.y);
+    { const z = g.world.zoneAt(pos.x, pos.z, pos.y); if (z !== this._zone) { this._zone = z; const el = $('#hud .loc'); el.textContent = z; const r = reading(z); if (r) { const sm = document.createElement('small'); sm.className = 'loc-r'; sm.textContent = r; el.appendChild(sm); } } }
     $('#hud .clock').textContent = g.tod.clock;
     $('#hud .money').textContent = yen(g.money);
     $('#hud .fps').textContent = `MIDNIGHT JAPAN v${GAME.version}` + (g.settings.fps ? ` · ${Math.round(g.fps || 0)} FPS` : '');
     $('#hud .speedo').style.display = g.mode === 'drive' ? '' : 'none';
     if (g.frame % 4 === 0) this.drawMini(pos, g.mode === 'drive' ? v.yaw : g.player.yaw);
+    // GPS: distance + turn arrow
+    const nv = g.nav, nh = $('#navhud');
+    if (nv?.target) { nh.hidden = false; const yaw = g.mode === 'drive' ? v.yaw : g.player.yaw; const a = nv.hint(pos, yaw) ?? Math.atan2(nv.target.x - pos.x, nv.target.z - pos.z) - yaw; nh.querySelector('.nav-arrow').style.transform = `rotate(${-a}rad)`; const d = nv.dist ?? 0; nh.querySelector('.nav-dist').textContent = d > 950 ? (d / 1000).toFixed(1) + ' km' : Math.round(d / 10) * 10 + ' m'; } else nh.hidden = true;
+    // police: distance / ETA while being chased or after a crash, last known position after losing them
+    const ph = $('#pursuit'), pi = g.police?.hud?.(pos);
+    if (pi) { ph.hidden = false; ph.textContent = pi; } else ph.hidden = true;
   }
   drawSpeedo(v, dt = 1 / 20) {
     const c = this.speedo, W = 260, cx = 130, cy = 130;
@@ -549,18 +568,34 @@ export class UI {
     // PA lot
     c.fillStyle = 'rgba(120,140,170,.25)'; c.fillRect(PA_RECT.x0, PA_RECT.z0, PA_RECT.x1 - PA_RECT.x0, PA_RECT.z1 - PA_RECT.z0);
     c.fillStyle = 'rgba(200,210,230,.35)'; c.fillRect(-55, -84, 110, 24);
+    // city streets around you (streamed with the city tiles)
+    const N = this.g.world.city?.net;
+    if (N) { c.strokeStyle = 'rgba(150,160,178,.55)'; c.lineCap = 'round'; const R = 260;
+      for (const ch of N.chains.values()) { if (ch.dead || ch.bb[2] < pos.x - R || ch.bb[0] > pos.x + R || ch.bb[3] < pos.z - R || ch.bb[1] > pos.z + R) continue; c.lineWidth = Math.max(3, ch.w * 0.8); c.beginPath(); ch.pts.forEach((q, i) => i ? c.lineTo(q[0], q[1]) : c.moveTo(q[0], q[1])); c.stroke(); } }
     for (const r of this.g.net.roads) {
       c.strokeStyle = r.kind === 'expressway' ? '#3fbf7f' : r.kind === 'ramp' ? '#8fd6ae' : '#9aa6b8'; c.lineWidth = (r.edgeL - r.edgeR); c.lineCap = 'round';
       c.globalAlpha = 0.6; c.beginPath(); r.samples.forEach((s, i) => { if (i % 3 && i !== r.samples.length - 1) return; i ? c.lineTo(s.p.x, s.p.z) : c.moveTo(s.p.x, s.p.z); }); c.stroke();
     }
     c.globalAlpha = 1;
     for (const ai of this.g.traffic.cars) { if (ai.pos.distanceToSquared(pos) > 250 * 250) continue; c.fillStyle = ai.police ? (ai.pursuit ? '#ff3030' : '#4a8cff') : 'rgba(255,255,255,.7)'; c.fillRect(ai.pos.x - 2.5, ai.pos.z - 2.5, 5, 5); }
+    this.drawNav(c, 1 / S);
     c.restore();
+    // destination / police off the minimap edge: a pointer on the rim
+    const rim = (x, z, col) => { const a = Math.atan2(x - pos.x, z - pos.z) - yaw; const d = Math.hypot(x - pos.x, z - pos.z) * S; if (d < 90) return; const ang = -a - Math.PI / 2; c.fillStyle = col; c.beginPath(); c.arc(100 + Math.cos(ang) * 90, 100 + Math.sin(ang) * 90, 5, 0, Math.PI * 2); c.fill(); };
+    if (this.g.nav?.target) rim(this.g.nav.target.x, this.g.nav.target.z, '#3fb6ff');
+    const ls = this.g.police?.lastSeen; if (ls) rim(ls.x, ls.z, '#ff3030');
     // player arrow
     c.fillStyle = '#ffb347'; c.beginPath(); c.moveTo(100, 88); c.lineTo(108, 108); c.lineTo(100, 103); c.lineTo(92, 108); c.closePath(); c.fill();
     c.strokeStyle = 'rgba(255,255,255,.25)'; c.lineWidth = 2; c.beginPath(); c.arc(100, 100, 98, 0, Math.PI * 2); c.stroke();
     c.fillStyle = '#fff'; c.font = '700 12px system-ui'; c.textAlign = 'center';
     const nAng = -(Math.PI + yaw) - Math.PI / 2 + Math.PI; c.fillText('N', 100 + Math.cos(-Math.PI / 2 - (Math.PI + yaw)) * 86, 104 + Math.sin(-Math.PI / 2 - (Math.PI + yaw)) * 86);
+  }
+  // route polyline + destination (+ police last-seen) in world coordinates on an already transformed canvas
+  drawNav(c, px) {
+    const nv = this.g.nav;
+    if (nv?.route?.length > 1) { c.strokeStyle = '#3fb6ff'; c.lineWidth = 5 * px; c.lineCap = c.lineJoin = 'round'; c.globalAlpha = 0.9; c.beginPath(); nv.route.forEach((q, i) => i ? c.lineTo(q[0], q[1]) : c.moveTo(q[0], q[1])); c.stroke(); c.globalAlpha = 1; }
+    if (nv?.target) { c.fillStyle = '#3fb6ff'; c.beginPath(); c.arc(nv.target.x, nv.target.z, 7 * px, 0, Math.PI * 2); c.fill(); c.strokeStyle = '#fff'; c.lineWidth = 2 * px; c.stroke(); }
+    const ls = this.g.police?.lastSeen; if (ls) { c.fillStyle = 'rgba(255,48,48,.25)'; c.beginPath(); c.arc(ls.x, ls.z, ls.r || 120, 0, Math.PI * 2); c.fill(); c.fillStyle = '#ff3030'; c.beginPath(); c.arc(ls.x, ls.z, 6 * px, 0, Math.PI * 2); c.fill(); }
   }
   drawBigMap() {
     const cv = $('#bigmap'), c = cv.getContext('2d'), W = cv.width, H = cv.height, m = this.mv, k = m.k;
@@ -583,11 +618,17 @@ export class UI {
     c.globalAlpha = 1;
     // lane markings when zoomed right in
     if (k > 3) { c.strokeStyle = 'rgba(255,255,255,.6)'; c.lineWidth = dpr; c.setLineDash([6 * dpr, 8 * dpr]); for (const r of roads) for (const L of r.lanes) { c.beginPath(); r.samples.forEach((q, i) => { const [a, b] = P(q.p.x + q.left.x * L.lat, q.p.z + q.left.z * L.lat); i ? c.lineTo(a, b) : c.moveTo(a, b); }); c.stroke(); } c.setLineDash([]); }
+    // route / destination / police last seen, and the picked point
+    c.save(); c.translate(W / 2, H / 2); c.scale(k, k); c.translate(-m.x, -m.z); this.drawNav(c, 1 / k * dpr); c.restore();
+    if (this.mapSel) { const [a, b] = P(this.mapSel.x, this.mapSel.z); c.strokeStyle = '#ffb347'; c.lineWidth = 3 * dpr; c.beginPath(); c.arc(a, b, 10 * dpr, 0, Math.PI * 2); c.stroke(); c.beginPath(); c.moveTo(a, b - 18 * dpr); c.lineTo(a, b + 18 * dpr); c.moveTo(a - 18 * dpr, b); c.lineTo(a + 18 * dpr, b); c.stroke(); }
     // traffic
     for (const ai of this.g.traffic?.cars || []) { const [a, b] = P(ai.pos.x, ai.pos.z); if (a < 0 || b < 0 || a > W || b > H) continue; c.fillStyle = ai.police ? '#4a8cff' : 'rgba(255,255,255,.8)'; c.fillRect(a - 2 * dpr, b - 2 * dpr, 4 * dpr, 4 * dpr); }
     // labels: road names (expressways always, ramps/streets when zoomed), landmarks, places
     c.textAlign = 'center'; c.textBaseline = 'middle';
-    const lab = (txt, x, z, size, col = '#fff') => { const [a, b] = P(x, z); if (a < -200 || b < -50 || a > W + 200 || b > H + 50) return; c.font = `700 ${size * dpr}px "Hiragino Sans","Noto Sans JP",system-ui,sans-serif`; c.lineWidth = 3 * dpr; c.strokeStyle = 'rgba(0,0,0,.8)'; c.strokeText(txt, a, b); c.fillStyle = col; c.fillText(txt, a, b); };
+    // Japanese name + its reading in the player's language on a second, smaller line
+    const lab = (txt, x, z, size, col = '#fff') => { const [a, b] = P(x, z); if (a < -200 || b < -50 || a > W + 200 || b > H + 50) return; const pre = txt.match(/^[⬡◆] /)?.[0] || ''; const ja = txt.slice(pre.length); const rd = reading(ja);
+      c.font = `700 ${size * dpr}px "Hiragino Sans","Noto Sans JP",system-ui,sans-serif`; c.lineWidth = 3 * dpr; c.strokeStyle = 'rgba(0,0,0,.8)'; c.strokeText(txt, a, b); c.fillStyle = col; c.fillText(txt, a, b);
+      if (rd) { c.font = `600 ${size * 0.78 * dpr}px system-ui,sans-serif`; const y2 = b + size * 1.05 * dpr; c.strokeText(rd, a, y2); c.fillStyle = col; c.globalAlpha = 0.85; c.fillText(rd, a, y2); c.globalAlpha = 1; } };
     const seen = new Set();
     for (const r of roads) { if (!r.name || seen.has(r.name)) continue; if (r.kind !== 'expressway' && k < (r.kind === 'ramp' ? 0.6 : 1.2)) continue; seen.add(r.name); const q = r.samples[r.samples.length >> 1].p; lab(r.name.replace(/（.*?）/g, ''), q.x, q.z, r.kind === 'expressway' ? 13 : 11, r.kind === 'expressway' ? '#b6f5cf' : '#dde4ee'); }
     // place names: wards always, towns/wharves from mid zoom, JCTs/spots when zoomed in
