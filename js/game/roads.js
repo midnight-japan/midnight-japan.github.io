@@ -427,7 +427,8 @@ function buildTunnels(net, isLand, lampOut) {
         const a = S[i], b = S[i + 1];
         const ca = coveredAt(a, isLand), cb = coveredAt(b, isLand);
         const ta = ca ? a.p.y + TUN_H : 0.45, tb = cb ? b.p.y + TUN_H : 0.45;
-        for (const lat of [L, R]) quad(P(a, lat, a.p.y - 0.3), P(b, lat, b.p.y - 0.3), P(b, lat, Math.max(tb, b.p.y + 1)), P(a, lat, Math.max(ta, a.p.y + 1)));
+        // side walls — not where the wall would stand on another carriageway (both C1 loops share one tunnel bore)
+        for (const lat of [L, R]) { const pa = P(a, lat, a.p.y), pb = P(b, lat, b.p.y); if (onOtherRoad(net, r, pa[0], pa[1], pa[2], 0.3) || onOtherRoad(net, r, pb[0], pb[1], pb[2], 0.3)) continue; quad(P(a, lat, a.p.y - 0.3), P(b, lat, b.p.y - 0.3), P(b, lat, Math.max(tb, b.p.y + 1)), P(a, lat, Math.max(ta, a.p.y + 1))); }
         if (ca && cb) {
           quad(P(a, L, ta), P(b, L, tb), P(b, R, tb), P(a, R, ta));                 // ceiling
           if (!isLand(a.p.x, a.p.z)) quad(P(a, L - 0.6, ta + 1.2), P(b, L - 0.6, tb + 1.2), P(b, R + 0.6, tb + 1.2), P(a, R + 0.6, ta + 1.2)); // roof of the immersed box

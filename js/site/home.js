@@ -70,8 +70,9 @@ const ROADMAP = [
   ['0.8', 'done', ['loop', 'walls', 'umbrella']],
   ['0.9', 'done', ['nav', 'damage', 'talk', 'fuel']],
   ['0.10', 'done', ['touge']],
-  ['0.11', 'now', ['c1']],
-  ['1.0', 'next', ['07.cars', '03.events']],
+  ['0.11', 'done', ['c1']],
+  ['1.0', 'now', ['routes', 'site', 'money']],
+  ['1.1', 'next', ['07.cars', '03.events']],
   ['Later', 'later', ['02.perf']],
 ];
 
@@ -273,3 +274,32 @@ countUp();
 wireLb(); wireTabs(); wireCopy(); wireStrip();
 await initSite('home');
 onLang(() => { document.getElementById('hero-cars').textContent = t('site.show.all', { n: CARS.length }) + ' →'; renderWorld(); renderFeatures(); renderShowcase(); requestAnimationFrame(stripUpd); renderGallery(); renderRoadmap(); renderLatest(); renderReq(); renderCtl(); renderFaq(); });
+
+// ── v1.0 hero: cinematic slideshow (slow push-in + crossfade) with the location of each shot ──
+const SLIDES = [
+  ['27-c1night', '首都高速都心環状線 · 銀座'], ['29-hakone_dusk', 'アネスト岩田ターンパイク箱根'], ['31-k1rain', '首都高速K1横羽線 · 横浜駅'],
+  ['28-c1tunnel', '首都高速都心環状線 · 掘割'], ['30-hakone_day', '大観山 · 箱根'], ['32-bayday', '首都高速湾岸線 · 鶴見つばさ橋'], ['26-k1-night', '首都高速K1横羽線'],
+];
+(function heroSlides() {
+  const box = document.getElementById('hero-slides'), loc = document.getElementById('hero-loc'); if (!box) return;
+  const reduce = matchMedia('(prefers-reduced-motion: reduce)').matches;
+  const imgs = SLIDES.map(([f, l], i) => { if (i === 0) { const im = box.querySelector('img'); im.dataset.loc = l; return im; } const im = new Image(); im.className = 'hero-shot slide'; im.alt = ''; im.decoding = 'async'; im.loading = 'lazy'; im.srcset = `docs/screenshots/${f}-800.jpg 800w, docs/screenshots/${f}.jpg 1600w`; im.sizes = '100vw'; im.src = `docs/screenshots/${f}.jpg`; im.dataset.loc = l; box.appendChild(im); return im; });
+  let k = 0; const show = () => { imgs.forEach((im, i) => im.classList.toggle('on', i === k)); loc.innerHTML = `<i></i>${esc(imgs[k].dataset.loc)}`; };
+  show(); if (!reduce) setInterval(() => { k = (k + 1) % imgs.length; show(); }, 6500);
+})();
+
+// ── routes: big cards, each starts the game at that place ──
+const ROUTES = [
+  { id: 'c1', img: '27-c1night', route: 'C1', km: '14', ja: '首都高速都心環状線' },
+  { id: 'hakone', img: '29-hakone_dusk', route: 'TP', km: '13.5', ja: 'アネスト岩田ターンパイク箱根' },
+  { id: 'k1', img: '26-k1-night', route: 'K1', km: '17', ja: '横浜ループ（K5・K1・K3・湾岸線）' },
+  { id: 'pa', img: '07-ae86-loops', route: 'B', km: '30', ja: '大黒PA · 首都高速湾岸線' },
+  { id: 'mm', img: '18-minatomirai', route: 'Y', km: '546k', ja: '横浜・川崎・東京の街並み' },
+];
+function renderRoutes() {
+  const g = document.getElementById('route-grid'); if (!g) return;
+  g.innerHTML = ROUTES.map((r, i) => `<a class="route-card${i === 0 ? ' big' : ''}" href="play.html?spawn=${r.id}">
+    <img src="docs/screenshots/${r.img}-800.jpg" srcset="docs/screenshots/${r.img}-800.jpg 800w, docs/screenshots/${r.img}.jpg 1600w" sizes="(min-width: 900px) ${i === 0 ? '66vw' : '33vw'}, 100vw" alt="" loading="lazy" decoding="async">
+    <div class="rc-body"><span class="route">${esc(r.route)}</span><h3>${esc(t('site.routes.' + r.id))}</h3><p lang="ja">${esc(r.ja)}</p><p class="rc-d">${esc(t('site.routes.' + r.id + 'D'))}</p><span class="rc-go">${esc(t('site.routes.go'))} →</span></div></a>`).join('');
+}
+renderRoutes(); onLang(renderRoutes);

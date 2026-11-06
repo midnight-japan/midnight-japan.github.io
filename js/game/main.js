@@ -58,7 +58,7 @@ class Game {
     if (!this.settings.fpsOn) { this.settings.fps = true; this.settings.fpsOn = 1; } // v0.3.3: FPS + version shown by default
     this.garage = load(GARAGE_KEY, { car: 'r34', cars: {} });
     this.quality = this.settings.quality;
-    this.mode = 'loading'; this.frame = 0; this.money = 30000;
+    this.mode = 'loading'; this.frame = 0; this.money = 500000; // enough for tolls, fuel, konbini and the odd fine — the game is about driving, not budgeting
     this.stats = { tickets: 0, escapes: 0, tolls: 0, warnings: 0, km: 0 };
     this.focus = new THREE.Vector3(0, 0, 0);
     this.camMode = 'chase'; this.camModes = ['chase', 'far', 'hood', 'cockpit', 'orbit'];
@@ -474,6 +474,9 @@ class Game {
     this.openness = openness;
     this.engineSnd?.update({ rpm: v.engine.rpm, throttle: v.ctl.throttle, load: v.ctl.throttle > 0.05 ? v.ctl.throttle : (v.engine.running ? -0.4 : 0), running: v.engine.running, cranking: v.engine.cranking > 0, boost: v.engine.boost, speed: v.speed, slip: v.tireSlip, position: v.pos, interior: this.camMode === 'cockpit' || this.camMode === 'hood', openness });
     this.stats.km = v.odometer / 1000;
+    // driving pays: ¥3,000 every 5 km (delivery / meet prize money, so a fine or a settlement never leaves you stuck)
+    const leg = Math.floor(this.stats.km / 5); if (leg > (this._kmPaid ?? 0)) { this._kmPaid = leg; this.money += 3000; this.ui.toast(t('game.money.bonus', { amt: '3,000' }), 'info', 3); this.audio.sfx('coin'); }
+    if (this.money < 20000) { this.money = 20000; }
   }
   uturn(v, h) {
     // the map ends here → turn the car around onto the opposite carriageway

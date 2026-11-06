@@ -1,9 +1,10 @@
 # 📜 MIDNIGHT JAPAN 업데이트 기록 · Changelog
 
-현재 버전 · Current: **v0.11.1** · [▶ 웹에서 플레이](https://midnight-japan.github.io/) · [🌐 업데이트 페이지](https://midnight-japan.github.io/changelog.html)
+현재 버전 · Current: **v1.0.0** · [▶ 웹에서 플레이](https://midnight-japan.github.io/) · [🌐 업데이트 페이지](https://midnight-japan.github.io/changelog.html)
 
 | 버전 | 날짜 | 이름 | 요약 |
 |---|---|---|---|
+| [v1.0.0](#v100--real-japan-2026-11-06) | 2026-11-06 | Real Japan | 정식 1.0 — 실제 일본의 다섯 곳(C1·하코네·K1 루프·다이코쿠 PA와 만안선·요코하마/도쿄 시가지)을 달리는 게임으로. 홈페이지 전면 리뉴얼. |
 | [v0.11.1](#v0111--coin-parking-2026-11-06) | 2026-11-06 | Coin Parking | 시내 주차장에 코인파킹 디테일(주차선·차막이·P 간판·정산기). |
 | [v0.11.0](#v0110--inner-circular-2026-11-06) | 2026-11-06 | Inner Circular | C1 도심환상선 개통 — 도쿄 도심의 터널과 고가를 도는 내·외회선 루프, 주변 도쿄 도심 시가지. |
 | [v0.10.0](#v0100--touge-2026-11-06) | 2026-11-06 | Touge | 하코네 턴파이크 개통 — 실제 고도 데이터로 만든 산길 13.5km, 정상 다이칸야마 전망 주차장까지. |
@@ -27,6 +28,27 @@
 | [v0.2.0](#v020--bayshore-2026-11-05) | 2026-11-05 | Bayshore | 수도고속 완간선을 따라 하네다까지, 도쿄만 아쿠아라인 해저터널을 지나 우미호타루 PA까지. 실제 3D 차량 모델과 열리는 보닛도 들어왔어요. |
 | [v0.1.1](#v011--one-click-2026-11-04) | 2026-11-04 | One Click | 링크 하나로 바로 플레이. 크롬에서 공식 사이트 주소만 열면 설치 없이 실행돼요. |
 | [v0.1.0](#v010--first-meet-2026-11-04) | 2026-11-04 | First Meet | 첫 공개 버전. 다이코쿠 JCT·PA와 다이코쿠 부두 일대를 3D로 구현했습니다. |
+
+---
+
+## v1.0.0 — Real Japan (2026-11-06)
+
+> 정식 1.0 — 실제 일본의 다섯 곳(C1·하코네·K1 루프·다이코쿠 PA와 만안선·요코하마/도쿄 시가지)을 달리는 게임으로. 홈페이지 전면 리뉴얼.
+> Version 1.0: a game about driving the real Japan in five places — C1, Hakone, the K1 loop, Daikoku PA and the Bayshore, and the streets of Yokohama and Tokyo. A brand-new homepage.
+
+**✨ 추가 · New**
+
+- 정식 1.0: C1 도심환상선·하코네 턴파이크·K1 요코하마 루프·다이코쿠 PA와 만안선·요코하마/도쿄 시가지 — 실제 일본을 다섯 곳에서 달리는 게임<br><sub>Version 1.0: the C1 Inner Circular, the Hakone Turnpike, the K1 Yokohama loop, Daikoku PA and the Bayshore, and the streets of Yokohama and Tokyo — the real Japan in five places</sub>
+
+**🔧 변경 · Changed**
+
+- 홈페이지 전면 리뉴얼: 실제 주행 장면이 천천히 바뀌는 시네마틱 히어로(촬영 위치 표시), 「실제 일본, 다섯 곳을 달린다」 코스 카드(누르면 그 자리에서 바로 출발), 새 스크린샷<br><sub>A completely new homepage: a cinematic hero cycling through real in-game scenes (with where each was taken), “Five real places to drive” route cards that start the game right there, and new screenshots</sub>
+- 경제: 시작 자금 ¥500,000, 5km마다 주행 보너스 ¥3,000, 잔액이 ¥20,000 아래로 내려가지 않음 — 벌금·합의금 때문에 막히지 않게<br><sub>Money: start with ¥500,000, earn a ¥3,000 driving bonus every 5 km, and never drop below ¥20,000 — fines and settlements can’t leave you stuck</sub>
+- GitHub README: C1 야경 대표 이미지, 5개 코스 표(바로 시작 링크)<br><sub>GitHub README: the C1 at night as the header image and a table of the five routes with direct start links</sub>
+
+**🐞 수정 · Fixed**
+
+- C1 내·외회선이 나란히 달리는 구간에서 두 차도가 겹치고 반대 방향 터널 벽이 차로 한가운데 서 있던 문제 — 두 선을 9m 이상 분리하고 공유 터널로<br><sub>Where the C1 loops run side by side the carriageways overlapped and the other bore’s tunnel wall stood in the middle of your lane — the loops are now at least 9 m apart and share one tunnel</sub>
 
 ---
 

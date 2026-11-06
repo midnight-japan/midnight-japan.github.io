@@ -108,9 +108,10 @@
 <main id="main">
   <!-- HERO — image: docs/screenshots/00-hero.jpg (2560w) + 00-hero-1440.jpg + 00-hero-800.jpg; keep the subject on the right third -->
   <section class="hero" aria-labelledby="hero-title">
-    <picture class="hero-media" aria-hidden="true">
-      <img class="hero-shot" id="hero-shot" src="docs/screenshots/00-hero.jpg" srcset="docs/screenshots/00-hero-800.jpg 800w, docs/screenshots/00-hero-1440.jpg 1440w, docs/screenshots/00-hero.jpg 2560w" sizes="100vw" alt="" width="2560" height="1440" fetchpriority="high" decoding="async">
-    </picture>
+    <div class="hero-media hero-slides" id="hero-slides" aria-hidden="true">
+      <img class="hero-shot slide on" src="docs/screenshots/27-c1night.jpg" srcset="docs/screenshots/27-c1night-800.jpg 800w, docs/screenshots/27-c1night.jpg 1600w" sizes="100vw" alt="" width="1600" height="900" fetchpriority="high" data-loc="首都高速都心環状線 · 銀座">
+    </div>
+    <div class="hero-loc" id="hero-loc" aria-hidden="true"></div>
     <div class="hero-grain" aria-hidden="true"></div>
     <div class="wrap hero-wrap">
       <div class="hero-inner">
@@ -128,10 +129,11 @@
     <div class="hero-stats">
       <div class="wrap">
         <ul class="hero-meta">
+          <li><b>5</b><span data-i18n="site.hero.statRoutes">drivable routes</span></li>
+          <li><b>546</b><span data-i18n="site.hero.statBuildings">k real buildings</span></li>
           <li><b id="hero-carcount">41</b><span data-i18n="site.hero.statCars">real cars</span></li>
           <li><b>20</b><span data-i18n="site.hero.statLangs">languages</span></li>
-          <li><b class="nocount">30:00</b><span data-i18n="site.hero.statCycle">= 12 h day/night</span></li>
-          <li class="hs-route"><span class="route">B</span><span class="route aq">CA</span><span lang="ja">湾岸線 · アクアライン</span></li>
+          <li class="hs-route"><span class="route">B</span><span class="route">K1</span><span class="route">C1</span><span class="route aq">TP</span><span lang="ja">湾岸線 · 横羽線 · 都心環状線 · 箱根</span></li>
         </ul>
       </div>
     </div>
@@ -139,6 +141,18 @@
 
   <!-- route-sign ticker (decorative) -->
   <div class="ticker" aria-hidden="true"><div class="ticker-track" id="ticker"></div></div>
+
+  <!-- ROUTES: five real places to drive, each opens the game there -->
+  <section class="section routes" id="routes" aria-labelledby="routes-title">
+    <div class="wrap">
+      <div class="sec-head">
+        <span class="kicker"><span class="route">C1</span><span data-i18n="site.routes.kicker">Routes</span></span>
+        <h2 class="sec-title" id="routes-title" data-i18n="site.routes.title">Five real places to drive</h2>
+        <p class="sec-lead" data-i18n="site.routes.lead">Every road is the real one, rebuilt from map and elevation data. Pick a route and start right there.</p>
+      </div>
+      <div class="route-grid" id="route-grid"></div>
+    </div>
+  </section>
 
   <!-- WORLD / REGIONS -->
   <section class="section world" id="world" aria-labelledby="world-title">

@@ -1,8 +1,19 @@
 // Shared game metadata: version, changelog, regions. Update VERSION + CHANGELOG on every release.
-export const GAME = { title: 'MIDNIGHT JAPAN', titleJa: 'ミッドナイト・ジャパン', version: '0.11.1', build: '2026.11.06' };
+export const GAME = { title: 'MIDNIGHT JAPAN', titleJa: 'ミッドナイト・ジャパン', version: '1.0.0', build: '2026.11.06' };
 
 // Newest first. type: new | change | fix | known
 export const CHANGELOG = [
+  {
+    version: '1.0.0', date: '2026-11-06', codename: 'Real Japan',
+    summary: { ko: '정식 1.0 — 실제 일본의 다섯 곳(C1·하코네·K1 루프·다이코쿠 PA와 만안선·요코하마/도쿄 시가지)을 달리는 게임으로. 홈페이지 전면 리뉴얼.', ja: '正式版1.0——本物の日本の5つの場所（C1・箱根・K1ループ・大黒PAと湾岸線・横浜／東京の街）を走るゲームに。ホームページを全面リニューアル。', en: 'Version 1.0: a game about driving the real Japan in five places — C1, Hakone, the K1 loop, Daikoku PA and the Bayshore, and the streets of Yokohama and Tokyo. A brand-new homepage.' },
+    items: [
+      { type: "new", ko: "정식 1.0: C1 도심환상선·하코네 턴파이크·K1 요코하마 루프·다이코쿠 PA와 만안선·요코하마/도쿄 시가지 — 실제 일본을 다섯 곳에서 달리는 게임", ja: "正式版1.0：C1都心環状線・箱根ターンパイク・K1横浜ループ・大黒PAと湾岸線・横浜／東京の街——本物の日本を5つの場所で走るゲーム", en: "Version 1.0: the C1 Inner Circular, the Hakone Turnpike, the K1 Yokohama loop, Daikoku PA and the Bayshore, and the streets of Yokohama and Tokyo — the real Japan in five places" },
+      { type: "change", ko: "홈페이지 전면 리뉴얼: 실제 주행 장면이 천천히 바뀌는 시네마틱 히어로(촬영 위치 표시), 「실제 일본, 다섯 곳을 달린다」 코스 카드(누르면 그 자리에서 바로 출발), 새 스크린샷", ja: "ホームページを全面リニューアル：実際の走行シーンがゆっくり切り替わるシネマティックなヒーロー（撮影地表示）、「実在の日本を、5つの場所で走る」コースカード（押すとその場から走り出せる）、新しいスクリーンショット", en: "A completely new homepage: a cinematic hero cycling through real in-game scenes (with where each was taken), “Five real places to drive” route cards that start the game right there, and new screenshots" },
+      { type: "change", ko: "경제: 시작 자금 ¥500,000, 5km마다 주행 보너스 ¥3,000, 잔액이 ¥20,000 아래로 내려가지 않음 — 벌금·합의금 때문에 막히지 않게", ja: "お金：初期資金¥500,000、5kmごとに走行ボーナス¥3,000、残高は¥20,000未満にならない——反則金や示談金で詰まらない", en: "Money: start with ¥500,000, earn a ¥3,000 driving bonus every 5 km, and never drop below ¥20,000 — fines and settlements can’t leave you stuck" },
+      { type: "fix", ko: "C1 내·외회선이 나란히 달리는 구간에서 두 차도가 겹치고 반대 방향 터널 벽이 차로 한가운데 서 있던 문제 — 두 선을 9m 이상 분리하고 공유 터널로", ja: "C1の内回りと外回りが並ぶ区間で車道が重なり、反対側のトンネル壁が車線の真ん中に立っていた問題——2本を9m以上離し、共用のトンネルに", en: "Where the C1 loops run side by side the carriageways overlapped and the other bore’s tunnel wall stood in the middle of your lane — the loops are now at least 9 m apart and share one tunnel" },
+      { type: "change", ko: "GitHub README: C1 야경 대표 이미지, 5개 코스 표(바로 시작 링크)", ja: "GitHub README：C1の夜景をトップ画像に、5つのコース表（すぐ走れるリンク付き）", en: "GitHub README: the C1 at night as the header image and a table of the five routes with direct start links" }
+    ]
+  },
   {
     version: '0.11.1', date: '2026-11-06', codename: 'Coin Parking',
     summary: { ko: '시내 주차장에 코인파킹 디테일(주차선·차막이·P 간판·정산기).', ja: '市街地の駐車場にコインパーキングのディテール（区画線・車止め・P看板・精算機）。', en: 'Coin-parking detail in city car parks (bay lines, wheel stops, P sign, pay machine).' },
