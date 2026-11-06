@@ -1,8 +1,19 @@
 // Shared game metadata: version, changelog, regions. Update VERSION + CHANGELOG on every release.
-export const GAME = { title: 'MIDNIGHT JAPAN', titleJa: 'ミッドナイト・ジャパン', version: '0.9.0', build: '2026.11.06' };
+export const GAME = { title: 'MIDNIGHT JAPAN', titleJa: 'ミッドナイト・ジャパン', version: '0.9.1', build: '2026.11.06' };
 
 // Newest first. type: new | change | fix | known
 export const CHANGELOG = [
+  {
+    version: '0.9.1', date: '2026-11-06', codename: 'Hill Start',
+    summary: { ko: '오르막 출발 버그 수정, NPC 차량 엔진음, 차 위로 점프, 다이코쿠 부두·PA를 실제처럼 채움.', ja: '坂道発進のバグ修正、NPC車のエンジン音、車の上へジャンプ、大黒ふ頭・PAを実際のように。', en: 'Hill-start fix, engine sound for AI cars, jumping onto cars, and a fuller, more lifelike Daikoku-futō and PA.' },
+    items: [
+      { type: "fix", ko: "오르막에서 출발하면 차가 뒤로 밀리고 자동변속이 후진처럼 동작하던 문제 — 힐 스타트 어시스트와 토크컨버터식 출발 체결", ja: "坂道発進で車が後ろへ下がり、ATが後退のように動いていた問題——ヒルスタートアシストとトルコン式の発進", en: "Hill starts: the car no longer rolls back (hill-start assist) and torque-converter automatics take up drive straight away" },
+      { type: "new", ko: "NPC 차량 엔진음: 가까운 차 4대가 공회전·주행 소리를 냄(위치 기반, 과하지 않은 음량)", ja: "NPC車のエンジン音：近くの4台がアイドリングや走行音を出す（位置に応じた控えめな音量）", en: "AI cars now have engine sound — the four nearest idle and drive by audibly, at a sensible volume" },
+      { type: "new", ko: "걷는 중 Space로 점프 — 차 지붕 위에 올라설 수 있음", ja: "歩行中にSpaceでジャンプ——車の屋根に乗れる", en: "Jump with Space while walking — you can climb onto car roofs" },
+      { type: "change", ko: "다이코쿠 부두: 수출 신차 야드를 6블록에서 최대 40블록으로(차체+유리 형태, 주차선 포함), 부두 포장을 회색 아스팔트로", ja: "大黒ふ頭：輸出車ヤードを6区画から最大40区画に（車体＋ガラスの形、区画線付き）、ふ頭の舗装をグレーのアスファルトに", en: "Daikoku-futō: the export-car yards grow from 6 to up to 40 blocks of car-shaped rows with bay lines, and the quays are paved in grey asphalt" },
+      { type: "change", ko: "다이코쿠 PA: 대형 칸은 쉬고 있는 트럭으로 대부분 차고, 일반 차량도 주차장 곳곳에 주차", ja: "大黒PA：大型車枠は休憩中のトラックでほぼ埋まり、一般車も駐車場のあちこちに", en: "Daikoku PA: the big-vehicle bays are mostly taken by resting trucks and ordinary cars are parked all over the lot" }
+    ]
+  },
   {
     version: '0.9.0', date: '2026-11-06', codename: 'Real Drive',
     summary: {

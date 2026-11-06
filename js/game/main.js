@@ -322,8 +322,12 @@ class Game {
     }
     this._blockMsgT = Math.max(0, (this._blockMsgT || 0) - dt) || 0;
     p.speed = sp;
-    // floor height (building floor slightly raised)
-    p.pos.y = this.walkY(p.pos.x, p.pos.z, p.pos.y);
+    // floor height (building floor slightly raised) — or a car roof; Space jumps (you can climb onto cars)
+    const top = this.carTop(p.pos.x, p.pos.z);
+    const floor = Math.max(this.walkY(p.pos.x, p.pos.z, Math.min(p.pos.y, (top ?? p.pos.y) + 5)), top !== null && p.pos.y > top - 0.5 ? top : -1e9);
+    if (this.input.act('jump') && !p.air) { p.vy = 4.4; p.air = true; this.audio.sfx('footstep'); }
+    if (p.air || p.pos.y > floor + 0.08) { p.air = true; p.vy = (p.vy || 0) - 9.8 * dt; p.pos.y += p.vy * dt; if (p.pos.y <= floor) { p.pos.y = floor; p.vy = 0; p.air = false; this.audio.sfx('footstep'); } }
+    else p.pos.y = floor;
     p.t += dt; let action = sp > 3 ? 'run' : sp > 0.1 ? 'walk' : (p.hold || 'idle');
     if (p.action === 'exit' && p.t < 1) action = 'exit';
     p.action = action;
@@ -344,14 +348,23 @@ class Game {
     if (inStore && !this._inStore) { this.audio.sfx('store_chime'); this.audio.speak('いらっしゃいませー。', 'ja-JP', { role: 'female', seed: 5 }); }
     this._inStore = inStore;
   }
-  carBlocks(x, z) {
+  // cars as obstacles for walking — unless you are standing on top of them (jumped up onto the roof)
+  carBlocks(x, z, y = this.player?.pos.y ?? 0) {
     for (const ai of this.traffic.cars) {
       if (ai.mode === 'road') continue; const dx = x - ai.pos.x, dz = z - ai.pos.z; if (dx * dx + dz * dz > 16) continue;
       const f = Math.sin(ai.yaw), c = Math.cos(ai.yaw); const lz = dx * f + dz * c, lx = dx * c - dz * f;
-      if (Math.abs(lz) < ai.halfL + 0.15 && Math.abs(lx) < ai.radius + 0.15) return true;
+      if (Math.abs(lz) < ai.halfL + 0.15 && Math.abs(lx) < ai.radius + 0.15 && y < ai.pos.y + ai.car.H / 1000 * 0.92 - 0.45) return true;
     }
-    const v = this.vehicle; if (v) { const dx = x - v.pos.x, dz = z - v.pos.z; const f = v.forward; const lz = dx * f.x + dz * f.z, lx = dx * f.z - dz * f.x; if (Math.abs(lz) < v.car.L / 2000 + 0.1 && Math.abs(lx) < v.car.W / 2000 + 0.1) return true; }
+    const v = this.vehicle; if (v) { const dx = x - v.pos.x, dz = z - v.pos.z; const f = v.forward; const lz = dx * f.x + dz * f.z, lx = dx * f.z - dz * f.x; if (Math.abs(lz) < v.car.L / 2000 + 0.1 && Math.abs(lx) < v.car.W / 2000 + 0.1 && y < v.pos.y + v.car.H / 1000 * 0.92 - 0.45) return true; }
     return false;
+  }
+  // roof height of a car under (x, z) — something to jump onto
+  carTop(x, z) {
+    let top = null;
+    const test = (px, pz, yaw, hl, hw, y) => { const dx = x - px, dz = z - pz, f = Math.sin(yaw), c = Math.cos(yaw); const lz = dx * f + dz * c, lx = dx * c - dz * f; if (Math.abs(lz) < hl * 0.8 && Math.abs(lx) < hw * 0.85) top = Math.max(top ?? -1e9, y); };
+    for (const ai of this.traffic.cars) { const dx = x - ai.pos.x, dz = z - ai.pos.z; if (dx * dx + dz * dz > 49) continue; test(ai.pos.x, ai.pos.z, ai.yaw, ai.halfL, ai.radius, ai.pos.y + ai.car.H / 1000 * 0.92); }
+    const v = this.vehicle; if (v) test(v.pos.x, v.pos.z, v.yaw, v.car.L / 2000, v.car.W / 2000, v.pos.y + v.car.H / 1000 * 0.92);
+    return top;
   }
   talkTo(n) {
     const c = CHATTER[Math.floor(Math.random() * CHATTER.length)];

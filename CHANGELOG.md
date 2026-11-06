@@ -1,9 +1,10 @@
 # 📜 MIDNIGHT JAPAN 업데이트 기록 · Changelog
 
-현재 버전 · Current: **v0.9.0** · [▶ 웹에서 플레이](https://midnight-japan.github.io/) · [🌐 업데이트 페이지](https://midnight-japan.github.io/changelog.html)
+현재 버전 · Current: **v0.9.1** · [▶ 웹에서 플레이](https://midnight-japan.github.io/) · [🌐 업데이트 페이지](https://midnight-japan.github.io/changelog.html)
 
 | 버전 | 날짜 | 이름 | 요약 |
 |---|---|---|---|
+| [v0.9.1](#v091--hill-start-2026-11-06) | 2026-11-06 | Hill Start | 오르막 출발 버그 수정, NPC 차량 엔진음, 차 위로 점프, 다이코쿠 부두·PA를 실제처럼 채움. |
 | [v0.9.0](#v090--real-drive-2026-11-06) | 2026-11-06 | Real Drive | 대규모 업데이트 — 차체 파손, 스키드마크·타이어 연기, 내비게이션과 텔레포트, 사고 상대·경찰과의 선택형 대화, 일본식 차선 주행과 시간대별 교통량, 터널 갱문과 표지판, 주유소 165곳, 지명 병기. |
 | [v0.8.1](#v081--pavement-2026-11-06) | 2026-11-06 | Pavement | 일본 거리다운 회색 보도블록(상점가 일부는 적갈색 블록), 지역 페이지에 K1 요코하마 루프·요코하마 시가지·쓰루미·가와사키·하네다 추가, README·사이트 수치 최신화. |
 | [v0.8.0](#v080--yokohama-loop-2026-11-06) | 2026-11-06 | Yokohama Loop | 요코하마 루프 개통 — 다이코쿠 JCT에서 K5를 타고 나마무기 JCT로, K1 요코하네선으로 요코하마역·미나토미라이를 지나 지하로 내려간 뒤, K3 가리바선과 혼모쿠 JCT를 거쳐 베이브리지로 돌아오는 약 17km의 실제 수도고 루프를 달릴 수 있어요. |
@@ -23,6 +24,27 @@
 | [v0.2.0](#v020--bayshore-2026-11-05) | 2026-11-05 | Bayshore | 수도고속 완간선을 따라 하네다까지, 도쿄만 아쿠아라인 해저터널을 지나 우미호타루 PA까지. 실제 3D 차량 모델과 열리는 보닛도 들어왔어요. |
 | [v0.1.1](#v011--one-click-2026-11-04) | 2026-11-04 | One Click | 링크 하나로 바로 플레이. 크롬에서 공식 사이트 주소만 열면 설치 없이 실행돼요. |
 | [v0.1.0](#v010--first-meet-2026-11-04) | 2026-11-04 | First Meet | 첫 공개 버전. 다이코쿠 JCT·PA와 다이코쿠 부두 일대를 3D로 구현했습니다. |
+
+---
+
+## v0.9.1 — Hill Start (2026-11-06)
+
+> 오르막 출발 버그 수정, NPC 차량 엔진음, 차 위로 점프, 다이코쿠 부두·PA를 실제처럼 채움.
+> Hill-start fix, engine sound for AI cars, jumping onto cars, and a fuller, more lifelike Daikoku-futō and PA.
+
+**✨ 추가 · New**
+
+- NPC 차량 엔진음: 가까운 차 4대가 공회전·주행 소리를 냄(위치 기반, 과하지 않은 음량)<br><sub>AI cars now have engine sound — the four nearest idle and drive by audibly, at a sensible volume</sub>
+- 걷는 중 Space로 점프 — 차 지붕 위에 올라설 수 있음<br><sub>Jump with Space while walking — you can climb onto car roofs</sub>
+
+**🔧 변경 · Changed**
+
+- 다이코쿠 부두: 수출 신차 야드를 6블록에서 최대 40블록으로(차체+유리 형태, 주차선 포함), 부두 포장을 회색 아스팔트로<br><sub>Daikoku-futō: the export-car yards grow from 6 to up to 40 blocks of car-shaped rows with bay lines, and the quays are paved in grey asphalt</sub>
+- 다이코쿠 PA: 대형 칸은 쉬고 있는 트럭으로 대부분 차고, 일반 차량도 주차장 곳곳에 주차<br><sub>Daikoku PA: the big-vehicle bays are mostly taken by resting trucks and ordinary cars are parked all over the lot</sub>
+
+**🐞 수정 · Fixed**
+
+- 오르막에서 출발하면 차가 뒤로 밀리고 자동변속이 후진처럼 동작하던 문제 — 힐 스타트 어시스트와 토크컨버터식 출발 체결<br><sub>Hill starts: the car no longer rolls back (hill-start assist) and torque-converter automatics take up drive straight away</sub>
 
 ---
 

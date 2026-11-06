@@ -98,6 +98,7 @@ export class Traffic {
     }
   }
   remove(ai) {
+    if (ai.snd) { try { ai.snd.dispose(); } catch {} ai.snd = null; }
     this.scene.remove(ai.model.root);
     ai.model.root.traverse(o => { if (o.geometry && o !== ai.beam) o.geometry.dispose(); });
     this.cars.splice(this.cars.indexOf(ai), 1);
@@ -136,26 +137,49 @@ export class Traffic {
     }
     // a few trucks parked in the large bays
     const big = this.world.parkingSpots.filter(s => s.size === 'l');
-    for (let i = 0; i < 6; i++) { const s = big[Math.floor(Math.random() * big.length)]; if (!s.taken) this.spawnParked(Math.random() < 0.7 ? 'truck' : 'bus', s, true); }
+    // the large bays are mostly full of trucks resting (as at any expressway PA), and ordinary cars are parked all over
+    // the rest of the lot — commuters, families, delivery vans — not only the meet crowd
+    for (const s of big) if (!s.taken && Math.random() < 0.7) this.spawnParked(Math.random() < 0.75 ? 'truck' : 'bus', s, true, true);
+    for (const s of spots) if (!s.taken && Math.random() < 0.22) this.spawnParked(TRAFFIC_POOL[Math.floor(Math.random() * TRAFFIC_POOL.length)], s, true, true);
     // police: patrol car on the expressway + parked units at the post
     const pol = this.createAI('police'); pol.police = true; this.placeOnRoad(pol, bay, bay.lanes.find(l => l.dir === 1 && l.i === 0), 600); pol.vDes = 22;
     this.patrol = pol;
     for (const p of (this.world.policeBays || []).slice(0, 2)) { const a = this.createAI(Math.random() < 0.5 ? 'police' : 'police_unmarked'); a.mode = 'parked'; a.pos.copy(p); a.yaw = this.world.policeYaw ?? Math.PI; a.police = true; a.station = true; }
   }
-  spawnParked(id, spot, noDriver = false) {
-    const ai = this.createAI(id);
+  spawnParked(id, spot, noDriver = false, plain = false) {
+    const ai = this.createAI(id); ai.plain = plain;
     spot.taken = true; ai.spot = spot; ai.mode = 'parked'; ai.pos.copy(spot.pos); ai.yaw = spot.yaw;
     ai.stay = 60 + Math.random() * 400;
     if (!noDriver) this.g.npc?.spawnMeetGroup(ai);
     // some show-offs: hood open, stance
-    if (Math.random() < 0.25 && ai.model.parts.hood) ai.model.parts.hood.target = 1;
-    if (Math.random() < 0.3) ai.model.setStance({ camberF: -3 - Math.random() * 6, camberR: -4 - Math.random() * 8, ride: -0.03 - Math.random() * 0.03 });
+    if (!plain && Math.random() < 0.25 && ai.model.parts.hood) ai.model.parts.hood.target = 1;
+    if (!plain && Math.random() < 0.3) ai.model.setStance({ camberF: -3 - Math.random() * 6, camberR: -4 - Math.random() * 8, ride: -0.03 - Math.random() * 0.03 });
     ai.model.lights.head = false;
     return ai;
   }
 
   // ───── per frame ─────
+  // engine sound for the few AI cars closest to you (lite synth, positional; idle / cruising rpm from road speed with a
+  // virtual gearbox) — enough to hear cars pass and idle beside you without a wall of noise
+  engineSounds(dt) {
+    const a = this.g.audio; if (!a?.ready) return;
+    this._sndT = (this._sndT || 0) - dt;
+    if (this._sndT <= 0) {
+      this._sndT = 0.5; const f = this.g.focus;
+      const near = this.cars.filter(c => c.mode !== 'parked' || c.engineOn).map(c => [c, c.pos.distanceToSquared(f)]).filter(([, d]) => d < 70 * 70).sort((x, y) => x[1] - y[1]).slice(0, 4).map(([c]) => c);
+      for (const c of this.cars) if (c.snd && !near.includes(c)) { try { c.snd.dispose(); } catch {} c.snd = null; }
+      for (const c of near) if (!c.snd) c.snd = a.createEngine(c.car, { lod: 'lite' });
+    }
+    for (const c of this.cars) {
+      if (!c.snd) continue;
+      const E = c.car.engine, kmh = (c.v || 0) * 3.6, idle = E.idle || 750, red = E.redline || 6500;
+      const span = c.car.mass > 4000 ? 18 : 32, g = Math.floor(kmh / span), frac = (kmh % span) / span;
+      const rpm = kmh < 2 ? idle : Math.min(red * 0.75, idle * 1.15 + frac * red * 0.32 + Math.min(g, 4) * red * 0.04);
+      c.snd.update({ rpm, throttle: c.braking ? 0 : kmh > 2 ? 0.35 : 0, load: c.braking ? -0.3 : 0.25, running: true, cranking: false, boost: 0, speed: c.v || 0, slip: 0, position: c.pos, interior: false, openness: 1 });
+    }
+  }
   update(dt, env) {
+    try { this.engineSounds(dt); } catch (e) { /* audio is optional */ }
     this.t += dt;
     const player = this.g.vehicle && this.g.mode === 'drive' ? this.g.vehicle : null;
     const night = env.night;
@@ -294,7 +318,7 @@ export class Traffic {
     }
     ai.s = clamp(ai.s, 0, ai.road.length); ai.v = 0;
   }
-  meetCount() { return this.cars.filter(c => c.mode === 'parked' || c.mode === 'path').filter(c => !c.police && !c.station).length; }
+  meetCount() { return this.cars.filter(c => c.mode === 'parked' || c.mode === 'path').filter(c => !c.police && !c.station && !c.plain).length; }
 
   // ───── PA lot driving (waypoints) ─────
   enterLot(ai) {

@@ -194,7 +194,7 @@ export class World {
 
   // ───────────────────────── ground & sea ─────────────────────────
   buildGround(S) {
-    const port = surface('asphalt_worn', { tile: 8, tint: 0x8c8c8c });
+    const port = surface('asphalt_worn', { tile: 8, tint: 0x9a9ea3 });
     const land = surface('concrete_old', { tile: 7, tint: 0x8d8c88 }); // urban ground: weathered concrete / packed earth
     const wall = surface('concrete_old', { tile: 4 });
     const iron = new THREE.MeshStandardMaterial({ color: 0x2b2b2b, roughness: 0.6, metalness: 0.6 });
@@ -715,15 +715,26 @@ export class World {
       }
     }
     // new-car yards (自動車ターミナル) on open ground near the PA's south-east, rows of export cars
-    const yardCar = boxGeo(4.4, 1.4, 1.8);
-    const carCols = [0xffffff, 0xf2f2f2, 0x111111, 0xb0b5ba, 0x8b0000, 0x1d3f73, 0xc0c0c0];
+    // car-shaped (body + glasshouse), parked nose-to-tail in tight rows on marked asphalt, as at the real terminals
+    const yardBody = boxGeo(4.4, 0.85, 1.75), yardCab = boxGeo(2.3, 0.6, 1.5);
+    const carCols = [0xffffff, 0xf4f4f2, 0xeeeeec, 0x111111, 0xb0b5ba, 0x8b0000, 0x1d3f73, 0xc0c0c0, 0x2b2f36];
     const yc = carCols.map(c => new THREE.MeshStandardMaterial({ color: c, roughness: 0.3, metalness: 0.5 }));
+    const glass = new THREE.MeshStandardMaterial({ color: 0x1a222b, roughness: 0.15, metalness: 0.6 });
+    const yardPad = new THREE.MeshStandardMaterial({ color: 0x55585c, roughness: 0.95 });
+    const padGeo = boxGeo(86, 0.04, 30), lineGeo = boxGeo(0.12, 0.02, 2.6), lineMat = new THREE.MeshStandardMaterial({ color: 0xdedede, roughness: 0.8 });
     let placed = 0;
-    for (let gx = -600; gx < 1800 && placed < 6; gx += 90) for (let gz = -900; gz < 1300 && placed < 6; gz += 70) {
-      if (!freeAt(gx, gz, 26) || !freeAt(gx + 40, gz + 20, 26) || !freeAt(gx - 40, gz - 20, 26)) continue;
-      if (!isl || !inPoly(gx, gz, isl.pts)) continue;
-      for (let r = 0; r < 8; r++) for (let i = 0; i < 16; i++) if (rnd() > 0.12) S.add(yardCar, yc[Math.floor(rnd() * yc.length)], gx - 40 + i * 5.2, 0.8, gz - 12 + r * 3, 0);
-      this.addCollider(gx + 1.6, gz - 1.5, 42, 13);
+    for (let gx = -600; gx < 1800 && placed < 40; gx += 92) for (let gz = -900; gz < 1300 && placed < 40; gz += 34) {
+      if (!freeAt(gx, gz, 24) || !freeAt(gx + 40, gz + 12, 22) || !freeAt(gx - 40, gz - 12, 22) || !freeAt(gx + 40, gz - 12, 22) || !freeAt(gx - 40, gz + 12, 22)) continue;
+      if (!isl || !inPoly(gx, gz, isl.pts) || !inPoly(gx + 44, gz + 15, isl.pts) || !inPoly(gx - 44, gz - 15, isl.pts)) continue;
+      if (PA.inLot(gx, gz, 60)) continue;
+      S.add(padGeo, yardPad, gx, 0.02, gz, 0);
+      for (let r = 0; r < 9; r++) for (let i = 0; i < 16; i++) {
+        S.add(lineGeo, lineMat, gx - 40 + i * 5.2 - 2.6, 0.05, gz - 12 + r * 3, 0);
+        if (rnd() < 0.1) continue;
+        const m = yc[Math.floor(rnd() * yc.length)], x = gx - 40 + i * 5.2, z = gz - 12 + r * 3;
+        S.add(yardBody, m, x, 0.62, z, 0); S.add(yardCab, glass, x - 0.2, 1.33, z, 0);
+      }
+      this.addCollider(gx + 1.6, gz, 42, 14);
       placed++;
     }
     // port lamp masts along the main avenue

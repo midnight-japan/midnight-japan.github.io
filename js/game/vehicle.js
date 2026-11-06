@@ -210,6 +210,8 @@ export class Vehicle {
     const idle = (this.car.engine.idle || 800) * RPM2W;
     const launch = idle * 1.15 + thr * this.car.engine.redline * RPM2W * (this.car.engine.turbo ? 0.45 : 0.38); // flare to a proper launch rpm (turbo: build boost)
     // creep bite just above idle, then the clutch only really bites near the launch rpm so the engine can rev up
+    // torque-converter automatics creep firmly at idle and take up drive progressively as the engine revs
+    if (this.mode === 'auto' && this.transType === 'AT') return Math.min(1, 0.3 * sstep(idle * 0.8, idle * 1.0, we) + 0.7 * sstep(idle * 1.05, Math.max(idle * 1.3, launch * 0.7), we));
     return 0.07 * sstep(idle * 0.8, idle * 1.0, we) + 0.93 * sstep(Math.max(idle * 1.05, launch * 0.55), launch, we);
   }
 
@@ -380,7 +382,10 @@ export class Vehicle {
       // torque converter multiplication (AT) while slipping
       const tcMul = (this.mode === 'auto' && this.transType === 'AT' && we > 1) ? 1 + 0.9 * clamp(1 - Math.abs(wt) / we, 0, 1) : 1;
       Fdrive = Tc * tcMul * ratio * eta / this.r;
-      if (this.mode === 'auto' && this.atSel === 'P' && Math.abs(vx) < 1.5) { this.parkLock = true; } else this.parkLock = false;
+      // hill-start assist: in D/R the car is held instead of rolling backwards against the selected direction
+      const dirS = this.atSel === 'D' ? 1 : this.atSel === 'R' ? -1 : 0;
+      const rollback = (this.mode === 'auto' || this.ev) && dirS && e.running && vx * dirS < -0.02 && Math.abs(vx) < 2.5;
+      if ((this.mode === 'auto' && this.atSel === 'P' && Math.abs(vx) < 1.5) || rollback) { this.parkLock = true; } else this.parkLock = false;
     }
 
     // ── wheelspin: the driven wheels' slip speed grows when drive force exceeds what the tyres can transmit
