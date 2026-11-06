@@ -195,7 +195,7 @@ export class World {
   // ───────────────────────── ground & sea ─────────────────────────
   buildGround(S) {
     const port = surface('asphalt_worn', { tile: 8, tint: 0x9a9ea3 });
-    const land = surface('concrete_old', { tile: 7, tint: 0x8d8c88 }); // urban ground: weathered concrete / packed earth
+    const land = surface('concrete_old', { tile: 7, tint: 0x8e9296 }); // urban ground: weathered concrete / packed earth
     const wall = surface('concrete_old', { tile: 4 });
     const iron = new THREE.MeshStandardMaterial({ color: 0x2b2b2b, roughness: 0.6, metalness: 0.6 });
     const bol = new THREE.CylinderGeometry(0.25, 0.35, 0.7, 12);
