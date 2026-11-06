@@ -1,9 +1,10 @@
 # 📜 MIDNIGHT JAPAN 업데이트 기록 · Changelog
 
-현재 버전 · Current: **v0.11.0** · [▶ 웹에서 플레이](https://midnight-japan.github.io/) · [🌐 업데이트 페이지](https://midnight-japan.github.io/changelog.html)
+현재 버전 · Current: **v0.11.1** · [▶ 웹에서 플레이](https://midnight-japan.github.io/) · [🌐 업데이트 페이지](https://midnight-japan.github.io/changelog.html)
 
 | 버전 | 날짜 | 이름 | 요약 |
 |---|---|---|---|
+| [v0.11.1](#v0111--coin-parking-2026-11-06) | 2026-11-06 | Coin Parking | 시내 주차장에 코인파킹 디테일(주차선·차막이·P 간판·정산기). |
 | [v0.11.0](#v0110--inner-circular-2026-11-06) | 2026-11-06 | Inner Circular | C1 도심환상선 개통 — 도쿄 도심의 터널과 고가를 도는 내·외회선 루프, 주변 도쿄 도심 시가지. |
 | [v0.10.0](#v0100--touge-2026-11-06) | 2026-11-06 | Touge | 하코네 턴파이크 개통 — 실제 고도 데이터로 만든 산길 13.5km, 정상 다이칸야마 전망 주차장까지. |
 | [v0.9.1](#v091--hill-start-2026-11-06) | 2026-11-06 | Hill Start | 오르막 출발 버그 수정, NPC 차량 엔진음, 차 위로 점프, 다이코쿠 부두·PA를 실제처럼 채움. |
@@ -26,6 +27,17 @@
 | [v0.2.0](#v020--bayshore-2026-11-05) | 2026-11-05 | Bayshore | 수도고속 완간선을 따라 하네다까지, 도쿄만 아쿠아라인 해저터널을 지나 우미호타루 PA까지. 실제 3D 차량 모델과 열리는 보닛도 들어왔어요. |
 | [v0.1.1](#v011--one-click-2026-11-04) | 2026-11-04 | One Click | 링크 하나로 바로 플레이. 크롬에서 공식 사이트 주소만 열면 설치 없이 실행돼요. |
 | [v0.1.0](#v010--first-meet-2026-11-04) | 2026-11-04 | First Meet | 첫 공개 버전. 다이코쿠 JCT·PA와 다이코쿠 부두 일대를 3D로 구현했습니다. |
+
+---
+
+## v0.11.1 — Coin Parking (2026-11-06)
+
+> 시내 주차장에 코인파킹 디테일(주차선·차막이·P 간판·정산기).
+> Coin-parking detail in city car parks (bay lines, wheel stops, P sign, pay machine).
+
+**✨ 추가 · New**
+
+- 시내 주차장마다 일본식 코인파킹: 흰 주차선·차막이, 노란 「P」 간판 기둥, 정산기<br><sub>Coin parking in every city car park: white bay lines and wheel stops, a yellow “P” sign pole and a pay machine</sub>
 
 ---
 

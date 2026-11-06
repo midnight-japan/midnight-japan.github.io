@@ -1,8 +1,15 @@
 // Shared game metadata: version, changelog, regions. Update VERSION + CHANGELOG on every release.
-export const GAME = { title: 'MIDNIGHT JAPAN', titleJa: 'ミッドナイト・ジャパン', version: '0.11.0', build: '2026.11.06' };
+export const GAME = { title: 'MIDNIGHT JAPAN', titleJa: 'ミッドナイト・ジャパン', version: '0.11.1', build: '2026.11.06' };
 
 // Newest first. type: new | change | fix | known
 export const CHANGELOG = [
+  {
+    version: '0.11.1', date: '2026-11-06', codename: 'Coin Parking',
+    summary: { ko: '시내 주차장에 코인파킹 디테일(주차선·차막이·P 간판·정산기).', ja: '市街地の駐車場にコインパーキングのディテール（区画線・車止め・P看板・精算機）。', en: 'Coin-parking detail in city car parks (bay lines, wheel stops, P sign, pay machine).' },
+    items: [
+      { type: "new", ko: "시내 주차장마다 일본식 코인파킹: 흰 주차선·차막이, 노란 「P」 간판 기둥, 정산기", ja: "市街地の駐車場にコインパーキング：白い区画線と車止め、黄色の「P」看板ポール、精算機", en: "Coin parking in every city car park: white bay lines and wheel stops, a yellow “P” sign pole and a pay machine" }
+    ]
+  },
   {
     version: '0.11.0', date: '2026-11-06', codename: 'Inner Circular',
     summary: { ko: 'C1 도심환상선 개통 — 도쿄 도심의 터널과 고가를 도는 내·외회선 루프, 주변 도쿄 도심 시가지.', ja: 'C1都心環状線開通——東京都心のトンネルと高架を巡る内回り・外回りのループと、周囲の都心の街並み。', en: 'The C1 Inner Circular Route opens: both loops through central Tokyo’s tunnels and viaducts, with the city around them.' },

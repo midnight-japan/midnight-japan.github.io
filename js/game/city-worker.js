@@ -601,6 +601,24 @@ function buildTile(T, lod, opts) {
     if (!mid && c !== L.WATER && c !== L.GREEN && c !== L.WOOD) continue;
     const g = ground[c] || (ground[c] = new Flat());
     const y = c === L.WATER ? 0.02 : c === L.PARKING ? 0.028 : 0.012 + (c % 5) * 0.002;
+    // coin parking (コインパーキング): white bay lines across the lot, wheel stops, a yellow 「P」 sign pole with the
+    // tariff board and a pay machine at the entrance corner
+    if (c === L.PARKING && near) {
+      const ob = obb(pts);
+      if (ob && ob.hl > 4 && ob.hw > 3 && ob.hl * ob.hw < 6000) {
+        const tx = ob.tx, tz = ob.tz, nx = -tz, nz = tx, at = (a, b) => [ob.x + tx * a + nx * b, ob.z + tz * a + nz * b];
+        const rows = ob.hw > 9 ? [-ob.hw + 2.6, ob.hw - 2.6] : [-ob.hw + 2.6];
+        for (const b of rows) for (let a = -ob.hl + 1; a <= ob.hl - 1; a += 2.5) {
+          const [x, z] = at(a, b); paint.quad([x - nx * 2.5 - tx * 0.06, y + 0.012, z - nz * 2.5 - tz * 0.06], [x + nx * 2.5 - tx * 0.06, y + 0.012, z + nz * 2.5 - tz * 0.06], [x + nx * 2.5 + tx * 0.06, y + 0.012, z + nz * 2.5 + tz * 0.06], [x - nx * 2.5 + tx * 0.06, y + 0.012, z - nz * 2.5 + tz * 0.06], WHITE);
+          if (a + 2.5 <= ob.hl - 1) { const [wx, wz] = at(a + 1.25, b + Math.sign(b) * 2.1); pm.box(wx, 0.07, wz, tx, tz, 0.6, 0.1, 0.07, [0.85, 0.85, 0.8], [PLAIN, 0, 0, 0]); }
+        }
+        const [sx, sz] = at(-ob.hl + 0.4, -ob.hw + 0.4);
+        pm.cyl(sx, sz, 0, 3.4, 0.07, 6, [0.85, 0.85, 0.85], [PLAIN, 0, 0, 0]); cols.push([sx, sz, 0.12, 0.12, 0, -1, 3.4]);
+        gm.box(sx, 3.6, sz, nx, nz, 0.45, 0.06, 0.45, [1, 0.82, 0.1], [1, 0, 0, 0]);
+        pm.box(sx, 2.6, sz, nx, nz, 0.4, 0.07, 0.42, [0.97, 0.97, 0.97], [PLAIN, 0, 0, 0]);
+        const [mx, mz] = at(-ob.hl + 0.6, -ob.hw + 1.6); pm.box(mx, 0.75, mz, tx, tz, 0.25, 0.3, 0.75, [0.92, 0.7, 0.1], [PLAIN, 0, 0, 0]); gm.box(mx + nx * 0.31, 1.15, mz + nz * 0.31, tx, tz, 0.15, 0.01, 0.12, [0.6, 0.9, 1], [1, 0, 0, 0]); cols.push([mx, mz, 0.3, 0.35, 0, -1, 1.5]);
+      }
+    }
     for (const [i0, i1, i2] of triangulate(pts)) g.tri([pts[i0][0], y, pts[i0][1]], [pts[i1][0], y, pts[i1][1]], [pts[i2][0], y, pts[i2][1]], [1, 1, 1]);
     // trees in parks / woods
     if (mid && (c === L.GREEN || c === L.WOOD)) {
