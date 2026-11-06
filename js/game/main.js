@@ -217,6 +217,8 @@ class Game {
     try {
       if (region === 'bay') { const r = net.byId.bayshore, sp = this.world.bridgeSpan; const s = sp ? Math.max(50, sp.s0 - 250) : r.length * 0.2; const L = r.lanes.filter(l => l.dir === 1).sort((a, b) => b.lat - a.lat)[0]; return at(r, s, L.lat); }
       // K1 Yokohane Line just after Namamugi JCT, heading for Yokohama Station / Minato Mirai (the Yokohama loop)
+      // Hakone Turnpike: at the Odawara toll gate, heading up the mountain
+      if (region === 'hakone' && net.byId.hakone_tp) { const r = net.byId.hakone_tp; const L = r.lanes.filter(l => l.dir === 1).sort((a, b) => b.lat - a.lat)[0]; return at(r, 140, L.lat); }
       if (region === 'k1' && net.byId.k1) { const r = net.byId.k1; const L = r.lanes.filter(l => l.dir === 1).sort((a, b) => b.lat - a.lat)[0]; return at(r, 1300, L.lat); }
       if (region === 'umi') { const r = net.byId.umi_in_e || net.byId.umi_in_w; return at(r, Math.max(2, r.length - 10), 0); }
       // city streets (real OpenStreetMap roads): keep to the left lane
@@ -451,9 +453,9 @@ class Game {
       // two-way roads: U-turn only where a carriageway really leaves the map (the Bayshore's forward side starts at
       // Honmoku JCT where the K3 Kariba Line flows into it, so cars arriving there carry straight on)
       const fwdSide = Math.sign(r.lanes.find(l => l.dir === 1)?.lat ?? 1), onFwd = h && Math.sign(h.lat) === fwdSide;
-      const fedStart = r.id === 'bayshore' && this.net.byId.k3;
-      const atEdge = h && (r.lanesB ? ((h.s < 15 && !(fedStart && onFwd)) || h.s > r.length - 15) : r.edge === 'end' ? h.s > r.length - 15 : h.s < 15);
-      if (atEdge && (r.lanesB ? (r.id === 'bayshore' || r.id === 'k5') : true)) this.uturn(v, h);
+      const fedStart = r.id === 'bayshore' && this.net.byId.k3, openEnd = r.id === 'hakone_tp'; // the Turnpike runs on into the Daikanyama car park
+      const atEdge = h && (r.lanesB ? ((h.s < 15 && !(fedStart && onFwd)) || (!openEnd && h.s > r.length - 15)) : r.edge === 'end' ? h.s > r.length - 15 : h.s < 15);
+      if (atEdge && (r.lanesB ? (r.id === 'bayshore' || r.id === 'k5' || r.id === 'hakone_tp') : true)) this.uturn(v, h);
     }
     // model visuals
     const sp = v.spin;

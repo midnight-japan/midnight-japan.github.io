@@ -8,6 +8,7 @@ import * as THREE from 'three';
 import { mergeGeometries } from 'three/addons/utils/BufferGeometryUtils.js';
 import { surface, chainlinkMaterial, windowTexture, glowTexture, weather } from './textures.js';
 import { buildPortals } from './portals.js';
+import { Hakone, inHakone } from './hakone.js';
 import { buildRoadMeshes, lampSpots, bridgeSpan, trenchPolys, PA_RECT, PA, PA_LAYOUT, MAP } from './roads.js';
 import { buildBay, noPierBay, inUmihotaru } from './bay.js';
 import { signMesh } from './signs.js';
@@ -146,15 +147,18 @@ export class World {
 
   // ground height (land = 0, sea = sea floor)
   ground(x, z) {
+    if (this.hakone && inHakone(x, z)) return this.hakone.ground(x, z);
     if (this.isLand(x, z)) return this.city?.inWater(x, z) ? -12 : 0;
     return -12;
   }
   isLand(x, z) {
+    if (inHakone(x, z)) return true;
     if (x < CR[0] || x > CR[2] || z < CR[1] || z > CR[3]) return farLand(x, z);
     for (const l of LAND) { const b = l.bb; if (x > b.x0 && x < b.x1 && z > b.z0 && z < b.z1 && inPoly(x, z, l.pts)) return true; }
     return false;
   }
   zoneAt(x, z, y) {
+    if (inHakone(x, z)) { const L = this.hakone?.lotAt(x, z); if (L) return L.name === '大観山' ? '大観山 · 箱根' : L.name + ' · 箱根ターンパイク'; const h = this.net.query(x, z, y); return h.road ? h.road.name : '箱根'; }
     const pl = placeAt(x, z), area = pl ? pl.name : '';
     const withArea = n => area && area !== n ? `${n} · ${area}` : n;
     if (y > 3 || y < -1) { const h = this.net.query(x, z, y); if (h.road) return withArea(h.road.name); }
@@ -203,6 +207,7 @@ export class World {
     // open tunnel approaches (trenches) are cut out of the ground so the road below stays visible
     const trenches = trenchPolys(this.net, (x, z) => this.isLand(x, z));
     try { this.group.add(buildPortals(this)); } catch (e) { console.warn('portals', e); }
+    try { if (this.net.byId.hakone_tp) this.hakone = new Hakone(this); } catch (e) { console.warn('hakone', e); }
     for (const l of LAND) {
       if (l.name === '海ほたるPA') { l.skipSeawall = true; }
       const near = l.bb.x1 > -2600 && l.bb.x0 < 2600 && l.bb.z1 > -2600 && l.bb.z0 < 2600;
@@ -1052,6 +1057,7 @@ export class World {
 
   // ───────────────────────── per-frame ─────────────────────────
   update(dt, env) {
+    this.hakone?.update(env);
     this.t += dt;
     const n = env.night; // 0 day .. 1 night
     if (Math.abs((this._lastN ?? -1) - n) > 0.01) {

@@ -1,9 +1,10 @@
 # 📜 MIDNIGHT JAPAN 업데이트 기록 · Changelog
 
-현재 버전 · Current: **v0.9.1** · [▶ 웹에서 플레이](https://midnight-japan.github.io/) · [🌐 업데이트 페이지](https://midnight-japan.github.io/changelog.html)
+현재 버전 · Current: **v0.10.0** · [▶ 웹에서 플레이](https://midnight-japan.github.io/) · [🌐 업데이트 페이지](https://midnight-japan.github.io/changelog.html)
 
 | 버전 | 날짜 | 이름 | 요약 |
 |---|---|---|---|
+| [v0.10.0](#v0100--touge-2026-11-06) | 2026-11-06 | Touge | 하코네 턴파이크 개통 — 실제 고도 데이터로 만든 산길 13.5km, 정상 다이칸야마 전망 주차장까지. |
 | [v0.9.1](#v091--hill-start-2026-11-06) | 2026-11-06 | Hill Start | 오르막 출발 버그 수정, NPC 차량 엔진음, 차 위로 점프, 다이코쿠 부두·PA를 실제처럼 채움. |
 | [v0.9.0](#v090--real-drive-2026-11-06) | 2026-11-06 | Real Drive | 대규모 업데이트 — 차체 파손, 스키드마크·타이어 연기, 내비게이션과 텔레포트, 사고 상대·경찰과의 선택형 대화, 일본식 차선 주행과 시간대별 교통량, 터널 갱문과 표지판, 주유소 165곳, 지명 병기. |
 | [v0.8.1](#v081--pavement-2026-11-06) | 2026-11-06 | Pavement | 일본 거리다운 회색 보도블록(상점가 일부는 적갈색 블록), 지역 페이지에 K1 요코하마 루프·요코하마 시가지·쓰루미·가와사키·하네다 추가, README·사이트 수치 최신화. |
@@ -24,6 +25,20 @@
 | [v0.2.0](#v020--bayshore-2026-11-05) | 2026-11-05 | Bayshore | 수도고속 완간선을 따라 하네다까지, 도쿄만 아쿠아라인 해저터널을 지나 우미호타루 PA까지. 실제 3D 차량 모델과 열리는 보닛도 들어왔어요. |
 | [v0.1.1](#v011--one-click-2026-11-04) | 2026-11-04 | One Click | 링크 하나로 바로 플레이. 크롬에서 공식 사이트 주소만 열면 설치 없이 실행돼요. |
 | [v0.1.0](#v010--first-meet-2026-11-04) | 2026-11-04 | First Meet | 첫 공개 버전. 다이코쿠 JCT·PA와 다이코쿠 부두 일대를 3D로 구현했습니다. |
+
+---
+
+## v0.10.0 — Touge (2026-11-06)
+
+> 하코네 턴파이크 개통 — 실제 고도 데이터로 만든 산길 13.5km, 정상 다이칸야마 전망 주차장까지.
+> The Hakone Turnpike opens: 13.5 km of mountain road built from real elevation data, up to the Daikanyama summit car park.
+
+**✨ 추가 · New**
+
+- 하코네 턴파이크 토우게: 오다와라 요금소(해발 34m)에서 다이칸야마(990m)까지 13.5km — 도로는 OpenStreetMap, 높이·산 지형은 실제 고도 데이터<br><sub>Hakone Turnpike touge: 13.5 km from the Odawara toll gate (34 m) up to Daikanyama (990 m) — road from OpenStreetMap, heights and mountains from real elevation data</sub>
+- 흰 W빔 가드레일·시선유도표, 황색 중앙선(추월 금지), 절토·성토 사면, 삼나무·활엽수 숲, 조명 없는 밤길<br><sub>White W-beam guardrails and delineators, a yellow no-overtaking centre line, cut-and-fill slopes, cedar and broadleaf forest, and no street lights at night</sub>
+- 정상 다이칸야마 주차장(라운지·화장실·자판기·전망 난간·표지), 중턱 전망 주차대, 오다와라 요금소<br><sub>The Daikanyama summit car park (lounge, toilets, vending machines, viewing rail and sign), a viewpoint lay-by half way up, and the Odawara toll gate</sub>
+- 스폰 지점 「하코네 턴파이크」, 지도에서 텔레포트로도 이동 가능<br><sub>A “Hakone Turnpike” spawn point (and teleport from the map)</sub>
 
 ---
 

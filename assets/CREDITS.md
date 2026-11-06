@@ -118,3 +118,8 @@ All sources are freesound.org recordings released under **CC0 1.0** (public doma
 | `sfx/shift` | civic manual shifter noise | jrssandoval | https://freesound.org/people/jrssandoval/sounds/67135/ | [CC0 1.0](https://creativecommons.org/publicdomain/zero/1.0/) |
 
 Everything else in the audio (synth engine layer, turbo whistle, EV drive, siren, radio, ambience, reverb impulse responses) is synthesised in code.
+
+
+## Terrain
+
+Hakone Turnpike terrain heights: AWS Terrain Tiles (Mapzen, Terrarium format, zoom 13) — https://registry.opendata.aws/terrain-tiles/ — elevation derived from SRTM, GMTED2010, ETOPO1 and other public-domain / open sources. Road geometry © OpenStreetMap contributors (ODbL).

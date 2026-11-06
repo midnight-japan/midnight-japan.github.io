@@ -1,8 +1,18 @@
 // Shared game metadata: version, changelog, regions. Update VERSION + CHANGELOG on every release.
-export const GAME = { title: 'MIDNIGHT JAPAN', titleJa: 'ミッドナイト・ジャパン', version: '0.9.1', build: '2026.11.06' };
+export const GAME = { title: 'MIDNIGHT JAPAN', titleJa: 'ミッドナイト・ジャパン', version: '0.10.0', build: '2026.11.06' };
 
 // Newest first. type: new | change | fix | known
 export const CHANGELOG = [
+  {
+    version: '0.10.0', date: '2026-11-06', codename: 'Touge',
+    summary: { ko: '하코네 턴파이크 개통 — 실제 고도 데이터로 만든 산길 13.5km, 정상 다이칸야마 전망 주차장까지.', ja: '箱根ターンパイク開通——実際の標高データで作った山道13.5km、山頂の大観山駐車場まで。', en: 'The Hakone Turnpike opens: 13.5 km of mountain road built from real elevation data, up to the Daikanyama summit car park.' },
+    items: [
+      { type: "new", ko: "하코네 턴파이크 토우게: 오다와라 요금소(해발 34m)에서 다이칸야마(990m)까지 13.5km — 도로는 OpenStreetMap, 높이·산 지형은 실제 고도 데이터", ja: "箱根ターンパイクの峠道：小田原の料金所（標高34m）から大観山（990m）まで13.5km——道路はOpenStreetMap、高さと山の地形は実際の標高データ", en: "Hakone Turnpike touge: 13.5 km from the Odawara toll gate (34 m) up to Daikanyama (990 m) — road from OpenStreetMap, heights and mountains from real elevation data" },
+      { type: "new", ko: "흰 W빔 가드레일·시선유도표, 황색 중앙선(추월 금지), 절토·성토 사면, 삼나무·활엽수 숲, 조명 없는 밤길", ja: "白いガードレールと視線誘導標、黄色の中央線（追越し禁止）、切土・盛土の法面、杉と広葉樹の森、照明のない夜の峠", en: "White W-beam guardrails and delineators, a yellow no-overtaking centre line, cut-and-fill slopes, cedar and broadleaf forest, and no street lights at night" },
+      { type: "new", ko: "정상 다이칸야마 주차장(라운지·화장실·자판기·전망 난간·표지), 중턱 전망 주차대, 오다와라 요금소", ja: "山頂の大観山駐車場（ラウンジ・トイレ・自販機・展望の手すり・標識）、中腹の見晴らし駐車帯、小田原料金所", en: "The Daikanyama summit car park (lounge, toilets, vending machines, viewing rail and sign), a viewpoint lay-by half way up, and the Odawara toll gate" },
+      { type: "new", ko: "스폰 지점 「하코네 턴파이크」, 지도에서 텔레포트로도 이동 가능", ja: "スポーン地点「箱根ターンパイク」、地図からテレポートでも移動可能", en: "A “Hakone Turnpike” spawn point (and teleport from the map)" }
+    ]
+  },
   {
     version: '0.9.1', date: '2026-11-06', codename: 'Hill Start',
     summary: { ko: '오르막 출발 버그 수정, NPC 차량 엔진음, 차 위로 점프, 다이코쿠 부두·PA를 실제처럼 채움.', ja: '坂道発進のバグ修正、NPC車のエンジン音、車の上へジャンプ、大黒ふ頭・PAを実際のように。', en: 'Hill-start fix, engine sound for AI cars, jumping onto cars, and a fuller, more lifelike Daikoku-futō and PA.' },

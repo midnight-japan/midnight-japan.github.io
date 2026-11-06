@@ -6,6 +6,7 @@ import * as THREE from 'three';
 import { mergeGeometries } from 'three/addons/utils/BufferGeometryUtils.js';
 import { surface, weather } from './textures.js';
 import { MAP } from '../../data/map-daikoku.js';
+import { HAKONE } from '../../data/map-hakone.js';
 
 const LANE = 3.5;
 const UV_WRAP = 600; // metres; texture v coordinates restart every 600 m (all tile sizes divide it)
@@ -36,7 +37,7 @@ export const DECK_Z = PA.cz - 80; // legacy export
 // lanesF: lanes in point order (on the LEFT of the centreline); lanesB: opposite direction. median: gap between directions.
 // partner/edge: one-way roads that end at the map edge (K5 decks) → the player is turned onto the partner road there.
 export const UMI_LOTS = [];
-export const ROAD_DEFS = [...MAP.roads, ...umihotaruRamps()];
+export const ROAD_DEFS = [...MAP.roads, ...umihotaruRamps(), HAKONE.road];
 
 // ── Umihotaru PA (海ほたる): the Aqua-Line runs along the island on the surface and under the ship-shaped PA building.
 // Each carriageway gets its own surface lot on its left (Japan: exits on the left) with an entry and an exit ramp.
@@ -463,12 +464,12 @@ export function buildRoadMeshes(net, opts = {}) {
   const span = bridgeSpan(net);
   // keep piers off the PA lot and out of its main building (the viaducts span over them)
   const noPier = (x, z) => PA.inLot(x, z, 2) || (() => { const [lx, lz] = PA.toLocal(x, z); return lx > -112 && lx < -84 && Math.abs(lz) < 46; })();
-  const geoms = { asphalt: [], asphaltOld: [], concrete: [], concreteOld: [], sidewalk: [], white: [], yellow: [], wallSteel: [], wallClear: [] };
+  const geoms = { asphalt: [], asphaltOld: [], concrete: [], concreteOld: [], sidewalk: [], white: [], yellow: [], wallSteel: [], wallClear: [], rail: [] };
   // 防音壁 (Shutoko noise barriers): galvanised lower panel + clear acrylic upper panel curving inwards, H-posts every 4 m.
   // Only where an elevated expressway runs over land (not over the sea / on the long bridges).
   const steelPanel = [[0.36, 1.05], [0.36, 2.15], [0.44, 2.15], [0.44, 1.05]];
   const clearPanel = [[0.40, 2.15], [0.40, 3.45], [0.12, 3.85]];
-  const wallPosts = [], reflectors = [];
+  const wallPosts = [], reflectors = [], railPosts = [];
   const landRuns = (r, runs) => {
     if (!opts.isLand || r.kind === 'ramp' || r.kind === 'local') return [];
     const out = [];
@@ -486,7 +487,8 @@ export function buildRoadMeshes(net, opts = {}) {
   const pierSpots = [];
 
   net.roads.forEach((r, ri) => {
-    const local = r.kind === 'local';
+    const mountain = r.kind === 'mountain';
+    const local = r.kind === 'local' || mountain;
     const deckMat = local ? 'asphaltOld' : 'asphalt';
     // deck surface (tiny y offset per road to avoid z-fighting where decks overlap)
     const yo = 0.0006 * ri; // tiny per-road lift (anti z-fight) — kept small so wheels never sink into a deck
@@ -542,6 +544,13 @@ export function buildRoadMeshes(net, opts = {}) {
       }
     } else {
       // curbs + sidewalks
+      if (mountain) {
+        // touge: white W-beam guardrails (ガードレール) on posts both sides, delineators on top — no kerbs / pavements
+        const rail = [[0.35, 0.55], [0.3, 0.62], [0.35, 0.7], [0.3, 0.78], [0.35, 0.85], [0.42, 0.85], [0.42, 0.55]];
+        geoms.rail.push(sweep(r, rail, r.edgeL, yo, 1)); geoms.rail.push(sweep(r, rail, r.edgeR, yo, -1));
+        for (const [side, edge] of [[1, r.edgeL], [-1, r.edgeR]]) for (let q = 2; q < r.length; q += 4) { const p = r.at(q, edge + 0.45 * side); const t = r.dirAt(q); railPosts.push(p.x, p.y + yo, p.z, Math.atan2(t.x, t.z)); if (q % 20 < 4) reflectors.push(p.x, p.y + yo + 0.95, p.z, Math.atan2(t.x, t.z), side > 0 ? 0 : 1); }
+        return;
+      }
       const sw = r.sidewalk || 3;
       const curb = [[0, 0], [0, 0.15], [sw, 0.15], [sw, 0.0]];
       // kerbs + sidewalks, interrupted where another street crosses (intersections) or a ramp joins
@@ -552,7 +561,8 @@ export function buildRoadMeshes(net, opts = {}) {
   });
   const wallSteel = surface('metal_galvanized', { tile: 2, tint: 0xb9bec2, metalness: 0.6, roughness: 0.55 }).clone(); wallSteel.side = THREE.DoubleSide;
   const wallClear = new THREE.MeshStandardMaterial({ color: 0xbfd8d6, roughness: 0.08, metalness: 0.1, transparent: true, opacity: 0.28, side: THREE.DoubleSide, depthWrite: false });
-  const M = { asphalt, asphaltOld, concrete, concreteOld, sidewalk, white, yellow, wallSteel, wallClear };
+  const railMat = new THREE.MeshStandardMaterial({ color: 0xe9ebec, roughness: 0.45, metalness: 0.35, side: THREE.DoubleSide });
+  const M = { asphalt, asphaltOld, concrete, concreteOld, sidewalk, white, yellow, wallSteel, wallClear, rail: railMat };
   for (const k in geoms) if (geoms[k].length) {
     const mesh = new THREE.Mesh(mergeGeometries(geoms[k]), M[k]);
     mesh.receiveShadow = true; mesh.castShadow = k === 'concrete';
@@ -567,6 +577,7 @@ export function buildRoadMeshes(net, opts = {}) {
     im.castShadow = mat !== null; group.add(im); return im;
   };
   inst(new THREE.BoxGeometry(0.18, 2.85, 0.14).translate(0, 1.05 + 1.42, 0), new THREE.MeshStandardMaterial({ color: 0x7d8487, metalness: 0.7, roughness: 0.45 }), wallPosts, 4, (o, a, k) => { o.position.set(a[k], a[k + 1], a[k + 2]); o.rotation.set(0, a[k + 3], 0); });
+  if (railPosts.length) inst(new THREE.CylinderGeometry(0.06, 0.06, 0.95, 8).translate(0, 0.47, 0), new THREE.MeshStandardMaterial({ color: 0xdfe2e4, metalness: 0.4, roughness: 0.5 }), railPosts, 4, (o, a, k) => { o.position.set(a[k], a[k + 1], a[k + 2]); o.rotation.set(0, a[k + 3], 0); });
   const refl = [0, 1].map(c => new THREE.MeshStandardMaterial({ color: c ? 0xffa21a : 0xf4f4f0, emissive: c ? 0x6a3a00 : 0x3a3a3a, roughness: 0.3 }));
   for (const c of [0, 1]) { const arr = []; for (let k = 0; k < reflectors.length; k += 5) if (reflectors[k + 4] === c) arr.push(reflectors[k], reflectors[k + 1], reflectors[k + 2], reflectors[k + 3]);
     const im = inst(new THREE.CylinderGeometry(0.05, 0.05, 0.02, 10).rotateX(Math.PI / 2), refl[c], arr, 4, (o, a, k) => { o.position.set(a[k], a[k + 1], a[k + 2]); o.rotation.set(0, a[k + 3], 0); });
@@ -642,6 +653,7 @@ export function buildRoadMeshes(net, opts = {}) {
 export function lampSpots(net) {
   const out = []; const span = bridgeSpan(net);
   for (const r of net.roads) {
+    if (r.kind === 'mountain') continue; // touge roads are unlit
     const step = r.kind === 'local' ? 36 : 42;
     for (let s = 10; s < r.length - 5; s += step) {
       if (span && r === span.road && s > span.s0 + 150 && s < span.s1 - 150) continue; // the bridge has its own lights
