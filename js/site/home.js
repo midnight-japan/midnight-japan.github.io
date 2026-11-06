@@ -30,7 +30,7 @@ const FEATURES = [
 //    sips -s format jpeg -s formatOptions 78 -Z 1600 X.png --out X.jpg && sips -s format jpeg -s formatOptions 74 -Z 800 X.png --out X-800.jpg
 // Caption: i18n key site.shot.<first 2 chars> if it exists, otherwise the file name ("08-wangan-night" → "Wangan night").
 // 9 entries fill the grid exactly on desktop (first one large). Other shots on disk: 05-onfoot, 06-tollgate.
-const SHOTS = ['18-minatomirai', '24-rain', '22-haneda', '19-city-aerial', '07-ae86-loops', '17-city-night', '23-foodcourt', '16-tsubasa', '21-tuning'];
+const SHOTS = ['26-k1-night', '18-minatomirai', '25-k1-tunnel', '24-rain', '22-haneda', '19-city-aerial', '07-ae86-loops', '17-city-night', '23-foodcourt', '16-tsubasa', '21-tuning'];
 const SHOT_DIR = 'docs/screenshots/';
 const shotSrc = (s, w) => SHOT_DIR + s + (w === 800 ? '-800' : '') + '.jpg';
 const shotCap = s => {
@@ -66,8 +66,9 @@ const ROADMAP = [
   ['0.4', 'done', ['roadside', 'places', 'traffic', 'konbini']],
   ['0.5', 'done', ['city', 'citytraffic', 'landmarks', 'tuning']],
   ['0.6', 'done', ['trains', 'people', 'haneda', 'interiors']],
-  ['0.7', 'now', ['weather', 'bigcity', 'faces']],
-  ['0.8', 'next', ['03.c1', '07.cars', '06.touge']],
+  ['0.7', 'done', ['weather', 'bigcity', 'faces']],
+  ['0.8', 'now', ['loop', 'walls', 'umbrella']],
+  ['0.9', 'next', ['03.c1', '07.cars', '06.touge']],
   ['Later', 'later', ['03.events', '02.perf']],
 ];
 

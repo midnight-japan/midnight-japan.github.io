@@ -97,9 +97,9 @@ export class Traffic {
 
   init() {
     // initial highway traffic
-    const bay = this.net.byId.bayshore, k5 = this.net.byId.k5, k5n = this.net.byId.k5_nb || k5;
+    const bay = this.net.byId.bayshore, k5 = this.net.byId.k5, k5n = this.net.byId.k5_nb || k5, k1 = this.net.byId.k1 || bay, k3 = this.net.byId.k3 || bay;
     for (let i = 0; i < this.max; i++) {
-      const q = Math.random(), road = q < 0.7 ? bay : q < 0.85 ? k5 : k5n;
+      const q = Math.random(), road = q < 0.55 ? bay : q < 0.67 ? k5 : q < 0.78 ? k5n : q < 0.93 ? k1 : k3;
       const lane = road.lanes[Math.floor(Math.random() * road.lanes.length)];
       const ai = this.createAI(TRAFFIC_POOL[Math.floor(Math.random() * TRAFFIC_POOL.length)]);
       this.placeOnRoad(ai, road, lane, Math.random() * road.length);
@@ -231,7 +231,11 @@ export class Traffic {
     // end of a ramp → continue on the road it merges into; map edge → recycle
     if (ai.s < 0 || ai.s > road.length) {
       const L = ai.dir === 1 ? this.net.links?.get(road) : null;
+      // a road that ends exactly where the next one starts (K5 → Namamugi → K1 → Ishikawachō → K3 …) shows up as a
+      // diverge at its very end rather than a link: carry on along one of those
+      const cont = !L && ai.dir === 1 ? (dvs || []).filter(d => d.dir === 1 && d.s >= road.length - 3 && d.to !== road) : [];
       if (L && L.to !== road) { const lane = this.net.laneNear(L.to, L.dir, L.lat); this.transfer(ai, L.to, lane, L.s); ai.vDes = Math.max(ai.vDes, (L.to.speed / 3.6) * 0.9); }
+      else if (cont.length) { const d = cont[Math.floor(Math.random() * cont.length)]; this.transfer(ai, d.to, d.to.lanes.find(l => l.dir === 1) || d.to.lanes[0], 0); ai.vDes = Math.max(ai.vDes, (d.to.speed / 3.6) * 0.9); }
       else this.recycle(ai);
       return;
     }

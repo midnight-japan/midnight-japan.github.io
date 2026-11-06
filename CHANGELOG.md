@@ -1,9 +1,10 @@
 # 📜 MIDNIGHT JAPAN 업데이트 기록 · Changelog
 
-현재 버전 · Current: **v0.7.2** · [▶ 웹에서 플레이](https://midnight-japan.github.io/) · [🌐 업데이트 페이지](https://midnight-japan.github.io/changelog.html)
+현재 버전 · Current: **v0.8.0** · [▶ 웹에서 플레이](https://midnight-japan.github.io/) · [🌐 업데이트 페이지](https://midnight-japan.github.io/changelog.html)
 
 | 버전 | 날짜 | 이름 | 요약 |
 |---|---|---|---|
+| [v0.8.0](#v080--yokohama-loop-2026-11-06) | 2026-11-06 | Yokohama Loop | 요코하마 루프 개통 — 다이코쿠 JCT에서 K5를 타고 나마무기 JCT로, K1 요코하네선으로 요코하마역·미나토미라이를 지나 지하로 내려간 뒤, K3 가리바선과 혼모쿠 JCT를 거쳐 베이브리지로 돌아오는 약 17km의 실제 수도고 루프를 달릴 수 있어요. |
 | [v0.7.2](#v072--umbrella-2026-11-06) | 2026-11-06 | Umbrella | 비 오는 날 보행자들이 우산을 써요(투명 편의점 우산이 가장 많아요). 달리는 중에 하차 키를 누르면 안내가 나와요. |
 | [v0.7.1](#v071--shakedown-2026-11-06) | 2026-11-06 | Shakedown | 버그 수정 — PA에서 시작하면 바로 출발할 수 있고, 여객기 자세·전철 정차·보행자 회피가 자연스러워졌어요. |
 | [v0.7.0](#v070--downpour-2026-11-06) | 2026-11-06 | Downpour | 날씨가 생겼어요 — 비 오는 밤의 젖은 노면이 불빛을 반사하고, 그립이 줄고, 빗소리가 들려요. 도시는 고속도로 주변 5km(건물 35만 8천 채)로 넓어졌어요. |
@@ -20,6 +21,29 @@
 | [v0.2.0](#v020--bayshore-2026-11-05) | 2026-11-05 | Bayshore | 수도고속 완간선을 따라 하네다까지, 도쿄만 아쿠아라인 해저터널을 지나 우미호타루 PA까지. 실제 3D 차량 모델과 열리는 보닛도 들어왔어요. |
 | [v0.1.1](#v011--one-click-2026-11-04) | 2026-11-04 | One Click | 링크 하나로 바로 플레이. 크롬에서 공식 사이트 주소만 열면 설치 없이 실행돼요. |
 | [v0.1.0](#v010--first-meet-2026-11-04) | 2026-11-04 | First Meet | 첫 공개 버전. 다이코쿠 JCT·PA와 다이코쿠 부두 일대를 3D로 구현했습니다. |
+
+---
+
+## v0.8.0 — Yokohama Loop (2026-11-06)
+
+> 요코하마 루프 개통 — 다이코쿠 JCT에서 K5를 타고 나마무기 JCT로, K1 요코하네선으로 요코하마역·미나토미라이를 지나 지하로 내려간 뒤, K3 가리바선과 혼모쿠 JCT를 거쳐 베이브리지로 돌아오는 약 17km의 실제 수도고 루프를 달릴 수 있어요.
+> The Yokohama loop opens: from Daikoku JCT take the K5 to Namamugi JCT, the K1 Yokohane Line past Yokohama Station and Minato Mirai and down underground, then the K3 Kariba Line and Honmoku JCT back over the Bay Bridge — about 17 km of real Shuto expressway.
+
+**✨ 추가 · New**
+
+- K5 대황선 전 구간(다이코쿠 JCT ↔ 나마무기 JCT), K1 요코하네선 9km(요코하마역 앞 고가, 이시카와초 지하 구간), K3 가리바선 2.5km, 나마무기·이시카와초 JCT 연결로 — 모두 OpenStreetMap 실제 노선<br><sub>The whole K5 Daikoku Line (Daikoku JCT ↔ Namamugi JCT), 9 km of the K1 Yokohane Line (the viaduct past Yokohama Station and the underground section at Ishikawachō), 2.5 km of the K3 Kariba Line and the Namamugi / Ishikawachō junction ramps, all from real OpenStreetMap routes</sub>
+- 스폰 지점 「K1 요코하마 루프」, 분기점 노면 행선지 표시(横浜·大黒·本牧), 루프를 따라 달리는 고속도로 교통<br><sub>A "K1 Yokohama Loop" spawn point, painted destinations at the new junctions (Yokohama, Daikoku, Honmoku) and expressway traffic that follows the loop</sub>
+
+**🔧 변경 · Changed**
+
+- 도시를 새 루프 주변까지 확장: 건물 42만 채, 도로 5만 3천 개, 타일 504개<br><sub>The city now also surrounds the new loop: 421,000 buildings, 53,000 streets, 504 tiles</sub>
+
+**🐞 수정 · Fixed**
+
+- 터널·지하 구간에 벽 충돌이 없어 차로를 벗어나면 차가 지상으로 튀어 오르던 문제(만안선 해저터널 포함)<br><sub>Tunnels and underground sections had no wall collisions, so leaving the carriageway popped the car up to the surface (including the Bayshore undersea tunnels)</sub>
+- AI 차량이 끝과 시작이 맞닿은 도로(램프→본선)에서 65% 확률로 사라지던 문제<br><sub>AI cars vanished 65% of the time where one road ends exactly where the next begins (ramp → main line)</sub>
+- 분기점에서 달릴 수 없는 장식용 고가(K2 등)와 반대 차로 고가의 가로등이 주행 차로를 막거나 뚫고 나오던 문제<br><sub>Decorative (non-drivable) viaducts such as the K2 at junctions, and the street lights of the opposite carriageway, no longer block or poke through the lanes you drive on</sub>
+- 지붕 없는 지하 진입 구간에서 바다 수면이 비쳐 차가 가려지던 문제<br><sub>In open cuttings below ground level the sea surface showed across the road and hid the car</sub>
 
 ---
 

@@ -888,9 +888,10 @@ export class World {
     const net = this.net;
     const DEST = { bay_k5: ['横羽線', 'K1'], pa_in: ['大黒PA', 'B'], bay_aqua: ['アクアライン', 'CA'], aqua_e: ['木更津', 'CA'], k5_nb: ['大黒線', 'K5'],
       futo_out: ['大黒ふ頭', 'B'], k5_pa: ['大黒PA', 'K5'], k5_bay: ['湾岸線', 'B'], k5_bay_e: ['東京', 'B'], pa_k5: ['大黒線', 'K5'],
-      umi_in_e: ['海ほたる', 'CA'], umi_in_w: ['海ほたる', 'CA'], aqua_bay: ['東京', 'B'] };
+      umi_in_e: ['海ほたる', 'CA'], umi_in_w: ['海ほたる', 'CA'], aqua_bay: ['東京', 'B'],
+      k5_k1: ['横浜', 'K1'], k1_k5: ['大黒', 'K5'], k1_k3: ['本牧', 'K3'] };
     const MAIN = { bayshore: { 1: '東京', '-1': '横浜' }, aqua_e: { 1: '木更津' }, aqua_w: { 1: '川崎' }, k5: { 1: '大黒' }, pa_in: { 1: '湾岸線' } };
-    const EN = { '横羽線': 'Yokohane Rte.', '大黒PA': 'Daikoku PA', 'アクアライン': 'Aqua-Line', '木更津': 'Kisarazu', '大黒線': 'Daikoku Rte.', '大黒ふ頭': 'Daikoku Wharf', '湾岸線': 'Bayshore Rte.', '東京': 'Tokyo', '海ほたる': 'Umihotaru', '横浜': 'Yokohama', '川崎': 'Kawasaki', '大黒': 'Daikoku' };
+    const EN = { '横羽線': 'Yokohane Rte.', '大黒PA': 'Daikoku PA', 'アクアライン': 'Aqua-Line', '木更津': 'Kisarazu', '大黒線': 'Daikoku Rte.', '大黒ふ頭': 'Daikoku Wharf', '湾岸線': 'Bayshore Rte.', '東京': 'Tokyo', '海ほたる': 'Umihotaru', '横浜': 'Yokohama', '川崎': 'Kawasaki', '大黒': 'Daikoku', '本牧': 'Honmoku' };
     const texCache = new Map();
     const tex = (key, draw, w = 128, h = 512) => {
       if (texCache.has(key)) return texCache.get(key);

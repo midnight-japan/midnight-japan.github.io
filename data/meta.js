@@ -1,8 +1,25 @@
 // Shared game metadata: version, changelog, regions. Update VERSION + CHANGELOG on every release.
-export const GAME = { title: 'MIDNIGHT JAPAN', titleJa: 'ミッドナイト・ジャパン', version: '0.7.2', build: '2026.11.06' };
+export const GAME = { title: 'MIDNIGHT JAPAN', titleJa: 'ミッドナイト・ジャパン', version: '0.8.0', build: '2026.11.06' };
 
 // Newest first. type: new | change | fix | known
 export const CHANGELOG = [
+  {
+    version: '0.8.0', date: '2026-11-06', codename: 'Yokohama Loop',
+    summary: {
+      ko: '요코하마 루프 개통 — 다이코쿠 JCT에서 K5를 타고 나마무기 JCT로, K1 요코하네선으로 요코하마역·미나토미라이를 지나 지하로 내려간 뒤, K3 가리바선과 혼모쿠 JCT를 거쳐 베이브리지로 돌아오는 약 17km의 실제 수도고 루프를 달릴 수 있어요.',
+      ja: '横浜ループ開通——大黒JCTからK5で生麦JCTへ、K1横羽線で横浜駅・みなとみらいを抜けて地下へ潜り、K3狩場線と本牧JCTを経てベイブリッジへ戻る約17kmの実在の首都高ループを走れる。',
+      en: 'The Yokohama loop opens: from Daikoku JCT take the K5 to Namamugi JCT, the K1 Yokohane Line past Yokohama Station and Minato Mirai and down underground, then the K3 Kariba Line and Honmoku JCT back over the Bay Bridge — about 17 km of real Shuto expressway.'
+    },
+    items: [
+      { type: 'new', ko: 'K5 대황선 전 구간(다이코쿠 JCT ↔ 나마무기 JCT), K1 요코하네선 9km(요코하마역 앞 고가, 이시카와초 지하 구간), K3 가리바선 2.5km, 나마무기·이시카와초 JCT 연결로 — 모두 OpenStreetMap 실제 노선', ja: 'K5大黒線の全区間（大黒JCT↔生麦JCT）、K1横羽線9km（横浜駅前の高架、石川町の地下区間）、K3狩場線2.5km、生麦・石川町JCTの連絡路——すべてOpenStreetMapの実在路線', en: 'The whole K5 Daikoku Line (Daikoku JCT ↔ Namamugi JCT), 9 km of the K1 Yokohane Line (the viaduct past Yokohama Station and the underground section at Ishikawachō), 2.5 km of the K3 Kariba Line and the Namamugi / Ishikawachō junction ramps, all from real OpenStreetMap routes' },
+      { type: 'new', ko: '스폰 지점 「K1 요코하마 루프」, 분기점 노면 행선지 표시(横浜·大黒·本牧), 루프를 따라 달리는 고속도로 교통', ja: 'スポーン地点「K1横浜ループ」、分岐の路面行き先表示（横浜・大黒・本牧）、ループを走る高速道路の交通', en: 'A "K1 Yokohama Loop" spawn point, painted destinations at the new junctions (Yokohama, Daikoku, Honmoku) and expressway traffic that follows the loop' },
+      { type: 'change', ko: '도시를 새 루프 주변까지 확장: 건물 42만 채, 도로 5만 3천 개, 타일 504개', ja: '街を新しいループの周囲まで拡張：建物42万棟、道路5万3千本、504タイル', en: 'The city now also surrounds the new loop: 421,000 buildings, 53,000 streets, 504 tiles' },
+      { type: 'fix', ko: '터널·지하 구간에 벽 충돌이 없어 차로를 벗어나면 차가 지상으로 튀어 오르던 문제(만안선 해저터널 포함)', ja: 'トンネル・地下区間に壁の当たり判定がなく、車線を外れると車が地上へ飛び出していた問題（湾岸線の海底トンネル含む）', en: 'Tunnels and underground sections had no wall collisions, so leaving the carriageway popped the car up to the surface (including the Bayshore undersea tunnels)' },
+      { type: 'fix', ko: 'AI 차량이 끝과 시작이 맞닿은 도로(램프→본선)에서 65% 확률로 사라지던 문제', ja: 'AI車両が終点と始点が接する道路（ランプ→本線）で65%の確率で消えていた問題', en: 'AI cars vanished 65% of the time where one road ends exactly where the next begins (ramp → main line)' },
+      { type: 'fix', ko: '분기점에서 달릴 수 없는 장식용 고가(K2 등)와 반대 차로 고가의 가로등이 주행 차로를 막거나 뚫고 나오던 문제', ja: '分岐部で走れない装飾用の高架（K2など）や反対車線の高架の街灯が走行車線をふさいだり突き抜けたりしていた問題', en: 'Decorative (non-drivable) viaducts such as the K2 at junctions, and the street lights of the opposite carriageway, no longer block or poke through the lanes you drive on' },
+      { type: 'fix', ko: '지붕 없는 지하 진입 구간에서 바다 수면이 비쳐 차가 가려지던 문제', ja: '屋根のない地下への進入区間で海面が映り込み、車が隠れていた問題', en: 'In open cuttings below ground level the sea surface showed across the road and hid the car' },
+    ]
+  },
   {
     version: '0.7.2', date: '2026-11-06', codename: 'Umbrella',
     summary: {

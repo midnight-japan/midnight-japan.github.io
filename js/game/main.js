@@ -210,6 +210,8 @@ class Game {
     const net = this.net, at = (r, s, lat) => { const q = r.at(s), d = r.dirAt(s); const pos = q.clone(); pos.x += d.z * lat; pos.z -= d.x * lat; pos.y = (net.query(pos.x, pos.z, q.y + 1)?.y ?? q.y) + 0.3; return { pos, yaw: Math.atan2(d.x, d.z) }; };
     try {
       if (region === 'bay') { const r = net.byId.bayshore, sp = this.world.bridgeSpan; const s = sp ? Math.max(50, sp.s0 - 250) : r.length * 0.2; const L = r.lanes.filter(l => l.dir === 1).sort((a, b) => b.lat - a.lat)[0]; return at(r, s, L.lat); }
+      // K1 Yokohane Line just after Namamugi JCT, heading for Yokohama Station / Minato Mirai (the Yokohama loop)
+      if (region === 'k1' && net.byId.k1) { const r = net.byId.k1; const L = r.lanes.filter(l => l.dir === 1).sort((a, b) => b.lat - a.lat)[0]; return at(r, 1300, L.lat); }
       if (region === 'umi') { const r = net.byId.umi_in_e || net.byId.umi_in_w; return at(r, Math.max(2, r.length - 10), 0); }
       // city streets (real OpenStreetMap roads): keep to the left lane
       const CITY_SPAWN = { mm: [-3949.7, 1257.2, 1.01, 14], chinatown: [-2987.3, 2310, -1.04, 7.5], tsurumi: [-2109.4, -2792.6, -0.93, 7.5], kawasaki: [2598.8, -5144.9, -0.91, 7.5], haneda: [7756.1, -9056.3, 1.02, 7.5] };
@@ -427,7 +429,11 @@ class Game {
     // out-of-area boundary
     if (v.road && (v.road.lanesB || v.road.partner)) {
       const h = v.surface.hit, r = v.road;
-      const atEdge = h && (r.lanesB ? (h.s < 15 || h.s > r.length - 15) : r.edge === 'end' ? h.s > r.length - 15 : h.s < 15);
+      // two-way roads: U-turn only where a carriageway really leaves the map (the Bayshore's forward side starts at
+      // Honmoku JCT where the K3 Kariba Line flows into it, so cars arriving there carry straight on)
+      const fwdSide = Math.sign(r.lanes.find(l => l.dir === 1)?.lat ?? 1), onFwd = h && Math.sign(h.lat) === fwdSide;
+      const fedStart = r.id === 'bayshore' && this.net.byId.k3;
+      const atEdge = h && (r.lanesB ? ((h.s < 15 && !(fedStart && onFwd)) || h.s > r.length - 15) : r.edge === 'end' ? h.s > r.length - 15 : h.s < 15);
       if (atEdge && (r.lanesB ? (r.id === 'bayshore' || r.id === 'k5') : true)) this.uturn(v, h);
     }
     // model visuals
@@ -570,6 +576,9 @@ class Game {
     if (this.shake > 0 && this.settings.shake) { cam.position.x += (Math.random() - 0.5) * this.shake * 0.15; cam.position.y += (Math.random() - 0.5) * this.shake * 0.15; this.shake *= Math.exp(-dt * 6); }
     if (this.settings.shake && v.speed > 30 && this.camMode !== 'orbit') { cam.position.y += (Math.random() - 0.5) * 0.004 * v.speed / 30; }
     if (Math.abs(cam.fov - fov) > 0.1) { cam.fov = lerp(cam.fov, fov, 1 - Math.exp(-dt * 3)); cam.updateProjectionMatrix(); }
+    // the sea plane runs under the whole map just below ground level; in an open cutting on land (K1 at Ishikawachō …)
+    // it would show as a sheet of water across the trench and hide the car → hide it while the camera is down there
+    const sea = this.world.sea; if (sea) sea.visible = !(cam.position.y < 0.3 && this.world.isLand(cam.position.x, cam.position.z));
   }
 
   // ───────────────────────── main loop ─────────────────────────
