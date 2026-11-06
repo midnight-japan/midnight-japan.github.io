@@ -8,7 +8,7 @@ import { displayName, currentUser } from '../account.js';
 import { PLATE_REGIONS, PLATE_KANA, PLATE_TYPES, plateCanvas, formatNumber } from './plates.js';
 import { STROBE_MODES } from './carmodel.js';
 import { OUTFIT_OPTIONS } from './humans.js';
-import { PA_RECT } from './roads.js';
+import { PA_RECT, MAP } from './roads.js';
 import { ASSIST_SETTING_KEYS, assistsFromSettings, applyDifficulty } from './vehicle.js';
 
 const $ = (s, r = document) => r.querySelector(s);
@@ -114,7 +114,7 @@ export class UI {
       <div id="controls" class="screen dim"><div class="menu wide"><h2 data-i18n="game.menu.controls"></h2><div id="c-body"></div><button class="btn primary" data-a="controlsClose" data-i18n="game.menu.back"></button></div></div>
       <div id="outfit" class="screen side"><div class="panel"><div class="ph"><h2 data-i18n="game.menu.outfit"></h2><button class="x" data-a="outfitClose">✕</button></div><div id="o-body"></div></div></div>
       <div id="shop" class="popup"><h3 id="shop-title"></h3><div id="shop-list"></div><button class="btn sm" data-a="shopClose">✕</button></div>
-      <div id="map" class="screen dim"><canvas id="bigmap" width="900" height="900"></canvas><button class="btn sm mapx" data-a="mapClose">✕</button></div>
+      <div id="map" class="screen dim"><canvas id="bigmap"></canvas><div class="mapctl"><button class="btn sm" data-a="mapIn">＋</button><button class="btn sm" data-a="mapOut">－</button><button class="btn sm" data-a="mapMe">◎</button><button class="btn sm" data-a="mapAll">⤢</button></div><div class="maphint">M · Wheel / Pinch · Drag</div><button class="btn sm mapx" data-a="mapClose">✕</button></div>
       <div id="touch" class="hidden">
         <div class="t-drive">
           <div class="t-steer"><button data-t="left">◀</button><button data-t="right">▶</button></div>
@@ -127,7 +127,7 @@ export class UI {
     this.relabel();
     r.addEventListener('click', e => { const b = e.target.closest('[data-a]'); if (b) { this.g.audio?.sfx('ui_click'); this.action(b.dataset.a, b); } const c = e.target.closest('[data-c]'); if (c) this.carAction(c.dataset.c); });
     this.wireTouch();
-    this.speedo = $('#speedo').getContext('2d'); this.mini = $('#minimap').getContext('2d');
+    this.speedo = $('#speedo').getContext('2d'); this.mini = $('#minimap').getContext('2d'); $('#minimap').addEventListener('click', () => this.toggleMap(true));
   }
   relabel() { this.root.querySelectorAll('[data-i18n]').forEach(e => e.textContent = t(e.dataset.i18n)); }
   loading(p, msg) { $('#loading .bar i').style.width = (p * 100) + '%'; $('#loading .load-msg').textContent = msg || ''; if (p >= 1) setTimeout(() => $('#loading').classList.remove('show'), 300); }
@@ -172,6 +172,10 @@ export class UI {
       case 'closeCar': $('#carmenu').classList.remove('show'); break;
       case 'shopClose': $('#shop').classList.remove('show'); break;
       case 'mapClose': this.toggleMap(false); break;
+      case 'mapIn': this.mapZoom(1.6); break;
+      case 'mapOut': this.mapZoom(1 / 1.6); break;
+      case 'mapMe': this.mapCenterMe(); break;
+      case 'mapAll': this.mapFitAll(); break;
       case 'plateRandom': { const cur = g.carSetup(g.previewId).plate; const p = { ...cur, region: PLATE_REGIONS[Math.floor(Math.random() * 8)], kana: PLATE_KANA[Math.floor(Math.random() * 30)], num: 1 + Math.floor(Math.random() * 9999) }; g.applyPreview({ plate: p }); this.fillPlate(); break; }
     }
   }
@@ -350,7 +354,29 @@ export class UI {
     };
     $('#shop').classList.add('show');
   }
-  toggleMap(force) { this.mapOpen = force ?? !this.mapOpen; $('#map').classList.toggle('show', this.mapOpen); if (this.mapOpen) this.drawBigMap(); }
+  toggleMap(force) {
+    this.mapOpen = force ?? !this.mapOpen; $('#map').classList.toggle('show', this.mapOpen);
+    if (!this.mapOpen) return;
+    const cv = $('#bigmap'), dpr = Math.min(2, devicePixelRatio || 1); cv.width = innerWidth * dpr; cv.height = innerHeight * dpr;
+    if (!this.mv) { this.mv = { x: 0, z: 0, k: 0.35 * dpr }; this.wireMap(cv); this.mapCenterMe(); } else this.drawBigMap();
+  }
+  mapPos() { return this.g.mode === 'walk' ? this.g.player?.pos : this.g.vehicle?.pos; }
+  mapZoom(f, cx, cy) { const cv = $('#bigmap'), m = this.mv; cx ??= cv.width / 2; cy ??= cv.height / 2; const wx = m.x + (cx - cv.width / 2) / m.k, wz = m.z + (cy - cv.height / 2) / m.k; m.k = Math.max(0.01, Math.min(12, m.k * f)); m.x = wx - (cx - cv.width / 2) / m.k; m.z = wz - (cy - cv.height / 2) / m.k; this.drawBigMap(); }
+  mapCenterMe() { const p = this.mapPos(); if (p) { this.mv.x = p.x; this.mv.z = p.z; } this.drawBigMap(); }
+  mapFitAll() { const cv = $('#bigmap'); let a = [1e9, 1e9, -1e9, -1e9]; for (const r of this.g.net.roads) for (const q of r.samples) { a[0] = Math.min(a[0], q.p.x); a[1] = Math.min(a[1], q.p.z); a[2] = Math.max(a[2], q.p.x); a[3] = Math.max(a[3], q.p.z); } this.mv.x = (a[0] + a[2]) / 2; this.mv.z = (a[1] + a[3]) / 2; this.mv.k = 0.9 * Math.min(cv.width / (a[2] - a[0]), cv.height / (a[3] - a[1])); this.drawBigMap(); }
+  wireMap(cv) {
+    const pts = new Map(); let pinch = 0;
+    cv.addEventListener('wheel', e => { e.preventDefault(); const r = cv.getBoundingClientRect(), d = cv.width / r.width; this.mapZoom(Math.exp(-e.deltaY * 0.0015), (e.clientX - r.left) * d, (e.clientY - r.top) * d); }, { passive: false });
+    cv.addEventListener('pointerdown', e => { cv.setPointerCapture(e.pointerId); pts.set(e.pointerId, [e.clientX, e.clientY]); });
+    cv.addEventListener('pointerup', e => { pts.delete(e.pointerId); pinch = 0; });
+    cv.addEventListener('pointercancel', e => { pts.delete(e.pointerId); pinch = 0; });
+    cv.addEventListener('pointermove', e => {
+      const prev = pts.get(e.pointerId); if (!prev) return; const r = cv.getBoundingClientRect(), d = cv.width / r.width;
+      pts.set(e.pointerId, [e.clientX, e.clientY]);
+      if (pts.size === 2) { const [a, b] = [...pts.values()]; const dist = Math.hypot(a[0] - b[0], a[1] - b[1]); if (pinch) this.mapZoom(dist / pinch, ((a[0] + b[0]) / 2 - r.left) * d, ((a[1] + b[1]) / 2 - r.top) * d); pinch = dist; return; }
+      this.mv.x -= (e.clientX - prev[0]) * d / this.mv.k; this.mv.z -= (e.clientY - prev[1]) * d / this.mv.k; this.drawBigMap();
+    });
+  }
   togglePhoto() { this.photo = !this.photo; document.body.classList.toggle('photo', this.photo); if (this.photo) { this.g.audio.sfx('camera_shutter'); this.toast(t('game.photo.on'), 'info', 3); } }
 
   // ───── tutorial (first drive) ─────
@@ -508,19 +534,41 @@ export class UI {
     const nAng = -(Math.PI + yaw) - Math.PI / 2 + Math.PI; c.fillText('N', 100 + Math.cos(-Math.PI / 2 - (Math.PI + yaw)) * 86, 104 + Math.sin(-Math.PI / 2 - (Math.PI + yaw)) * 86);
   }
   drawBigMap() {
-    const cv = $('#bigmap'), c = cv.getContext('2d'), W = cv.width;
-    const x0 = -900, z0 = -700, span = 2600, k = W / span;
-    c.fillStyle = '#0b1830'; c.fillRect(0, 0, W, W);
-    const P = (x, z) => [(x - x0) * k, (z - z0) * k];
-    const I = { x0: -462, x1: 925, z0: -205, z1: 965 };
-    c.fillStyle = '#26303d'; const [ix, iz] = P(I.x0, I.z0); c.fillRect(ix, iz, (I.x1 - I.x0) * k, (I.z1 - I.z0) * k);
-    c.fillStyle = '#3a4a62'; const [px, pz] = P(PA_RECT.x0, PA_RECT.z0); c.fillRect(px, pz, 250 * k, 170 * k);
-    for (const r of this.g.net.roads) { c.strokeStyle = r.kind === 'expressway' ? '#33c27a' : r.kind === 'ramp' ? '#9be3b8' : '#b8c2d4'; c.lineWidth = Math.max(2, (r.edgeL - r.edgeR) * k); c.beginPath(); r.samples.forEach((s, i) => { const [x, y] = P(s.p.x, s.p.z); i ? c.lineTo(x, y) : c.moveTo(x, y); }); c.stroke(); }
-    c.fillStyle = '#fff'; c.font = '600 16px "Hiragino Sans","Noto Sans JP",sans-serif';
-    const lab = (txt, x, z) => { const [a, b] = P(x, z); c.fillText(txt, a, b); };
-    lab('大黒PA', -30, 0); lab('湾岸線 B', 300, -260); lab('K5 大黒線', -800, -600); lab('横浜ベイブリッジ', -500, 900); lab('大黒ふ頭', 200, 560); lab('料金所', -180, 300); lab('東京湾', 700, 1400);
-    const v = this.g.mode === 'walk' ? this.g.player.pos : this.g.vehicle?.pos;
-    if (v) { const [a, b] = P(v.x, v.z); c.fillStyle = '#ffb347'; c.beginPath(); c.arc(a, b, 7, 0, 7); c.fill(); }
+    const cv = $('#bigmap'), c = cv.getContext('2d'), W = cv.width, H = cv.height, m = this.mv, k = m.k;
+    const P = (x, z) => [(x - m.x) * k + W / 2, (z - m.z) * k + H / 2];
+    const dpr = W / innerWidth;
+    c.fillStyle = '#0a1a33'; c.fillRect(0, 0, W, H); // sea
+    const poly = (pts, fill) => { c.beginPath(); pts.forEach(([x, z], i) => { const [a, b] = P(x, z); i ? c.lineTo(a, b) : c.moveTo(a, b); }); c.closePath(); c.fillStyle = fill; c.fill(); };
+    for (const l of MAP.land || []) if (l.pts?.length > 2) poly(l.pts, l.main ? '#1d2633' : '#222c3a');
+    if (k > 0.25) for (const b of MAP.buildings || []) poly(b.pts, '#3a4658');
+    { const [x0, z0] = P(PA_RECT.x0, PA_RECT.z0), [x1, z1] = P(PA_RECT.x1, PA_RECT.z1); c.fillStyle = '#44587a'; c.fillRect(Math.min(x0, x1), Math.min(z0, z1), Math.abs(x1 - x0), Math.abs(z1 - z0)); }
+    const roads = this.g.net.roads;
+    for (const pass of [0, 1]) for (const r of roads) {
+      const col = r.kind === 'expressway' ? '#2fbf74' : r.kind === 'ramp' ? '#8fe0b2' : '#c4ccd8';
+      c.strokeStyle = pass ? col : 'rgba(0,0,0,.55)'; c.lineCap = c.lineJoin = 'round';
+      c.lineWidth = Math.max(pass ? 1.5 * dpr : 3 * dpr, (r.edgeL - r.edgeR) * k + (pass ? 0 : 2 * dpr));
+      c.globalAlpha = r.samples.some(q => q.p.y < -0.6) && pass ? 0.75 : 1;
+      const step = k < 0.05 ? 8 : k < 0.3 ? 3 : 1;
+      c.beginPath(); r.samples.forEach((q, i) => { if (i % step && i !== r.samples.length - 1) return; const [a, b] = P(q.p.x, q.p.z); i ? c.lineTo(a, b) : c.moveTo(a, b); }); c.stroke();
+    }
+    c.globalAlpha = 1;
+    // lane markings when zoomed right in
+    if (k > 3) { c.strokeStyle = 'rgba(255,255,255,.6)'; c.lineWidth = dpr; c.setLineDash([6 * dpr, 8 * dpr]); for (const r of roads) for (const L of r.lanes) { c.beginPath(); r.samples.forEach((q, i) => { const [a, b] = P(q.p.x + q.left.x * L.lat, q.p.z + q.left.z * L.lat); i ? c.lineTo(a, b) : c.moveTo(a, b); }); c.stroke(); } c.setLineDash([]); }
+    // traffic
+    for (const ai of this.g.traffic?.cars || []) { const [a, b] = P(ai.pos.x, ai.pos.z); if (a < 0 || b < 0 || a > W || b > H) continue; c.fillStyle = ai.police ? '#4a8cff' : 'rgba(255,255,255,.8)'; c.fillRect(a - 2 * dpr, b - 2 * dpr, 4 * dpr, 4 * dpr); }
+    // labels: road names (expressways always, ramps/streets when zoomed), landmarks, places
+    c.textAlign = 'center'; c.textBaseline = 'middle';
+    const lab = (txt, x, z, size, col = '#fff') => { const [a, b] = P(x, z); if (a < -200 || b < -50 || a > W + 200 || b > H + 50) return; c.font = `700 ${size * dpr}px "Hiragino Sans","Noto Sans JP",system-ui,sans-serif`; c.lineWidth = 3 * dpr; c.strokeStyle = 'rgba(0,0,0,.8)'; c.strokeText(txt, a, b); c.fillStyle = col; c.fillText(txt, a, b); };
+    const seen = new Set();
+    for (const r of roads) { if (!r.name || seen.has(r.name)) continue; if (r.kind !== 'expressway' && k < (r.kind === 'ramp' ? 0.6 : 1.2)) continue; seen.add(r.name); const q = r.samples[r.samples.length >> 1].p; lab(r.name.replace(/（.*?）/g, ''), q.x, q.z, r.kind === 'expressway' ? 13 : 11, r.kind === 'expressway' ? '#b6f5cf' : '#dde4ee'); }
+    for (const l of MAP.landmarks || []) lab('◆ ' + l.name, l.x, l.z, 12, '#ffd38a');
+    lab('大黒PA', (PA_RECT.x0 + PA_RECT.x1) / 2, (PA_RECT.z0 + PA_RECT.z1) / 2, 15, '#ffb347');
+    // player
+    const p = this.mapPos(); if (p) { const [a, b] = P(p.x, p.z); const yaw = this.g.mode === 'walk' ? this.g.player.yaw : this.g.vehicle.yaw; c.save(); c.translate(a, b); c.rotate(-yaw + Math.PI); c.fillStyle = '#ffb347'; c.strokeStyle = '#000'; c.lineWidth = 2 * dpr; c.beginPath(); c.moveTo(0, -11 * dpr); c.lineTo(8 * dpr, 9 * dpr); c.lineTo(0, 4 * dpr); c.lineTo(-8 * dpr, 9 * dpr); c.closePath(); c.fill(); c.stroke(); c.restore(); }
+    // scale bar + north
+    const nice = [10, 20, 50, 100, 200, 500, 1000, 2000, 5000, 10000]; const len = nice.find(n => n * k > 80 * dpr) || 10000;
+    c.fillStyle = '#fff'; c.fillRect(20 * dpr, H - 30 * dpr, len * k, 3 * dpr); c.textAlign = 'left'; c.font = `600 ${12 * dpr}px system-ui`; c.fillText(len >= 1000 ? len / 1000 + ' km' : len + ' m', 20 * dpr, H - 42 * dpr);
+    c.textAlign = 'center'; c.font = `800 ${14 * dpr}px system-ui`; c.fillText('N ▲', W - 40 * dpr, 70 * dpr);
   }
 
   // ───── touch controls ─────

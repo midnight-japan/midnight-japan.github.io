@@ -62,9 +62,10 @@ const FEATURED = ['r34', 'r32', 'jza80', 'fd3s', 'na1', 'ae86', 'gr86', 'ap1', '
 // Item keys: site.road.<version without dot>.<key>, except entries written as 'NN.key' which point at another version's key.
 const ROADMAP = [
   ['0.1', 'done', ['pa', 'cars', 'life', 'online']],
-  ['0.2', 'now', ['bay', 'aqua', 'models3d']],
-  ['0.3', 'next', ['c1', '02.models', '02.perf']],
-  ['Later', 'later', ['03.events', '03.tuning', '03.areas']],
+  ['0.2', 'done', ['bay', 'aqua', 'models3d']],
+  ['0.3', 'now', ['02.models', '02.perf']],
+  ['0.4', 'next', ['c1', '03.areas']],
+  ['Later', 'later', ['03.events', '03.tuning']],
 ];
 
 // ── Controls. Keep in sync with the game's input map. Values: keyboard keys (array → <kbd>), gamepad, touch i18n key.

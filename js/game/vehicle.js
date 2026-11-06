@@ -563,5 +563,18 @@ export class Vehicle {
     }
     this.pitch = lerp(this.pitch, clamp(this.ax * 0.006, -0.04, 0.04) - Math.atan(this.grade || 0) * 0, 1 - Math.exp(-dt * 6));
     this.roll = lerp(this.roll, clamp(-this.ay * 0.008, -0.06, 0.06), 1 - Math.exp(-dt * 6));
+    // per-wheel suspension (visual): spring-damper following road texture (finer on expressway asphalt, coarser on
+    // streets / lots) plus load transfer — front dips under braking, outer side compresses in corners
+    if (!this.suspV) { this.suspV = [0, 0, 0, 0]; this.suspD = 0; }
+    this.suspD += Math.abs(this.vx) * dt;
+    const rough = this.road?.kind === 'local' || !this.onRoad ? 0.007 : 0.0035, sp = Math.min(1, Math.abs(this.vx) / 15);
+    for (let i = 0; i < 4; i++) {
+      const d = this.suspD + (i >= 2 ? 2.6 : 0) + (i % 2) * 0.37;
+      const road = rough * sp * (Math.sin(d * 2.1 + i) * 0.6 + Math.sin(d * 5.3 + i * 1.7) * 0.3 + Math.sin(d * 13.7) * 0.1);
+      const load = (i < 2 ? 1 : -1) * clamp(-this.ax * 0.0035, -0.03, 0.03) + ((i % 2) ? 1 : -1) * clamp(this.ay * 0.003, -0.03, 0.03);
+      const tgt = road + load, k = 180, c = 2 * Math.sqrt(k) * 0.55;
+      this.suspV[i] += (k * (tgt - this.susp[i]) - c * this.suspV[i]) * dt;
+      this.susp[i] = clamp(this.susp[i] + this.suspV[i] * dt, -0.06, 0.06);
+    }
   }
 }

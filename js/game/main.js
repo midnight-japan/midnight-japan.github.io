@@ -412,7 +412,7 @@ class Game {
     }
     // model visuals
     const sp = v.spin;
-    const susp = [0, 0, 0, 0];
+    const susp = v.susp;
     m.update(dt, { steer: v.steerAng, spin: [sp[0], sp[1], sp[2], sp[3]], susp, pitch: v.pitch, roll: v.roll });
     m.root.position.copy(v.pos); m.root.rotation.y = v.yaw;
     // align to grade

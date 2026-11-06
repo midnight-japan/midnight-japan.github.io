@@ -1,8 +1,22 @@
 // Shared game metadata: version, changelog, regions. Update VERSION + CHANGELOG on every release.
-export const GAME = { title: 'MIDNIGHT JAPAN', titleJa: 'ミッドナイト・ジャパン', version: '0.3.3', build: '2026.11.06' };
+export const GAME = { title: 'MIDNIGHT JAPAN', titleJa: 'ミッドナイト・ジャパン', version: '0.3.4', build: '2026.11.06' };
 
 // Newest first. type: new | change | fix | known
 export const CHANGELOG = [
+  {
+    version: '0.3.4', date: '2026-11-06', codename: 'Full Map',
+    summary: {
+      ko: '확대·축소·이동되는 전체 지도, 바퀴마다 움직이는 서스펜션, 로드맵 갱신, GitHub 소개 페이지 리뉴얼.',
+      ja: '拡大・縮小・移動できる全体マップ、4輪それぞれが動くサスペンション、ロードマップ更新、GitHub紹介ページを刷新。',
+      en: 'A zoomable, pannable full map, per-wheel suspension, an updated roadmap and a renewed GitHub page.'
+    },
+    items: [
+      { type: 'new', ko: '전체 지도(M 키 또는 미니맵 클릭): 휠·핀치로 확대/축소, 드래그로 이동, 내 위치·전체 보기 버튼, 육지·건물·도로 이름·랜드마크·교통 표시, 최대 확대 시 차선까지, 축척 막대', ja: '全体マップ（Mキーまたはミニマップをクリック）：ホイール・ピンチで拡大縮小、ドラッグで移動、現在地・全体表示ボタン、陸地・建物・道路名・ランドマーク・交通を表示、最大拡大で車線まで、縮尺バー', en: 'Full map (M or click the minimap): wheel/pinch zoom, drag to pan, locate-me and fit-all buttons, land, buildings, road names, landmarks and traffic, lanes at max zoom, scale bar' },
+      { type: 'new', ko: '서스펜션: 네 바퀴가 노면 요철(고속도로는 곱게, 일반도로·주차장은 거칠게)과 하중 이동(제동 시 앞, 코너 시 바깥쪽)에 따라 각각 움직임', ja: 'サスペンション：4輪それぞれが路面の凹凸（高速は細かく、一般道・駐車場は粗く）と荷重移動（ブレーキで前、コーナーで外側）に合わせて動く', en: 'Suspension: each wheel moves with road texture (fine on expressways, coarser on streets and lots) and load transfer (nose under braking, outside wheels in corners)' },
+      { type: 'change', ko: 'GitHub 소개 페이지 리뉴얼: 비설치 고사양 웹 게임으로 안내, 업데이트 기록 정리', ja: 'GitHub紹介ページを刷新：インストール不要の高性能ブラウザゲームとして案内、更新履歴を整理', en: 'GitHub page renewed: presented as a no-install, high-end browser game; release history tidied' },
+      { type: 'change', ko: '웹사이트 로드맵 갱신: 0.2 완료, 0.3 진행 중, 0.4 수도고 C1·새 지역 예정', ja: 'サイトのロードマップを更新：0.2完了、0.3進行中、0.4で首都高C1・新エリア予定', en: 'Website roadmap updated: 0.2 done, 0.3 in progress, 0.4 Shuto C1 and new areas next' },
+    ]
+  },
   {
     version: '0.3.3', date: '2026-11-06', codename: 'Smooth Ride',
     summary: {
