@@ -847,7 +847,7 @@ export class World {
     const lay = (mat, road, s, lat, dir, w, len) => {
       const sA = s - dir * len / 2, sB = s + dir * len / 2; if (Math.min(sA, sB) < 2 || Math.max(sA, sB) > road.length - 2) return;
       const q = road.at(s); const y0 = this.net.query(q.x + road.dirAt(s).z * lat, q.z - road.dirAt(s).x * lat, q.y + 1)?.y; if (y0 === undefined || Math.abs(y0 - q.y) > 0.6) return;
-      const n = Math.max(1, Math.ceil(len / 1.5)), pos = [], uv = [], idx = [], lift = 0.03 + 0.002 * road.index;
+      const n = Math.max(1, Math.ceil(len / 1.5)), pos = [], uv = [], idx = [], lift = 0.03 + 0.0006 * road.index;
       const lL = lat + dir * w / 2, lR = lat - dir * w / 2; // driver's left / right
       for (let k = 0; k <= n; k++) {
         const ss = sA + (sB - sA) * k / n, c = road.at(ss), t = road.dirAt(ss);
@@ -860,6 +860,14 @@ export class World {
     };
     const place = (road, s, lat, kind, opts, back) => { s = Math.max(2, Math.min(road.length - 2, s)); const p = road.at(s, lat), t = road.dirAt(s); return this.sign(kind, opts, p.x, p.y, p.z, Math.atan2(t.x, t.z) + Math.PI + (back ? Math.PI : 0), 1); };
     let nText = 0, nSigns = 0, nStops = 0;
+    // roadside posts: always on the travel-left verge (Japan drives on the left), never on another carriageway
+    const post = (road, sp, dir, kind, opts, side = 'left', off = 1.4) => {
+      if (sp < 5 || sp > road.length - 5) return false;
+      const lat = (side === 'left') === (dir > 0) ? road.edgeL + off : road.edgeR - off;
+      const q = road.at(sp, lat); if (road.at(sp).y < -0.6) return false;
+      if (net.hits(q.x, q.z).some(h => !h.beyond && Math.abs(h.y - q.y) < 4 && h.lat < h.road.edgeL + 0.4 && h.lat > h.road.edgeR - 0.4)) return false;
+      place(road, sp, lat, kind, opts, dir < 0); nSigns++; return true;
+    };
     // expressway / ramp diverges
     for (const [road, list] of net.diverges) {
       if (road.kind === 'local') continue;
@@ -904,8 +912,30 @@ export class World {
         const sLine = (end ? r.length : 0) - dir * (Math.max(h.road.edgeL, -h.road.edgeR) + 3.5);
         if (r.length < 40 || sLine < 8 || sLine > r.length - 8) continue;
         for (const L of lanes) { lay(plain, r, sLine, L.lat, dir, 3.4, 0.45); lay(textMat('止まれ'), r, sLine - dir * 6, L.lat, dir, 1.4, 6); }
+        post(r, sLine - dir * 1.5, dir, 'stop', {}, 'left', 0.6);
         nStops++;
       }
+    }
+    for (const [road, list] of net.diverges) {
+      if (road.kind === 'local') continue;
+      for (const d of list) {
+        const dest = DEST[d.to.id]; if (!dest) continue; const dir = d.dir || 1;
+        const side = d.lat * dir > 0 ? 'left' : 'right';
+        post(road, d.s - 1000 * dir, dir, 'exit_sign', { ja: dest[0], en: EN[dest[0]] || '', dist: '1km' }, side, 1.6);
+        post(road, d.s - 30 * dir, dir, 'route_marker', { route: dest[1] === 'CA' ? 'B' : dest[1], name: dest[1] !== 'CA' }, side, 1.0);
+      }
+    }
+    for (const road of net.roads) {
+      const dirs = road.lanesB ? [1, -1] : [1];
+      if (road.kind === 'expressway') {
+        for (const dir of dirs) {
+          for (let k = 1, sp = 700; sp < road.length - 300; sp += 1800, k++) post(road, dir > 0 ? sp : road.length - sp, dir, 'speed_limit', { value: road.speed || 80 });
+          for (let sp = 1000; sp < road.length - 200; sp += 3000) post(road, dir > 0 ? sp : road.length - sp, dir, 'route_marker', { route: road.short === 'CA' ? 'B' : (road.short || 'B') });
+        }
+        for (let km = 1; km * 1000 < road.length; km++) post(road, km * 1000, 1, 'kilometer_post', { name: '', km: (km * 1.0).toFixed(1), route: road.short || 'B' }, 'left', 0.8);
+      } else if (road.kind === 'local' && road.length > 120) {
+        for (const dir of dirs) post(road, dir > 0 ? road.length * 0.3 : road.length * 0.7, dir, 'speed_limit', { value: road.speed || 40 }, 'left', 1.0);
+      } else if (road.kind === 'ramp' && road.length > 200) post(road, 60, 1, 'speed_limit', { value: road.speed || 40 });
     }
     const grp = new THREE.Group(); grp.name = 'road_paint';
     for (const [m, list] of geos) { const mesh = new THREE.Mesh(mergeGeometries(list), m); mesh.receiveShadow = true; mesh.renderOrder = 2; grp.add(mesh); }

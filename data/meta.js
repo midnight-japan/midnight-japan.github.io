@@ -1,8 +1,25 @@
 // Shared game metadata: version, changelog, regions. Update VERSION + CHANGELOG on every release.
-export const GAME = { title: 'MIDNIGHT JAPAN', titleJa: 'ミッドナイト・ジャパン', version: '0.3.2', build: '2026.11.06' };
+export const GAME = { title: 'MIDNIGHT JAPAN', titleJa: 'ミッドナイト・ジャパン', version: '0.3.3', build: '2026.11.06' };
 
 // Newest first. type: new | change | fix | known
 export const CHANGELOG = [
+  {
+    version: '0.3.3', date: '2026-11-06', codename: 'Smooth Ride',
+    summary: {
+      ko: '오디오 음량 평준화, 도로 단차 95% 제거, 표지판 171개로 확대, 화면 하단 버전·FPS 표시, 웹사이트 사진 전면 교체.',
+      ja: 'オーディオの音量を平準化、道路の段差を95%解消、標識を171基に拡充、画面下にバージョン・FPS表示、サイトの写真を一新。',
+      en: 'Audio loudness levelled, 95% of road steps removed, 171 roadside signs, version + FPS at the bottom of the screen, all website photos retaken.'
+    },
+    items: [
+      { type: 'change', ko: '오디오 평준화: 엔진 녹음의 RPM 구간별 음량을 통일(차종 간 편차 제거), 효과음 피크 정리, 마스터 컴프레서 강화', ja: 'オーディオ平準化：エンジン録音の回転域ごとの音量を統一（車種間の差を解消）、効果音のピークを整え、マスターコンプを強化', en: 'Audio levelling: every rpm slice of every engine recording at the same loudness (no jumps between cars), SFX peaks evened out, stronger master compressor' },
+      { type: 'fix', ko: '도로 단차 543곳 → 26곳: 같은 도로의 높이 판정 오류(10~20cm 턱) 수정, 램프 합류·분기부를 본선 높이에 맞춰 부드럽게 연결, 노면이 바퀴보다 떠 보이던 문제 수정', ja: '道路の段差 543か所→26か所：同じ道路の高さ判定の誤り（10〜20cmの段）を修正、ランプの合流・分岐を本線の高さに合わせてなめらかに接続、路面がタイヤより浮いて見える問題を修正', en: 'Road steps 543 → 26: fixed a height lookup that put 10–20 cm ledges in the same road, ramps now meet the main line flush at merges and diverges, decks no longer drawn above the tyres' },
+      { type: 'new', ko: '표지판 대폭 추가(171개): 분기 1km 전 출구 예고, 분기점 노선 표시, 제한속도·노선 표지 반복 설치, 킬로포스트, 일반도로 제한속도와 「止まれ」 표지', ja: '標識を大幅追加（171基）：分岐1km手前の出口予告、分岐点の路線標識、速度規制・路線標識の繰り返し、キロポスト、一般道の速度規制と「止まれ」標識', en: 'Many more signs (171): exit warnings 1 km before junctions, route markers at the gore, repeated speed-limit and route signs, kilometre posts, street speed limits and STOP signs' },
+      { type: 'new', ko: '화면 하단에 게임 버전과 FPS 상시 표시 (설정에서 FPS 끄기 가능)', ja: '画面下にバージョンとFPSを常時表示（設定でFPSはオフ可能）', en: 'Game version and FPS always shown at the bottom of the screen (FPS can be turned off in settings)' },
+      { type: 'change', ko: '웹사이트 사진 전면 교체: HUD 없는 깨끗한 새 스크린샷, 고해상도 히어로', ja: 'サイトの写真を一新：HUDなしの新しいスクリーンショット、高解像度ヒーロー', en: 'Website photos retaken: clean new screenshots without HUD, high-resolution hero' },
+      { type: 'fix', ko: '부두 스폰 시 일본 좌측통행에 맞게 왼쪽 차로에서 출발', ja: 'ふ頭スタート時は左側通行に合わせ左車線から出発', en: 'Wharf spawn now starts in the left lane (Japan drives on the left)' },
+      { type: 'known', ko: '다이코쿠 JCT 일부 램프가 반대 차로 위를 낮게 지나는 구간(지도 데이터)에 작은 단차가 남아 있음', ja: '大黒JCTの一部ランプが反対車線の上を低く通る区間（地図データ）に小さな段差が残っています', en: 'A few small steps remain where Daikoku JCT ramps pass low over the opposite lanes (map data)' },
+    ]
+  },
   {
     version: '0.3.2', date: '2026-11-06', codename: 'Road Paint',
     summary: {

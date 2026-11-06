@@ -1369,10 +1369,10 @@ export class GameAudio {
     // master chain: buses → master → glue comp → limiter → out
     this.master = G(this._vol.master);
     this.comp = ctx.createDynamicsCompressor();
-    this.comp.threshold.value = -14; this.comp.knee.value = 8; this.comp.ratio.value = 3; this.comp.attack.value = 0.005; this.comp.release.value = 0.25;
+    this.comp.threshold.value = -20; this.comp.knee.value = 10; this.comp.ratio.value = 4; this.comp.attack.value = 0.005; this.comp.release.value = 0.25;
     this.limiter = ctx.createDynamicsCompressor();
-    this.limiter.threshold.value = -4; this.limiter.knee.value = 0; this.limiter.ratio.value = 20; this.limiter.attack.value = 0.001; this.limiter.release.value = 0.1;
-    this.out = G(0.72);
+    this.limiter.threshold.value = -3; this.limiter.knee.value = 0; this.limiter.ratio.value = 20; this.limiter.attack.value = 0.001; this.limiter.release.value = 0.1;
+    this.out = G(0.85); // makeup gain after the heavier levelling compressor
     this.master.connect(this.comp); this.comp.connect(this.limiter); this.limiter.connect(this.out); this.out.connect(ctx.destination);
     this.bus = { engine: G(this._vol.engine), sfx: G(this._vol.sfx), ambient: G(this._vol.ambient), radio: G(this._vol.radio) };
     for (const k in this.bus) this.bus[k].connect(this.master);

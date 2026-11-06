@@ -56,7 +56,7 @@ kbd{font:700 13px var(--display);background:#fff;color:#111;border-radius:6px;pa
 .toasts{position:absolute;left:max(16px,env(safe-area-inset-left));bottom:max(16px,env(safe-area-inset-bottom));display:flex;flex-direction:column;gap:6px;max-width:min(460px,60vw)}
 .toast{background:rgba(10,16,30,.88);border-left:3px solid #6aa8ff;padding:8px 12px;border-radius:8px;font-size:13px;line-height:1.45;animation:tin .25s}.toast.warn{border-color:#ffb020}.toast.police{border-color:#ff3b3b;background:rgba(40,8,10,.9)}.toast.toll{border-color:var(--etc)}.toast.chat{border-color:var(--green)}.toast.out{opacity:0;transform:translateX(-14px) scale(.98);transition:opacity .4s,transform .4s}
 @keyframes tin{from{transform:translateX(-24px) scale(.96);opacity:0}60%{transform:translateX(3px)}}
-.fps{position:absolute;left:50%;bottom:6px;transform:translateX(-50%);font:600 11px var(--display);color:#8f9}
+.fps{position:absolute;left:50%;bottom:6px;transform:translateX(-50%);font:600 11px var(--display);letter-spacing:.06em;color:rgba(200,255,210,.75);text-shadow:0 1px 2px #000;pointer-events:none;white-space:nowrap}
 .popup{position:absolute;left:50%;top:50%;transform:translate(-50%,-50%) scale(.96);opacity:0;pointer-events:none!important;transition:.15s;background:var(--panel);border:1px solid var(--line);border-radius:16px;padding:16px;width:min(420px,92vw);text-align:center}
 .popup.show{opacity:1;transform:translate(-50%,-50%);pointer-events:auto!important}.popup h3{margin:0 0 10px}
 .popup .grid{display:grid;grid-template-columns:1fr 1fr;gap:6px;margin-bottom:10px}.popup .grid button{padding:10px;border-radius:10px;border:1px solid var(--line);background:rgba(255,255,255,.04);color:var(--text);font:600 13px var(--font);cursor:pointer}

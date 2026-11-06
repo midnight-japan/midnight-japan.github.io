@@ -64,6 +64,10 @@ export class Banks {
         const meta = await (await fetch(BASE + 'engines/' + fam + '.json')).json();
         const buf = await this._decode(BASE + 'engines/' + fam + '.ogg', meta.sr);
         const data = buf.getChannelData(0);
+        // loudness levelling: every rpm slice of every engine family to the same RMS (on-throttle), off-throttle a fixed
+        // step quieter — no more jumps in volume between rpm slices or between cars with different recordings
+        const lev = (list, target) => { for (const b of list) { const a = b.o, e = Math.min(data.length, b.o + b.N * b.n); let sq = 0; for (let i = a; i < e; i++) sq += data[i] * data[i]; const rms = Math.sqrt(sq / Math.max(1, e - a)); if (rms < 1e-5) continue; const k = Math.min(6, target / rms); for (let i = a; i < e; i++) data[i] = Math.max(-1, Math.min(1, data[i] * k)); } };
+        lev(meta.on, 0.13); lev(meta.off, 0.075);
         const bank = { fam, data, on: meta.on, off: meta.off, sr: meta.sr, rpmMin: Math.min(...meta.on.map((b) => b.rpm)), rpmMax: Math.max(...meta.on.map((b) => b.rpm)) };
         this.ready.set(fam, bank);
         return bank;
@@ -86,9 +90,16 @@ export class Banks {
   }
   buffer(name) {
     if (this.sfx.has(name)) return this.sfx.get(name);
-    const p = this._decode(BASE + 'sfx/' + name + '.ogg').then((b) => { this.sfxReady.set(name, b); return b; }, (e) => { console.warn('[audio] sfx', name, e); return null; });
+    const p = this._decode(BASE + 'sfx/' + name + '.ogg').then((b) => { peakNorm(b); this.sfxReady.set(name, b); return b; }, (e) => { console.warn('[audio] sfx', name, e); return null; });
     this.sfx.set(name, p);
     return p;
   }
   get(name) { return this.sfxReady.get(name) || null; }
+}
+
+// sfx recordings come at very different levels: bring each to the same peak (-1 dBFS) so the mixer gains mean the same thing
+function peakNorm(b) {
+  let pk = 0; for (let c = 0; c < b.numberOfChannels; c++) { const d = b.getChannelData(c); for (let i = 0; i < d.length; i++) { const v = Math.abs(d[i]); if (v > pk) pk = v; } }
+  if (pk < 1e-4) return; const k = Math.min(2, 0.89 / pk);
+  for (let c = 0; c < b.numberOfChannels; c++) { const d = b.getChannelData(c); for (let i = 0; i < d.length; i++) d[i] *= k; }
 }

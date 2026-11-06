@@ -201,6 +201,24 @@ export class RoadNet {
     }
     this._res = [];
     this.findJunctions();
+    this.flushJoins();
+  }
+  // Where a ramp leaves / joins a road, the part of it lying on the parent deck must have the parent's height, then blend
+  // smoothly into its own profile — otherwise the ramp floats 1–2 m over the main lanes (a step for car and eye).
+  flushJoins() {
+    const pairs = [];
+    for (const [parent, l] of this.diverges) for (const d of l) pairs.push([d.to, parent, 0]);
+    for (const [child, d] of this.links) pairs.push([child, d.to, 1]);
+    for (const [r, parent, atEnd] of pairs) {
+      if (r.kind === 'local' || r === parent) continue;
+      const S = r.samples, n = S.length, idx = i => atEnd ? n - 1 - i : i;
+      const pY = (p) => { let y = null; for (const h of this.hits(p.x, p.z)) if (h.road === parent && !h.beyond && h.lat <= parent.edgeL + 0.5 && h.lat >= parent.edgeR - 0.5 && Math.abs(h.y - p.y) < 4) y = h.y; return y; };
+      let k = 0, lastOff = 0; const BL = 30;
+      for (; k < n; k++) { const q = S[idx(k)]; const y = pY(q.p); if (y === null) break; lastOff = y - q.p.y; q.p.y = y; }
+      if (!k) continue;
+      const s0 = S[idx(k - 1)].s;
+      for (let j = k; j < n; j++) { const q = S[idx(j)]; const ds = Math.abs(q.s - s0); if (ds > BL) break; const t = ds / BL; q.p.y += lastOff * (1 - t * t * (3 - 2 * t)); }
+    }
   }
   // Where one road's start lies on another (diverge) and where a road's end flows into another (link).
   // Used by the traffic AI; computed from geometry so new regions work without hand-made tables.
@@ -255,6 +273,9 @@ export class RoadNet {
       const prev = best.get(key);
       if (!prev || d < prev.d) best.set(key, { road: r, i, t: tc, d, lat, y, s: A.s + (B.s - A.s) * tc, beyond: (t < -0.01 && i === 0) || (t > 1.01 && i === r.samples.length - 2) });
     }
+    // the same road can appear under two level keys where it crosses a 6 m boundary: keep only the nearer segment
+    // (the other is a clamped neighbour whose height is off by grade × distance → a 10–20 cm step in the surface)
+    if (best.size > 1) { const v = [...best.entries()]; for (const [k, h] of v) for (const [k2, h2] of v) if (k !== k2 && h.road === h2.road && Math.abs(h.y - h2.y) < 3 && best.has(k) && best.has(k2)) best.delete(h.d <= h2.d ? k2 : k); }
     for (const h of best.values()) { h.inside = !h.beyond && h.lat <= h.road.edgeL + 0.6 && h.lat >= h.road.edgeR - 0.6; res.push(h); }
     return res;
   }
@@ -265,7 +286,7 @@ export class RoadNet {
     for (const h of hs) {
       if (!h.inside) continue;
       if (h.y > yHint + 1.6) continue; // deck far above us → not our surface
-      if (!best || h.y > best.y) best = h;
+      if (!best || (h.y > best.y && !(Math.abs(best.y - yHint) < 0.5 && h.y - yHint > 0.5))) best = h; // stay on our own deck
     }
     const gy = ground ? ground(x, z) : 0;
     if (best && (best.y >= gy - 0.05 || best.y < -0.5)) return { y: best.y, hit: best, road: best.road, onRoad: true }; // below ground = tunnel / trench
@@ -432,7 +453,7 @@ export function buildRoadMeshes(net, opts = {}) {
     const local = r.kind === 'local';
     const deckMat = local ? 'asphaltOld' : 'asphalt';
     // deck surface (tiny y offset per road to avoid z-fighting where decks overlap)
-    const yo = 0.002 * ri;
+    const yo = 0.0006 * ri; // tiny per-road lift (anti z-fight) — kept small so wheels never sink into a deck
     geoms[deckMat].push(ribbon(r, r.edgeR, r.edgeL, yo, { segs: Math.max(2, Math.round((r.edgeL - r.edgeR) / 4)) }));
     // markings — clipped wherever they would run across another road's carriageway (junctions, merges, intersections),
     // so no other deck can cover or z-fight them. On expressways the clipped part of an edge

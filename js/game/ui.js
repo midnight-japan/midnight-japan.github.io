@@ -72,7 +72,6 @@ export class UI {
         <button class="btn primary wide" data-a="drive" data-i18n="game.garage.drive"></button>
       </div></div>
       <div id="hud" class="hidden">
-        <div class="hud-ver">v${GAME.version}</div>
         <div class="tl"><div class="loc"></div><div class="clock"></div><div class="money"></div></div>
         <canvas id="minimap" width="200" height="200"></canvas>
         <div class="speedo"><canvas id="speedo" width="260" height="260"></canvas><div class="icons"></div></div>
@@ -432,7 +431,7 @@ export class UI {
     $('#hud .loc').textContent = g.world.zoneAt(pos.x, pos.z, pos.y);
     $('#hud .clock').textContent = g.tod.clock;
     $('#hud .money').textContent = yen(g.money);
-    $('#hud .fps').textContent = g.settings.fps ? Math.round(g.fps || 0) + ' fps' : '';
+    $('#hud .fps').textContent = `MIDNIGHT JAPAN v${GAME.version}` + (g.settings.fps ? ` · ${Math.round(g.fps || 0)} FPS` : '');
     $('#hud .speedo').style.display = g.mode === 'drive' ? '' : 'none';
     if (g.frame % 4 === 0) this.drawMini(pos, g.mode === 'drive' ? v.yaw : g.player.yaw);
   }
