@@ -7,9 +7,9 @@ import { initSite, onLang, esc } from './common.js';
 const POS = {
   daikoku_pa: [128, 318], daikoku_jct: [140, 306], daikoku_futo: [146, 330], baybridge: [118, 346],
   tsubasa: [168, 290], tatsumi: [262, 94], shibaura: [222, 106], umihotaru: [325, 315],
-  k1loop: [110, 279], haneda: [230, 210],
+  k1loop: [110, 279], haneda: [230, 210], c1: [205, 50],
 };
-const LABEL_SIDE = { daikoku_pa: 'l', daikoku_jct: 'r', daikoku_futo: 'r', baybridge: 'r', tsubasa: 'r', tatsumi: 'r', shibaura: 'l', umihotaru: 'r', k1loop: 'l', yokohama: 'l', kawasaki: 'l', haneda: 'r' };
+const LABEL_SIDE = { daikoku_pa: 'l', daikoku_jct: 'r', daikoku_futo: 'r', baybridge: 'r', tsubasa: 'r', tatsumi: 'r', shibaura: 'l', umihotaru: 'r', k1loop: 'l', yokohama: 'l', kawasaki: 'l', haneda: 'r', c1: 'r' };
 
 const WATER = 'M216 100 L262 98 L300 112 L350 112 L392 80 L432 58 L470 96 L520 130 L552 162 L540 205 L522 246 L486 284 L452 322 L400 370 L352 418 L336 456 L292 478 L252 504 L292 528 L316 600 L160 600 L184 578 L148 560 L120 541 L128 470 L132 420 L124 372 L102 350 L96 336 L118 326 L134 312 L150 292 L190 276 L226 262 L248 236 L256 214 L238 186 L214 168 L204 148 L210 122 Z';
 

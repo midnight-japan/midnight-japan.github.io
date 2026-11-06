@@ -69,9 +69,10 @@ const ROADMAP = [
   ['0.7', 'done', ['weather', 'bigcity', 'faces']],
   ['0.8', 'done', ['loop', 'walls', 'umbrella']],
   ['0.9', 'done', ['nav', 'damage', 'talk', 'fuel']],
-  ['0.10', 'now', ['touge']],
-  ['1.0', 'next', ['03.c1', '07.cars']],
-  ['Later', 'later', ['03.events', '02.perf']],
+  ['0.10', 'done', ['touge']],
+  ['0.11', 'now', ['c1']],
+  ['1.0', 'next', ['07.cars', '03.events']],
+  ['Later', 'later', ['02.perf']],
 ];
 
 // ── Controls. Keep in sync with the game's input map. Values: keyboard keys (array → <kbd>), gamepad, touch i18n key.

@@ -180,6 +180,7 @@ function buildTile(T, lod, opts) {
   const asphaltCol = c => c <= S.PRIMARY ? [0.5, 0.5, 0.52] : c <= S.TERTIARY ? [0.55, 0.55, 0.56] : c === S.PED ? [0.95, 0.9, 0.85] : [0.6, 0.6, 0.6];
   const WHITE = [0.92, 0.92, 0.9], YEL = [0.95, 0.68, 0.12];
   for (const st of streets) {
+    if (st.flags & 16) continue; // ghost: a driveable expressway at street level (only keeps trees / props off it)
     const { pts, w, cls } = st; const hw = w / 2;
     const y = 0.035 + (6 - cls) * 0.003;
     const swW = (st.flags & 8) && cls <= S.TERTIARY ? (cls <= S.PRIMARY ? 3.5 : 2.5) : 0;
@@ -312,7 +313,7 @@ function buildTile(T, lod, opts) {
     const ty = P[k], x = P[k + 1] * D, z = P[k + 2] * D, hh = P[k + 3]; C(x, z);
     if (ty === PT.CHIMNEY || ty === PT.TOWER) { if (!mid) continue; const H = hh || (ty === PT.CHIMNEY ? 60 + rnd() * 60 : 30 + rnd() * 30); const red = ty === PT.CHIMNEY; for (let b = 0; b < (red ? 8 : 1); b++) bm.cyl(x, z, b * H / 8, red ? (b + 1) * H / 8 : H, red ? 2.2 - b * 0.12 : 1.4, 12, red ? (b % 2 ? [0.85, 0.22, 0.16] : [0.93, 0.93, 0.92]) : [0.7, 0.72, 0.74], [PLAIN, 0, 0, 0], b === 7, red ? 2.2 - (b + 1) * 0.12 : 1.0); cols.push([x, z, 2.2, 2.2, 0, -1, H]); gm.box(x, H + 0.6, z, 1, 0, 0.5, 0.5, 0.5, [1, 0.15, 0.1], [5, 0, 0, 0]); continue; }
     if (ty === PT.FUEL && mid) {
-      let best = null; for (const sg of segs.near(x, z)) { const dx = sg.bx - sg.ax, dz = sg.bz - sg.az, L = Math.hypot(dx, dz) || 1; const t = Math.max(0, Math.min(1, ((x - sg.ax) * dx + (z - sg.az) * dz) / (L * L))); const px = sg.ax + dx * t, pz = sg.az + dz * t; const d = Math.hypot(x - px, z - pz); if (!best || d < best.d) best = { d, tx: dx / L, tz: dz / L, px, pz, w: sg.w }; }
+      let best = null; for (const sg of segs.near(x, z)) { if (sg.st.flags & 16) continue; const dx = sg.bx - sg.ax, dz = sg.bz - sg.az, L = Math.hypot(dx, dz) || 1; const t = Math.max(0, Math.min(1, ((x - sg.ax) * dx + (z - sg.az) * dz) / (L * L))); const px = sg.ax + dx * t, pz = sg.az + dz * t; const d = Math.hypot(x - px, z - pz); if (!best || d < best.d) best = { d, tx: dx / L, tz: dz / L, px, pz, w: sg.w }; }
       if (best && best.d < 60) {
         const hl = 8, hw = 5.5; let nx = (x - best.px) / (best.d || 1), nz = (z - best.pz) / (best.d || 1); if (!best.d) { nx = -best.tz; nz = best.tx; }
         const set = Math.max(best.d, best.w / 2 + 3.5 + hw); // keep the canopy off the carriageway and the pavement
@@ -700,13 +701,13 @@ function buildTile(T, lod, opts) {
   { const G = T.g || []; for (let k = 0; k < G.length; k += 3) gates.push(G[k] * D, G[k + 1] * D, G[k + 2] / 100); }
 
   // ── OSM trees ──
-  if (mid) { const tr = T.t || []; for (let k = 0; k < tr.length; k += near ? 2 : 6) trees.push(tr[k] * D, tr[k + 1] * D, 0.8 + rnd() * 0.5, rnd() * 6.28, near ? Math.floor(rnd() * 3) : 3); }
+  if (mid) { const tr = T.t || []; for (let k = 0; k < tr.length; k += near ? 2 : 6) { const x = tr[k] * D, z = tr[k + 1] * D; const sd = segs.dist(x, z); if (sd && sd.s.st?.flags & 16 && sd.d < sd.s.w / 2 + 3) continue; trees.push(x, z, 0.8 + rnd() * 0.5, rnd() * 6.28, near ? Math.floor(rnd() * 3) : 3); } }
 
   const rails = [], stations = [];
   if (mid) for (const a of T.r || []) { if (a.length < 6) continue; const o = [a[0], a[1] * D]; for (let k = 2; k < a.length; k += 2) o.push(Math.round(a[k] * D * 10) / 10, Math.round(a[k + 1] * D * 10) / 10); rails.push(o); }
   { const P2 = T.p || []; for (let k = 0; k < P2.length; k += 4) if (P2[k] === PT.STATION) stations.push(P2[k + 1] * D, P2[k + 2] * D); }
   const net = [];
-  if (mid) for (const st of streets) { if (st.cls >= S.SERVICE || st.pts.length < 2) continue; const a = [st.cls, st.w, st.flags & 2 ? 1 : 0]; for (const [x, z] of st.pts) a.push(Math.round(x * 10) / 10, Math.round(z * 10) / 10); net.push(a); }
+  if (mid) for (const st of streets) { if (st.cls >= S.SERVICE || st.pts.length < 2 || st.flags & 16) continue; const a = [st.cls, st.w, st.flags & 2 ? 1 : 0]; for (const [x, z] of st.pts) a.push(Math.round(x * 10) / 10, Math.round(z * 10) / 10); net.push(a); }
   const out = { runways, gates, rails, stations, net, sigs, land: landF.out(), bm: bm.out(), pm: pm.out(), gm: gm.out(), sg: sg.out(), road: road.out(), walk: walk.out(), paint: paint.out(), wires: wires.out(), trees: trees.out(), cols, lamps, water, bridges, ground: {} };
   for (const c in ground) out.ground[c] = ground[c].out();
   return out;

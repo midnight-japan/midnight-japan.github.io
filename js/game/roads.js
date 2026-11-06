@@ -7,6 +7,7 @@ import { mergeGeometries } from 'three/addons/utils/BufferGeometryUtils.js';
 import { surface, weather } from './textures.js';
 import { MAP } from '../../data/map-daikoku.js';
 import { HAKONE } from '../../data/map-hakone.js';
+import { C1 } from '../../data/map-c1.js';
 
 const LANE = 3.5;
 const UV_WRAP = 600; // metres; texture v coordinates restart every 600 m (all tile sizes divide it)
@@ -37,7 +38,7 @@ export const DECK_Z = PA.cz - 80; // legacy export
 // lanesF: lanes in point order (on the LEFT of the centreline); lanesB: opposite direction. median: gap between directions.
 // partner/edge: one-way roads that end at the map edge (K5 decks) → the player is turned onto the partner road there.
 export const UMI_LOTS = [];
-export const ROAD_DEFS = [...MAP.roads, ...umihotaruRamps(), HAKONE.road];
+export const ROAD_DEFS = [...MAP.roads, ...umihotaruRamps(), HAKONE.road, ...C1.roads];
 
 // ── Umihotaru PA (海ほたる): the Aqua-Line runs along the island on the surface and under the ship-shaped PA building.
 // Each carriageway gets its own surface lot on its left (Japan: exits on the left) with an entry and an exit ramp.

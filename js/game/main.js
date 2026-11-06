@@ -218,6 +218,8 @@ class Game {
       if (region === 'bay') { const r = net.byId.bayshore, sp = this.world.bridgeSpan; const s = sp ? Math.max(50, sp.s0 - 250) : r.length * 0.2; const L = r.lanes.filter(l => l.dir === 1).sort((a, b) => b.lat - a.lat)[0]; return at(r, s, L.lat); }
       // K1 Yokohane Line just after Namamugi JCT, heading for Yokohama Station / Minato Mirai (the Yokohama loop)
       // Hakone Turnpike: at the Odawara toll gate, heading up the mountain
+      // C1 Inner Circular Route (inner loop), central Tokyo
+      if (region === 'c1' && net.byId.c1_in_a) { const r = net.byId.c1_in_a; const L = r.lanes.sort((a, b) => b.lat - a.lat)[0]; return at(r, 200, L.lat); }
       if (region === 'hakone' && net.byId.hakone_tp) { const r = net.byId.hakone_tp; const L = r.lanes.filter(l => l.dir === 1).sort((a, b) => b.lat - a.lat)[0]; return at(r, 140, L.lat); }
       if (region === 'k1' && net.byId.k1) { const r = net.byId.k1; const L = r.lanes.filter(l => l.dir === 1).sort((a, b) => b.lat - a.lat)[0]; return at(r, 1300, L.lat); }
       if (region === 'umi') { const r = net.byId.umi_in_e || net.byId.umi_in_w; return at(r, Math.max(2, r.length - 10), 0); }

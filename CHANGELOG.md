@@ -1,9 +1,10 @@
 # 📜 MIDNIGHT JAPAN 업데이트 기록 · Changelog
 
-현재 버전 · Current: **v0.10.0** · [▶ 웹에서 플레이](https://midnight-japan.github.io/) · [🌐 업데이트 페이지](https://midnight-japan.github.io/changelog.html)
+현재 버전 · Current: **v0.11.0** · [▶ 웹에서 플레이](https://midnight-japan.github.io/) · [🌐 업데이트 페이지](https://midnight-japan.github.io/changelog.html)
 
 | 버전 | 날짜 | 이름 | 요약 |
 |---|---|---|---|
+| [v0.11.0](#v0110--inner-circular-2026-11-06) | 2026-11-06 | Inner Circular | C1 도심환상선 개통 — 도쿄 도심의 터널과 고가를 도는 내·외회선 루프, 주변 도쿄 도심 시가지. |
 | [v0.10.0](#v0100--touge-2026-11-06) | 2026-11-06 | Touge | 하코네 턴파이크 개통 — 실제 고도 데이터로 만든 산길 13.5km, 정상 다이칸야마 전망 주차장까지. |
 | [v0.9.1](#v091--hill-start-2026-11-06) | 2026-11-06 | Hill Start | 오르막 출발 버그 수정, NPC 차량 엔진음, 차 위로 점프, 다이코쿠 부두·PA를 실제처럼 채움. |
 | [v0.9.0](#v090--real-drive-2026-11-06) | 2026-11-06 | Real Drive | 대규모 업데이트 — 차체 파손, 스키드마크·타이어 연기, 내비게이션과 텔레포트, 사고 상대·경찰과의 선택형 대화, 일본식 차선 주행과 시간대별 교통량, 터널 갱문과 표지판, 주유소 165곳, 지명 병기. |
@@ -25,6 +26,24 @@
 | [v0.2.0](#v020--bayshore-2026-11-05) | 2026-11-05 | Bayshore | 수도고속 완간선을 따라 하네다까지, 도쿄만 아쿠아라인 해저터널을 지나 우미호타루 PA까지. 실제 3D 차량 모델과 열리는 보닛도 들어왔어요. |
 | [v0.1.1](#v011--one-click-2026-11-04) | 2026-11-04 | One Click | 링크 하나로 바로 플레이. 크롬에서 공식 사이트 주소만 열면 설치 없이 실행돼요. |
 | [v0.1.0](#v010--first-meet-2026-11-04) | 2026-11-04 | First Meet | 첫 공개 버전. 다이코쿠 JCT·PA와 다이코쿠 부두 일대를 3D로 구현했습니다. |
+
+---
+
+## v0.11.0 — Inner Circular (2026-11-06)
+
+> C1 도심환상선 개통 — 도쿄 도심의 터널과 고가를 도는 내·외회선 루프, 주변 도쿄 도심 시가지.
+> The C1 Inner Circular Route opens: both loops through central Tokyo’s tunnels and viaducts, with the city around them.
+
+**✨ 추가 · New**
+
+- C1 도심환상선: 내회선·외회선 각 약 14km — 지하 터널(일반 -9m, 깊은 구간 -14m), 掘割(지면 아래 트렌치), 고층 빌딩 사이 고가(7·13·19m 3층), OpenStreetMap 실제 노선<br><sub>C1 Inner Circular Route: inner and outer loops of about 14 km each — tunnels (−9 m, deep sections −14 m), open cuttings, and viaducts at three levels (7 / 13 / 19 m) between the towers, from real OpenStreetMap routes</sub>
+- 도쿄 도심 시가지: C1 주변 1.8km(긴자·시오도메·가스미가세키·간다…) 실제 건물 — 도시 전체 건물 54만 6천 채, 타일 637개<br><sub>Central Tokyo: the real buildings within 1.8 km of the C1 (Ginza, Shiodome, Kasumigaseki, Kanda …) — 546,000 buildings across the whole city in 637 tiles</sub>
+- 스폰 지점 「C1 도심환상선」, 지역 페이지에 C1·하코네 추가<br><sub>A “C1 Inner Circular” spawn point; C1 and Hakone added to the regions page</sub>
+
+**🐞 수정 · Fixed**
+
+- 지면 높이 근처를 지나는 고속도로 위에 공원 나무·가로등이 겹쳐 자라던 문제<br><sub>Park trees and street lights no longer grow on top of expressways running near street level</sub>
+- 지상 높이의 고속도로에서 위치 표시가 근처 지명(예: 東京湾)으로 잘못 나오던 문제<br><sub>On expressways near ground level the location label showed a nearby place (e.g. Tokyo Bay) instead of the road</sub>
 
 ---
 

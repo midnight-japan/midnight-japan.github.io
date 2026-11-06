@@ -161,7 +161,7 @@ export class World {
     if (inHakone(x, z)) { const L = this.hakone?.lotAt(x, z); if (L) return L.name === '大観山' ? '大観山 · 箱根' : L.name + ' · 箱根ターンパイク'; const h = this.net.query(x, z, y); return h.road ? h.road.name : '箱根'; }
     const pl = placeAt(x, z), area = pl ? pl.name : '';
     const withArea = n => area && area !== n ? `${n} · ${area}` : n;
-    if (y > 3 || y < -1) { const h = this.net.query(x, z, y); if (h.road) return withArea(h.road.name); }
+    { const h = this.net.query(x, z, y); if (h.road && (h.road.kind !== 'local' || y > 3 || y < -1)) return withArea(h.road.name); }
     if (PA.inLot(x, z, 8)) return '大黒PA · 鶴見区大黒ふ頭';
     if (inUmihotaru(x, z)) return '海ほたるPA · 東京湾アクアライン';
     if (MAIN && inPoly(x, z, MAIN.pts)) return '鶴見区 大黒ふ頭';

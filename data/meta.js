@@ -1,8 +1,19 @@
 // Shared game metadata: version, changelog, regions. Update VERSION + CHANGELOG on every release.
-export const GAME = { title: 'MIDNIGHT JAPAN', titleJa: 'ミッドナイト・ジャパン', version: '0.10.0', build: '2026.11.06' };
+export const GAME = { title: 'MIDNIGHT JAPAN', titleJa: 'ミッドナイト・ジャパン', version: '0.11.0', build: '2026.11.06' };
 
 // Newest first. type: new | change | fix | known
 export const CHANGELOG = [
+  {
+    version: '0.11.0', date: '2026-11-06', codename: 'Inner Circular',
+    summary: { ko: 'C1 도심환상선 개통 — 도쿄 도심의 터널과 고가를 도는 내·외회선 루프, 주변 도쿄 도심 시가지.', ja: 'C1都心環状線開通——東京都心のトンネルと高架を巡る内回り・外回りのループと、周囲の都心の街並み。', en: 'The C1 Inner Circular Route opens: both loops through central Tokyo’s tunnels and viaducts, with the city around them.' },
+    items: [
+      { type: "new", ko: "C1 도심환상선: 내회선·외회선 각 약 14km — 지하 터널(일반 -9m, 깊은 구간 -14m), 掘割(지면 아래 트렌치), 고층 빌딩 사이 고가(7·13·19m 3층), OpenStreetMap 실제 노선", ja: "C1都心環状線：内回り・外回り各約14km——地下トンネル（通常-9m、深い区間-14m）、掘割、高層ビルの間の高架（7・13・19mの3層）、OpenStreetMapの実在路線", en: "C1 Inner Circular Route: inner and outer loops of about 14 km each — tunnels (−9 m, deep sections −14 m), open cuttings, and viaducts at three levels (7 / 13 / 19 m) between the towers, from real OpenStreetMap routes" },
+      { type: "new", ko: "도쿄 도심 시가지: C1 주변 1.8km(긴자·시오도메·가스미가세키·간다…) 실제 건물 — 도시 전체 건물 54만 6천 채, 타일 637개", ja: "東京都心の街並み：C1の周囲1.8km（銀座・汐留・霞が関・神田…）の実在建物——街全体で建物54万6千棟、637タイル", en: "Central Tokyo: the real buildings within 1.8 km of the C1 (Ginza, Shiodome, Kasumigaseki, Kanda …) — 546,000 buildings across the whole city in 637 tiles" },
+      { type: "new", ko: "스폰 지점 「C1 도심환상선」, 지역 페이지에 C1·하코네 추가", ja: "スポーン地点「C1 都心環状線」、地域ページにC1・箱根を追加", en: "A “C1 Inner Circular” spawn point; C1 and Hakone added to the regions page" },
+      { type: "fix", ko: "지면 높이 근처를 지나는 고속도로 위에 공원 나무·가로등이 겹쳐 자라던 문제", ja: "地面の高さを通る高速道路の上に公園の木や街灯が重なっていた問題", en: "Park trees and street lights no longer grow on top of expressways running near street level" },
+      { type: "fix", ko: "지상 높이의 고속도로에서 위치 표시가 근처 지명(예: 東京湾)으로 잘못 나오던 문제", ja: "地面の高さの高速道路で現在地表示が近くの地名（例：東京湾）になっていた問題", en: "On expressways near ground level the location label showed a nearby place (e.g. Tokyo Bay) instead of the road" }
+    ]
+  },
   {
     version: '0.10.0', date: '2026-11-06', codename: 'Touge',
     summary: { ko: '하코네 턴파이크 개통 — 실제 고도 데이터로 만든 산길 13.5km, 정상 다이칸야마 전망 주차장까지.', ja: '箱根ターンパイク開通——実際の標高データで作った山道13.5km、山頂の大観山駐車場まで。', en: 'The Hakone Turnpike opens: 13.5 km of mountain road built from real elevation data, up to the Daikanyama summit car park.' },
@@ -371,6 +382,10 @@ export const REGIONS = [
   { id: 'haneda', status: 'live', name: { ko: '하네다 공항', ja: '羽田空港', en: 'Haneda Airport' }, pref: '東京都大田区',
     desc: { ko: '실제 활주로와 주기장, 이착륙하는 여객기. 만안선 다마가와 터널로 연결.', ja: '実在の滑走路とスポット、離着陸する旅客機。湾岸線の多摩川トンネルで接続。', en: 'The real runways and stands with airliners landing and taking off, reached through the Bayshore’s Tama River Tunnel.' } },
   { id: 'tsubasa', status: 'live', name: { ko: '츠루미 츠바사 다리', ja: '鶴見つばさ橋', en: 'Tsurumi Tsubasa Bridge' }, pref: '首都高速 湾岸線', desc: { ko: '하네다로 이어지는 완간선의 1주 사장교. 밤이면 케이블 조명이 바다 위에 떠요.', ja: '羽田へ続く湾岸線の一本柱斜張橋。夜はケーブルの照明が海に浮かぶ。', en: 'The single-tower cable-stayed bridge on the Bayshore Route toward Haneda; its cables glow over the sea at night.' } },
+  { id: 'c1', status: 'live', name: { ko: 'C1 도심환상선', ja: 'C1 都心環状線', en: 'C1 Inner Circular' }, pref: '東京都千代田区・中央区・港区',
+    desc: { ko: '도쿄 도심을 도는 약 14km 루프 — 내·외회선, 지하 터널, 掘割(트렌치), 고층 빌딩 사이 고가.', ja: '東京都心を巡る約14kmのループ——内回り・外回り、地下トンネル、掘割、高層ビルの間の高架。', en: 'The ~14 km loop round central Tokyo — inner and outer loops, tunnels, open cuttings and viaducts between the towers.' } },
+  { id: 'hakone', status: 'live', name: { ko: '하코네 턴파이크', ja: '箱根ターンパイク', en: 'Hakone Turnpike' }, pref: '神奈川県小田原市・箱根町',
+    desc: { ko: '오다와라에서 다이칸야마(990m)까지 13.5km 토우게. 실제 고도 데이터로 만든 산길.', ja: '小田原から大観山（990m）まで13.5kmの峠道。実際の標高データで作った山道。', en: 'A 13.5 km touge from Odawara up to Daikanyama (990 m), built from real elevation data.' } },
   { id: 'tatsumi', status: 'planned', name: { ko: '타츠미 PA', ja: '辰巳第一PA', en: 'Tatsumi PA' }, pref: '東京都江東区', desc: { ko: '예정', ja: '予定', en: 'Planned' } },
   { id: 'shibaura', status: 'planned', name: { ko: '시바우라 PA', ja: '芝浦PA', en: 'Shibaura PA' }, pref: '東京都港区', desc: { ko: '예정', ja: '予定', en: 'Planned' } },
   { id: 'umihotaru', status: 'live', name: { ko: '우미호타루 PA', ja: '海ほたるPA', en: 'Umihotaru PA' }, pref: '東京湾アクアライン', desc: { ko: '도쿄만 한가운데 배 모양 PA. 해저 터널을 빠져나오면 바로 나와요.', ja: '東京湾の真ん中に浮かぶ船の形のPA。海底トンネルを抜けるとすぐ。', en: 'The ship-shaped PA in the middle of Tokyo Bay, right where the undersea tunnel surfaces.' } },

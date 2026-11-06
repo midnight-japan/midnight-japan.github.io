@@ -18,6 +18,7 @@ const N = {
   '汐留': ['시오도메', 'Shiodome'], '銀座': ['긴자', 'Ginza'], '海ほたるPA': ['우미호타루 PA', 'Umihotaru PA'], '風の塔': ['가제노토', 'Kaze-no-Tō'],
   '木更津': ['기사라즈', 'Kisarazu'], '木更津金田': ['기사라즈 가네다', 'Kisarazu-Kaneda'], '東京湾': ['도쿄만', 'Tokyo Bay'], '大黒PA': ['다이코쿠 PA', 'Daikoku PA'],
   'アネスト岩田ターンパイク箱根': ['하코네 턴파이크', 'Hakone Turnpike'], '大観山': ['다이칸야마', 'Daikanyama'], '箱根': ['하코네', 'Hakone'], '大観山 · 箱根': ['다이칸야마 · 하코네', 'Daikanyama · Hakone'], '見晴らし駐車帯 · 箱根ターンパイク': ['전망 주차대 · 하코네 턴파이크', 'Viewpoint lay-by · Hakone Turnpike'],
+  '首都高速都心環状線（内回り）': ['수도고속 도심환상선 (내회선)', 'Shuto C1 Inner Circular (inner loop)'], '首都高速都心環状線（外回り）': ['수도고속 도심환상선 (외회선)', 'Shuto C1 Inner Circular (outer loop)'],
   '首都高速湾岸線': ['수도고속 만안선', 'Shuto Bayshore Route'], '東京湾アクアライン': ['도쿄만 아쿠아라인', 'Tokyo Bay Aqua-Line'], '首都高速K5大黒線': ['수도고속 K5 다이코쿠선', 'Shuto K5 Daikoku Route'],
   '首都高速K1横羽線': ['수도고속 K1 요코하네선', 'Shuto K1 Yokohane Route'], '首都高速K3狩場線': ['수도고속 K3 가리바선', 'Shuto K3 Kariba Route'],
   '大黒PA 入口ランプ': ['다이코쿠 PA 진입 램프', 'Daikoku PA entry ramp'], '大黒PA 出口ランプ': ['다이코쿠 PA 진출 램프', 'Daikoku PA exit ramp'],
