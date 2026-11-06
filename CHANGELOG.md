@@ -1,9 +1,10 @@
 # 📜 MIDNIGHT JAPAN 업데이트 기록 · Changelog
 
-현재 버전 · Current: **v0.7.0** · [▶ 웹에서 플레이](https://midnight-japan.github.io/) · [🌐 업데이트 페이지](https://midnight-japan.github.io/changelog.html)
+현재 버전 · Current: **v0.7.1** · [▶ 웹에서 플레이](https://midnight-japan.github.io/) · [🌐 업데이트 페이지](https://midnight-japan.github.io/changelog.html)
 
 | 버전 | 날짜 | 이름 | 요약 |
 |---|---|---|---|
+| [v0.7.1](#v071--shakedown-2026-11-06) | 2026-11-06 | Shakedown | 버그 수정 — PA에서 시작하면 바로 출발할 수 있고, 여객기 자세·전철 정차·보행자 회피가 자연스러워졌어요. |
 | [v0.7.0](#v070--downpour-2026-11-06) | 2026-11-06 | Downpour | 날씨가 생겼어요 — 비 오는 밤의 젖은 노면이 불빛을 반사하고, 그립이 줄고, 빗소리가 들려요. 도시는 고속도로 주변 5km(건물 35만 8천 채)로 넓어졌어요. |
 | [v0.6.1](#v061--faces-2026-11-06) | 2026-11-06 | Faces | 사람 얼굴 조형, 실제 3D 모델만 쓰는 NPC 차량, 기본 그래픽(높음)에서 프레임 약 35% 향상. |
 | [v0.6.0](#v060--rush-hour-2026-11-06) | 2026-11-06 | Rush Hour | 도시가 움직이기 시작했어요 — 실제 노선을 달리는 전철, 인도를 걷는 사람들, 하네다 공항에 내리고 뜨는 여객기, 걸어 들어갈 수 있는 PA 실내. |
@@ -18,6 +19,21 @@
 | [v0.2.0](#v020--bayshore-2026-11-05) | 2026-11-05 | Bayshore | 수도고속 완간선을 따라 하네다까지, 도쿄만 아쿠아라인 해저터널을 지나 우미호타루 PA까지. 실제 3D 차량 모델과 열리는 보닛도 들어왔어요. |
 | [v0.1.1](#v011--one-click-2026-11-04) | 2026-11-04 | One Click | 링크 하나로 바로 플레이. 크롬에서 공식 사이트 주소만 열면 설치 없이 실행돼요. |
 | [v0.1.0](#v010--first-meet-2026-11-04) | 2026-11-04 | First Meet | 첫 공개 버전. 다이코쿠 JCT·PA와 다이코쿠 부두 일대를 3D로 구현했습니다. |
+
+---
+
+## v0.7.1 — Shakedown (2026-11-06)
+
+> 버그 수정 — PA에서 시작하면 바로 출발할 수 있고, 여객기 자세·전철 정차·보행자 회피가 자연스러워졌어요.
+> Bug fixes: you can drive straight off from the PA, and airliner attitude, train stops and pedestrians stepping aside now behave properly.
+
+**🐞 수정 · Fixed**
+
+- PA 스폰: 앞차 줄을 보고 주차된 채 시작해 앞으로 나갈 수 없던 문제 — 일본식으로 후진 주차된 상태(앞이 통로 쪽)로 시작<br><sub>PA spawn: you started nose-in against the next row and could not drive forward — you now start backed in, nose to the aisle, as people park in Japan</sub>
+- 여객기: 남북 이외 방향의 활주로에서 이착륙할 때 기체가 옆으로 기울던 문제<br><sub>Airliners: planes on runways not aligned north–south rolled sideways instead of pitching on take-off and landing</sub>
+- 여객기를 지울 때 형상·재질을 해제해 장시간 플레이 시 메모리가 늘던 문제<br><sub>Airliners now free their geometry and materials when removed, so memory no longer grows over long sessions</sub>
+- 전철: 옆 노선의 역 근처를 지날 때 이유 없이 감속하던 문제<br><sub>Trains: they no longer slow down for stations on a neighbouring line</sub>
+- 보행자: 다가오는 차를 피해 비켜서는 동작이 실제로 보이도록 수정(이후 인도로 복귀)<br><sub>Pedestrians: stepping aside for an approaching car now actually shows, and they drift back onto the pavement afterwards</sub>
 
 ---
 

@@ -1,8 +1,23 @@
 // Shared game metadata: version, changelog, regions. Update VERSION + CHANGELOG on every release.
-export const GAME = { title: 'MIDNIGHT JAPAN', titleJa: 'ミッドナイト・ジャパン', version: '0.7.0', build: '2026.11.06' };
+export const GAME = { title: 'MIDNIGHT JAPAN', titleJa: 'ミッドナイト・ジャパン', version: '0.7.1', build: '2026.11.06' };
 
 // Newest first. type: new | change | fix | known
 export const CHANGELOG = [
+  {
+    version: '0.7.1', date: '2026-11-06', codename: 'Shakedown',
+    summary: {
+      ko: '버그 수정 — PA에서 시작하면 바로 출발할 수 있고, 여객기 자세·전철 정차·보행자 회피가 자연스러워졌어요.',
+      ja: 'バグ修正——PAからすぐ発進でき、旅客機の姿勢・電車の停車・歩行者の回避が自然に。',
+      en: 'Bug fixes: you can drive straight off from the PA, and airliner attitude, train stops and pedestrians stepping aside now behave properly.'
+    },
+    items: [
+      { type: 'fix', ko: 'PA 스폰: 앞차 줄을 보고 주차된 채 시작해 앞으로 나갈 수 없던 문제 — 일본식으로 후진 주차된 상태(앞이 통로 쪽)로 시작', ja: 'PAスポーン：前の列に向いて停まった状態で始まり前進できなかった問題——日本式のバック駐車（前が通路側）で開始', en: 'PA spawn: you started nose-in against the next row and could not drive forward — you now start backed in, nose to the aisle, as people park in Japan' },
+      { type: 'fix', ko: '여객기: 남북 이외 방향의 활주로에서 이착륙할 때 기체가 옆으로 기울던 문제', ja: '旅客機：南北以外の滑走路で離着陸すると機体が横に傾いていた問題', en: 'Airliners: planes on runways not aligned north–south rolled sideways instead of pitching on take-off and landing' },
+      { type: 'fix', ko: '여객기를 지울 때 형상·재질을 해제해 장시간 플레이 시 메모리가 늘던 문제', ja: '旅客機を消すときに形状・マテリアルを解放し、長時間プレイでメモリが増えていた問題を修正', en: 'Airliners now free their geometry and materials when removed, so memory no longer grows over long sessions' },
+      { type: 'fix', ko: '전철: 옆 노선의 역 근처를 지날 때 이유 없이 감속하던 문제', ja: '電車：隣の路線の駅の近くを通るときに理由なく減速していた問題', en: 'Trains: they no longer slow down for stations on a neighbouring line' },
+      { type: 'fix', ko: '보행자: 다가오는 차를 피해 비켜서는 동작이 실제로 보이도록 수정(이후 인도로 복귀)', ja: '歩行者：近づく車を避けて脇によける動きが実際に見えるよう修正（その後歩道へ戻る）', en: 'Pedestrians: stepping aside for an approaching car now actually shows, and they drift back onto the pavement afterwards' },
+    ]
+  },
   {
     version: '0.7.0', date: '2026-11-06', codename: 'Downpour',
     summary: {

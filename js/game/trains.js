@@ -87,7 +87,7 @@ export class Trains {
       let target = tr.vMax;
       if (tr.stop > 0) { tr.stop -= dt; target = 0; if (tr.stop <= 0) tr.leave = 6; }
       else if (!(tr.leave > 0)) {
-        for (const st of R.stations) { const dx = st[0] - head[0], dz = st[1] - head[2], d = Math.hypot(dx, dz); if (d > 170 || st === tr.lastSt) continue; const hd = R.at(tr.c, tr.s); const fwd = (dx * hd.dx + dz * hd.dz) * tr.dir; if (fwd < -5) continue; target = Math.min(target, Math.max(0, Math.sqrt(Math.max(0, 2 * 0.9 * Math.max(0, d - 8))))); if (d < 10) { tr.stop = 18 + Math.random() * 10; tr.lastSt = st; } }
+        for (const st of R.stations) { const dx = st[0] - head[0], dz = st[1] - head[2], d = Math.hypot(dx, dz); if (d > 170 || st === tr.lastSt) continue; const hd = R.at(tr.c, tr.s); const fwd = (dx * hd.dx + dz * hd.dz) * tr.dir; if (fwd < -5 || Math.abs(dx * hd.dz - dz * hd.dx) > 14) continue; /* ahead, and on this line (not a parallel one) */ target = Math.min(target, Math.max(0, Math.sqrt(Math.max(0, 2 * 0.9 * Math.max(0, d - 8))))); if (d < 10) { tr.stop = 18 + Math.random() * 10; tr.lastSt = st; } }
       }
       if (tr.leave > 0) tr.leave -= dt;
       tr.v += Math.max(-1.2, Math.min(0.8, target - tr.v)) * dt;

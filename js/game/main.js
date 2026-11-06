@@ -193,7 +193,8 @@ class Game {
     const spots = this.world.parkingSpots.filter(s => !s.taken && s.size === 's' && s.pos.x > 55);
     const spot = spots[Math.floor(spots.length / 2)] || this.world.parkingSpots.find(s => !s.taken);
     spot.taken = true; this.mySpot = spot;
-    return spot;
+    // backed in, nose to the aisle (as people park in Japan) — a nose-in spawn faces the next row and can't drive off
+    return { ...spot, yaw: spot.yaw + Math.PI };
   }
   buildPlayerCar(id) {
     const car = CAR_BY_ID[id]; const S = this.carSetup(id);

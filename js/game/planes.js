@@ -39,7 +39,7 @@ function airliner(tailColor) {
   g.userData.strobe = [spr(0xffffff, 5, -31.2, -0.8, -10.5), spr(0xffffff, 5, 31.2, -0.8, -10.5), spr(0xffffff, 4, 0, 1.2, -32)];
   g.userData.beacon = [spr(0xff2a10, 3, 0, 3.2, 0), spr(0xff2a10, 3, 0, -3.2, 2)];
   g.userData.land = [spr(0xfff4dc, 16, -4, -1.6, 6), spr(0xfff4dc, 16, 4, -1.6, 6), spr(0xfff4dc, 10, 0, -4.2, 19)];
-  g.scale.setScalar(0.98);
+  g.scale.setScalar(0.98); g.rotation.order = 'YXZ'; // yaw first, then pitch about the plane's own wing axis
   return g;
 }
 
@@ -71,7 +71,7 @@ export class Planes {
       if (dH < 4500 && !this.parked.length) {
         const stands = this.data.gates.slice().sort((a, b) => Math.hypot(a[0] - focus.x, a[1] - focus.z) - Math.hypot(b[0] - focus.x, b[1] - focus.z)).filter((s, i, arr) => !arr.slice(0, i).some(o => Math.hypot(o[0] - s[0], o[1] - s[1]) < 45)).slice(0, { low: 4, medium: 8, high: 14, ultra: 20 }[this.g.quality] ?? 8);
         for (const [x, z, yaw] of stands) { const m = airliner(TAIL[Math.floor(Math.random() * TAIL.length)]); m.position.set(x, 5.4, z); m.rotation.y = yaw; this.g.scene.add(m); this.parked.push(m); m.userData.land.forEach(s => (s.visible = false)); }
-      } else if (dH > 5500 && this.parked.length) { for (const m of this.parked) this.g.scene.remove(m); this.parked.length = 0; }
+      } else if (dH > 5500 && this.parked.length) { for (const m of this.parked) this.free(m); this.parked.length = 0; }
     }
     // flight operations while within sight of Haneda
     this.next -= dt;
@@ -109,5 +109,7 @@ export class Planes {
     const loud = this.flying.reduce((a, f) => Math.max(a, f.loud || 0), 0);
     this.g.audio?.setJet?.(loud);
   }
-  drop(f) { this.g.scene.remove(f.m); this.flying.splice(this.flying.indexOf(f), 1); }
+  drop(f) { this.free(f.m); this.flying.splice(this.flying.indexOf(f), 1); }
+  // each airliner owns its geometries/materials (the glow texture is shared and cached) — free them with the model
+  free(m) { this.g.scene.remove(m); m.traverse(o => { o.geometry?.dispose(); o.material?.dispose(); }); }
 }
