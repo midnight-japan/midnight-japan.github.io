@@ -109,8 +109,8 @@ class Game {
     this.composer.addPass(new RenderPass(this.scene, this.camera));
     this.bloom = new UnrealBloomPass(new THREE.Vector2(innerWidth / 2, innerHeight / 2), 0.4, 0.45, 0.9);
     this.bloom.enabled = this.settings.bloom && this.quality !== 'low';
-    // ambient occlusion: contact shadows under cars, kerbs, barriers (high/ultra)
-    if (this.quality === 'high' || this.quality === 'ultra') {
+    // ambient occlusion: contact shadows under cars, kerbs, barriers (ultra — it costs about a third of the frame)
+    if (this.quality === 'ultra') {
       try {
         const ao = new GTAOPass(this.scene, this.camera, innerWidth, innerHeight);
         ao.updateGtaoMaterial({ radius: 0.9, distanceExponent: 1.2, thickness: 1.2, scale: 1.1, samples: this.quality === 'ultra' ? 16 : 10, distanceFallOff: 1, screenSpaceRadius: false });

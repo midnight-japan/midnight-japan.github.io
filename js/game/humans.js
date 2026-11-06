@@ -551,6 +551,14 @@ function headPt(P, nx, ny, nz, extra = 0) {
   }
   // flatter face plane & cheek bones
   if (nz > 0) { z -= 0.012 * nz * nz * Math.abs(nx); x *= 1 + 0.03 * nz * (1 - Math.abs(ny)); }
+  // sculpted features (metres): nose bridge + tip, brow ridge, eye sockets, cheekbones, lips, chin
+  if (nz > 0.2) {
+    const g = (a, b) => Math.exp(-a * a - b * b), ax2 = Math.abs(nx);
+    const f = 0.020 * g(nx / 0.085, (ny + 0.2) / 0.16) + 0.009 * g(nx / 0.055, (ny - 0.04) / 0.13)
+      + 0.006 * g((ny - 0.22) / 0.055, 0) * (1 - nx * nx) - 0.008 * g((ax2 - 0.34) / 0.12, (ny - 0.02) / 0.09)
+      + 0.004 * g((ax2 - 0.55) / 0.12, (ny + 0.1) / 0.1) + 0.0045 * g(nx / 0.17, (ny + 0.55) / 0.07) + 0.006 * g(nx / 0.24, (ny + 0.84) / 0.1);
+    z += f * Math.min(1, (nz - 0.2) * 2.5);
+  }
   return [x + P.headC[0], y + P.headC[1], z + P.headC[2]];
 }
 function headDir(th, ph) { return [Math.sin(th) * Math.sin(ph), Math.cos(th), Math.sin(th) * Math.cos(ph)]; }
@@ -973,7 +981,7 @@ function buildHead(P, o) {
   const parts = [];
   // neck + head
   parts.push(lathe(limbProfile(0.13, () => P.neckR - 0.003, 0, 1, 0, false, false, 1).map(([r, y]) => [r, y + 0.11]), 8, { color: o.skin, rough: 0.55 }));
-  parts.push(grid(12, 9, (u, v) => {
+  parts.push(grid(30, 22, (u, v) => {
     const d = headDir(v * Math.PI, TAU * u);
     return headPt(P, d[0], d[1], d[2], 0);
   }, { closed: true, color: o.skin, rough: 0.5 }));
@@ -992,7 +1000,7 @@ function buildHead(P, o) {
     // eyelid crease / upper lash line
     parts.push(onFace(paint(new THREE.SphereGeometry(1, 4, 3), shade(o.skin, 0.5), 0.6).scale(0.0145, 0.0022, 0.003), P, sd * 0.35, 0.065, 0.002, sd * -0.08));
   }
-  parts.push(onFace(paint(new THREE.SphereGeometry(1, 5, 3), shade(o.skin, 0.96), 0.5).scale(0.011, 0.022, 0.016), P, 0, -0.22, -0.005, 0));
+  parts.push(onFace(paint(new THREE.SphereGeometry(1, 6, 4), shade(o.skin, 0.97), 0.45).scale(0.008, 0.007, 0.006), P, 0, -0.26, -0.002, 0)); // nose tip
   parts.push(onFace(paint(new THREE.SphereGeometry(1, 6, 3), lip, 0.45).scale(0.018, 0.004, 0.004), P, 0, -0.56, 0.0, 0));
   parts.push(...buildHair(P, o));
   parts.push(...buildAccessory(P, o));

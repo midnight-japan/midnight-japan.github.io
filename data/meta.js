@@ -1,8 +1,22 @@
 // Shared game metadata: version, changelog, regions. Update VERSION + CHANGELOG on every release.
-export const GAME = { title: 'MIDNIGHT JAPAN', titleJa: 'ミッドナイト・ジャパン', version: '0.6.0', build: '2026.11.06' };
+export const GAME = { title: 'MIDNIGHT JAPAN', titleJa: 'ミッドナイト・ジャパン', version: '0.6.1', build: '2026.11.06' };
 
 // Newest first. type: new | change | fix | known
 export const CHANGELOG = [
+  {
+    version: '0.6.1', date: '2026-11-06', codename: 'Faces',
+    summary: {
+      ko: '사람 얼굴 조형, 실제 3D 모델만 쓰는 NPC 차량, 기본 그래픽(높음)에서 프레임 약 35% 향상.',
+      ja: '人の顔の造形、実車3DモデルだけのNPC車両、標準グラフィック（高）でフレームレート約35%向上。',
+      en: 'Sculpted faces, NPC traffic made only of real 3D car models, and about 35% more frames on the default High setting.'
+    },
+    items: [
+      { type: 'change', ko: '사람 얼굴: 콧대·코끝·눈두덩·광대·입술·턱을 머리 형태에 조형하고 머리 해상도 6배', ja: '人の顔：鼻筋・鼻先・眉骨・頬骨・唇・顎を頭部の形状に造形し、頭部の解像度を6倍に', en: 'Faces: nose bridge and tip, brow ridge, eye sockets, cheekbones, lips and chin are sculpted into the head, at six times the head resolution' },
+      { type: 'change', ko: '고속도로·시내·PA의 NPC 차량을 실제 3D 모델이 있는 차종으로만 구성(택시·크라운·리프·하이에이스·트럭·버스 등)', ja: '高速道路・市街地・PAのNPC車両を実車3Dモデルのある車種だけで構成（タクシー・クラウン・リーフ・ハイエース・トラック・バスなど）', en: 'NPC cars on the expressways, in the city and at the PA now use only cars with real 3D models (taxis, Crown, Leaf, HiAce, trucks, buses …)' },
+      { type: 'change', ko: '앰비언트 오클루전(GTAO)을 울트라 전용으로 — 높음 품질에서 프레임 약 35% 향상', ja: 'アンビエントオクルージョン（GTAO）をウルトラ専用に——高品質でフレームレート約35%向上', en: 'Ambient occlusion (GTAO) is now Ultra-only — about 35% more frames on High' },
+      { type: 'fix', ko: '여객기 항법등·충돌방지등이 날개 끝에 오도록 수정', ja: '旅客機の航法灯・衝突防止灯を翼端に修正', en: 'Airliner nav and strobe lights sit on the wingtips' },
+    ]
+  },
   {
     version: '0.6.0', date: '2026-11-06', codename: 'Rush Hour',
     summary: {

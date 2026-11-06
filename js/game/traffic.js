@@ -9,9 +9,10 @@ import { PA_RECT, PA, PA_LAYOUT } from './roads.js';
 const _pa = new THREE.Vector3(), _pb = new THREE.Vector3();
 const clamp = (x, a, b) => Math.max(a, Math.min(b, x));
 const lerp = (a, b, t) => a + (b - a) * t;
-const MEET_POOL = ['r34', 'r32', 'r33', 'r35', 's15', 'rps13', 'z33', 'gr86', 'ae86', 'jza80', 'a90', 'jzx100', 'fd3s', 'nd', 'na1', 'ek9', 'fl5', 'ap1', 'evo9', 'gdb', 'lfa', 'copen', 's660', 'altow', 'p911', 'e46', 'mustang', 'model3'];
-const CITY_POOL = ['prius', 'prius', 'prius', 'taxi', 'taxi', 'taxi', 'nbox', 'nbox', 'nbox', 'every', 'hiace', 'hiace', 'truck', 'crown', 'leaf', 'sakura', 'sakura', 'jimny', 'altow', 'model3', 'copen', 'gr86', 'bus'];
-const TRAFFIC_POOL = ['prius', 'prius', 'taxi', 'taxi', 'hiace', 'hiace', 'every', 'truck', 'truck', 'bus', 'crown', 'nbox', 'nbox', 'leaf', 'sakura', 'model3', 'jimny', 'altow', 'gr86', 'fl5', 'r35', 'a90', 'mustang'];
+const MEET_POOL = ['r34', 'r32', 'r33', 'r35', 's15', 'rps13', 'z33', 'gr86', 'ae86', 'jza80', 'a90', 'jzx100', 'fd3s', 'na1', 'ek9', 'fl5', 'evo9', 'gdb', 'lfa', 'p911', 'e46', 'mustang', 'model3', 'r34', 'jza80', 'fd3s'];
+const CITY_POOL = ['taxi', 'taxi', 'taxi', 'crown', 'crown', 'leaf', 'leaf', 'leaf', 'model3', 'hiace', 'hiace', 'hiace', 'truck', 'truck', 'jimny', 'jimny', 'altow', 'bus', 'gr86', 'ek9', 'jzx100', 'e46', 'z33'];
+// NPC traffic uses cars that have real 3D models (the procedural-only kei/hybrid models stay player-selectable)
+const TRAFFIC_POOL = ['taxi', 'taxi', 'crown', 'crown', 'leaf', 'leaf', 'model3', 'hiace', 'hiace', 'hiace', 'truck', 'truck', 'truck', 'bus', 'jimny', 'altow', 'gr86', 'fl5', 'r35', 'a90', 'mustang', 'jzx100', 'e46', 'ek9', 'z33', 'p911'];
 
 // Merge all static meshes of a car model by material (keeps wheels, doors, lights animatable).
 export function mergeModel(model) {
