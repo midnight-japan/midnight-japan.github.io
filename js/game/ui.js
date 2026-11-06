@@ -7,6 +7,7 @@ import { t, pick, setLang, getLang } from '../i18n.js';
 import { displayName, currentUser } from '../account.js';
 import { PLATE_REGIONS, PLATE_KANA, PLATE_TYPES, plateCanvas, formatNumber } from './plates.js';
 import { STROBE_MODES } from './carmodel.js';
+import { TUNE_PRESETS, resolveTune } from './vehicle.js';
 import { OUTFIT_OPTIONS } from './humans.js';
 import { PA_RECT, MAP } from './roads.js';
 import { PLACES } from '../../data/places.js';
@@ -44,13 +45,14 @@ export class UI {
         <button class="btn" data-a="quick"><span data-i18n="game.title.quick"></span> <small class="sub" id="quick-car"></small></button>
         <label class="spawn-sel"><span data-i18n="game.spawn.label"></span> <select id="t-spawn">
           <option value="pa" data-i18n="game.spawn.pa"></option><option value="bay" data-i18n="game.spawn.bay"></option>
-          <option value="umi" data-i18n="game.spawn.umi"></option><option value="futo" data-i18n="game.spawn.futo"></option></select></label>
+          <option value="umi" data-i18n="game.spawn.umi"></option><option value="futo" data-i18n="game.spawn.futo"></option>
+          <option value="mm" data-i18n="game.spawn.mm"></option><option value="chinatown" data-i18n="game.spawn.chinatown"></option><option value="tsurumi" data-i18n="game.spawn.tsurumi"></option><option value="kawasaki" data-i18n="game.spawn.kawasaki"></option></select></label>
         <div class="lobby-online" id="lobby-online"></div>
         <div class="lobby-row"><button class="btn sm" data-a="settings">⚙ <span data-i18n="game.menu.settings"></span></button>
         <button class="btn sm" data-a="controls">🎮 <span data-i18n="game.menu.controls"></span></button>
         <a class="btn sm ghost" href="index.html">🌐 <span data-i18n="game.title.site"></span></a></div>
         <p class="hint" data-i18n="game.title.hint"></p>
-        <div class="title-ver">MIDNIGHT JAPAN v${GAME.version} · ${GAME.build}</div>
+        <div class="title-ver">MIDNIGHT JAPAN v${GAME.version} · ${GAME.build} · Map data © <a href="https://www.openstreetmap.org/copyright" target="_blank" rel="noopener">OpenStreetMap</a> contributors</div>
       </div></div>
       <div id="garage" class="screen side"><div class="panel">
         <div class="ph"><h2 data-i18n="game.garage.title"></h2><button class="x" data-a="garageBack">✕</button></div>
@@ -65,6 +67,18 @@ export class UI {
           <label class="sl"><span data-i18n="game.garage.camberR"></span><input type="range" id="g-cr" min="-14" max="2" step="0.5"><b></b></label>
           <label class="sl"><span data-i18n="game.garage.ride"></span><input type="range" id="g-ride" min="-0.08" max="0.06" step="0.005"><b></b></label>
           <label class="sl"><span data-i18n="game.garage.track"></span><input type="range" id="g-track" min="-0.03" max="0.06" step="0.005"><b></b></label></div>
+        <div class="gsec tune"><h3 data-i18n="game.tune.title"></h3>
+          <div class="presets" id="g-tpre"></div>
+          <label class="sl"><span data-i18n="game.tune.power"></span><input type="range" id="t-power" min="0.9" max="1.8" step="0.01"><b></b></label>
+          <label class="sl"><span data-i18n="game.tune.weight"></span><input type="range" id="t-weight" min="0" max="0.18" step="0.005"><b></b></label>
+          <label class="sl"><span data-i18n="game.tune.tyre"></span><select id="t-tyre"><option value="eco"></option><option value="street"></option><option value="sport"></option><option value="semi"></option><option value="drift"></option></select></label>
+          <label class="sl"><span data-i18n="game.tune.final"></span><input type="range" id="t-final" min="0.8" max="1.25" step="0.01"><b></b></label>
+          <label class="sl"><span data-i18n="game.tune.brake"></span><input type="range" id="t-brake" min="0.8" max="1.4" step="0.01"><b></b></label>
+          <label class="sl"><span data-i18n="game.tune.bias"></span><input type="range" id="t-bias" min="0.5" max="0.75" step="0.01"><b></b></label>
+          <label class="sl"><span data-i18n="game.tune.balance"></span><input type="range" id="t-balance" min="-1" max="1" step="0.05"><b></b></label>
+          <label class="sl"><span data-i18n="game.tune.aero"></span><input type="range" id="t-aero" min="0" max="1" step="0.05"><b></b></label>
+          <label class="sl"><span data-i18n="game.tune.lock"></span><input type="range" id="t-lock" min="28" max="58" step="1"><b></b></label>
+          <p class="note" id="t-sum"></p></div>
         <div class="gsec"><h3 data-i18n="game.garage.plate"></h3><canvas id="g-plate" width="330" height="165"></canvas>
           <div class="row"><select id="g-pregion"></select><input id="g-pcls" maxlength="3" size="3"><select id="g-pkana"></select><input id="g-pnum" type="number" min="1" max="9999" style="width:80px"><button class="btn sm" data-a="plateRandom">🎲</button></div>
           <p class="note" id="g-ptype"></p></div>
@@ -211,6 +225,19 @@ export class UI {
     const sl = (sel, key, fmt) => { const i = $(sel); i.value = S[key]; const out = i.nextElementSibling; out.textContent = fmt(+i.value); i.oninput = () => { out.textContent = fmt(+i.value); g.applyPreview({ [key]: +i.value }); }; };
     sl('#g-cf', 'camberF', v => v.toFixed(1) + '°'); sl('#g-cr', 'camberR', v => v.toFixed(1) + '°');
     sl('#g-ride', 'ride', v => (v * 1000).toFixed(0) + ' mm'); sl('#g-track', 'track', v => '+' + (v * 1000).toFixed(0) + ' mm');
+    // performance tuning: presets + sliders (any slider edit switches the preset to "custom")
+    {
+      const T = resolveTune(S.tune);
+      $('#g-tpre').innerHTML = [...Object.keys(TUNE_PRESETS), 'custom'].map(k => `<button data-tp="${k}" class="${T.preset === k ? 'on' : ''}">${esc(t('game.tune.p.' + k))}</button>`).join('');
+      $('#g-tpre').onclick = ev => { const b = ev.target.closest('[data-tp]'); if (!b) return; const k = b.dataset.tp; g.applyPreview({ tune: k === 'custom' ? { ...T, preset: 'custom' } : { preset: k } }); this.showGarage(); };
+      for (const o of $('#t-tyre').options) o.textContent = t('game.tune.ty.' + o.value);
+      const fmt = { power: v => Math.round(v * car.engine.hp) + ' PS', weight: v => Math.round(car.mass * (1 - v)) + ' kg', final: v => '×' + v.toFixed(2), brake: v => Math.round(v * 100) + '%', bias: v => Math.round(v * 100) + ' : ' + Math.round(100 - v * 100), balance: v => (v > 0.02 ? 'OS +' : v < -0.02 ? 'US ' : '') + v.toFixed(2), aero: v => Math.round(v * 100) + '%', lock: v => v.toFixed(0) + '°' };
+      const edit = (key, val) => { const nt = { ...resolveTune(g.carSetup(id).tune), [key]: val, preset: 'custom' }; g.applyPreview({ tune: nt }); $('#g-tpre').querySelectorAll('button').forEach(b => b.classList.toggle('on', b.dataset.tp === 'custom')); summary(nt); };
+      const summary = tt => { $('#t-sum').textContent = t('game.tune.sum', { hp: Math.round(tt.power * car.engine.hp), kg: Math.round(car.mass * (1 - tt.weight)), pw: (Math.round(car.mass * (1 - tt.weight)) / Math.round(tt.power * car.engine.hp)).toFixed(2) }); };
+      for (const key of Object.keys(fmt)) { const i = $('#t-' + key); i.value = T[key]; const out = i.nextElementSibling; out.textContent = fmt[key](+i.value); i.oninput = () => { out.textContent = fmt[key](+i.value); edit(key, +i.value); }; }
+      $('#t-tyre').value = T.tyre; $('#t-tyre').onchange = ev => edit('tyre', ev.target.value);
+      summary(T);
+    }
     $('#g-strobe').innerHTML = STROBE_MODES.map(m => `<option value="${m}">${esc(t('game.strobe.' + m))}</option>`).join('');
     $('#g-strobe').value = S.strobe; $('#g-strobe').onchange = ev => { g.applyPreview({ strobe: ev.target.value }); g.preview.lights.strobe = ev.target.value; };
     $('#g-trans').value = g.settings.transmission; $('#g-trans').onchange = ev => { g.settings.transmission = ev.target.value; g.saveSettings(); };

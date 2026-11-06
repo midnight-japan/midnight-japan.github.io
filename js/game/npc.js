@@ -27,7 +27,7 @@ export class NPCs {
   }
   canWalk(x, z) { return this.g.world.canWalk(x, z) && !this.blocked(x, z); }
   blocked(x, z, r = 0.35) {
-    for (const C of this.g.world.colliders) {
+    for (const list of this.g.world.colliderLists(x, z)) for (const C of list) {
       if (C.y0 > 1.5 || C.y1 < 0.2) continue;
       const dx = x - C.x, dz = z - C.z;
       const lx = dx * C.c - dz * C.s, lz = dx * C.s + dz * C.c;

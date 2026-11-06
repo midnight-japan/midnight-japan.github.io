@@ -197,3 +197,6 @@ body.photo .online-pill,body.photo .chat{display:none}
 #map .maphint{position:absolute;left:50%;top:14px;transform:translateX(-50%);font-size:12px;color:#9fb0c8;pointer-events:none}
 #map .mapx{position:absolute!important;right:16px;top:16px;left:auto!important;bottom:auto!important;transform:none!important;width:44px;height:44px;pointer-events:auto}
 #minimap{cursor:zoom-in;pointer-events:auto}
+/* tuning presets */
+.gsec.tune .presets{display:flex;flex-wrap:wrap;gap:6px;margin:4px 0 10px}.gsec.tune .presets button{padding:6px 11px;border-radius:20px;border:1px solid var(--line);background:none;color:var(--muted);font:600 12px var(--font);cursor:pointer;transition:background .15s,color .15s}.gsec.tune .presets button.on{background:var(--sodium);color:#1a0d00;border-color:transparent}.gsec.tune .presets button:hover{color:var(--text,#fff)}
+.gsec.tune select{background:rgba(255,255,255,.06);color:inherit;border:1px solid var(--line);border-radius:8px;padding:4px 6px;font:500 12px var(--font)}

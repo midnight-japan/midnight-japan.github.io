@@ -160,6 +160,6 @@ export class TimeOfDay {
       if (tex) { this.scene.environment = tex; this._envKind = want; this._envDirty = false; }
     }
     this.scene.environmentIntensity = 0.12 + 0.5 * day;
-    return { night: this.night, day, golden, sunDir: d };
+    return { night: this.night, day, golden, sunDir: d, hours: this.hours };
   }
 }

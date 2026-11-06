@@ -32,6 +32,21 @@ export function applyDifficulty(s, name) {
   Object.assign(s, { difficulty: name, steerAssist: p.steer, stm: p.stm, tcs: p.tcs, abs: p.abs, transmission: p.trans, police: p.police });
   return s;
 }
+// ── performance tuning (garage): presets + individual settings. Every value is a multiplier/offset on the stock car.
+//   power ×, weight − fraction, tyre compound, final drive ×, brake force ×, brake bias (front share), balance −1 (understeer)
+//   … +1 (oversteer), downforce 0..1, steering lock (deg), lsd 0 open … 1 locked
+export const TYRES = { eco: { mu: 0.9, r: 1 }, street: { mu: 1, r: 1 }, sport: { mu: 1.07, r: 1 }, semi: { mu: 1.15, r: 1 }, drift: { mu: 1.02, r: 0.86 } };
+export const TUNE_DEFAULT = { preset: 'stock', power: 1, weight: 0, tyre: 'street', final: 1, brake: 1, bias: 0.64, balance: 0, aero: 0, lock: 34, lsd: 0.2 };
+export const TUNE_PRESETS = {
+  stock: { ...TUNE_DEFAULT },
+  street: { power: 1.12, weight: 0.03, tyre: 'sport', final: 1.03, brake: 1.08, bias: 0.64, balance: 0, aero: 0.1, lock: 36, lsd: 0.35 },
+  grip: { power: 1.22, weight: 0.08, tyre: 'semi', final: 1.05, brake: 1.22, bias: 0.62, balance: -0.1, aero: 0.6, lock: 34, lsd: 0.45 },
+  drift: { power: 1.3, weight: 0.06, tyre: 'drift', final: 1.12, brake: 1.1, bias: 0.6, balance: 0.55, aero: 0.15, lock: 54, lsd: 0.95 },
+  wangan: { power: 1.55, weight: 0.04, tyre: 'sport', final: 0.86, brake: 1.25, bias: 0.63, balance: -0.25, aero: 0.45, lock: 30, lsd: 0.5 },
+  touge: { power: 1.15, weight: 0.12, tyre: 'semi', final: 1.1, brake: 1.15, bias: 0.6, balance: 0.15, aero: 0.25, lock: 40, lsd: 0.6 },
+};
+export function resolveTune(t) { const p = t && TUNE_PRESETS[t.preset] && t.preset !== 'custom' ? TUNE_PRESETS[t.preset] : {}; return { ...TUNE_DEFAULT, ...(t || {}), ...p, preset: t?.preset || 'stock' }; }
+
 // steering assist tuning: lockK = how far past the geometric (neutral-steer) angle the fronts may be steered,
 // in multiples of the peak slip angle; cs = auto counter-steer gain; rateK = digital (keyboard/touch) steering speed
 const STEER_P = {
@@ -115,6 +130,25 @@ export class Vehicle {
     this.steerIn = 0; this.tcCut = 0; this.stmCut = 0; this.lockF = false; this.lockR = false;
     this.stmActive = 0; this.tcsActive = 0; this.absActive = 0; // 0..1 flags for HUD / audio
     this.setAssists(opts.assists ?? (opts.tcs === false ? 'pro' : 'standard'));
+    this.base = { mu: this.mu, final: this.final, downK: this.downK, m: this.m, Iz: this.Iz, tq: this.tq, Kus: this.Kus };
+    this.gF = 1; this.gR = 1; this.brakeK = 1; this.bias = 0.64; this.lsd = 0.2;
+    this.applyTune(opts.tune);
+  }
+  // performance tuning (see TUNE_PRESETS); safe to call while driving
+  applyTune(t) {
+    const T = this.tune = resolveTune(t), B = this.base, car = this.car;
+    if (car.cat === 'traffic' && !t) return;
+    const ty = TYRES[T.tyre] || TYRES.street;
+    this.m = B.m * (1 - clamp(T.weight, 0, 0.2)); this.Iz = B.Iz * this.m / B.m; this.Fz0 = this.m * G / 4;
+    this.mu = B.mu * ty.mu;
+    const bal = clamp(T.balance, -1, 1);
+    this.gF = 1 - bal * 0.05; this.gR = (1 + bal * 0.05) * ty.r;
+    this.final = B.final * clamp(T.final, 0.7, 1.4);
+    this.downK = B.downK * (1 + clamp(T.aero, 0, 1) * 3.2);
+    const pk = clamp(T.power, 0.8, 2); this.tq = rpm => B.tq(rpm) * pk; this.powerK = pk;
+    this.brakeK = clamp(T.brake, 0.7, 1.5); this.bias = clamp(T.bias, 0.45, 0.8); this.lsd = clamp(T.lsd, 0, 1);
+    this.lock = clamp(T.lock, 25, 60) * Math.PI / 180;
+    this.Kus = B.Kus * (1 - bal * 0.35);
   }
   setAssists(a) { this.assist = resolveAssists(a); this.tcs = this.assist.tcs !== 'off'; }
   get kmh() { return this.vx * 3.6; }
@@ -198,7 +232,7 @@ export class Vehicle {
     // axle grip with tyre load sensitivity: the outer tyre gains less than the inner loses → the axle with more
     // roll stiffness (front) loses a little grip → stable, slightly understeering balance
     const axleGrip = (Fz, share) => { const d = clamp(dFz * share, -Fz * 0.5, Fz * 0.5); const w1 = Fz / 2 + d, w2 = Fz / 2 - d; return mu * (w1 * (1 - 0.1 * (w1 / Fz0 - 1)) + w2 * (1 - 0.1 * (w2 / Fz0 - 1))); };
-    const Fmf = axleGrip(Fzf, 0.58), Fmr = axleGrip(Fzr, 0.42);
+    const Fmf = axleGrip(Fzf, 0.58) * this.gF, Fmr = axleGrip(Fzr, 0.42) * this.gR;
 
     // ── steering: input conditioning (keyboard ramps in speed-sensitively + auto-centres; pads stay direct)
     if (c.steerDigital) {
@@ -363,8 +397,8 @@ export class Vehicle {
 
     // ── brakes: pedal can ask for more than the tyres have; ABS caps each axle at its (combined) limit
     const hbPark = this.handbrakeOn && !hbPull ? 1 : 0;
-    const Fb = c.brake * m * G * 1.3;
-    let FbF = Fb * 0.64, FbR = Fb * 0.36 + hbPark * Fmr;
+    const Fb = c.brake * m * G * 1.3 * this.brakeK;
+    let FbF = Fb * this.bias, FbR = Fb * (1 - this.bias) + hbPark * Fmr;
     if (this.parkLock) { FbF += Fmf; FbR += Fmr; }
     this.absActive = 0;
     if (A.abs) {
@@ -504,7 +538,7 @@ export class Vehicle {
     const rad = this.car.W / 2000 * 0.95, halfL = this.car.L / 2000;
     for (const off of [-halfL + rad, 0, halfL - rad]) {
       const cx = this.pos.x + f.x * off, cz = this.pos.z + f.z * off;
-      for (const C of world.colliders) {
+      for (const list of world.colliderLists ? world.colliderLists(cx, cz) : [world.colliders]) for (const C of list) {
         if (this.pos.y + 1.5 < C.y0 || this.pos.y > C.y1) continue;
         const dx = cx - C.x, dz = cz - C.z;
         if (Math.abs(dx) > C.hx + C.hz + rad + 1 && Math.abs(dz) > C.hx + C.hz + rad + 1) continue;

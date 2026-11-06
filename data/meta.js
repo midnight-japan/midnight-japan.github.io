@@ -1,8 +1,29 @@
 // Shared game metadata: version, changelog, regions. Update VERSION + CHANGELOG on every release.
-export const GAME = { title: 'MIDNIGHT JAPAN', titleJa: 'ミッドナイト・ジャパン', version: '0.4.0', build: '2026.11.06' };
+export const GAME = { title: 'MIDNIGHT JAPAN', titleJa: 'ミッドナイト・ジャパン', version: '0.5.0', build: '2026.11.06' };
 
 // Newest first. type: new | change | fix | known
 export const CHANGELOG = [
+  {
+    version: '0.5.0', date: '2026-11-06', codename: 'Metropolis',
+    summary: {
+      ko: '고속도로 밖으로 — OpenStreetMap 실제 데이터로 만든 요코하마·가와사키 시가지 전체(건물 23만 6천 채)를 달릴 수 있게 됐어요. 신호를 지키는 시내 교통, 랜드마크, 튜닝 프리셋, 도시 환경음까지.',
+      ja: '高速道路の外へ——OpenStreetMapの実データで作った横浜・川崎の市街地（建物23万6千棟）を走れるように。信号を守る市街地交通、ランドマーク、チューニングプリセット、街の環境音まで。',
+      en: 'Off the expressway: the whole of Yokohama and Kawasaki around the routes — 236,000 real buildings from OpenStreetMap — is now drivable, with city traffic that obeys the signals, landmarks, tuning presets and a city soundscape.'
+    },
+    items: [
+      { type: 'new', ko: '실제 도시: OpenStreetMap의 건물 23만 6천 채·도로 2만 7천 개·철도 1,500개 노선·하천·공원을 1km 타일로 스트리밍(백그라운드 워커, 3단계 LOD) — 고속도로 주변 3.2km가 전부 실제 지형', ja: '本物の街：OpenStreetMapの建物23万6千棟・道路2万7千本・鉄道1,500路線・河川・公園を1kmタイルでストリーミング（バックグラウンドワーカー、3段階LOD）——高速道路の周囲3.2kmがすべて実在の地形', en: 'A real city: 236,000 buildings, 27,000 streets, 1,500 rail lines, rivers and parks from OpenStreetMap stream in as 1 km tiles (background workers, three levels of detail) — everything within 3.2 km of the expressways is the real place' },
+      { type: 'new', ko: '일본식 건축 자동 생성: 기와 박공·우진각 지붕 주택, 발코니·외부 복도·엘리베이터실이 있는 맨션, 1층 상점과 간판·차양, 편의점(주차장·폴사인), 공장·창고·저장탱크·굴뚝, 붉은 벽돌 창고', ja: '日本の建築を自動生成：瓦の切妻・寄棟屋根の住宅、バルコニー・外廊下・エレベーター塔のあるマンション、1階の店舗と看板・テント、コンビニ（駐車場・ポールサイン）、工場・倉庫・タンク・煙突、赤レンガ倉庫', en: 'Japanese architecture, generated per building: houses with tiled gable/hip roofs, mansions with balconies, open corridors and lift towers, ground-floor shops with signs and awnings, konbini with car parks and pole signs, factories, warehouses, tanks and stacks, red-brick warehouses' },
+      { type: 'new', ko: '거리 디테일: 전봇대와 전선, 블록 담장과 대문, 자판기, 가로등, 가드레일, 가로수, 횡단보도·정지선, 실제로 바뀌는 신호등(보행자 신호 포함), 고가 수도고 노선, 고가·지상 철도, 하천 제방', ja: '街のディテール：電柱と電線、ブロック塀と門、自販機、街灯、ガードレール、街路樹、横断歩道・停止線、実際に切り替わる信号機（歩行者用も）、高架の首都高、高架・地上の鉄道、河川の護岸', en: 'Street detail: utility poles and wires, block walls and gates, vending machines, street lights, guard rails, street trees, zebra crossings and stop lines, working traffic lights (with pedestrian signals), elevated Shuto routes, elevated and ground-level railways, river embankments' },
+      { type: 'new', ko: '창문 셰이더: 알루미늄 새시·커튼·반투명 욕실창·덧문 박스, 밤에는 집집마다 다른 불빛, 멀리서는 깜빡임 없이 부드럽게', ja: '窓シェーダー：アルミサッシ・カーテン・すりガラスの浴室窓・雨戸の戸袋、夜は家ごとに違う明かり、遠くはちらつかず滑らかに', en: 'Window shader: aluminium sashes, curtains, frosted bathroom windows, shutter boxes; every home lit differently at night, and no shimmer in the distance' },
+      { type: 'new', ko: '시내 교통: NPC 차량이 실제 도로망을 좌측통행으로 달리며 교차로에서 방향을 고르고, 앞차를 따라가며, 신호등 주기에 맞춰 정지·출발(방향지시등 포함)', ja: '市街地交通：NPC車両が実際の道路網を左側通行で走り、交差点で進路を選び、前の車に続き、信号のサイクルに合わせて停止・発進（ウインカー付き）', en: 'City traffic: NPC cars drive the real street network on the left, pick turns at junctions, queue behind each other and stop and go with the signal cycle (with indicators)' },
+      { type: 'new', ko: '랜드마크: 실제 위치의 코스모클록21(곤돌라 60대, 게임 시각을 보여주는 디지털 시계), 요코하마 마린타워 격자 구조, 야마시타 공원의 히카와마루, 실제 높이의 랜드마크 타워·퀸즈스퀘어', ja: 'ランドマーク：実際の位置のコスモクロック21（ゴンドラ60基、ゲーム内時刻を表示するデジタル時計）、横浜マリンタワーの格子構造、山下公園の氷川丸、実際の高さのランドマークタワー・クイーンズスクエア', en: 'Landmarks: Cosmo Clock 21 at its real spot (60 gondolas, a digital clock showing the in-game time), the lattice Yokohama Marine Tower, the Hikawa Maru at Yamashita Park, and Landmark Tower and Queen\'s Square at their real heights' },
+      { type: 'new', ko: '튜닝: 순정·스트리트·그립·드리프트·완간·토우게 프리셋 + 출력·경량화·타이어 5종·최종감속비·제동력·브레이크 배분·핸들링 밸런스·다운포스·조향각', ja: 'チューニング：ノーマル・ストリート・グリップ・ドリフト・湾岸・峠のプリセット＋出力・軽量化・タイヤ5種・ファイナル・ブレーキ力・配分・ハンドリングバランス・ダウンフォース・切れ角', en: 'Tuning: Stock, Street, Grip, Drift, Wangan and Touge presets plus power, weight reduction, five tyre compounds, final drive, brake force and bias, handling balance, downforce and steering lock' },
+      { type: 'new', ko: '도시 환경음: 시가지의 웅성거림, 보행자 신호에 맞춰 울리는 "삐요삐요"·"뻐꾹" 안내음, 낮의 까마귀, 멀리 지나가는 전철', ja: '街の環境音：市街地のざわめき、歩行者信号に合わせて鳴る「ピヨピヨ」「カッコー」、昼のカラス、遠くを通る電車', en: 'City soundscape: the hum of the streets, crossing chimes ("piyo-piyo" / cuckoo) in time with the walk signals, crows by day, trains passing in the distance' },
+      { type: 'new', ko: '시내 스폰 지역 추가: 미나토미라이·차이나타운·모토마치·쓰루미·가와사키, 정차 후 시내 어디서든 하차해 걷기', ja: '市街地のスポーン地点を追加：みなとみらい・中華街・元町・鶴見・川崎、停車すれば街のどこでも降りて歩ける', en: 'New city spawn points: Minato Mirai, Chinatown–Motomachi, Tsurumi, Kawasaki; stop anywhere in the city and walk' },
+      { type: 'change', ko: '고속도로 교통량 1.5배(품질별 28~112대), 멀리 있는 차량을 플레이어 주변으로 재배치해 항상 붐비게', ja: '高速道路の交通量1.5倍（品質別28〜112台）、遠くの車をプレイヤーの周囲へ再配置して常に賑やかに', en: '1.5x expressway traffic (28–112 cars by quality); cars far away are moved near you so the road always feels busy' },
+      { type: 'fix', ko: '멀리 있는 지면이 바다와 겹쳐 보이던 깊이 정밀도 문제 수정, 거대한 해안선 다각형 대신 타일별 지면', ja: '遠くの地面が海と重なって見えた深度精度の問題を修正、巨大な海岸線ポリゴンの代わりにタイル別の地面', en: 'Fixed distant ground z-fighting with the sea (depth precision); ground is now built per tile instead of one huge coastline polygon' },
+    ]
+  },
   {
     version: '0.4.0', date: '2026-11-06', codename: 'Roadside',
     summary: {

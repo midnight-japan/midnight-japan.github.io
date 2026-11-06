@@ -65,7 +65,7 @@ class Game {
     const car = CAR_BY_ID[id];
     const s = this.garage.cars[id] || (this.garage.cars[id] = {});
     if (!s.plate) { s.plate = randomPlate(car.plate); this.saveGarage(); }
-    return { color: s.color || car.colors[0], finish: s.finish || (car.cat === 'police' ? 'solid' : 'metallic'), rim: s.rim || null, camberF: s.camberF ?? 0, camberR: s.camberR ?? 0, ride: s.ride ?? 0, track: s.track ?? 0, strobe: s.strobe || 'off', plate: s.plate || randomPlate(car.plate), tint: s.tint ?? false };
+    return { tune: s.tune || { preset: 'stock' }, color: s.color || car.colors[0], finish: s.finish || (car.cat === 'police' ? 'solid' : 'metallic'), rim: s.rim || null, camberF: s.camberF ?? 0, camberR: s.camberR ?? 0, ride: s.ride ?? 0, track: s.track ?? 0, strobe: s.strobe || 'off', plate: s.plate || randomPlate(car.plate), tint: s.tint ?? false };
   }
 
   async init() {
@@ -202,6 +202,9 @@ class Game {
     try {
       if (region === 'bay') { const r = net.byId.bayshore, sp = this.world.bridgeSpan; const s = sp ? Math.max(50, sp.s0 - 250) : r.length * 0.2; const L = r.lanes.filter(l => l.dir === 1).sort((a, b) => b.lat - a.lat)[0]; return at(r, s, L.lat); }
       if (region === 'umi') { const r = net.byId.umi_in_e || net.byId.umi_in_w; return at(r, Math.max(2, r.length - 10), 0); }
+      // city streets (real OpenStreetMap roads): keep to the left lane
+      const CITY_SPAWN = { mm: [-3949.7, 1257.2, 1.01, 14], chinatown: [-2987.3, 2310, -1.04, 7.5], tsurumi: [-2109.4, -2792.6, -0.93, 7.5], kawasaki: [2598.8, -5144.9, -0.91, 7.5] };
+      if (CITY_SPAWN[region]) { const [x, z, yaw, w] = CITY_SPAWN[region]; const o = w / 4; return { pos: new THREE.Vector3(x + Math.cos(yaw) * o, 0.3, z - Math.sin(yaw) * o), yaw }; }
       if (region === 'futo') { const r = net.byId.futo_5 || net.roads.find(x => x.kind === 'local'); const L = r.lanes.filter(l => l.dir === 1).sort((a, b) => b.lat - a.lat)[0] || r.lanes[0]; return at(r, r.length * 0.5, L.lat); }
     } catch (e) { console.warn('spawn', e); }
     return null;
@@ -220,7 +223,7 @@ class Game {
     this.scene.add(this.model.root);
     // the real 3D model may still be downloading → swap it in when ready (keeps position, lights, doors)
     if (!this.model.isGlb) loadManifest().then(() => hasGlb(id) && requestGlb(id).then(() => this.swapPlayerModel(id)).catch(() => {}));
-    const v = new Vehicle(car, this.model, { mode: this.settings.transmission, assists: assistsFromSettings(this.settings) });
+    const v = new Vehicle(car, this.model, { mode: this.settings.transmission, assists: assistsFromSettings(this.settings), tune: this.carSetup(id).tune });
     v.camberF = this.model.camber.f; v.camberR = this.model.camber.r;
     if (keepPos && prev) v.place(prev.pos, prev.yaw); else v.place(spot.pos.clone(), spot.yaw);
     v.handbrakeOn = true;
@@ -280,7 +283,8 @@ class Game {
   }
   // walkable = PA/lot walk areas, or any road deck (shoulder / stopped on the expressway) at our level
   roadAt(x, z, y) { const q = this.net.query(x, z, y + 0.6, (a, b) => this.world.ground(a, b)); return q.onRoad && Math.abs(q.y - y) < 0.9 ? q : null; }
-  walkable(x, z, y) { return (y < 1.2 && this.world.canWalk(x, z)) || !!this.roadAt(x, z, y); }
+  walkable(x, z, y) { return (y < 1.2 && this.world.canWalk(x, z, true) && !this.cityBlocked(x, z)) || !!this.roadAt(x, z, y); }
+  cityBlocked(x, z) { const c = this.world.city; if (!c) return false; for (const C of c.collidersAt(x, z)) { const dx = x - C.x, dz = z - C.z; const lx = dx * C.c - dz * C.s, lz = dx * C.s + dz * C.c; if (Math.abs(lx) < C.hx + 0.3 && Math.abs(lz) < C.hz + 0.3) return true; } return false; }
   walkY(x, z, y) { const q = this.roadAt(x, z, y); if (q && (y > 1.2 || !this.world.canWalk(x, z))) return q.y; return (z < -53.9 && z > -60.2) ? 0.15 : z < -60 && z > -84 && x > -55 && x < 55 ? 0.21 : 0; }
   updateWalk(dt) {
     const p = this.player, I = this.input.axes, W = this.world;
@@ -457,6 +461,8 @@ class Game {
 
   // ───────────────────────── camera ─────────────────────────
   updateCamera(dt) {
+    // near plane: tight only inside the car; elsewhere 0.45 m keeps distant ground from z-fighting with the sea
+    { const nr = (this.mode === 'drive' && (this.camMode === 'cockpit' || this.camMode === 'hood')) ? 0.08 : this.mode === 'walk' ? 0.2 : 0.45; if (this.camera.near !== nr) { this.camera.near = nr; this.camera.updateProjectionMatrix(); } }
     const cam = this.camera, I = this.input;
     if (this.debugCam) { cam.position.copy(this.debugCam.pos); cam.lookAt(this.debugCam.look); return; } // dev / screenshot tool
     if (I.act('camera')) { const list = this.mode === 'walk' ? ['chase', 'orbit'] : this.camModes; this.camMode = list[(list.indexOf(this.camMode) + 1) % list.length]; this.lookYaw = 0; this.lookPitch = 0; this.camSnap = true; }
@@ -582,12 +588,16 @@ class Game {
     this.env = this.tod.update(paused ? 0 : dt, this.focus);
     this.world.update(dt, this.env);
     this.world.updateDynamicLights(dt, this.focus, this.env.night);
+    this.world.city?.update(dt, this.focus, this.env.night);
     // audio listener & environment
     if (this.audio.ready) {
       const cam = this.camera; const fw = new THREE.Vector3(); cam.getWorldDirection(fw);
       this.audio.setListener(cam.position, fw, cam.up);
       const inPA = this.focus.x > PA_RECT.x0 && this.focus.x < PA_RECT.x1 && this.focus.z > PA_RECT.z0 && this.focus.z < PA_RECT.z1;
-      this.audio.setEnvironment({ night: this.env.night, inPA, nearSea: !this.world.isLand(this.focus.x, this.focus.z) || this.focus.y > 10, speedWind: this.mode === 'drive' ? this.vehicle.speed * (this.vehicle.car.open ? 1 : 0.3) : 0 });
+      const city = this.world.city, onLand = this.world.isLand(this.focus.x, this.focus.z);
+      const inCity = city && onLand && !inPA && this.focus.y < 8 && Math.hypot(this.focus.x - 150, this.focus.z + 100) > 900 ? 1 : 0;
+      const ch = inCity ? city.chimeAt(this.focus) : { chime: 0, vol: 0 };
+      this.audio.setEnvironment({ night: this.env.night, inPA, inCity, chime: ch.chime, chimeVol: ch.vol, nearSea: !onLand || this.focus.y > 10, speedWind: this.mode === 'drive' ? this.vehicle.speed * (this.vehicle.car.open ? 1 : 0.3) : 0 });
       if (this.radio && this.vehicle) this.radio.update({ position: this.vehicle.pos, interior: this.mode === 'drive' && (this.camMode === 'cockpit' || this.camMode === 'hood' || this.camMode === 'chase'), openness: this.openness ?? 0, speed: this.vehicle.speed });
       this.audio.update(dt);
     }

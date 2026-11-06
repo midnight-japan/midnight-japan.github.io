@@ -10,6 +10,8 @@ import { surface, chainlinkMaterial, windowTexture, glowTexture, weather } from 
 import { buildRoadMeshes, lampSpots, bridgeSpan, trenchPolys, PA_RECT, PA, PA_LAYOUT, MAP } from './roads.js';
 import { buildBay, noPierBay, inUmihotaru } from './bay.js';
 import { signMesh } from './signs.js';
+import { City } from './city.js';
+import { buildLandmarks, updateLandmarks } from './landmarks.js';
 
 export const SEA_Y = -1.6;
 const rnd = (() => { let s = 1234567; return () => (s = (s * 16807) % 2147483647) / 2147483647; })();
@@ -143,7 +145,7 @@ export class World {
 
   // ground height (land = 0, sea = sea floor)
   ground(x, z) {
-    if (this.isLand(x, z)) return 0;
+    if (this.isLand(x, z)) return this.city?.inWater(x, z) ? -12 : 0;
     return -12;
   }
   isLand(x, z) {
@@ -182,13 +184,17 @@ export class World {
     this.buildSkyline();
     buildBay(this, S, { boxGeo, planeGeo, polyGeo, prismGeo, Frame });
     S.build(this.group);
+    // streamed OpenStreetMap city (buildings, streets, rail, rivers) around the expressways
+    try { if (/[?&]nocity=1/.test(location.search)) throw new Error('city disabled by ?nocity=1'); this.city = new City(this, this.scene, this.q); if (!(await this.city.init())) this.city = null; } catch (e) { console.warn('city', e); this.city = null; }
     return this;
   }
+  // static colliders near a point: hand-built world + streamed city tile grid
+  colliderLists(x, z) { const L = this._cl || (this._cl = [null, null]); L[0] = this.colliders; L[1] = this.city ? this.city.collidersAt(x, z) : []; return L; }
 
   // ───────────────────────── ground & sea ─────────────────────────
   buildGround(S) {
     const port = surface('asphalt_worn', { tile: 8, tint: 0x8c8c8c });
-    const land = new THREE.MeshStandardMaterial({ color: 0x2c2e2c, roughness: 1 });
+    const land = surface('concrete_old', { tile: 7, tint: 0x8d8c88 }); // urban ground: weathered concrete / packed earth
     const wall = surface('concrete_old', { tile: 4 });
     const iron = new THREE.MeshStandardMaterial({ color: 0x2b2b2b, roughness: 0.6, metalness: 0.6 });
     const bol = new THREE.CylinderGeometry(0.25, 0.35, 0.7, 12);
@@ -962,69 +968,11 @@ export class World {
       if (h > 120) this.blink.push(this.warnLight(x, h + 2, z));
       towers.push(mesh); return mesh;
     };
-    // Minato Mirai 21 (west across the harbour; Landmark Tower ≈ 35.4547 N 139.6314 E)
-    const MM = { x: -4400, z: 750 };
-    // Landmark Tower (296 m) – tapered
-    { const g = new THREE.CylinderGeometry(22, 34, 296, 4, 1); g.rotateY(Math.PI / 4); g.translate(0, 148, 0); const tex = windowTexture(77, 0.45, 20, 70); const m = this.night(new THREE.MeshStandardMaterial({ color: 0x9aa0a6, roughness: 0.5, metalness: 0.4, emissive: 0xffffff, emissiveMap: tex, emissiveIntensity: 0 }), 0, 1.5); const lm = new THREE.Mesh(g, m); lm.position.set(MM.x, 0, MM.z); far.add(lm); this.blink.push(this.warnLight(MM.x, 300, MM.z)); }
-    // Queen's Square A/B/C
-    tower(MM.x + 140, MM.z - 90, 45, 40, 172, 3); tower(MM.x + 200, MM.z - 70, 40, 36, 138, 4); tower(MM.x + 250, MM.z - 40, 36, 34, 110, 5);
-    // sail-shaped hotel
-    { const sh = new THREE.Shape(); sh.moveTo(-40, 0); sh.quadraticCurveTo(-30, 80, 0, 110); sh.quadraticCurveTo(30, 80, 40, 0); sh.lineTo(-40, 0); const g = new THREE.ExtrudeGeometry(sh, { depth: 25, bevelEnabled: false }); const m = this.night(new THREE.MeshStandardMaterial({ color: 0xe4e8ec, emissive: 0xbfd6ff, emissiveIntensity: 0, roughness: 0.3 }), 0, 0.6); const hotel = new THREE.Mesh(g, m); hotel.position.set(MM.x + 330, 0, MM.z + 60); hotel.rotation.y = -0.5; far.add(hotel); }
-    // Ferris wheel (Cosmo Clock-like) with LED rim
-    { const wg = new THREE.Group(); wg.position.set(MM.x + 420, 60, MM.z + 180); wg.rotation.y = 0.6;
-      const rim = new THREE.Mesh(new THREE.TorusGeometry(50, 0.8, 8, 96), new THREE.MeshStandardMaterial({ color: 0xcfd6dd, metalness: 0.6, roughness: 0.4 })); wg.add(rim);
-      const spokes = []; for (let a = 0; a < 60; a++) { const ang = a / 60 * Math.PI * 2; spokes.push(new THREE.Vector3(0, 0, 0), new THREE.Vector3(Math.cos(ang) * 50, Math.sin(ang) * 50, 0)); }
-      wg.add(new THREE.LineSegments(new THREE.BufferGeometry().setFromPoints(spokes), new THREE.LineBasicMaterial({ color: 0x8899aa })));
-      const led = []; for (let a = 0; a < 240; a++) { const ang = a / 240 * Math.PI * 2; led.push(new THREE.Vector3(Math.cos(ang) * 50.5, Math.sin(ang) * 50.5, 0)); }
-      const lg = new THREE.BufferGeometry().setFromPoints(led); const cols = new Float32Array(led.length * 3); lg.setAttribute('color', new THREE.BufferAttribute(cols, 3));
-      this.wheelLED = new THREE.Points(lg, new THREE.PointsMaterial({ size: 3, vertexColors: true, transparent: true, opacity: 0 })); this.night(this.wheelLED.material, 0, 1).userData.opacityMode = true;
-      wg.add(this.wheelLED);
-      const leg = new THREE.Mesh(new THREE.CylinderGeometry(1.5, 2.5, 62, 8), dark); leg.position.y = -31; wg.add(leg);
-      far.add(wg); this.ferris = wg; }
-    // Marine Tower
-    { const g = new THREE.CylinderGeometry(3, 9, 106, 10, 1, true); g.translate(0, 53, 0); const mt = new THREE.Mesh(g, this.night(new THREE.MeshStandardMaterial({ color: 0xc9ccd0, emissive: 0xff6060, emissiveIntensity: 0, roughness: 0.5, metalness: 0.5, side: THREE.DoubleSide }), 0, 0.7)); mt.position.set(-2650, 0, 1950); far.add(mt); }
-    // general city blocks (Yokohama / Honmoku / Tsurumi / Kawasaki / Tokyo far)
-    const blocks = [
-      { cx: -3900, cz: 1700, n: 70, r: 700, h: [20, 110] }, { cx: -4600, cz: -600, n: 50, r: 800, h: [15, 70] },
-      { cx: -2300, cz: 3300, n: 40, r: 600, h: [10, 50] }, { cx: -1800, cz: -3000, n: 60, r: 900, h: [10, 60] },
-      { cx: 1800, cz: -3200, n: 50, r: 1200, h: [10, 50] }, { cx: 6000, cz: -9000, n: 60, r: 2500, h: [40, 220] },
-    ];
-    let seed = 10;
-    for (const b of blocks) for (let i = 0; i < b.n; i++) {
-      const a = rnd() * Math.PI * 2, r = Math.sqrt(rnd()) * b.r;
-      const h = b.h[0] + rnd() * (b.h[1] - b.h[0]);
-      tower(b.cx + Math.cos(a) * r, b.cz + Math.sin(a) * r, 18 + rnd() * 30, 18 + rnd() * 30, h, seed++, 0.2 + rnd() * 0.35);
-    }
-    // Keihin industrial zone (factory night view): tanks, chimneys, flare stacks, lights
-    const tankM = new THREE.MeshStandardMaterial({ color: 0xbfc4c8, roughness: 0.6, metalness: 0.5 });
-    const factoryLights = [];
-    for (let i = 0; i < 90; i++) {
-      const x = 400 + rnd() * 3200, z = -1500 - rnd() * 1500;
-      if (rnd() < 0.5) { const r = 12 + rnd() * 18; const t = new THREE.Mesh(new THREE.CylinderGeometry(r, r, 14 + rnd() * 10, 24), tankM); t.position.set(x, 10, z); far.add(t); }
-      else { const h = 50 + rnd() * 120; const c = new THREE.Mesh(new THREE.CylinderGeometry(1.5, 3, h, 10), new THREE.MeshStandardMaterial({ color: rnd() < 0.5 ? 0xd94b3d : 0xe6e6e6, roughness: 0.7 })); c.position.set(x, h / 2, z); far.add(c); this.blink.push(this.warnLight(x, h + 1, z)); }
-      for (let k = 0; k < 25; k++) factoryLights.push(new THREE.Vector3(x + (rnd() - 0.5) * 120, rnd() * 50, z + (rnd() - 0.5) * 120));
-    }
-    // flare stacks (flames)
-    this.flares = [];
-    for (let i = 0; i < 5; i++) { const x = 900 + i * 600, z = -2200 - rnd() * 600; const st = new THREE.Mesh(new THREE.CylinderGeometry(1.2, 2, 90, 8), tankM); st.position.set(x, 45, z); far.add(st); const fl = new THREE.Mesh(new THREE.ConeGeometry(4, 16, 10, 1, true), new THREE.MeshBasicMaterial({ color: 0xffa040, transparent: true, opacity: 0.85, blending: THREE.AdditiveBlending, depthWrite: false })); fl.position.set(x, 98, z); far.add(fl); this.flares.push(fl); }
-    const flg = new THREE.BufferGeometry().setFromPoints(factoryLights);
-    this.factoryPts = new THREE.Points(flg, new THREE.PointsMaterial({ color: 0xffe2a8, size: 2.5, transparent: true, opacity: 0 }));
-    this.night(this.factoryPts.material, 0.0, 1).userData.opacityMode = true;
-    far.add(this.factoryPts);
-    // city light carpet (mainland streets)
-    const carpet = [];
-    for (let i = 0, tries = 0; i < 6000 && tries < 40000; i++, tries++) {
-      const zone = rnd(); let x, z;
-      if (zone < 0.35) { x = -1800 - rnd() * 4000; z = -2000 + rnd() * 7000; }
-      else if (zone < 0.7) { x = -3000 + rnd() * 9000; z = -1450 - rnd() * 6000; }
-      else { x = -2500 + rnd() * 6000; z = 2400 + rnd() * 3000; }
-      if (!this.isLand(x, z) || PA.inLot(x, z, 200)) { i--; continue; } // only on land
-      carpet.push(new THREE.Vector3(x, 1 + rnd() * 6, z));
-    }
-    const cg = new THREE.BufferGeometry().setFromPoints(carpet);
-    this.cityPts = new THREE.Points(cg, new THREE.PointsMaterial({ color: 0xffd7a0, size: 3, sizeAttenuation: true, transparent: true, opacity: 0 }));
-    this.night(this.cityPts.material, 0, 0.9).userData.opacityMode = true;
-    far.add(this.cityPts);
+    // Minato Mirai / Yamashita landmarks: hand-modelled where OpenStreetMap only has a footprint (js/game/landmarks.js);
+    // the towers themselves (Landmark Tower, Queen's Square, InterContinental …) stream in from OSM with real heights
+    buildLandmarks(this, far);
+    // (the city itself — every building, street and chimney around the expressways — now streams in from
+    //  OpenStreetMap via js/game/city.js; only the hand-modelled landmarks above stay in the far group)
     far.traverse(o => { o.castShadow = false; o.receiveShadow = false; });
     this.group.add(far);
   }
@@ -1043,6 +991,7 @@ export class World {
     // aviation lights blink at night
     const on = (this.t % 1.5) < 0.6;
     for (const b of this.blink) b.mesh.visible = n > 0.3 && ((this.t + b.phase) % 1.5) < 0.6;
+    updateLandmarks(this, dt, env.hours ?? 21);
     if (this.ferris) {
       this.ferris.rotation.z += dt * 0.01;
       if (n > 0.2 && this.wheelLED) {
@@ -1071,17 +1020,19 @@ export class World {
     this._dynT -= dt;
     if (this._dynT <= 0) {
       this._dynT = 0.5;
-      const near = [...this.lampHeads.map(p => [p, p.distanceToSquared(focus), 0]), ...(this.tunnelHeads || []).filter(p => Math.abs(p.x - focus.x) < 300 && Math.abs(p.z - focus.z) < 300).map(p => [p, p.distanceToSquared(focus), 1])].sort((a, b) => a[1] - b[1]).slice(0, this.dyn.length);
+      const near = [...this.lampHeads.map(p => [p, p.distanceToSquared(focus), 0]), ...(this.city ? this.city.lampsNear(focus).map(p => [p, p.distanceToSquared(focus), 0]) : []), ...(this.tunnelHeads || []).filter(p => Math.abs(p.x - focus.x) < 300 && Math.abs(p.z - focus.z) < 300).map(p => [p, p.distanceToSquared(focus), 1])].sort((a, b) => a[1] - b[1]).slice(0, this.dyn.length);
       this.dyn.forEach((l, i) => { if (near[i]) { l.position.copy(near[i][0]); l.userData.tun = near[i][2]; } });
     }
     for (const l of this.dyn) l.intensity = l.userData.tun ? 220 : night * 140;
   }
 
   // pedestrian walkability
-  canWalk(x, z) {
+  canWalk(x, z, anywhere = false) {
     const inR = r => { let px = x, pz = z; if (r.f) [px, pz] = r.f.local(x, z); return px > r.x0 && px < r.x1 && pz > r.z0 && pz < r.z1; };
     if (this.pedBlock?.some(inR)) return false;
-    return this.walkRects.some(inR);
+    if (this.walkRects.some(inR)) return true;
+    // the player (not PA pedestrians) may walk anywhere on land in the streamed city: streets, sidewalks, lots
+    return !!(anywhere && this.city && !PA.inLot(x, z, 25) && this.isLand(x, z) && !this.city.inWater(x, z));
   }
 }
 

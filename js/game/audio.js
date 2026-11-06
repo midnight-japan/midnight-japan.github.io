@@ -1313,7 +1313,7 @@ export class GameAudio {
     this.ctx = null;
     this._offline = false;
     this._vol = { master: 0.9, engine: 0.8, sfx: 0.8, ambient: 0.6, radio: 0.7 };
-    this._env = { night: 1, inPA: false, nearSea: false, speedWind: 0 };
+    this._env = { night: 1, inPA: false, nearSea: false, speedWind: 0, inCity: 0, chime: 0, chimeVol: 0 };
     this._L = { pos: { x: 0, y: 0, z: 0 }, fwd: { x: 0, y: 0, z: -1 }, up: { x: 0, y: 1, z: 0 } };
     this.engines = new Set(); this.sirens = new Set(); this.radios = new Set();
     this._errors = [];
@@ -1461,6 +1461,8 @@ export class GameAudio {
       if (e.inPA !== undefined) E.inPA = !!e.inPA;
       if (e.nearSea !== undefined) E.nearSea = !!e.nearSea;
       if (e.speedWind !== undefined) E.speedWind = Math.abs(num(e.speedWind, 0));
+      if (e.inCity !== undefined) E.inCity = clamp(num(e.inCity, 0), 0, 1);
+      if (e.chime !== undefined) { E.chime = e.chime | 0; E.chimeVol = clamp(num(e.chimeVol, 0), 0, 1); }
     } catch (x) { this._err(x); }
   }
 
@@ -1604,7 +1606,7 @@ export class GameAudio {
     const G = (v) => { const g = ctx.createGain(); g.gain.value = v; return g; };
     const F = (type, f, q = 0.7) => { const b = ctx.createBiquadFilter(); b.type = type; b.frequency.value = f; b.Q.value = q; return b; };
     const NS = (kind, rate = 1) => { const s = ctx.createBufferSource(); s.buffer = this.noise[kind]; s.loop = true; s.playbackRate.value = rate; s.start(t, Math.random() * 2.5); return s; };
-    const A = (this.amb = { out: G(1), swell: 0, gust: 0, timers: { insect: 1, brake: 8, gull: 5, rev: 6, door: 4, pass: 3 } });
+    const A = (this.amb = { out: G(1), swell: 0, gust: 0, timers: { insect: 1, brake: 8, gull: 5, rev: 6, door: 4, pass: 3, chime: 0, crow: 9, train: 30 } });
     A.out.connect(this.bus.ambient);
     // distant expressway: two decorrelated low rumbles + tyre hiss, panned wide
     A.traf = [];
@@ -1625,6 +1627,11 @@ export class GameAudio {
     NS('white').connect(A.windBP); A.windBP.connect(A.wind); A.wind.connect(A.out);
     A.rumLP = F('lowpass', 120, 0.6); A.rum = G(0);
     NS('brown', 1.3).connect(A.rumLP); A.rumLP.connect(A.rum); A.rum.connect(A.out);
+    // city bed: many distant streets — a mid-band roar that is denser than the expressway hum
+    A.cityBP = F('bandpass', 420, 0.35); A.city = G(0);
+    NS('pink', 0.9).connect(A.cityBP); A.cityBP.connect(A.city); A.city.connect(A.out);
+    A.cityLP = F('lowpass', 160, 0.5); A.cityLow = G(0);
+    NS('brown', 0.8).connect(A.cityLP); A.cityLP.connect(A.cityLow); A.cityLow.connect(A.out);
     // crowd murmur: formant-filtered noise "voices" with syllabic envelopes
     A.crowd = G(0); A.crowdLP = F('lowpass', 2400, 0.5); A.crowdLP.connect(A.crowd); A.crowd.connect(A.out);
     A.voices = [];
@@ -1663,8 +1670,11 @@ export class GameAudio {
     sp(A.wind.gain, wTot * (A.windS ? 0.35 : 1), t, 0.15);
     sv(A.windBP.frequency, 350 + 900 * Math.min(w, 1) + A.gust * 200, 0.03);
     sp(A.rum.gain, Math.min(0.35, 0.22 * w * w) * (1 + A.gust), t, 0.15);
+    const ci = E.inCity;
+    sp(A.city.gain, ci * (0.05 * (1 - 0.45 * n) + 0.012) * (1 + A.swell * 0.6), t, 0.6);
+    sp(A.cityLow.gain, ci * (0.08 * (1 - 0.4 * n) + 0.02), t, 0.6);
     // crowd
-    const crowd = E.inPA ? 0.05 + 0.1 * n : 0;
+    const crowd = E.inPA ? 0.05 + 0.1 * n : ci * (0.03 + 0.03 * day);
     sp(A.crowd.gain, crowd, t, 0.6);
     if (crowd > 0.001) {
       for (const v of A.voices) {
@@ -1690,6 +1700,10 @@ export class GameAudio {
     if (T.brake <= 0) { T.brake = (day > 0.5 ? 25 : 60) * (0.5 + Math.random()); this._airBrake(); }
     if (T.gull <= 0) { T.gull = 12 + Math.random() * 20; if (day > 0.4 && Math.random() < (E.nearSea ? 0.9 : 0.3)) this._gull(day); }
     if (T.rev <= 0) { T.rev = 6 + Math.random() * 14; if (E.inPA && n > 0.5) this._distantRev(); }
+    // pedestrian crossing chimes (視覚障害者用付加装置): ピヨピヨ on one axis, カッコー on the other, while the walk light is on
+    if (T.chime <= 0) { T.chime = E.chime === 2 ? 1.25 : 0.62; if (E.chime && E.chimeVol > 0.01) this._chime(E.chime, E.chimeVol * (0.4 + 0.6 * day + 0.3)); }
+    if (T.crow <= 0) { T.crow = 14 + Math.random() * 30; if (ci > 0.5 && day > 0.35 && Math.random() < 0.7) this._crow(); }
+    if (T.train <= 0) { T.train = 45 + Math.random() * 70; if (ci > 0.5 && Math.random() < 0.8) this._train(); }
     if (T.door <= 0) { T.door = 3 + Math.random() * 9; if (E.inPA && Math.random() < 0.6) this._ambSfx(Math.random() < 0.7 ? 'door_close' : 'trunk_close', 0.08 + Math.random() * 0.08); }
   }
   _ambDest(pan, lp, gain) {
@@ -1716,6 +1730,32 @@ export class GameAudio {
       const f = 3500 + Math.random() * 600, k = 3 + Math.floor(Math.random() * 4);
       for (let i = 0; i < k; i++) tn(this, d, t + i * 0.065, { f, gain: 1, attack: 0.004, hold: 0.02, decay: 0.006 });
     }
+  }
+  _chime(kind, vol) {
+    const ctx = this.ctx, t = ctx.currentTime + 0.01, d = this._ambDest(0, 6000, 0.05 * vol);
+    if (kind === 1) { // ピヨ: a quick falling chirp, twice
+      for (const dt2 of [0, 0.2]) { const o = ctx.createOscillator(), g = ctx.createGain(); o.type = 'sine'; o.frequency.setValueAtTime(2900, t + dt2); o.frequency.exponentialRampToValueAtTime(1900, t + dt2 + 0.11); g.gain.setValueAtTime(0, t + dt2); g.gain.linearRampToValueAtTime(1, t + dt2 + 0.01); g.gain.setTargetAtTime(0, t + dt2 + 0.08, 0.025); o.connect(g); g.connect(d); o.start(t + dt2); o.stop(t + dt2 + 0.3); }
+    } else { // カッコー: two soft notes (cuckoo, a major third down)
+      for (const [dt2, f] of [[0, 1047], [0.36, 831]]) { const o = ctx.createOscillator(), g = ctx.createGain(); o.type = 'triangle'; o.frequency.value = f; g.gain.setValueAtTime(0, t + dt2); g.gain.linearRampToValueAtTime(1, t + dt2 + 0.02); g.gain.setTargetAtTime(0, t + dt2 + 0.18, 0.06); o.connect(g); g.connect(d); o.start(t + dt2); o.stop(t + dt2 + 0.6); }
+    }
+  }
+  _crow() { // ハシブトガラス "kaa… kaa"
+    const ctx = this.ctx, t0 = ctx.currentTime + 0.01, d = this._ambDest(Math.random() * 1.6 - 0.8, 3200, 0.03);
+    const k = 2 + Math.floor(Math.random() * 3);
+    for (let i = 0; i < k; i++) {
+      const t = t0 + i * (0.55 + Math.random() * 0.15);
+      const o = ctx.createOscillator(), f1 = ctx.createBiquadFilter(), f2 = ctx.createBiquadFilter(), g = ctx.createGain();
+      o.type = 'sawtooth'; o.frequency.setValueAtTime(520, t); o.frequency.linearRampToValueAtTime(610, t + 0.08); o.frequency.linearRampToValueAtTime(470, t + 0.32);
+      f1.type = 'bandpass'; f1.frequency.value = 1150; f1.Q.value = 4; f2.type = 'bandpass'; f2.frequency.value = 2300; f2.Q.value = 5;
+      g.gain.setValueAtTime(0, t); g.gain.linearRampToValueAtTime(1, t + 0.04); g.gain.setTargetAtTime(0, t + 0.28, 0.05);
+      o.connect(f1); o.connect(f2); f1.connect(g); f2.connect(g); g.connect(d); o.start(t); o.stop(t + 0.6);
+    }
+  }
+  _train() { // a commuter train passing a few blocks away: low rumble + rail joints (ガタンゴトン)
+    const ctx = this.ctx, t = ctx.currentTime + 0.01, dur = 7 + Math.random() * 4, pan = Math.random() * 1.4 - 0.7;
+    const d = this._ambDest(pan, 700, 0.06);
+    nz(this, d, t, { type: 'lowpass', f: 180, q: 0.6, gain: 1, attack: dur * 0.4, hold: dur * 0.2, decay: dur * 0.4 });
+    for (let k = 0; k < dur / 0.42; k++) { const tt = t + k * 0.42 + (k % 2) * 0.1; const env = Math.sin(Math.PI * Math.min(1, k * 0.42 / dur)); if (env > 0.1) nz(this, d, tt, { type: 'bandpass', f: 320, q: 1.2, gain: 0.5 * env, attack: 0.004, hold: 0.02, decay: 0.08 }); }
   }
   _airBrake() {
     const d = this._ambDest(Math.random() * 1.6 - 0.8, 3500, 0.03 * (1 - 0.4 * this._env.night));

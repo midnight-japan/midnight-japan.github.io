@@ -10,6 +10,7 @@ const _pa = new THREE.Vector3(), _pb = new THREE.Vector3();
 const clamp = (x, a, b) => Math.max(a, Math.min(b, x));
 const lerp = (a, b, t) => a + (b - a) * t;
 const MEET_POOL = ['r34', 'r32', 'r33', 'r35', 's15', 'rps13', 'z33', 'gr86', 'ae86', 'jza80', 'a90', 'jzx100', 'fd3s', 'nd', 'na1', 'ek9', 'fl5', 'ap1', 'evo9', 'gdb', 'lfa', 'copen', 's660', 'altow', 'p911', 'e46', 'mustang', 'model3'];
+const CITY_POOL = ['prius', 'prius', 'prius', 'taxi', 'taxi', 'taxi', 'nbox', 'nbox', 'nbox', 'every', 'hiace', 'hiace', 'truck', 'crown', 'leaf', 'sakura', 'sakura', 'jimny', 'altow', 'model3', 'copen', 'gr86', 'bus'];
 const TRAFFIC_POOL = ['prius', 'prius', 'taxi', 'taxi', 'hiace', 'hiace', 'every', 'truck', 'truck', 'bus', 'crown', 'nbox', 'nbox', 'leaf', 'sakura', 'model3', 'jimny', 'altow', 'gr86', 'fl5', 'r35', 'a90', 'mustang'];
 
 // Merge all static meshes of a car model by material (keeps wheels, doors, lights animatable).
@@ -52,10 +53,11 @@ export function mergeModel(model) {
 export class Traffic {
   constructor(game) {
     this.g = game; this.net = game.net; this.world = game.world; this.scene = game.scene;
-    this.cars = []; this.max = { low: 18, medium: 38, high: 56, ultra: 76 }[game.quality] ?? 22;
+    this.cars = []; this.max = { low: 28, medium: 52, high: 84, ultra: 112 }[game.quality] ?? 40;
     this.meetMax = { low: 12, medium: 22, high: 32, ultra: 44 }[game.quality] ?? 22;
     this.t = 0; this.spawnT = 0; this.paClosed = false;
     this.headPool = this.makeHeadPool();
+    this.cityMax = { low: 10, medium: 22, high: 36, ultra: 50 }[game.quality] ?? 22;
   }
   makeHeadPool() {
     const c = document.createElement('canvas'); c.width = 64; c.height = 128; const g = c.getContext('2d');
@@ -153,6 +155,7 @@ export class Traffic {
       if (ai.mode === 'road') this.driveRoad(ai, dt, byLane, ph, player);
       else if (ai.mode === 'path') this.drivePath(ai, dt, player);
       else if (ai.mode === 'parked') this.parked(ai, dt);
+      else if (ai.mode === 'city') this.driveCity(ai, dt, player);
       // write transform
       const m = ai.model;
       m.root.position.copy(ai.pos); m.root.rotation.order = 'YXZ'; m.root.rotation.y = ai.yaw;
@@ -337,8 +340,8 @@ export class Traffic {
     }
   }
   // fill the expressways around the player too (not only at the far ends of the Bayshore Route)
-  spawnNear() {
-    const f = this.g.focus; if (!f) return;
+  spawnNear(reuse = null) {
+    const f = this.g.focus; if (!f) return false;
     const roads = this.net.roads.filter(r => r.kind !== 'local' && r.kind !== 'ramp' && r.lanes?.length && r.length > 300);
     for (let tries = 0; tries < 6; tries++) {
       const r = roads[Math.floor(Math.random() * roads.length)]; if (!r) return;
@@ -346,9 +349,11 @@ export class Traffic {
       if (d < 180 || d > 900) continue; // out of sight, but close enough to meet
       const lane = r.lanes[Math.floor(Math.random() * r.lanes.length)];
       if (this.cars.some(c => c.road === r && c.lane === lane && Math.abs(c.s - s) < 30)) continue;
-      const ai = this.createAI(Math.random() < 0.3 ? MEET_POOL[Math.floor(Math.random() * MEET_POOL.length)] : TRAFFIC_POOL[Math.floor(Math.random() * TRAFFIC_POOL.length)]);
-      this.placeOnRoad(ai, r, lane, s); return;
+      const ai = reuse || this.createAI(Math.random() < 0.3 ? MEET_POOL[Math.floor(Math.random() * MEET_POOL.length)] : TRAFFIC_POOL[Math.floor(Math.random() * TRAFFIC_POOL.length)]);
+      ai.decided = false; ai.toPA = false; ai.toLot = false;
+      this.placeOnRoad(ai, r, lane, s); return true;
     }
+    return false;
   }
   manage() {
     // keep highway population
@@ -359,11 +364,114 @@ export class Traffic {
       const s = lane.dir === 1 ? 0 : bay.length;
       const ai = this.createAI(Math.random() < 0.35 ? MEET_POOL[Math.floor(Math.random() * MEET_POOL.length)] : TRAFFIC_POOL[Math.floor(Math.random() * TRAFFIC_POOL.length)]);
       this.placeOnRoad(ai, bay, lane, s);
-      this.spawnNear();
+      this.spawnNear(); this.spawnNear();
     }
+    // keep the traffic where the player is: cars far away along the 30 km of expressway are moved closer
+    const f = this.g.focus; let moved = 0;
+    for (const ai of this.cars) {
+      if (moved >= 3) break;
+      if (ai.mode !== 'road' || ai.police || ai.toLot || ai.toPA || ai.accident || ai.pursuit) continue;
+      if (Math.hypot(ai.pos.x - f.x, ai.pos.z - f.z) < 2400) continue;
+      if (this.spawnNear(ai)) moved++;
+    }
+    this.manageCity();
     // mark near cars for full-rate updates
     for (const ai of this.cars) ai.near = ai.pos.distanceToSquared(this.g.focus) < 120 * 120;
   }
+  // ───── city streets (OpenStreetMap graph from js/game/city.js) ─────
+  manageCity() {
+    const net = this.world.city?.net; if (!net || !net.chains.size) return;
+    const f = this.g.focus; const city = this.cars.filter(c => c.mode === 'city');
+    // recycle far / orphaned cars to new spots near the player
+    for (const ai of city) if (ai.c.dead || Math.hypot(ai.pos.x - f.x, ai.pos.z - f.z) > 650 || ai.stuck > 25) this.placeCity(ai, net, f);
+    // cars only appear when the player is near the city streets
+    const nearStreet = net.randomNear(f.x, f.z, 0, 400);
+    if (!nearStreet) return;
+    const fill = city.length < this.cityMax * 0.6;
+    for (let k = city.length; k < this.cityMax && k < city.length + (fill ? 8 : 3); k++) {
+      const ai = this.createAI(CITY_POOL[Math.floor(Math.random() * CITY_POOL.length)]);
+      if (!this.placeCity(ai, net, f, fill ? 35 : 150)) { this.remove(ai); break; }
+    }
+  }
+  placeCity(ai, net, f, rMin = 150) {
+    const sp = net.randomNear(f.x, f.z, rMin, 480); if (!sp) { ai.mode = 'city'; ai.c = { dead: true }; return false; }
+    ai.mode = 'city'; ai.road = null; ai.c = sp.c; ai.i = sp.i; ai.d = sp.d; ai.dir = sp.dir; ai.stuck = 0; ai.next = null;
+    ai.vDes = [16, 13.5, 12, 11, 8.5, 6][sp.c.cls] * (0.85 + Math.random() * 0.25); ai.v = ai.vDes * 0.7;
+    this.cityPose(ai, true); return true;
+  }
+  segOf(c, i) { const a = c.pts[i], b = c.pts[i + 1]; const L = Math.hypot(b[0] - a[0], b[1] - a[1]) || 0.01; return { a, b, L, tx: (b[0] - a[0]) / L, tz: (b[1] - a[1]) / L }; }
+  // pick the street to continue on at the vertex the car is driving into
+  chooseNext(ai, net) {
+    const c = ai.c, vi = ai.dir > 0 ? ai.i + 1 : ai.i; const k = c.keys[vi];
+    const S0 = this.segOf(c, ai.i); const hx = S0.tx * ai.dir, hz = S0.tz * ai.dir;
+    const opts = [];
+    for (const [c2, i2] of net.nodes.get(k) || []) {
+      if (c2.dead) continue;
+      if (i2 < c2.pts.length - 1) { const S = this.segOf(c2, i2); if (!(c2 === c && i2 === ai.i && ai.dir === -1)) opts.push({ c: c2, i: i2, dir: 1, d: 0, dot: S.tx * hx + S.tz * hz }); }
+      if (i2 > 0 && !c2.oneway) { const S = this.segOf(c2, i2 - 1); if (!(c2 === c && i2 - 1 === ai.i && ai.dir === 1)) opts.push({ c: c2, i: i2 - 1, dir: -1, d: S.L, dot: -S.tx * hx - S.tz * hz }); }
+    }
+    const ok = opts.filter(o => o.dot > -0.5 && o.c.cls < 5);
+    if (!ok.length) return null;
+    let sum = 0; for (const o of ok) { o.w = (o.dot > 0.85 ? 6 : o.dot > 0.2 ? 2 : 1) * (o.c.cls <= ai.c.cls ? 1.5 : 1); sum += o.w; }
+    let r = Math.random() * sum; for (const o of ok) { r -= o.w; if (r <= 0) return o; } return ok[0];
+  }
+  cityPose(ai, snap) {
+    const c = ai.c, S = this.segOf(c, ai.i);
+    const lat = c.oneway ? (c.w > 7 ? c.w / 4 : 0) : Math.max(1.35, Math.min(c.w / 4, 3.4));
+    const hx = S.tx * ai.dir, hz = S.tz * ai.dir;
+    const x = S.a[0] + S.tx * ai.d + hz * lat, z = S.a[1] + S.tz * ai.d - hx * lat;
+    ai.pos.set(x, 0, z);
+    const yaw = Math.atan2(hx, hz);
+    if (snap) ai.yaw = yaw; else { let dy = yaw - ai.yaw; while (dy > Math.PI) dy -= Math.PI * 2; while (dy < -Math.PI) dy += Math.PI * 2; ai.steer = clamp(dy * 2, -0.5, 0.5); ai.yaw += dy * (1 - Math.exp(-ai.dtLast * 8)); }
+  }
+  driveCity(ai, dt, player) {
+    const net = this.world.city?.net; if (!net || ai.c.dead) return;
+    ai.dtLast = dt;
+    const S = this.segOf(ai.c, ai.i);
+    const toV = ai.dir > 0 ? S.L - ai.d : ai.d;                       // distance to the vertex ahead
+    if (!ai.next) ai.next = this.chooseNext(ai, net) || 'end';
+    let vMax = ai.vDes;
+    if (ai.next !== 'end' && ai.next.dot < 0.85) vMax = Math.min(vMax, toV < 22 ? lerp(4.2, ai.vDes, clamp((toV - 4) / 18, 0, 1)) : vMax);
+    if (ai.next === 'end') vMax = Math.min(vMax, Math.max(1, toV * 0.6));
+    // gap to the nearest obstacle ahead: other city cars, the player, a red light
+    let gap = 1e9, vLead = vMax;
+    const hx = S.tx * ai.dir, hz = S.tz * ai.dir;
+    for (const o of this.cars) {
+      if (o === ai || o.mode !== 'city') continue;
+      const dx = o.pos.x - ai.pos.x, dz = o.pos.z - ai.pos.z; const fwd = dx * hx + dz * hz; if (fwd <= 0 || fwd > 35) continue;
+      const side = Math.abs(dx * hz - dz * hx); if (side > 1.8) continue;
+      if (Math.sin(o.yaw) * hx + Math.cos(o.yaw) * hz < 0.2) continue;
+      if (fwd < gap) { gap = fwd; vLead = o.v; }
+    }
+    if (player) { const dx = player.pos.x - ai.pos.x, dz = player.pos.z - ai.pos.z; const fwd = dx * hx + dz * hz; if (fwd > 0 && fwd < 35 && Math.abs(dx * hz - dz * hx) < 2.2 && Math.abs(player.pos.y - ai.pos.y) < 2) { if (fwd < gap) { gap = fwd; vLead = Math.max(0, player.vel.x * hx + player.vel.z * hz); } } }
+    const k = ai.c.keys[ai.dir > 0 ? ai.i + 1 : ai.i];
+    const light = net.light(k, hx, hz, this.world.city.uniforms.uTime.value);
+    if (light !== 'go' && toV > 7) { const stop = toV - 7.5; if (light === 'stop' || stop > ai.v * 1.2) { if (stop < gap) { gap = Math.max(0.1, stop + ai.halfL * 2 + 4); vLead = 0; } } }
+    // IDM (city: shorter headway)
+    const a = 1.8, b = 2.6, s0 = 2.2 + ai.halfL, T = 1.1;
+    const sStar = s0 + Math.max(0, ai.v * T + ai.v * (ai.v - vLead) / (2 * Math.sqrt(a * b)));
+    let acc = a * (1 - Math.pow(ai.v / Math.max(0.5, vMax), 4) - Math.pow(sStar / Math.max(0.1, gap - ai.halfL * 2), 2));
+    acc = clamp(acc, -7, a); ai.braking = acc < -0.8 || ai.v < 0.3;
+    ai.v = Math.max(0, ai.v + acc * dt);
+    ai.stuck = ai.v < 0.2 ? ai.stuck + dt : 0;
+    // advance, crossing vertices
+    let step = ai.v * dt;
+    for (let guard = 0; guard < 4 && step > 0; guard++) {
+      const Sg = this.segOf(ai.c, ai.i); const rem = ai.dir > 0 ? Sg.L - ai.d : ai.d;
+      if (step < rem) { ai.d += step * ai.dir; step = 0; break; }
+      step -= rem; ai.d = ai.dir > 0 ? Sg.L : 0;
+      const n = ai.next && ai.next !== 'end' ? ai.next : null;
+      if (!n) { // dead end: turn around if two-way, else wait to be recycled
+        if (!ai.c.oneway) { ai.dir = -ai.dir; ai.v = 0; } else { ai.v = 0; ai.stuck = 99; }
+        ai.next = null; break;
+      }
+      ai.c = n.c; ai.i = n.i; ai.dir = n.dir; ai.d = n.d; ai.next = null;
+      ai.signal = 0;
+    }
+    if (ai.next && ai.next !== 'end') { const turn = Math.sign((ai.next.c.pts[ai.next.dir > 0 ? ai.next.i + 1 : ai.next.i][0] - ai.pos.x) * hz - (ai.next.c.pts[ai.next.dir > 0 ? ai.next.i + 1 : ai.next.i][1] - ai.pos.z) * hx); ai.signal = toV < 30 && ai.next.dot < 0.6 ? (turn > 0 ? 1 : -1) : 0; }
+    this.cityPose(ai, false);
+  }
+
   // collisions with the player (circle approximations)
   collidePlayer(v) {
     if (!v) return;
@@ -379,7 +487,7 @@ export class Traffic {
           const nx = ex / d, nz = ez / d, pen = min - d;
           const heavy = ai.car.mass / (ai.car.mass + v.m);
           v.pos.x += nx * pen * heavy; v.pos.z += nz * pen * heavy;
-          if (ai.mode === 'road') ai.v *= 0.7; else { ai.pos.x -= nx * pen * (1 - heavy); ai.pos.z -= nz * pen * (1 - heavy); }
+          if (ai.mode === 'road' || ai.mode === 'city') ai.v *= 0.7; else { ai.pos.x -= nx * pen * (1 - heavy); ai.pos.z -= nz * pen * (1 - heavy); }
           const rel = (v.vel.x - af.x * ai.v) * nx + (v.vel.z - af.z * ai.v) * nz;
           if (rel < 0) { v.vel.x -= nx * rel * 1.2; v.vel.z -= nz * rel * 1.2; v.vx = v.vel.dot(v.forward); v.vlat = v.vel.dot(v.left); if (rel < -2) v.events.push('crash'); ai.hitBy = this.t; }
         }

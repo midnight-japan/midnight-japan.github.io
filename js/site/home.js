@@ -9,6 +9,8 @@ import { carImage } from './carart.js';
 const ic = p => `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">${p}</svg>`;
 // (Desktop/mobile/PWA is covered by the "Start in 3 steps" section, so it is not repeated here.)
 const FEATURES = [
+  ['city', ic('<path d="M3 21V9l5-3v15M8 21V4l7 3v14M15 21v-9l6-2v11M2 21h20"/><path d="M11 9h1M11 12h1M11 15h1M18 13h1M18 16h1"/>'), '実在の街'],
+  ['tune', ic('<circle cx="12" cy="12" r="3"/><path d="M12 2v3M12 19v3M2 12h3M19 12h3M4.9 4.9l2.1 2.1M17 17l2.1 2.1M4.9 19.1 7 17M17 7l2.1-2.1"/>'), 'チューン'],
   ['pa', ic('<path d="M4 20V5h7a4 4 0 0 1 0 8H4"/><path d="M15 20h5"/>'), '大黒PA'],
   ['online', ic('<circle cx="6" cy="12" r="2.5"/><circle cx="18" cy="6" r="2.5"/><circle cx="18" cy="18" r="2.5"/><path d="M8.3 10.9 15.7 7.1M8.3 13.1l7.4 3.8"/>'), 'オンライン', 'beta'],
   ['cycle', ic('<path d="M12 3a9 9 0 1 0 9 9 7 7 0 0 1-9-9z"/>'), '昼夜'],
@@ -28,7 +30,7 @@ const FEATURES = [
 //    sips -s format jpeg -s formatOptions 78 -Z 1600 X.png --out X.jpg && sips -s format jpeg -s formatOptions 74 -Z 800 X.png --out X-800.jpg
 // Caption: i18n key site.shot.<first 2 chars> if it exists, otherwise the file name ("08-wangan-night" → "Wangan night").
 // 9 entries fill the grid exactly on desktop (first one large). Other shots on disk: 05-onfoot, 06-tollgate.
-const SHOTS = ['07-ae86-loops', '16-tsubasa', '14-aqua-tunnel', '13-umihotaru', '01-pa-night', '04-garage', '15-aqua-bridge', '03-cockpit', '02-loop-day'];
+const SHOTS = ['18-minatomirai', '17-city-night', '19-city-aerial', '07-ae86-loops', '16-tsubasa', '14-aqua-tunnel', '21-tuning', '13-umihotaru', '03-cockpit'];
 const SHOT_DIR = 'docs/screenshots/';
 const shotSrc = (s, w) => SHOT_DIR + s + (w === 800 ? '-800' : '') + '.jpg';
 const shotCap = s => {
@@ -47,13 +49,13 @@ function pngFallback(img, name, onFail) {
 
 // ── World tiles (home): [screenshot, region id in data/meta.js REGIONS or i18n key, route badge, Japanese name]
 const WORLD = [
+  ['19-city-aerial', 'site.world.city', 'K', '横浜・川崎'],
   ['07-ae86-loops', 'daikoku_pa', 'B', '大黒PA'],
   ['16-tsubasa', 'tsubasa', 'B', '鶴見つばさ橋'],
   ['14-aqua-tunnel', 'site.world.aqua', 'CA', '東京湾アクアライン'],
-  ['13-umihotaru', 'umihotaru', 'CA', '海ほたるPA'],
 ];
 // Route-sign ticker words (decorative, Japanese/English place names — not translated on purpose)
-const TICKER = ['大黒PA', 'DAIKOKU PA', '首都高速湾岸線', 'BAYSHORE ROUTE', '鶴見つばさ橋', 'TSURUMI TSUBASA BRIDGE', '川崎浮島JCT', '東京湾アクアライン', 'TOKYO BAY AQUA-LINE', '海ほたるPA', 'UMIHOTARU', '羽田', 'HANEDA', '横浜ベイブリッジ', 'YOKOHAMA BAY BRIDGE'];
+const TICKER = ['みなとみらい', 'MINATO MIRAI', '横浜中華街', 'YOKOHAMA CHINATOWN', '川崎', 'KAWASAKI', '大黒PA', 'DAIKOKU PA', '首都高速湾岸線', 'BAYSHORE ROUTE', '鶴見つばさ橋', 'TSURUMI TSUBASA BRIDGE', '川崎浮島JCT', '東京湾アクアライン', 'TOKYO BAY AQUA-LINE', '海ほたるPA', 'UMIHOTARU', '羽田', 'HANEDA', '横浜ベイブリッジ', 'YOKOHAMA BAY BRIDGE'];
 
 // ── Featured cars for the home showcase strip (ids from data/cars.js; unknown ids are skipped).
 const FEATURED = ['r34', 'r32', 'jza80', 'fd3s', 'na1', 'ae86', 'gr86', 'ap1', 'evo9', 'lfa'];
@@ -61,12 +63,12 @@ const FEATURED = ['r34', 'r32', 'jza80', 'fd3s', 'na1', 'ae86', 'gr86', 'ap1', '
 // ── Roadmap: [version, status, item keys]. Keep it modest — plans, not promises.
 // Item keys: site.road.<version without dot>.<key>, except entries written as 'NN.key' which point at another version's key.
 const ROADMAP = [
-  ['0.1', 'done', ['pa', 'cars', 'life', 'online']],
   ['0.2', 'done', ['bay', 'aqua', 'models3d']],
   ['0.3', 'done', ['handling', 'cockpit', 'paint', 'map']],
-  ['0.4', 'now', ['roadside', 'places', 'traffic', 'konbini']],
-  ['0.5', 'next', ['03.c1', '05.landmarks', '03.areas']],
-  ['Later', 'later', ['03.events', '03.tuning', '02.perf']],
+  ['0.4', 'done', ['roadside', 'places', 'traffic', 'konbini']],
+  ['0.5', 'now', ['city', 'citytraffic', 'landmarks', 'tuning']],
+  ['0.6', 'next', ['03.c1', 'haneda', 'people', 'interiors']],
+  ['Later', 'later', ['03.events', '06.touge', '02.perf']],
 ];
 
 // ── Controls. Keep in sync with the game's input map. Values: keyboard keys (array → <kbd>), gamepad, touch i18n key.

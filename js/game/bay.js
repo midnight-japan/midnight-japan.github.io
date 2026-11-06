@@ -255,7 +255,7 @@ function buildIndustry(W, far) {
   const stackG = new THREE.CylinderGeometry(0.6, 1, 1, 10); stackG.translate(0, 0.5, 0);
   const tanks = [], stacks = [];
   const zones = [
-    { x0: 3500, x1: 10500, z0: -7600, z1: -2100, n: 260 },     // Ōgishima / Higashi-Ōgishima / Ukishima (JFE, refineries)
+    // (Ōgishima / Ukishima / Kawasaki: real OSM tanks and stacks stream in with js/game/city.js)
     { x0: 19500, x1: 27000, z0: -9000, z1: 9000, n: 220 },     // Chiba coast: Sodegaura / Kisarazu / Kimitsu
   ];
   for (const Z of zones) for (let i = 0, tries = 0; i < Z.n && tries < Z.n * 12; tries++) {
@@ -270,7 +270,7 @@ function buildIndustry(W, far) {
   for (const [mat, list] of [[redM, stacks.filter((_, i) => i % 2)], [whiteM, stacks.filter((_, i) => !(i % 2))]]) if (list.length) { const im = new THREE.InstancedMesh(stackG, mat, list.length); list.forEach(([x, z, h], i) => { m4.makeScale(2.4, h, 2.4); m4.setPosition(x, 0, z); im.setMatrixAt(i, m4); }); far.add(im); }
   // flare stacks with flames (animated by World.update through W.flares)
   W.flares = W.flares || [];
-  for (const [x, z] of [[6200, -4300], [7800, -5200], [9300, -6900], [22400, -2500], [23800, 1200]]) {
+  for (const [x, z] of [[22400, -2500], [23800, 1200]]) {
     if (!W.isLand(x, z)) continue;
     const st = new THREE.Mesh(new THREE.CylinderGeometry(1.2, 2, 90, 8), tankM); st.position.set(x, 45, z); far.add(st);
     const fl = new THREE.Mesh(new THREE.ConeGeometry(4, 16, 10, 1, true), new THREE.MeshBasicMaterial({ color: 0xffa040, transparent: true, opacity: 0.85, blending: THREE.AdditiveBlending, depthWrite: false })); fl.position.set(x, 98, z); far.add(fl); W.flares.push(fl);
@@ -280,7 +280,7 @@ function buildIndustry(W, far) {
   // city light carpet on the far shores (Kawasaki, Ōta / Shinagawa, Chiba)
   for (let i = 0, tries = 0; i < 9000 && tries < 60000; tries++) {
     const x = lerp(-4000, 30000, rand()), z = lerp(-26000, 12000, rand());
-    if (Math.hypot(x, z) < 4500 || !W.isLand(x, z)) continue; i++;
+    if ((x < 14500 && z > -14500) || !W.isLand(x, z)) continue; i++; // the streamed city covers the near shores
     carpet.push(new THREE.Vector3(x, 1 + rand() * 8, z));
   }
   const cp = new THREE.Points(new THREE.BufferGeometry().setFromPoints(carpet), new THREE.PointsMaterial({ color: 0xffd7a0, size: 3, sizeAttenuation: true, transparent: true, opacity: 0 }));
