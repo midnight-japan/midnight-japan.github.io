@@ -1250,7 +1250,7 @@ export function signTexture(kind, opts = {}) {
 
 export function setSignAnisotropy(n) {
   _aniso = n;
-  for (const e of _cache.values()) { e.texture.anisotropy = n; e.texture.needsUpdate = true; }
+  for (const e of _cache.values()) { e.texture.anisotropy = n; if (e.texture.image) e.texture.needsUpdate = true; }
   for (const t of _dynamic) { t.anisotropy = n; t.needsUpdate = true; }
 }
 const _dynamic = new Set();

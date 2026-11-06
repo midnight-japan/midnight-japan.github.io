@@ -30,6 +30,8 @@ import { createHuman, defaultOutfit, createNameTag } from './humans.js';
 import { UI } from './ui.js';
 import { randomPlate } from './plates.js';
 
+// merging helpers call toNonIndexed() on geometries that may already be non-indexed: skip those quietly
+{ const tni = THREE.BufferGeometry.prototype.toNonIndexed; THREE.BufferGeometry.prototype.toNonIndexed = function () { return this.index === null ? this : tni.call(this); }; }
 const clamp = (x, a, b) => Math.max(a, Math.min(b, x));
 const lerp = (a, b, t) => a + (b - a) * t;
 const SETTINGS_KEY = 'dn.settings', GARAGE_KEY = 'dn.garage';

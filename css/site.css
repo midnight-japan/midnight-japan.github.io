@@ -584,7 +584,8 @@ input[type="color"] { width: 54px; height: 36px; padding: 2px; border-radius: 8p
 /* ── roadmap ── */
 .road { grid-template-columns: 1fr; }
 @media (min-width: 680px) { .road { grid-template-columns: repeat(2, 1fr); } }
-@media (min-width: 1100px) { .road { grid-template-columns: repeat(4, 1fr); } }
+@media (min-width: 1100px) { .road { grid-template-columns: repeat(5, 1fr); } }
+@media (min-width: 680px) and (max-width: 1099px) { .road .road-col:last-child:nth-child(odd) { grid-column: 1 / -1; } }
 .road-col { border-top: 3px solid #45516e; }
 .road-col.done { border-top-color: var(--green); }
 .road-col.now { border-top-color: var(--sodium); box-shadow: 0 0 0 1px rgba(255, 154, 46, .25), 0 24px 50px -30px rgba(255, 140, 30, .5); }
@@ -956,3 +957,13 @@ body:not([data-page="home"]) .site-header:not(.scrolled):has(.nav.open) { backgr
 .hero-inner { max-width: min(46rem, 100%); }
 .hero-title { overflow-wrap: normal; hyphens: none; white-space: nowrap; }
 :lang(ko) body, html[lang="ko"] body { word-break: keep-all; overflow-wrap: break-word; } /* Korean: break between words, not inside them */
+
+/* ── v0.3.5 polish: smoother cards, crisper focus, refined imagery ── */
+.card, .shot, .road-col { transition: transform .25s ease, box-shadow .25s ease, border-color .25s ease; }
+@media (hover: hover) { .road-col:hover, .card:hover { transform: translateY(-3px); box-shadow: 0 18px 40px -24px rgba(0,0,0,.8); } }
+.shot img { filter: saturate(1.08) contrast(1.04); }
+.shot::after { content: ''; position: absolute; inset: 0; pointer-events: none; background: linear-gradient(180deg, transparent 55%, rgba(4,8,16,.55)); }
+:focus-visible { outline: 2px solid var(--sodium); outline-offset: 3px; border-radius: 6px; }
+html { scroll-behavior: smooth; scroll-padding-top: 80px; }
+::selection { background: rgba(255,154,46,.35); }
+.shot .cap, .shot figcaption { z-index: 1; }

@@ -1,9 +1,10 @@
 # 📜 MIDNIGHT JAPAN 업데이트 기록 · Changelog
 
-현재 버전 · Current: **v0.3.4** · [▶ 웹에서 플레이](https://midnight-japan.github.io/) · [🌐 업데이트 페이지](https://midnight-japan.github.io/changelog.html)
+현재 버전 · Current: **v0.3.5** · [▶ 웹에서 플레이](https://midnight-japan.github.io/) · [🌐 업데이트 페이지](https://midnight-japan.github.io/changelog.html)
 
 | 버전 | 날짜 | 이름 | 요약 |
 |---|---|---|---|
+| [v0.3.5](#v035--polish-2026-11-06) | 2026-11-06 | Polish | 버그·경고 정리와 웹사이트·GitHub 페이지 리뉴얼. |
 | [v0.3.4](#v034--full-map-2026-11-06) | 2026-11-06 | Full Map | 확대·축소·이동되는 전체 지도, 바퀴마다 움직이는 서스펜션, 로드맵 갱신, GitHub 소개 페이지 리뉴얼. |
 | [v0.3.3](#v033--smooth-ride-2026-11-06) | 2026-11-06 | Smooth Ride | 오디오 음량 평준화, 도로 단차 95% 제거, 표지판 171개로 확대, 화면 하단 버전·FPS 표시, 웹사이트 사진 전면 교체. |
 | [v0.3.2](#v032--road-paint-2026-11-06) | 2026-11-06 | Road Paint | 노면에 행선지·화살표·제한속도·「止まれ」 표시, 분기점마다 안내 표지판, 도로 구멍과 차로 위 가로등 수정, 스폰 지역 선택과 버전 표시. |
@@ -12,6 +13,22 @@
 | [v0.2.0](#v020--bayshore-2026-11-05) | 2026-11-05 | Bayshore | 수도고속 완간선을 따라 하네다까지, 도쿄만 아쿠아라인 해저터널을 지나 우미호타루 PA까지. 실제 3D 차량 모델과 열리는 보닛도 들어왔어요. |
 | [v0.1.1](#v011--one-click-2026-11-04) | 2026-11-04 | One Click | 링크 하나로 바로 플레이. 크롬에서 공식 사이트 주소만 열면 설치 없이 실행돼요. |
 | [v0.1.0](#v010--first-meet-2026-11-04) | 2026-11-04 | First Meet | 첫 공개 버전. 다이코쿠 JCT·PA와 다이코쿠 부두 일대를 3D로 구현했습니다. |
+
+---
+
+## v0.3.5 — Polish (2026-11-06)
+
+> 버그·경고 정리와 웹사이트·GitHub 페이지 리뉴얼.
+> Bug and warning clean-up, refreshed website and GitHub page.
+
+**🔧 변경 · Changed**
+
+- 웹사이트: 로드맵 5단 레이아웃(혼자 떨어지던 카드 수정), 카드 호버·포커스 표시·스크롤 다듬기, 스크린샷 색감·캡션 가독성 개선<br><sub>Website: five-column roadmap (no more orphaned card), refined card hover, focus rings and scrolling, richer screenshots with readable captions</sub>
+- GitHub 소개 페이지 리뉴얼: 히어로 이미지, 플레이 버튼, 최근 업데이트 표, 스크린샷 특징 그리드, 영어 소개 갱신<br><sub>GitHub page renewed: hero image, play button, recent-updates table, screenshot feature grid, updated English intro</sub>
+
+**🐞 수정 · Fixed**
+
+- 게임 실행 중 콘솔 경고 740여 건 제거(지오메트리 병합), 표지판 텍스처 갱신 오류 수정<br><sub>Removed ~740 console warnings during play (geometry merging) and fixed a sign-texture update error</sub>
 
 ---
 

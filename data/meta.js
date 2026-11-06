@@ -1,8 +1,21 @@
 // Shared game metadata: version, changelog, regions. Update VERSION + CHANGELOG on every release.
-export const GAME = { title: 'MIDNIGHT JAPAN', titleJa: 'ミッドナイト・ジャパン', version: '0.3.4', build: '2026.11.06' };
+export const GAME = { title: 'MIDNIGHT JAPAN', titleJa: 'ミッドナイト・ジャパン', version: '0.3.5', build: '2026.11.06' };
 
 // Newest first. type: new | change | fix | known
 export const CHANGELOG = [
+  {
+    version: '0.3.5', date: '2026-11-06', codename: 'Polish',
+    summary: {
+      ko: '버그·경고 정리와 웹사이트·GitHub 페이지 리뉴얼.',
+      ja: 'バグと警告の整理、サイトとGitHubページの刷新。',
+      en: 'Bug and warning clean-up, refreshed website and GitHub page.'
+    },
+    items: [
+      { type: 'fix', ko: '게임 실행 중 콘솔 경고 740여 건 제거(지오메트리 병합), 표지판 텍스처 갱신 오류 수정', ja: 'ゲーム中のコンソール警告約740件を解消（ジオメトリ結合）、標識テクスチャ更新の不具合を修正', en: 'Removed ~740 console warnings during play (geometry merging) and fixed a sign-texture update error' },
+      { type: 'change', ko: '웹사이트: 로드맵 5단 레이아웃(혼자 떨어지던 카드 수정), 카드 호버·포커스 표시·스크롤 다듬기, 스크린샷 색감·캡션 가독성 개선', ja: 'サイト：ロードマップを5列レイアウトに（はみ出たカードを修正）、カードのホバー・フォーカス表示・スクロールを改善、スクリーンショットの色味とキャプションの読みやすさを向上', en: 'Website: five-column roadmap (no more orphaned card), refined card hover, focus rings and scrolling, richer screenshots with readable captions' },
+      { type: 'change', ko: 'GitHub 소개 페이지 리뉴얼: 히어로 이미지, 플레이 버튼, 최근 업데이트 표, 스크린샷 특징 그리드, 영어 소개 갱신', ja: 'GitHub紹介ページを刷新：ヒーロー画像、プレイボタン、最近の更新表、スクリーンショット付き特徴グリッド、英語紹介を更新', en: 'GitHub page renewed: hero image, play button, recent-updates table, screenshot feature grid, updated English intro' },
+    ]
+  },
   {
     version: '0.3.4', date: '2026-11-06', codename: 'Full Map',
     summary: {

@@ -5,7 +5,7 @@
 // - everything else (images, models, audio): stale-while-revalidate
 // - cross-origin (Google Fonts, GitHub) is not intercepted
 // Keep VERSION in sync with GAME.version in data/meta.js — bumping it drops old caches.
-const VERSION = '0.3.4';
+const VERSION = '0.3.5';
 const CACHE = 'dn-' + VERSION + '-nf1'; // suffix bumps when the caching strategy changes
 const VENDOR = 'dn-vendor-' + VERSION;
 
