@@ -41,11 +41,15 @@ export class UI {
         <div class="lobby-steps"><span data-i18n="game.lobby.s1"></span><i>›</i><span data-i18n="game.lobby.s2"></span><i>›</i><span data-i18n="game.lobby.s3"></span><i>›</i><span data-i18n="game.lobby.s4"></span></div>
         <button class="btn primary big" data-a="play"><span data-i18n="game.title.start"></span><small class="sub" data-i18n="game.title.startSub"></small></button>
         <button class="btn" data-a="quick"><span data-i18n="game.title.quick"></span> <small class="sub" id="quick-car"></small></button>
+        <label class="spawn-sel"><span data-i18n="game.spawn.label"></span> <select id="t-spawn">
+          <option value="pa" data-i18n="game.spawn.pa"></option><option value="bay" data-i18n="game.spawn.bay"></option>
+          <option value="umi" data-i18n="game.spawn.umi"></option><option value="futo" data-i18n="game.spawn.futo"></option></select></label>
         <div class="lobby-online" id="lobby-online"></div>
         <div class="lobby-row"><button class="btn sm" data-a="settings">⚙ <span data-i18n="game.menu.settings"></span></button>
         <button class="btn sm" data-a="controls">🎮 <span data-i18n="game.menu.controls"></span></button>
         <a class="btn sm ghost" href="index.html">🌐 <span data-i18n="game.title.site"></span></a></div>
         <p class="hint" data-i18n="game.title.hint"></p>
+        <div class="title-ver">MIDNIGHT JAPAN v${GAME.version} · ${GAME.build}</div>
       </div></div>
       <div id="garage" class="screen side"><div class="panel">
         <div class="ph"><h2 data-i18n="game.garage.title"></h2><button class="x" data-a="garageBack">✕</button></div>
@@ -68,6 +72,7 @@ export class UI {
         <button class="btn primary wide" data-a="drive" data-i18n="game.garage.drive"></button>
       </div></div>
       <div id="hud" class="hidden">
+        <div class="hud-ver">v${GAME.version}</div>
         <div class="tl"><div class="loc"></div><div class="clock"></div><div class="money"></div></div>
         <canvas id="minimap" width="200" height="200"></canvas>
         <div class="speedo"><canvas id="speedo" width="260" height="260"></canvas><div class="icons"></div></div>
@@ -129,7 +134,7 @@ export class UI {
   loading(p, msg) { $('#loading .bar i').style.width = (p * 100) + '%'; $('#loading .load-msg').textContent = msg || ''; if (p >= 1) setTimeout(() => $('#loading').classList.remove('show'), 300); }
   fatal(msg) { $('#fatal').classList.add('show'); $('#fatal-msg').textContent = msg; }
   screens(show) { for (const id of ['title', 'garage', 'pause', 'settings', 'controls', 'outfit', 'map', 'tutorial']) $('#' + id).classList.toggle('show', show === id); }
-  showTitle() { this.screens('title'); $('#hud').classList.add('hidden'); $('#title .who').innerHTML = `${esc(t('game.title.hello'))} <b>${esc(displayName())}</b>` + (currentUser() ? '' : ` · <a href="account.html">${esc(t('game.title.login'))}</a>`); this.touchMode(null); const qc = CAR_BY_ID[this.g.garage.car]; $('#quick-car').textContent = qc ? `${qc.maker} ${qc.name}` : ''; this.updateOnline(); }
+  showTitle() { this.screens('title'); $('#hud').classList.add('hidden'); $('#title .who').innerHTML = `${esc(t('game.title.hello'))} <b>${esc(displayName())}</b>` + (currentUser() ? '' : ` · <a href="account.html">${esc(t('game.title.login'))}</a>`); this.touchMode(null); const sp = $('#t-spawn'); if (sp) { sp.value = this.g.settings.spawn || 'pa'; sp.onchange = () => { this.g.settings.spawn = sp.value; this.g.saveSettings?.(); }; } const qc = CAR_BY_ID[this.g.garage.car]; $('#quick-car').textContent = qc ? `${qc.maker} ${qc.name}` : ''; this.updateOnline(); }
   showHUD() { this.screens(null); $('#hud').classList.remove('hidden'); this.touchMode(this.g.mode); this.paused = false; }
   touchMode(mode) {
     const on = this.g.settings.touch === 'on' || (this.g.settings.touch === 'auto' && this.isTouch);

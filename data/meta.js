@@ -1,8 +1,25 @@
 // Shared game metadata: version, changelog, regions. Update VERSION + CHANGELOG on every release.
-export const GAME = { title: 'MIDNIGHT JAPAN', titleJa: 'ミッドナイト・ジャパン', version: '0.3.1', build: '2026.11.06' };
+export const GAME = { title: 'MIDNIGHT JAPAN', titleJa: 'ミッドナイト・ジャパン', version: '0.3.2', build: '2026.11.06' };
 
 // Newest first. type: new | change | fix | known
 export const CHANGELOG = [
+  {
+    version: '0.3.2', date: '2026-11-06', codename: 'Road Paint',
+    summary: {
+      ko: '노면에 행선지·화살표·제한속도·「止まれ」 표시, 분기점마다 안내 표지판, 도로 구멍과 차로 위 가로등 수정, 스폰 지역 선택과 버전 표시.',
+      ja: '路面に行き先・矢印・速度・「止まれ」を表示、分岐ごとに案内標識、道路の穴と車線上の街灯を修正、スタート地点の選択とバージョン表示。',
+      en: 'Destinations, arrows, speed numbers and 止まれ painted on the road, guide signs before every junction, road holes and lamp posts on lanes fixed, spawn-region choice and version display.'
+    },
+    items: [
+      { type: 'new', ko: '노면 표시: 분기 전 차로마다 행선지(東京·横浜·大黒PA·アクアライン 등)와 직진/분기 화살표, 고속도로 제한속도 숫자, 일반도로 교차로의 정지선과 「止まれ」', ja: '路面標示：分岐手前の各車線に行き先（東京・横浜・大黒PA・アクアラインなど）と直進／分岐矢印、高速の速度数字、一般道交差点の停止線と「止まれ」', en: 'Road markings: per-lane destinations (Tokyo, Yokohama, Daikoku PA, Aqua-Line…) with straight/branch arrows before junctions, speed numbers on expressways, stop lines and 止まれ at street junctions' },
+      { type: 'new', ko: '모든 고속도로 분기점 500m·200m 전에 오버헤드 안내 표지판 자동 배치 (아쿠아라인·우미호타루·K5 포함)', ja: '高速のすべての分岐の500m・200m手前に門型案内標識（アクアライン・海ほたる・K5含む）', en: 'Overhead guide signs 500 m and 200 m before every expressway junction (incl. Aqua-Line, Umihotaru, K5)' },
+      { type: 'new', ko: '타이틀에서 스폰 지역 선택: 다이코쿠 PA · 완간선(베이브리지) · 우미호타루 PA · 다이코쿠 부두', ja: 'タイトルでスタート地点を選択：大黒PA・湾岸線（ベイブリッジ）・海ほたるPA・大黒ふ頭', en: 'Choose where to spawn on the title screen: Daikoku PA, Bayshore (Bay Bridge), Umihotaru PA or Daikoku Wharf' },
+      { type: 'new', ko: '타이틀 화면과 주행 화면에 게임 버전 표시', ja: 'タイトルと走行画面にバージョンを表示', en: 'Game version shown on the title screen and in-game' },
+      { type: 'fix', ko: '도로 구멍 수정: 교차로에서 끊겨 있던 일반도로 연결, 우키시마 JCT 램프가 터널과 16m 어긋나던 문제 수정', ja: '道路の穴を修正：交差点で途切れていた一般道をつなぎ、浮島JCTのランプがトンネルと16mずれていた問題を修正', en: 'Road holes fixed: streets that stopped short of junctions now connect, and the Ukishima JCT ramp no longer sits 16 m above its tunnel' },
+      { type: 'fix', ko: '가로등이 다른 도로·램프·교차로의 차로 위에 서 있던 문제 수정 (1,517개 전수 검사 0건)', ja: '街灯が他の道路・ランプ・交差点の車線上に立っていた問題を修正（1,517本を全数検査で0件）', en: 'Lamp posts no longer stand on the lanes of other roads, ramps or junctions (all 1,517 checked)' },
+      { type: 'fix', ko: '교차로에서 인도가 차로를 덮던 문제 수정', ja: '交差点で歩道が車線を覆っていた問題を修正', en: 'Sidewalks no longer cover the carriageway at junctions' },
+    ]
+  },
   {
     version: '0.3.1', date: '2026-11-06', codename: 'Clean Lines',
     summary: {

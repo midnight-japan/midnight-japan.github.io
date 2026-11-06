@@ -177,6 +177,7 @@ export class World {
     this.buildToll(S);
     this.buildBayBridge(S);
     this.buildSigns();
+    try { this.buildRoadPaint(); } catch (e) { console.warn('road paint', e); }
     this.buildSkyline();
     buildBay(this, S, { boxGeo, planeGeo, polyGeo, prismGeo, Frame });
     S.build(this.group);
@@ -808,6 +809,108 @@ export class World {
     // port
     const fm = net.byId.futo_main;
     if (fm) { place(fm, fm.length * 0.3, fm.edgeL + 1.5, 'speed_limit', { value: 50 }); place(fm, fm.length * 0.6, fm.edgeR - 1.5, 'speed_limit', { value: 50 }, 0, 1, true); }
+  }
+
+  // ───────────────────────── road paint: destinations, lane arrows, stop lines (路面標示) + junction guide signs ─────────────────────────
+  // Before every expressway diverge the lanes carry the destination painted in elongated characters (read near → far, as in
+  // Japan) with straight / branch arrows, and an overhead guide sign 500 m and 200 m ahead. Minor streets get 止まれ + a stop line.
+  buildRoadPaint() {
+    const net = this.net;
+    const DEST = { bay_k5: ['横羽線', 'K1'], pa_in: ['大黒PA', 'B'], bay_aqua: ['アクアライン', 'CA'], aqua_e: ['木更津', 'CA'], k5_nb: ['大黒線', 'K5'],
+      futo_out: ['大黒ふ頭', 'B'], k5_pa: ['大黒PA', 'K5'], k5_bay: ['湾岸線', 'B'], k5_bay_e: ['東京', 'B'], pa_k5: ['大黒線', 'K5'],
+      umi_in_e: ['海ほたる', 'CA'], umi_in_w: ['海ほたる', 'CA'], aqua_bay: ['東京', 'B'] };
+    const MAIN = { bayshore: { 1: '東京', '-1': '横浜' }, aqua_e: { 1: '木更津' }, aqua_w: { 1: '川崎' }, k5: { 1: '大黒' }, pa_in: { 1: '湾岸線' } };
+    const EN = { '横羽線': 'Yokohane Rte.', '大黒PA': 'Daikoku PA', 'アクアライン': 'Aqua-Line', '木更津': 'Kisarazu', '大黒線': 'Daikoku Rte.', '大黒ふ頭': 'Daikoku Wharf', '湾岸線': 'Bayshore Rte.', '東京': 'Tokyo', '海ほたる': 'Umihotaru', '横浜': 'Yokohama', '川崎': 'Kawasaki', '大黒': 'Daikoku' };
+    const texCache = new Map();
+    const tex = (key, draw, w = 128, h = 512) => {
+      if (texCache.has(key)) return texCache.get(key);
+      const c = document.createElement('canvas'); c.width = w; c.height = h; const g = c.getContext('2d'); draw(g, w, h);
+      const t = new THREE.CanvasTexture(c); t.colorSpace = THREE.SRGBColorSpace; t.anisotropy = 8;
+      const m = new THREE.MeshStandardMaterial({ map: t, color: 0xe6e6e0, roughness: 0.7, transparent: true, alphaTest: 0.35, depthWrite: false, polygonOffset: true, polygonOffsetFactor: -6, polygonOffsetUnits: -6 });
+      texCache.set(key, m); return m;
+    };
+    // elongated characters stacked so the first one is nearest to the driver (bottom of the canvas = near)
+    const textMat = (str, color = '#fff') => tex('t:' + str + color, (g, w, h) => {
+      const ch = [...str], n = ch.length, cell = h / n; g.fillStyle = color; g.textAlign = 'center'; g.textBaseline = 'middle';
+      ch.forEach((c, i) => { g.save(); g.translate(w / 2, h - cell * (i + 0.5)); g.scale(1, cell / w * 0.92); g.font = `900 ${w * 0.9}px "Noto Sans JP","Hiragino Sans","Yu Gothic",sans-serif`; g.fillText(c, 0, 0); g.restore(); });
+    }, 128, 128 * Math.max(1, [...str].length));
+    const arrowMat = (type) => tex('a:' + type, (g, w, h) => {
+      g.fillStyle = '#fff'; const cx = w / 2;
+      if (type === 'up') { g.fillRect(cx - 9, h * 0.32, 18, h * 0.68); g.beginPath(); g.moveTo(cx, 0); g.lineTo(cx + 46, h * 0.34); g.lineTo(cx - 46, h * 0.34); g.fill(); return; }
+      const sx = type === 'right' ? 1 : -1; // stem then a bend toward the branch side
+      g.fillRect(cx - 9, h * 0.45, 18, h * 0.55);
+      g.save(); g.translate(cx, h * 0.47); g.rotate(sx * 0.42); g.fillRect(-9, -h * 0.25, 18, h * 0.27); g.beginPath(); g.moveTo(0, -h * 0.47); g.lineTo(42, -h * 0.22); g.lineTo(-42, -h * 0.22); g.fill(); g.restore();
+    });
+    const plain = new THREE.MeshStandardMaterial({ color: 0xe6e6e0, roughness: 0.7, polygonOffset: true, polygonOffsetFactor: -6, polygonOffsetUnits: -6 });
+    const geos = new Map(); // material → [geometries]
+    // a decal that follows the deck (grade, curvature, crossfall): strips sampled along the road. v = 0 near the driver.
+    const lay = (mat, road, s, lat, dir, w, len) => {
+      const sA = s - dir * len / 2, sB = s + dir * len / 2; if (Math.min(sA, sB) < 2 || Math.max(sA, sB) > road.length - 2) return;
+      const q = road.at(s); const y0 = this.net.query(q.x + road.dirAt(s).z * lat, q.z - road.dirAt(s).x * lat, q.y + 1)?.y; if (y0 === undefined || Math.abs(y0 - q.y) > 0.6) return;
+      const n = Math.max(1, Math.ceil(len / 1.5)), pos = [], uv = [], idx = [], lift = 0.03 + 0.002 * road.index;
+      const lL = lat + dir * w / 2, lR = lat - dir * w / 2; // driver's left / right
+      for (let k = 0; k <= n; k++) {
+        const ss = sA + (sB - sA) * k / n, c = road.at(ss), t = road.dirAt(ss);
+        for (const [l, u] of [[lL, 0], [lR, 1]]) { pos.push(c.x + t.z * l, c.y + lift, c.z - t.x * l); uv.push(u, k / n); }
+        if (k) { const a = (k - 1) * 2; idx.push(a, a + 1, a + 2, a + 1, a + 3, a + 2); }
+      }
+      const g = new THREE.BufferGeometry(); g.setAttribute('position', new THREE.Float32BufferAttribute(pos, 3)); g.setAttribute('uv', new THREE.Float32BufferAttribute(uv, 2)); g.setIndex(idx);
+      g.computeVertexNormals(); if (g.attributes.normal.getY(0) < 0) { for (let k = 0; k < idx.length; k += 3) [idx[k + 1], idx[k + 2]] = [idx[k + 2], idx[k + 1]]; g.setIndex(idx); g.computeVertexNormals(); }
+      let l = geos.get(mat); if (!l) geos.set(mat, l = []); l.push(g.toNonIndexed());
+    };
+    const place = (road, s, lat, kind, opts, back) => { s = Math.max(2, Math.min(road.length - 2, s)); const p = road.at(s, lat), t = road.dirAt(s); return this.sign(kind, opts, p.x, p.y, p.z, Math.atan2(t.x, t.z) + Math.PI + (back ? Math.PI : 0), 1); };
+    let nText = 0, nSigns = 0, nStops = 0;
+    // expressway / ramp diverges
+    for (const [road, list] of net.diverges) {
+      if (road.kind === 'local') continue;
+      for (const d of list) {
+        const dest = DEST[d.to.id]; if (!dest) continue;
+        const dir = d.dir || 1, lanes = road.lanes.filter(l => l.dir === dir); if (!lanes.length) continue;
+        const branchLane = lanes.slice().sort((a, b) => Math.abs(a.lat - d.lat) - Math.abs(b.lat - d.lat))[0];
+        const side = (d.lat - branchLane.lat) * dir > 0 || (lanes.length === 1 ? d.lat * dir > 0 : (branchLane.lat - (lanes.reduce((a, l) => a + l.lat, 0) / lanes.length)) * dir > 0) ? 'left' : 'right';
+        const main = MAIN[road.id]?.[dir];
+        for (const back of [60, 260]) {
+          const s0 = d.s - back * dir;
+          for (const L of lanes) {
+            const isB = L === branchLane, str = isB ? dest[0] : main; const w = 1.5;
+            lay(arrowMat(isB ? side : 'up'), road, s0 + 4 * dir, L.lat, dir, w * 1.3, 6);
+            if (str && (isB || lanes.length > 1)) { const n = [...str].length, len = n * 2.4; lay(textMat(str), road, s0 - (len / 2 + 2) * dir, L.lat, dir, w, len); nText++; }
+          }
+        }
+        // overhead guide signs 500 m / 200 m before the diverge (skip where the hand-placed Daikoku signs already are)
+        if (road.id === 'bayshore' && (d.to.id === 'pa_in' || d.to.id === 'bay_k5')) continue;
+        for (const ahead of [500, 200]) {
+          const s1 = d.s - ahead * dir; if (s1 < 20 || s1 > road.length - 20) continue;
+          const at = road.at(s1); if (at.y < -0.6) continue; // tunnels: no gantries in the tube
+          place(road, s1, 0, 'shuto_guide', { route: dest[1] === 'CA' ? null : dest[1], lines: [{ ja: dest[0], en: EN[dest[0]] || '' }].concat(main ? [{ ja: main, en: EN[main] || '' }] : []), arrow: side, dist: ahead === 500 ? '500m' : null, mount: 'overhead', span: road.edgeL - road.edgeR, clearance: 5.5 }, dir < 0);
+          nSigns++;
+        }
+      }
+    }
+    // speed numbers on the long expressway runs (速度標示) every ~1.2 km, both directions
+    for (const road of net.roads) {
+      if (road.kind !== 'expressway') continue;
+      const v = String(road.speed || 80);
+      for (let s = 400; s < road.length - 400; s += 1200) for (const dir of [1, -1]) for (const L of road.lanes.filter(l => l.dir === dir)) { lay(textMat(v), road, s + (dir < 0 ? 600 : 0), L.lat, dir, 1.4, 4.2); }
+    }
+    // minor street meeting another street: stop line + 止まれ (the narrower road yields)
+    for (const r of net.roads) {
+      if (r.kind !== 'local') continue;
+      for (const end of [0, 1]) {
+        const S = r.samples[end ? r.samples.length - 1 : 0];
+        const h = net.hits(S.p.x, S.p.z).find(h => h.road !== r && h.road.kind === 'local' && !h.beyond && Math.abs(h.y - S.p.y) < 1 && h.lat < h.road.edgeL && h.lat > h.road.edgeR);
+        if (!h || r.lanes.length > h.road.lanes.length) continue;
+        const dir = end ? 1 : -1, lanes = r.lanes.filter(l => l.dir === dir); if (!lanes.length) continue;
+        const sLine = (end ? r.length : 0) - dir * (Math.max(h.road.edgeL, -h.road.edgeR) + 3.5);
+        if (r.length < 40 || sLine < 8 || sLine > r.length - 8) continue;
+        for (const L of lanes) { lay(plain, r, sLine, L.lat, dir, 3.4, 0.45); lay(textMat('止まれ'), r, sLine - dir * 6, L.lat, dir, 1.4, 6); }
+        nStops++;
+      }
+    }
+    const grp = new THREE.Group(); grp.name = 'road_paint';
+    for (const [m, list] of geos) { const mesh = new THREE.Mesh(mergeGeometries(list), m); mesh.receiveShadow = true; mesh.renderOrder = 2; grp.add(mesh); }
+    this.group.add(grp);
+    this.paintStats = { nText, nSigns, nStops };
   }
 
   // ───────────────────────── skyline: Minato Mirai, Kawasaki factories, Tokyo ─────────────────────────

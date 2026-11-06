@@ -187,3 +187,7 @@ body.photo .online-pill,body.photo .chat{display:none}
 @media (prefers-reduced-motion: reduce){
   *,*::before,*::after{animation-duration:.01ms!important;animation-delay:0s!important;animation-iteration-count:1!important;transition-duration:.01ms!important;transition-delay:0s!important}
 }
+.spawn-sel{display:flex;align-items:center;justify-content:center;gap:8px;font-size:13px;color:#c9d4e4;margin:4px 0}
+.spawn-sel select{background:#141a24;color:#fff;border:1px solid #3a4a62;border-radius:8px;padding:6px 10px;font:inherit}
+.title-ver{margin-top:10px;font-size:11px;letter-spacing:.08em;color:#7d8aa0}
+.hud-ver{position:absolute;left:50%;bottom:6px;transform:translateX(-50%);font-size:10px;letter-spacing:.1em;color:rgba(255,255,255,.35);pointer-events:none}

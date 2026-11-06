@@ -40,7 +40,7 @@ const isMobile = /Android|iPhone|iPad|iPod|Mobile|SamsungBrowser/i.test(navigato
 export const DEFAULT_SETTINGS = {
   quality: isMobile ? 'low' : 'high', resScale: isMobile ? 0.75 : 1, transmission: 'auto', assist: true, units: 'kmh', etc: true,
   difficulty: 'standard', steerAssist: 'standard', stm: 'sport', tcs: 'sport', abs: true, police: 'normal',
-  master: 0.8, engine: 0.85, sfx: 0.8, ambient: 0.6, radio: 0.7, dj: true, tilt: false, shake: true, fps: false, timeSpeed: 1, bloom: true, online: true, touch: isMobile ? 'on' : 'auto',
+  master: 0.8, engine: 0.85, sfx: 0.8, ambient: 0.6, radio: 0.7, dj: true, spawn: 'pa', tilt: false, shake: true, fps: false, timeSpeed: 1, bloom: true, online: true, touch: isMobile ? 'on' : 'auto',
 };
 
 class Game {
@@ -193,10 +193,22 @@ class Game {
     model.root.traverse(o => { if (o.isMesh) o.castShadow = true; });
     return model;
   }
+  // spawn region chosen on the title screen: Daikoku PA stall, Bayshore shoulder at the Bay Bridge, Umihotaru PA, Daikoku-futō
+  regionSpawn(region) {
+    const net = this.net, at = (r, s, lat) => { const q = r.at(s), d = r.dirAt(s); const pos = q.clone(); pos.x += d.z * lat; pos.z -= d.x * lat; pos.y = (net.query(pos.x, pos.z, q.y + 1)?.y ?? q.y) + 0.3; return { pos, yaw: Math.atan2(d.x, d.z) }; };
+    try {
+      if (region === 'bay') { const r = net.byId.bayshore, sp = this.world.bridgeSpan; const s = sp ? Math.max(50, sp.s0 - 250) : r.length * 0.2; const L = r.lanes.filter(l => l.dir === 1).sort((a, b) => b.lat - a.lat)[0]; return at(r, s, L.lat); }
+      if (region === 'umi') { const r = net.byId.umi_in_e || net.byId.umi_in_w; return at(r, Math.max(2, r.length - 10), 0); }
+      if (region === 'futo') { const r = net.byId.futo_5 || net.roads.find(x => x.kind === 'local'); const L = r.lanes.find(l => l.dir === 1) || r.lanes[0]; return at(r, r.length * 0.5, L.lat); }
+    } catch (e) { console.warn('spawn', e); }
+    return null;
+  }
   startDrive(id, keepPos = false) {
     this.unlockAudio();
     const prev = this.vehicle;
-    const spot = keepPos && prev ? null : this.spawnPoint();
+    const reg = keepPos && prev ? null : (new URLSearchParams(location.search).get('spawn') || this.settings.spawn || 'pa');
+    const spot = keepPos && prev ? null : ((reg !== 'pa' && this.regionSpawn(reg)) || this.spawnPoint());
+    if (spot && !spot.size && this.mySpot) { this.mySpot.taken = false; this.mySpot = null; }
     if (this.model) { this.scene.remove(this.model.root); this.model.dispose(); }
     if (this.engineSnd) { this.engineSnd.dispose(); this.engineSnd = null; }
     this.carId = id; this.garage.car = id; this.saveGarage();

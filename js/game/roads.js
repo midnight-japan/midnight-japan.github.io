@@ -130,12 +130,61 @@ export class Road {
   dirAt(s) { const i = Math.min(this.samples.length - 1, Math.max(0, Math.round(s / (this.length / (this.samples.length - 1))))); return this.samples[i].t; }
 }
 
+// Some OSM ramps have no / wrong height where they join a tunnel or trench (Ukishima JCT: the ramp left the Aqua-Line
+// tunnel 16 m above it) → a step = a hole at the joint. Blend each ramp end to the height of the road it joins.
+function fixFlatRamps(defs) {
+  const dyNear = (self, x, z, y) => { let b = null; for (const o of defs) { if (o === self) continue; for (const q of o.pts) { if (Math.hypot(q[0] - x, q[2] - z) > 12) continue; const dy = q[1] - y; if (b === null || Math.abs(dy) < Math.abs(b)) b = dy; } } return b ?? 0; };
+  const sm = t => t * t * (3 - 2 * t), BL = 260;
+  return defs.map(d => {
+    if (d.kind !== 'ramp') return d;
+    const a = d.pts[0], e = d.pts[d.pts.length - 1];
+    const o0 = dyNear(d, a[0], a[2], a[1]), o1 = dyNear(d, e[0], e[2], e[1]);
+    if (Math.abs(o0) < 4 && Math.abs(o1) < 4) return d;
+    let L = 0; const acc = d.pts.map((p, i) => (L += i ? Math.hypot(p[0] - d.pts[i - 1][0], p[2] - d.pts[i - 1][2]) : 0));
+    return { ...d, pts: d.pts.map((p, i) => [p[0], p[1] + (Math.abs(o0) >= 4 ? o0 * (1 - sm(Math.min(1, acc[i] / BL))) : 0) + (Math.abs(o1) >= 4 ? o1 * (1 - sm(Math.min(1, (L - acc[i]) / BL))) : 0), p[2]]) };
+  });
+}
+
+// OSM street ways often stop a few metres short of the street they meet, leaving a hole in the asphalt at the junction.
+// Extend every dangling local-street end (straight on, within 40 m) to the centreline of the street ahead of it.
+function joinLocalEnds(defs) {
+  const loc = defs.filter(d => d.kind === 'local');
+  return defs.map(d => {
+    if (d.kind !== 'local') return d;
+    const pts = d.pts.map(p => p.slice());
+    for (const end of [0, 1]) {
+      const n = pts.length, e = end ? pts[n - 1] : pts[0], f = end ? pts[n - 2] : pts[1];
+      let tx = e[0] - f[0], tz = e[2] - f[2]; const tl = Math.hypot(tx, tz) || 1; tx /= tl; tz /= tl;
+      let best = null, joined = false;
+      // two street ends facing each other across a gap (corner): bridge end-to-end, regardless of angle
+      for (const o of loc) {
+        if (o === d || o.id < d.id) continue;
+        for (const oe of [o.pts[0], o.pts[o.pts.length - 1]]) { const dist = Math.hypot(oe[0] - e[0], oe[2] - e[2]); if (dist > 0.5 && dist < 30 && (!best || dist < best.dist)) best = { dist, p: [oe[0], e[1], oe[2]] }; }
+      }
+      if (best) { if (end) pts.push(best.p); else pts.unshift(best.p); continue; }
+      for (const o of loc) {
+        if (o === d || joined) continue;
+        for (let i = 0; i < o.pts.length - 1; i++) {
+          const a = o.pts[i], b = o.pts[i + 1], dx = b[0] - a[0], dz = b[2] - a[2], L2 = dx * dx + dz * dz || 1e-6;
+          const u = Math.max(0, Math.min(1, ((e[0] - a[0]) * dx + (e[2] - a[2]) * dz) / L2));
+          const x = a[0] + dx * u, z = a[2] + dz * u, vx = x - e[0], vz = z - e[2], dist = Math.hypot(vx, vz);
+          if (dist < 0.5) { joined = true; break; } // already joined
+          if (dist > 40 || (vx * tx + vz * tz) / dist < (dist < 25 ? 0.2 : 0.6)) continue; // only straight ahead
+          if (!best || dist < best.dist) best = { dist, p: [x, e[1], z] };
+        }
+      }
+      if (!joined && best) { if (end) pts.push(best.p); else pts.unshift(best.p); }
+    }
+    return { ...d, pts };
+  });
+}
+
 // ───────────────────────── spatial index & surface query ─────────────────────────
 export class RoadNet {
   constructor(defs = ROAD_DEFS) {
     // drop degenerate polylines from the OSM import (zero-length ways would put signs/lamps on one point of another road)
     const plen = d => d.pts.reduce((a, q, i) => i ? a + Math.hypot(q[0] - d.pts[i - 1][0], q[2] - d.pts[i - 1][2]) : 0, 0);
-    this.roads = defs.filter(d => d.pts?.length > 1 && plen(d) > 8).map((d, i) => new Road(d, i));
+    this.roads = fixFlatRamps(joinLocalEnds(defs.filter(d => d.pts?.length > 1 && plen(d) > 8))).map((d, i) => new Road(d, i));
     this.byId = Object.fromEntries(this.roads.map(r => [r.id, r]));
     this.cell = 24; this.grid = new Map();
     for (const r of this.roads) {
@@ -287,11 +336,11 @@ function onOtherRoad(net, road, x, y, z, pad = 0.2) {
   return false;
 }
 // [s0,s1] runs along `road` where the edge at lateral `lat` is free of other roads
-function freeRuns(net, road, lat) {
-  const out = []; let s0 = null; const S = road.samples;
+function freeRuns(net, road, lat, pad = 0.2) {
+  const out = []; let s0 = null; const S = road.samples; const lats = Array.isArray(lat) ? lat : [lat];
   for (let i = 0; i < S.length; i++) {
-    const q = S[i]; const x = q.p.x + q.left.x * lat, z = q.p.z + q.left.z * lat;
-    const free = !onOtherRoad(net, road, x, q.p.y, z);
+    const q = S[i];
+    const free = lats.every(l => !onOtherRoad(net, road, q.p.x + q.left.x * l, q.p.y, q.p.z + q.left.z * l, pad));
     if (free && s0 === null) s0 = q.s;
     if ((!free || i === S.length - 1) && s0 !== null) { const e = free ? q.s : S[Math.max(0, i - 1)].s; if (e - s0 > 3) out.push([s0, e]); s0 = null; }
   }
@@ -429,8 +478,8 @@ export function buildRoadMeshes(net, opts = {}) {
       const sw = r.sidewalk || 3;
       const curb = [[0, 0], [0, 0.15], [sw, 0.15], [sw, 0.0]];
       // kerbs + sidewalks, interrupted where another street crosses (intersections) or a ramp joins
-      for (const [s0, s1] of freeRuns(net, r, r.edgeL + sw * 0.5)) geoms.sidewalk.push(sweep(r, curb, r.edgeL, yo, 1, s0, s1));
-      for (const [s0, s1] of freeRuns(net, r, r.edgeR - sw * 0.5)) geoms.sidewalk.push(sweep(r, curb, r.edgeR, yo, -1, s0, s1));
+      for (const [s0, s1] of freeRuns(net, r, [r.edgeL + 0.3, r.edgeL + sw * 0.5, r.edgeL + sw - 0.2], -0.4)) geoms.sidewalk.push(sweep(r, curb, r.edgeL, yo, 1, s0, s1));
+      for (const [s0, s1] of freeRuns(net, r, [r.edgeR - 0.3, r.edgeR - sw * 0.5, r.edgeR - sw + 0.2], -0.4)) geoms.sidewalk.push(sweep(r, curb, r.edgeR, yo, -1, s0, s1));
       if (r.median > 0) for (const [s0, s1] of freeRuns(net, r, 0)) geoms.concrete.push(sweep(r, [[-r.median / 2 + 0.2, 0], [-r.median / 2 + 0.2, 0.18], [r.median / 2 - 0.2, 0.18], [r.median / 2 - 0.2, 0]], 0, yo, 1, s0, s1));
     }
   });
@@ -526,8 +575,17 @@ export function lampSpots(net) {
         if (cy - 2.0 - p.y > 4.2) out.push({ pos: p.clone(), arms: [], h: cy - 2.15 - p.y, road: r, ceiling: true, t });
         continue;
       }
-      if (r.kind === 'expressway' && r.median > 0) out.push({ pos: p.clone(), arms: [left.clone(), left.clone().negate()], h: 10, road: r, median: true });
-      else { const side = r.kind === 'local' ? r.edgeL + 0.8 : r.edgeL + 0.2; out.push({ pos: p.clone().addScaledVector(left, side), arms: [left.clone().negate()], h: r.kind === 'local' ? 8 : 10, road: r }); }
+      // a pole never stands on any carriageway (other roads, merging ramps, intersections, sidewalks of crossing streets)
+      const blocked = (x, z, own = true) => { for (const h of net.hits(x, z)) { if (h.beyond || Math.abs(h.y - p.y) > 3 || (!own && h.road === r)) continue; const pad = h.road.kind === 'local' ? (h.road.sidewalk || 3) * 0.5 : 0.9; if (h.road === r ? (h.lat < h.road.edgeL - 0.05 && h.lat > h.road.edgeR + 0.05) : (h.lat <= h.road.edgeL + pad && h.lat >= h.road.edgeR - pad)) return true; } return false; };
+      if (r.kind === 'expressway' && r.median > 0) { if (!blocked(p.x, p.z, false)) out.push({ pos: p.clone(), arms: [left.clone(), left.clone().negate()], h: 10, road: r, median: true }); continue; }
+      let placed = false;
+      for (const sgn of [1, -1]) {
+        const side = sgn > 0 ? (r.kind === 'local' ? r.edgeL + 0.8 : r.edgeL + 0.2) : (r.kind === 'local' ? r.edgeR - 0.8 : r.edgeR - 0.2);
+        const q = p.clone().addScaledVector(left, side);
+        if (blocked(q.x, q.z)) continue;
+        out.push({ pos: q, arms: [sgn > 0 ? left.clone().negate() : left.clone()], h: r.kind === 'local' ? 8 : 10, road: r }); placed = true; break;
+      }
+      if (!placed) continue;
     }
   }
   return out;
