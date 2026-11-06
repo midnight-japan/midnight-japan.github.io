@@ -329,6 +329,7 @@
  "game.walk.food": "ฟู้ดคอร์ต",
  "game.walk.noexit": "ลงรถตรงนี้ไม่ได้",
  "game.walk.shop": "คอนบินิ — ซื้อของ",
+ "game.walk.stopfirst": "หยุดรถก่อนลง",
  "game.walk.talk": "คุย",
  "game.walk.toilet": "ห้องน้ำ",
  "game.walk.toiletDone": "สดชื่นแล้ว",

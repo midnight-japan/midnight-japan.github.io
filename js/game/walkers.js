@@ -1,6 +1,21 @@
 // Pedestrians on the city sidewalks: they follow the real street graph (js/game/city.js CityNet) on either side of
 // the road, continue round corners at junctions, thin out late at night and step aside for cars.
+import * as THREE from 'three';
 import { createHuman, randomOutfit } from './humans.js';
+
+// umbrellas for rainy days — shared geometry, a few canopy colours (clear plastic konbini umbrellas are the most common)
+let UMB = null;
+function umbrella() {
+  if (!UMB) {
+    const canopy = new THREE.ConeGeometry(0.52, 0.2, 8, 1, true); canopy.translate(0, 0.1, 0);
+    const shaft = new THREE.CylinderGeometry(0.009, 0.009, 0.95, 4); shaft.translate(0, -0.47, 0);
+    const mk = (c, o) => new THREE.MeshStandardMaterial({ color: c, roughness: 0.35, transparent: o < 1, opacity: o, side: THREE.DoubleSide, depthWrite: o >= 1 });
+    UMB = { canopy, shaft, mats: [mk(0xe8eef2, 0.45), mk(0xe8eef2, 0.45), mk(0xe8eef2, 0.45), mk(0x15171c, 1), mk(0x1d2c4a, 1), mk(0x7a1622, 1), mk(0x2f4a35, 1)], shaftMat: new THREE.MeshStandardMaterial({ color: 0x9aa0a6, metalness: 0.6, roughness: 0.4 }) };
+  }
+  const g = new THREE.Group();
+  g.add(new THREE.Mesh(UMB.canopy, UMB.mats[Math.floor(Math.random() * UMB.mats.length)]), new THREE.Mesh(UMB.shaft, UMB.shaftMat));
+  g.rotation.z = -0.12; return g;
+}
 
 export class Walkers {
   constructor(game) {
@@ -14,9 +29,10 @@ export class Walkers {
     const sp = N.randomNear(f.x, f.z, 30, 200); if (!sp || sp.c.cls > 4) return false;
     let h; try { h = createHuman(randomOutfit()); } catch (e) { return false; }
     const w = { h, c: sp.c, i: sp.i, d: sp.d, dir: Math.random() < 0.5 ? 1 : -1, side: Math.random() < 0.5 ? 1 : -1, v: 1.05 + Math.random() * 0.5, yaw: 0, pause: 0, ox: 0, oz: 0 };
+    w.umb = umbrella(); w.umb.position.set(0.12, (h.height || 1.7) + 0.08, 0.06); w.umb.visible = false; h.object.add(w.umb);
     this.g.scene.add(h.object); this.list.push(w); this.pose(w, true); return true;
   }
-  remove(w) { this.g.scene.remove(w.h.object); try { w.h.dispose(); } catch {} this.list.splice(this.list.indexOf(w), 1); }
+  remove(w) { w.umb?.removeFromParent(); this.g.scene.remove(w.h.object); try { w.h.dispose(); } catch {} this.list.splice(this.list.indexOf(w), 1); }
   pose(w, snap) {
     const S = this.seg(w.c, w.i); const off = w.c.w / 2 + (w.c.cls <= 3 ? 1.6 : 0.8);
     const hx = S.tx * w.dir, hz = S.tz * w.dir;
@@ -37,6 +53,7 @@ export class Walkers {
       for (let k = 0; N && inCity && k < 3 && this.list.length < want; k++) this.spawn(f);
     }
     if (!N) return;
+    const raining = (this.g.env?.rain ?? 0) > 0.15;
     const v = this.g.vehicle, drive = this.g.mode === 'drive' && v;
     for (const w of this.list) {
       if (w.c.dead) continue;
@@ -64,6 +81,7 @@ export class Walkers {
         } else { w.dir = -w.dir; w.pause = 1 + Math.random() * 3; }
       }
       this.pose(w, false);
+      if (w.umb) w.umb.visible = raining;
       const d2 = (p.x - f.x) ** 2 + (p.z - f.z) ** 2;
       w.h.object.visible = d2 < 200 * 200;
       if (w.h.object.visible && (d2 < 70 * 70 || this.g.frame % 3 === 0)) { try { w.h.update(d2 < 70 * 70 ? dt : dt * 3, { speed, action: speed > 0.1 ? 'walk' : 'idle' }); } catch {} }

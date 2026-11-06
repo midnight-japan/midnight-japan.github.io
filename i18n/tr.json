@@ -329,6 +329,7 @@
  "game.walk.food": "Yemek alanı",
  "game.walk.noexit": "Burada inemezsin",
  "game.walk.shop": "Konbini — bir şey al",
+ "game.walk.stopfirst": "İnmek için dur",
  "game.walk.talk": "Konuş",
  "game.walk.toilet": "Tuvalet",
  "game.walk.toiletDone": "Ferahladın.",

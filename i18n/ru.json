@@ -329,6 +329,7 @@
  "game.walk.food": "Фуд-корт",
  "game.walk.noexit": "Здесь выйти нельзя",
  "game.walk.shop": "Конбини — что-нибудь купить",
+ "game.walk.stopfirst": "Остановитесь, чтобы выйти",
  "game.walk.talk": "Поговорить",
  "game.walk.toilet": "Туалет",
  "game.walk.toiletDone": "Освежился.",

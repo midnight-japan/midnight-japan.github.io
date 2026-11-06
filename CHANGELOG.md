@@ -1,9 +1,10 @@
 # 📜 MIDNIGHT JAPAN 업데이트 기록 · Changelog
 
-현재 버전 · Current: **v0.7.1** · [▶ 웹에서 플레이](https://midnight-japan.github.io/) · [🌐 업데이트 페이지](https://midnight-japan.github.io/changelog.html)
+현재 버전 · Current: **v0.7.2** · [▶ 웹에서 플레이](https://midnight-japan.github.io/) · [🌐 업데이트 페이지](https://midnight-japan.github.io/changelog.html)
 
 | 버전 | 날짜 | 이름 | 요약 |
 |---|---|---|---|
+| [v0.7.2](#v072--umbrella-2026-11-06) | 2026-11-06 | Umbrella | 비 오는 날 보행자들이 우산을 써요(투명 편의점 우산이 가장 많아요). 달리는 중에 하차 키를 누르면 안내가 나와요. |
 | [v0.7.1](#v071--shakedown-2026-11-06) | 2026-11-06 | Shakedown | 버그 수정 — PA에서 시작하면 바로 출발할 수 있고, 여객기 자세·전철 정차·보행자 회피가 자연스러워졌어요. |
 | [v0.7.0](#v070--downpour-2026-11-06) | 2026-11-06 | Downpour | 날씨가 생겼어요 — 비 오는 밤의 젖은 노면이 불빛을 반사하고, 그립이 줄고, 빗소리가 들려요. 도시는 고속도로 주변 5km(건물 35만 8천 채)로 넓어졌어요. |
 | [v0.6.1](#v061--faces-2026-11-06) | 2026-11-06 | Faces | 사람 얼굴 조형, 실제 3D 모델만 쓰는 NPC 차량, 기본 그래픽(높음)에서 프레임 약 35% 향상. |
@@ -19,6 +20,21 @@
 | [v0.2.0](#v020--bayshore-2026-11-05) | 2026-11-05 | Bayshore | 수도고속 완간선을 따라 하네다까지, 도쿄만 아쿠아라인 해저터널을 지나 우미호타루 PA까지. 실제 3D 차량 모델과 열리는 보닛도 들어왔어요. |
 | [v0.1.1](#v011--one-click-2026-11-04) | 2026-11-04 | One Click | 링크 하나로 바로 플레이. 크롬에서 공식 사이트 주소만 열면 설치 없이 실행돼요. |
 | [v0.1.0](#v010--first-meet-2026-11-04) | 2026-11-04 | First Meet | 첫 공개 버전. 다이코쿠 JCT·PA와 다이코쿠 부두 일대를 3D로 구현했습니다. |
+
+---
+
+## v0.7.2 — Umbrella (2026-11-06)
+
+> 비 오는 날 보행자들이 우산을 써요(투명 편의점 우산이 가장 많아요). 달리는 중에 하차 키를 누르면 안내가 나와요.
+> Pedestrians put up umbrellas when it rains (clear konbini umbrellas are the most common), and pressing the exit key while moving now tells you to stop first.
+
+**✨ 추가 · New**
+
+- 비 오는 날 보행자 우산 — 투명 비닐우산과 검정·남색·버건디·녹색 우산<br><sub>Umbrellas for pedestrians in the rain: clear plastic ones plus black, navy, burgundy and green</sub>
+
+**🐞 수정 · Fixed**
+
+- 주행 중 F(하차)를 누르면 아무 반응이 없던 문제 — "멈춘 뒤에 내릴 수 있어요" 안내 표시(20개 언어)<br><sub>Pressing F (get out) while moving did nothing; it now shows "Stop the car to get out" (20 languages)</sub>
 
 ---
 

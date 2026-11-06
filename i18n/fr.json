@@ -329,6 +329,7 @@
  "game.walk.food": "Aire de restauration",
  "game.walk.noexit": "Tu ne peux pas descendre ici",
  "game.walk.shop": "Konbini — acheter quelque chose",
+ "game.walk.stopfirst": "Arrêtez-vous pour descendre",
  "game.walk.talk": "Parler",
  "game.walk.toilet": "Toilettes",
  "game.walk.toiletDone": "Ça va mieux.",

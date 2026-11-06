@@ -329,6 +329,7 @@
  "game.walk.food": "푸드코트",
  "game.walk.noexit": "여기서는 내릴 수 없어요",
  "game.walk.shop": "편의점 — 구매하기",
+ "game.walk.stopfirst": "멈춘 뒤에 내릴 수 있어요",
  "game.walk.talk": "대화",
  "game.walk.toilet": "화장실",
  "game.walk.toiletDone": "개운하다.",

@@ -329,6 +329,7 @@
  "game.walk.food": "フードコート",
  "game.walk.noexit": "ここでは降りられません",
  "game.walk.shop": "コンビニで買い物",
+ "game.walk.stopfirst": "停車してから降りてください",
  "game.walk.talk": "話しかける",
  "game.walk.toilet": "トイレ",
  "game.walk.toiletDone": "すっきり。",

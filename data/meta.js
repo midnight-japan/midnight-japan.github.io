@@ -1,8 +1,20 @@
 // Shared game metadata: version, changelog, regions. Update VERSION + CHANGELOG on every release.
-export const GAME = { title: 'MIDNIGHT JAPAN', titleJa: 'ミッドナイト・ジャパン', version: '0.7.1', build: '2026.11.06' };
+export const GAME = { title: 'MIDNIGHT JAPAN', titleJa: 'ミッドナイト・ジャパン', version: '0.7.2', build: '2026.11.06' };
 
 // Newest first. type: new | change | fix | known
 export const CHANGELOG = [
+  {
+    version: '0.7.2', date: '2026-11-06', codename: 'Umbrella',
+    summary: {
+      ko: '비 오는 날 보행자들이 우산을 써요(투명 편의점 우산이 가장 많아요). 달리는 중에 하차 키를 누르면 안내가 나와요.',
+      ja: '雨の日は歩行者が傘をさす（いちばん多いのはコンビニのビニール傘）。走行中に降車キーを押すと案内が出る。',
+      en: 'Pedestrians put up umbrellas when it rains (clear konbini umbrellas are the most common), and pressing the exit key while moving now tells you to stop first.'
+    },
+    items: [
+      { type: 'new', ko: '비 오는 날 보행자 우산 — 투명 비닐우산과 검정·남색·버건디·녹색 우산', ja: '雨の日の歩行者の傘——透明のビニール傘と黒・紺・えんじ・緑の傘', en: 'Umbrellas for pedestrians in the rain: clear plastic ones plus black, navy, burgundy and green' },
+      { type: 'fix', ko: '주행 중 F(하차)를 누르면 아무 반응이 없던 문제 — "멈춘 뒤에 내릴 수 있어요" 안내 표시(20개 언어)', ja: '走行中にF（降車）を押しても無反応だった問題——「停車してから降りてください」と表示（20言語）', en: 'Pressing F (get out) while moving did nothing; it now shows "Stop the car to get out" (20 languages)' },
+    ]
+  },
   {
     version: '0.7.1', date: '2026-11-06', codename: 'Shakedown',
     summary: {

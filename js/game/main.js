@@ -262,7 +262,8 @@ class Game {
 
   // ───────────────────────── walking ─────────────────────────
   exitCar() {
-    const v = this.vehicle; if (!v || Math.abs(v.kmh) > 4) return;
+    const v = this.vehicle; if (!v) return;
+    if (Math.abs(v.kmh) > 4) { this.ui.toast(t('game.walk.stopfirst'), 'info', 2); return; }
     v.ctl.throttle = 0; v.handbrakeOn = true;
     const side = this.model.parts.driverX > 0 ? 1 : -1;
     const exit = this.model.parts.exitPoint.clone().applyAxisAngle(new THREE.Vector3(0, 1, 0), v.yaw).add(v.pos); exit.y = v.pos.y;
