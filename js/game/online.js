@@ -1,4 +1,6 @@
 // Online meets (beta) — serverless peer-to-peer via WebRTC (Trystero, Nostr relays for signalling).
+// fixed set of large, long-lived public Nostr relays (Trystero's default pool includes small relays that go offline)
+const RELAYS = ['wss://relay.damus.io', 'wss://nos.lol', 'wss://relay.primal.net', 'wss://relay.nostr.band', 'wss://nostr.mom'];
 // No game server: players in the same room see each other's cars, name tags, lights and engine sound,
 // and can chat. Everything received from peers is untrusted and validated before use.
 import * as THREE from 'three';
@@ -51,7 +53,7 @@ export class Online {
     try {
       const { joinRoom, selfId } = await import('../../vendor/trystero/trystero-nostr.mjs');
       this.selfId = selfId;
-      const room = this.room = joinRoom({ appId: APP_ID }, roomName);
+      const room = this.room = joinRoom({ appId: APP_ID, relayUrls: RELAYS, relayRedundancy: RELAYS.length }, roomName);
       const aInfo = room.makeAction('info'), aSt = room.makeAction('st'), aChat = room.makeAction('chat');
       const send = a => (data, target) => a.send(data, target ? { target } : undefined);
       this._sendInfo = send(aInfo); this._sendSt = send(aSt); this._sendChat = send(aChat);

@@ -1,13 +1,30 @@
 # 📜 MIDNIGHT JAPAN 업데이트 기록 · Changelog
 
-현재 버전 · Current: **v0.3.0** · [▶ 웹에서 플레이](https://midnight-japan.github.io/) · [🌐 업데이트 페이지](https://midnight-japan.github.io/changelog.html)
+현재 버전 · Current: **v0.3.1** · [▶ 웹에서 플레이](https://midnight-japan.github.io/) · [🌐 업데이트 페이지](https://midnight-japan.github.io/changelog.html)
 
 | 버전 | 날짜 | 이름 | 요약 |
 |---|---|---|---|
+| [v0.3.1](#v031--clean-lines-2026-11-06) | 2026-11-06 | Clean Lines | 차선 표시 정리: 교차로·합류부에서 다른 도로 위로 그어지던 차선 제거, 고속도로 합류·분류부에 굵은 점선, 온라인 접속 안정화. |
 | [v0.3.0](#v030--full-throttle-2026-11-06) | 2026-11-06 | Full Throttle | 주행감·사운드·콕핏·그래픽을 전부 다시 만들었어요. 실제 R34, 차종별 실내, 실녹음 엔진음, 난이도 설정, 그리고 도로 위에 서 있던 교각 수정. |
 | [v0.2.0](#v020--bayshore-2026-11-05) | 2026-11-05 | Bayshore | 수도고속 완간선을 따라 하네다까지, 도쿄만 아쿠아라인 해저터널을 지나 우미호타루 PA까지. 실제 3D 차량 모델과 열리는 보닛도 들어왔어요. |
 | [v0.1.1](#v011--one-click-2026-11-04) | 2026-11-04 | One Click | 링크 하나로 바로 플레이. 크롬에서 공식 사이트 주소만 열면 설치 없이 실행돼요. |
 | [v0.1.0](#v010--first-meet-2026-11-04) | 2026-11-04 | First Meet | 첫 공개 버전. 다이코쿠 JCT·PA와 다이코쿠 부두 일대를 3D로 구현했습니다. |
+
+---
+
+## v0.3.1 — Clean Lines (2026-11-06)
+
+> 차선 표시 정리: 교차로·합류부에서 다른 도로 위로 그어지던 차선 제거, 고속도로 합류·분류부에 굵은 점선, 온라인 접속 안정화.
+> Lane markings cleaned up: no more lines painted across other roads at junctions and merges, thick dashed merge lines on the expressways, steadier online connections.
+
+**✨ 추가 · New**
+
+- 고속도로 합류·분류 구간에 실제 수도고처럼 굵은 흰 점선 표시<br><sub>Thick white dashed merge/diverge lines on the expressways, as on the real Shutoko</sub>
+
+**🐞 수정 · Fixed**
+
+- 교차로·램프 합류부에서 차선·가장자리선이 다른 도로의 차로 위를 가로지르던 문제 수정<br><sub>Fixed lane and edge lines running across other roads' lanes at intersections and ramp junctions</sub>
+- 온라인: 자주 꺼지던 소형 릴레이 대신 대형 공개 릴레이 고정 사용 → 접속 오류 감소<br><sub>Online: pinned large public relays instead of small ones that went offline — fewer connection errors</sub>
 
 ---
 

@@ -1,8 +1,21 @@
 // Shared game metadata: version, changelog, regions. Update VERSION + CHANGELOG on every release.
-export const GAME = { title: 'MIDNIGHT JAPAN', titleJa: 'ミッドナイト・ジャパン', version: '0.3.0', build: '2026.11.06' };
+export const GAME = { title: 'MIDNIGHT JAPAN', titleJa: 'ミッドナイト・ジャパン', version: '0.3.1', build: '2026.11.06' };
 
 // Newest first. type: new | change | fix | known
 export const CHANGELOG = [
+  {
+    version: '0.3.1', date: '2026-11-06', codename: 'Clean Lines',
+    summary: {
+      ko: '차선 표시 정리: 교차로·합류부에서 다른 도로 위로 그어지던 차선 제거, 고속도로 합류·분류부에 굵은 점선, 온라인 접속 안정화.',
+      ja: '車線表示を整理：交差点・合流部で他の道路の上に引かれていた線を削除、高速の合流・分流部に太い破線、オンライン接続を安定化。',
+      en: 'Lane markings cleaned up: no more lines painted across other roads at junctions and merges, thick dashed merge lines on the expressways, steadier online connections.'
+    },
+    items: [
+      { type: 'fix', ko: '교차로·램프 합류부에서 차선·가장자리선이 다른 도로의 차로 위를 가로지르던 문제 수정', ja: '交差点・ランプ合流部で車線や外側線が他の道路の車線を横切っていた問題を修正', en: 'Fixed lane and edge lines running across other roads\' lanes at intersections and ramp junctions' },
+      { type: 'new', ko: '고속도로 합류·분류 구간에 실제 수도고처럼 굵은 흰 점선 표시', ja: '高速の合流・分流区間に首都高と同じ太い白破線', en: 'Thick white dashed merge/diverge lines on the expressways, as on the real Shutoko' },
+      { type: 'fix', ko: '온라인: 자주 꺼지던 소형 릴레이 대신 대형 공개 릴레이 고정 사용 → 접속 오류 감소', ja: 'オンライン：落ちやすい小規模リレーをやめ大手公開リレーに固定 → 接続エラーを削減', en: 'Online: pinned large public relays instead of small ones that went offline — fewer connection errors' },
+    ]
+  },
   {
     version: '0.3.0', date: '2026-11-06', codename: 'Full Throttle',
     summary: {

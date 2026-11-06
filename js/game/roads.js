@@ -226,13 +226,14 @@ export class RoadNet {
 
 // ───────────────────────── geometry ─────────────────────────
 // faces up (visible from above) unless `down` (deck soffits)
-function ribbon(road, latA, latB, yOff, { uScale = 1, segs = 1, dashed = null, s0 = 0, s1 = Infinity, down = false } = {}) {
+function ribbon(road, latA, latB, yOff, { uScale = 1, segs = 1, dashed = null, s0 = 0, s1 = Infinity, down = false, keep = null } = {}) {
   const S = road.samples; const pos = [], uv = [], idx = [];
   let vi = 0;
   for (let i = 0; i < S.length - 1; i++) {
     const a = S[i], b = S[i + 1];
     if (b.s < s0 || a.s > s1) continue;
     if (dashed) { const mid = (a.s + b.s) / 2 + dashed.offset; if ((mid % dashed.period) > dashed.on) continue; }
+    if (keep && !keep(i)) continue;
     const base = Math.floor(a.s / UV_WRAP) * UV_WRAP;
     for (const q of [a, b]) for (let k = 0; k <= segs; k++) {
       const lat = latA + (latB - latA) * k / segs;
@@ -384,12 +385,20 @@ export function buildRoadMeshes(net, opts = {}) {
     // deck surface (tiny y offset per road to avoid z-fighting where decks overlap)
     const yo = 0.002 * ri;
     geoms[deckMat].push(ribbon(r, r.edgeR, r.edgeL, yo, { segs: Math.max(2, Math.round((r.edgeL - r.edgeR) / 4)) }));
-    // markings
-    const mk = (lat, w, dashed, mat = 'white') => geoms[mat].push(ribbon(r, lat - w / 2, lat + w / 2, yo + 0.015, { dashed }));
+    // markings — clipped wherever they would run across another road's carriageway (junctions, merges, intersections),
+    // so no other deck can cover or z-fight them. On expressways the clipped part of an edge
+    // line becomes the thick dashed merge/diverge line used on Japanese expressways.
+    const MKY = yo + 0.02;
+    const freeAt = (lat) => { const S = r.samples; const f = new Uint8Array(S.length); for (let i = 0; i < S.length; i++) { const q = S[i]; f[i] = onOtherRoad(net, r, q.p.x + q.left.x * lat, q.p.y, q.p.z + q.left.z * lat, 0.4) ? 0 : 1; } return f; };
+    const mk = (lat, w, dashed, mat = 'white', merge = false) => {
+      const f = freeAt(lat);
+      geoms[mat].push(ribbon(r, lat - w / 2, lat + w / 2, MKY, { dashed, keep: i => f[i] && f[i + 1] }));
+      if (merge && !local && f.some(v => !v)) geoms.white.push(ribbon(r, lat - 0.225, lat + 0.225, MKY, { dashed: { period: 6, on: 3, offset: 0 }, keep: i => !f[i] && !f[i + 1] }));
+    };
     const dash = local ? { period: 10, on: 5, offset: 0 } : { period: 20, on: 8, offset: 0 };
     if (r.lanesB === 0) {
       for (let i = 1; i < r.lanesF; i++) mk(r.lanes[i].lat - LANE / 2, 0.15, dash);
-      mk(r.edgeL - r.shoulder, 0.15, null); mk(r.edgeR + r.shoulder, 0.15, null);
+      mk(r.edgeL - r.shoulder, 0.15, null, 'white', r.kind === 'expressway'); mk(r.edgeR + r.shoulder, 0.15, null, 'white', r.kind === 'expressway');
     } else {
       for (let i = 1; i < r.lanesF; i++) mk(r.median / 2 + i * LANE, 0.15, dash);
       for (let i = 1; i < r.lanesB; i++) mk(-(r.median / 2 + i * LANE), 0.15, dash);
