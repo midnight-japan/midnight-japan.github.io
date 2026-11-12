@@ -291,6 +291,7 @@
  "game.set.time1": "Normal (30 dk = 12 sa)",
  "game.set.touch": "Dokunmatik kontroller",
  "game.set.transmission": "Şanzıman",
+ "game.set.voice": "Spoken lines (TTS)",
  "game.set.weather": "Weather",
  "game.shop.bought": "Satın alındı: {item}",
  "game.shop.nomoney": "Yeterli para yok",

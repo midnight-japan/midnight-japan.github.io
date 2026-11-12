@@ -88,9 +88,11 @@ export class Banks {
     }
     return node;
   }
-  buffer(name) {
+  buffer(file) {
+    // 'name' → sfx/name.ogg; 'name.mp3' → sfx/name.mp3 (stored under 'name')
+    const name = file.replace(/\.\w+$/, ''), path = /\.\w+$/.test(file) ? file : file + '.ogg';
     if (this.sfx.has(name)) return this.sfx.get(name);
-    const p = this._decode(BASE + 'sfx/' + name + '.ogg').then((b) => { peakNorm(b); this.sfxReady.set(name, b); return b; }, (e) => { console.warn('[audio] sfx', name, e); return null; });
+    const p = this._decode(BASE + 'sfx/' + path).then((b) => { peakNorm(b); this.sfxReady.set(name, b); return b; }, (e) => { console.warn('[audio] sfx', name, e); return null; });
     this.sfx.set(name, p);
     return p;
   }

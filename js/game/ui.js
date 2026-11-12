@@ -305,7 +305,7 @@ export class UI {
       sel('touch', [['auto', t('game.set.auto')], ['on', 'ON'], ['off', 'OFF']], 'game.set.touch') +
       sel('timeSpeed', [[1, t('game.set.time1')], [0.25, t('game.set.time025')], [0, t('game.set.time0')]], 'game.set.time') +
       sel('weather', [['auto', t('game.weather.auto')], ['clear', t('game.weather.clear')], ['cloudy', t('game.weather.cloudy')], ['rain', t('game.weather.rain')]], 'game.set.weather') +
-      chk('online', 'game.set.online') + chk('assist', 'game.set.assist') + chk('etc', 'game.set.etc') + chk('dj', 'game.set.dj') + chk('tilt', 'game.set.tilt') + chk('shake', 'game.set.shake') + chk('damage', 'game.set.damage') + chk('bloom', 'game.set.bloom') + chk('fps', 'game.set.fps') +
+      chk('online', 'game.set.online') + chk('assist', 'game.set.assist') + chk('etc', 'game.set.etc') + chk('dj', 'game.set.dj') + chk('voice', 'game.set.voice') + chk('tilt', 'game.set.tilt') + chk('shake', 'game.set.shake') + chk('damage', 'game.set.damage') + chk('bloom', 'game.set.bloom') + chk('fps', 'game.set.fps') +
       rng('master', 'game.set.master') + rng('engine', 'game.set.engine') + rng('sfx', 'game.set.sfx') + rng('ambient', 'game.set.ambient') + rng('radio', 'game.set.radio');
     $('#s-lang').onchange = e => setLang(e.target.value).then(() => this.buildSettings());
     $('#s-grid').querySelectorAll('[data-s]').forEach(i => i.onchange = i.oninput = () => {
@@ -315,6 +315,7 @@ export class UI {
       s[k] = v; g.saveSettings(); g.applyVolumes();
       if (k === 'tilt') { g.input.tilt = v; if (v && typeof DeviceOrientationEvent?.requestPermission === 'function') DeviceOrientationEvent.requestPermission().catch(() => {}); }
       if (k === 'dj' && g.radio) g.radio.djVoice = v;
+      if (k === 'voice') g.audio.voiceOn = v;
       if (k === 'online') { if (v && g.vehicle) g.online.start(); else if (!v) g.online.stop(); this.updateOnline(); }
       if (k === 'bloom') g.bloom.enabled = v && g.quality !== 'low';
       if (k === 'transmission' && g.vehicle && !g.vehicle.ev) { g.vehicle.mode = v; g.vehicle.gear = 0; g.vehicle.atSel = 'P'; }

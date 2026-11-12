@@ -291,6 +291,7 @@
  "game.set.time1": "Normaal (30 min = 12 u)",
  "game.set.touch": "Touchbesturing",
  "game.set.transmission": "Transmissie",
+ "game.set.voice": "Spoken lines (TTS)",
  "game.set.weather": "Weather",
  "game.shop.bought": "Gekocht: {item}",
  "game.shop.nomoney": "Niet genoeg geld",

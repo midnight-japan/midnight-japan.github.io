@@ -291,6 +291,7 @@
  "game.set.time1": "Normale (30 min = 12 h)",
  "game.set.touch": "Comandi touch",
  "game.set.transmission": "Cambio",
+ "game.set.voice": "Spoken lines (TTS)",
  "game.set.weather": "Meteo",
  "game.shop.bought": "Acquistato: {item}",
  "game.shop.nomoney": "Soldi insufficienti",

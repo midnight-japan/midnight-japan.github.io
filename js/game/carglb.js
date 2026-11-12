@@ -16,9 +16,14 @@ const cache = new Map();   // id → { promise, scene, info, bay: { front, rear 
 export function loadManifest() {
   return manifestP ||= fetch(new URL('manifest.json', BASE)).then(r => (r.ok ? r.json() : {})).catch(() => ({})).then(m => (manifest = m));
 }
-export const hasGlb = id => !!manifest?.[id];
-export const glbEntry = id => { const e = cache.get(id); return e?.scene ? e : null; };
+// cars without a model of their own that are built on one that exists (police / taxi Crowns → the Crown model; the
+// procedural lightbar, roof sign and decals are kept on top)
+export const GLB_ALIAS = { police: 'crown', police_unmarked: 'crown', taxi: 'crown' };
+const mid = id => GLB_ALIAS[id] || id;
+export const hasGlb = id => !!manifest?.[mid(id)];
+export const glbEntry = id => { const e = cache.get(mid(id)); return e?.scene ? e : null; };
 export function requestGlb(id) {
+  id = mid(id);
   let e = cache.get(id); if (e) return e.promise;
   e = {}; cache.set(id, e);
   e.promise = loadManifest().then(m => {

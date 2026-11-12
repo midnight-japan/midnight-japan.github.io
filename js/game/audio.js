@@ -299,7 +299,9 @@ function smp(a, dest, t, name, o = {}) {
   src.start(t, off, dur);
   return t + dur / rate;
 }
-const SFX_FILES = ['tire_squeal', 'tire_scrub', 'road', 'wind', 'backfire', 'bov', 'pops', 'door_close', 'door_close_in', 'handbrake', 'blink_on', 'blink_off', 'ui_click', 'shift'];
+const SFX_FILES = ['tire_squeal', 'tire_scrub', 'road', 'wind', 'backfire', 'bov', 'pops', 'door_close', 'door_close_in', 'handbrake', 'blink_on', 'blink_off', 'ui_click', 'shift',
+  // v1.1.1: recorded (CC0) replacements for the synthesised horn, starter, crash, door and blow-off, and a real night-city bed
+  'pssh.mp3', 'hiss.mp3', 'horn.mp3', 'starter.mp3', 'crash_big.mp3', 'crash_hit.mp3', 'door_open.mp3', 'city_night.mp3'];
 
 // FM bell (store chime, coin, …)
 function bell(a, dest, t, f, gain, decay, ratio = 3.5, idx = 1.5) {
@@ -332,6 +334,7 @@ function hornTone(a, dest, t, dur, gain) {
 
 const SFX = {
   door_open(a, d, t) {
+    { const e = smp(a, d, t, 'door_open', { offset: 0.38, dur: 0.95, gain: 1.0 }); if (e) return e; }
     nz(a, d, t, { f: 2600, q: 3, gain: 0.3, decay: 0.008 });
     nz(a, d, t + 0.012, { type: 'lowpass', f: 520, gain: 0.45, decay: 0.035, noise: 'brown' });
     tn(a, d, t + 0.01, { f: 130, f2: 85, gain: 0.22, decay: 0.04 });
@@ -403,6 +406,7 @@ const SFX = {
     return nz(a, d, t + 0.02, { f: 1800, q: 10, gain: 0.025, attack: 0.02, decay: 0.05 });
   },
   ignition_click(a, d, t) {
+    { const e = smp(a, d, t, 'starter', { offset: 0.05, dur: 1.35, gain: 0.95 }); if (e) return e; } // key + starter motor cranking
     nz(a, d, t, { f: 3000, q: 3, gain: 0.22, decay: 0.006 });
     nz(a, d, t + 0.12, { f: 2200, q: 3, gain: 0.22, decay: 0.006 });
     return nz(a, d, t + 0.2, { f: 1200, q: 2, gain: 0.3, decay: 0.01 });
@@ -411,7 +415,7 @@ const SFX = {
     for (let i = 0; i < 11; i++) nz(a, d, t + i / 14, { f: 1500, q: 2, gain: 0.3, decay: 0.008 });
     return tn(a, d, t, { type: 'sawtooth', f: 46, f2: 38, glide: 0.75, gain: 0.07, attack: 0.03, hold: 0.6, decay: 0.05, lp: 320 });
   },
-  horn_short(a, d, t) { hornTone(a, d, t, 0.22, 0.35); return t + 0.45; },
+  horn_short(a, d, t) { const e = smp(a, d, t, 'horn', { offset: 1.27, dur: 0.38, gain: 0.9 }); if (e) return e; hornTone(a, d, t, 0.22, 0.35); return t + 0.45; },
   etc_beep(a, d, t) {
     for (const k of [0, 0.13]) {
       const o = { type: 'square', f: 1975, gain: 0.07, attack: 0.004, hold: 0.07, decay: 0.008, lp: 4000 };
@@ -467,6 +471,7 @@ const SFX = {
     return nz(a, d, t + 0.01, { type: 'highpass', f: 3500, gain: 0.04 + r * 0.03, decay: 0.015 });
   },
   crash(a, d, t) {
+    { const e = smp(a, d, t, 'crash_big', { offset: 0, dur: 2.1, gain: 1.0, rate: 0.95 + Math.random() * 0.1 }); if (e) { smp(a, d, t, 'crash_hit', { gain: 0.8 }); tn(a, d, t, { f: 62, f2: 30, gain: 0.6, decay: 0.14, glide: 0.4 }); return e; } }
     tn(a, d, t, { f: 70, f2: 32, gain: 0.9, decay: 0.15, glide: 0.4 });
     nz(a, d, t, { type: 'lowpass', f: 900, gain: 0.75, decay: 0.12, noise: 'brown' });
     nz(a, d, t, { f: 1700, f2: 600, q: 0.8, gain: 0.35, decay: 0.08 });
@@ -847,8 +852,8 @@ class EngineSound {
       if (N.whOsc) {
         const b = clamp(st.boost, 0, 1);
         sp(N.whOsc.frequency, (2400 + 7200 * Math.pow(b, 1.2)) * dop, t, 0.05);
-        sp(N.whG.gain, 0.022 * b * b * (0.35 + 0.65 * power) * alive, t, 0.05);
-        if (N.whooshG) { sp(N.whooshG.gain, 0.05 * b * power * alive, t, 0.05); sv(N.whooshBP.frequency, 1200 + 2600 * b, 0.03); }
+        sp(N.whG.gain, 0.05 * b * b * (0.35 + 0.65 * power) * alive, t, 0.05); // spool whistle (louder since v1.1.1)
+        if (N.whooshG) { sp(N.whooshG.gain, 0.09 * b * power * alive, t, 0.05); sv(N.whooshBP.frequency, 1200 + 2600 * b, 0.03); }
       }
       // overrun crackle / lift-off pops
       if (this.crackle && st.running) {
@@ -993,6 +998,20 @@ class EngineSound {
       const a = this.a, d = this._dest('bay');
       if (!d) return;
       const t = a.ctx.currentTime + 0.005, b = 0.5 + 0.5 * clamp(this.st.boost, 0, 1);
+      if (a.banks && a.banks.get('pssh')) {
+        // プシュー: a real pneumatic release, pitched per car, then (flutter cars) the compressor-surge chatter on top
+        const k = hashStr(String(this.car.id || '')), rate = 0.82 + (k % 17) / 60;
+        smp(a, d, t, 'pssh', { offset: 0.28, dur: 0.62, rate, gain: 1.15 * b });
+        if (b > 0.75 && a.banks.get('hiss')) smp(a, d, t + 0.05, 'hiss', { offset: 0.35, dur: 0.8, rate: rate * 1.15, gain: 0.35 * b, lp: 6000 });
+        if (this.bovStyle === 'flutter' && a.banks.get('bov')) {
+          const ctx = a.ctx, am = ctx.createGain(), lfo = ctx.createOscillator(), lg = ctx.createGain();
+          lfo.type = 'square'; lfo.frequency.setValueAtTime(26, t); lfo.frequency.linearRampToValueAtTime(12, t + 0.55);
+          lg.gain.value = 0.5; am.gain.value = 0.5; lfo.connect(lg); lg.connect(am.gain); am.connect(d); lfo.start(t); lfo.stop(t + 0.8);
+          smp(a, am, t + 0.02, 'bov', { rate: 0.9, gain: 0.6 * b });
+          if (!a._offline) setTimeout(() => { try { am.disconnect(); lg.disconnect(); } catch (e) { /* */ } }, 2500);
+        }
+        return;
+      }
       if (a.banks && a.banks.get('bov')) {
         // recorded blow-off / compressor-surge flutter; per-car pitch, louder with boost
         const rate = (this.bovStyle === 'flutter' ? 0.88 : 1.05) * (0.94 + ((hashStr(String(this.car.id || '')) >> 3) % 13) / 100);
@@ -1038,7 +1057,13 @@ class EngineSound {
       const a = this.a, N = this.N;
       if (!N || !a.ctx) return;
       const t = a.ctx.currentTime;
-      if (on && !N.horn) {
+      if (on && !N.horn && a.banks?.get('horn')) {
+        // recorded horn: attack from the start of the honk, then loop its steady middle while the key is held
+        const ctx = a.ctx, src = ctx.createBufferSource(), g = ctx.createGain(); src.buffer = a.banks.get('horn'); src.loop = true; src.loopStart = 1.6; src.loopEnd = 2.35;
+        src.connect(g); g.connect(N.ext); g.gain.setValueAtTime(0, t); g.gain.linearRampToValueAtTime(0.9, t + 0.01); src.start(t, 1.27);
+        g._oscs = [src]; N.horn = g;
+        N.hornInt = ctx.createGain(); N.hornInt.gain.value = 0.35; g.connect(N.hornInt); N.hornInt.connect(N.int);
+      } else if (on && !N.horn) {
         N.horn = hornTone(a, N.ext, t, 0, 0.32);
         N.hornInt = a.ctx.createGain(); N.hornInt.gain.value = 0.35; N.horn.connect(N.hornInt); N.hornInt.connect(N.int);
       } else if (!on && N.horn) {
@@ -1556,6 +1581,9 @@ export class GameAudio {
   }
 
   speak(text, lang = 'ja-JP', opts) {
+    // the browser's text-to-speech voices sound robotic: off unless the player turns 音声 on in the settings.
+    // (the line is always shown as a subtitle by the caller; police get the loud-hailer click instead)
+    if (!this.voiceOn) { if ((opts || {}).role === 'police') this.sfx('megaphone'); return; }
     try {
       const ss = W.speechSynthesis;
       if (!ss || !W.SpeechSynthesisUtterance || !text) return;
@@ -1654,7 +1682,9 @@ export class GameAudio {
     NS('pink', 0.9).connect(A.cityBP); A.cityBP.connect(A.city); A.city.connect(A.out);
     A.cityLP = F('lowpass', 160, 0.5); A.cityLow = G(0);
     NS('brown', 0.8).connect(A.cityLP); A.cityLP.connect(A.cityLow); A.cityLow.connect(A.out);
-    // crowd murmur: formant-filtered noise "voices" with syllabic envelopes
+    // recorded night-city bed (Tokyo street at night, CC0), looped — replaces the synthetic roar and the fake "voices"
+    A.cityRec = G(0); A.cityRec.connect(A.out); A.cityRecOn = false;
+    // crowd murmur: formant-filtered noise "voices" with syllabic envelopes (kept silent since v1.1.1)
     A.crowd = G(0); A.crowdLP = F('lowpass', 2400, 0.5); A.crowdLP.connect(A.crowd); A.crowd.connect(A.out);
     A.voices = [];
     for (let i = 0; i < 4; i++) {
@@ -1694,10 +1724,13 @@ export class GameAudio {
     sp(A.rum.gain, Math.min(0.35, 0.22 * w * w) * (1 + A.gust), t, 0.15);
     sp(A.rain.gain, E.rain * (E.inside ? 0.05 : 0.2), t, 0.5); sp(A.roof.gain, E.rain * (E.inside ? 0.12 : 0.02), t, 0.5);
     const ci = E.inCity;
-    sp(A.city.gain, ci * (0.05 * (1 - 0.45 * n) + 0.012) * (1 + A.swell * 0.6), t, 0.6);
-    sp(A.cityLow.gain, ci * (0.08 * (1 - 0.4 * n) + 0.02), t, 0.6);
-    // crowd
-    const crowd = E.inPA ? 0.05 + 0.1 * n : ci * (0.03 + 0.03 * day);
+    if (!A.cityRecOn && this.banks?.get('city_night')) { const src = this.ctx.createBufferSource(); src.buffer = this.banks.get('city_night'); src.loop = true; src.loopStart = 1; src.loopEnd = Math.max(2, src.buffer.duration - 1); src.connect(A.cityRec); src.start(t, Math.random() * 20); A.cityRecOn = true; }
+    const rec = A.cityRecOn ? 1 : 0, bed = Math.max(ci, E.inPA ? 0.7 : 0);
+    sp(A.cityRec.gain, bed * 0.32 * rec * (E.inside ? 0.45 : 1), t, 0.8);
+    sp(A.city.gain, ci * (0.05 * (1 - 0.45 * n) + 0.012) * (1 + A.swell * 0.6) * (1 - 0.8 * rec), t, 0.6);
+    sp(A.cityLow.gain, ci * (0.08 * (1 - 0.4 * n) + 0.02) * (1 - 0.5 * rec), t, 0.6);
+    // crowd (synthetic murmur off — the recorded bed has real people in it)
+    const crowd = 0;
     sp(A.crowd.gain, crowd, t, 0.6);
     if (crowd > 0.001) {
       for (const v of A.voices) {

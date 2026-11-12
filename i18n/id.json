@@ -291,6 +291,7 @@
  "game.set.time1": "Normal (30 menit = 12 jam)",
  "game.set.touch": "Kontrol sentuh",
  "game.set.transmission": "Transmisi",
+ "game.set.voice": "Spoken lines (TTS)",
  "game.set.weather": "Weather",
  "game.shop.bought": "Dibeli: {item}",
  "game.shop.nomoney": "Uang tidak cukup",

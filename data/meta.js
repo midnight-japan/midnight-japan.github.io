@@ -1,8 +1,20 @@
 // Shared game metadata: version, changelog, regions. Update VERSION + CHANGELOG on every release.
-export const GAME = { title: 'MIDNIGHT JAPAN', titleJa: 'ミッドナイト・ジャパン', version: '1.1.0', build: '2026.11.12' };
+export const GAME = { title: 'MIDNIGHT JAPAN', titleJa: 'ミッドナイト・ジャパン', version: '1.1.1', build: '2026.11.13' };
 
 // Newest first. type: new | change | fix | known
 export const CHANGELOG = [
+  {
+    version: '1.1.1', date: '2026-11-13', codename: 'Sound & Traffic',
+    summary: { ko: '교통차량은 전부 실제 3D 모델, 추월차로(1차로)는 플레이어 전용, 경적에 비켜 주는 차들, 실제 녹음으로 바꾼 사운드와 터보 블로오프 「프슈욱」.', ja: '交通はすべて本物の3Dモデル、追越車線はプレイヤー専用、クラクションで道を譲る車、本物の録音に替えたサウンドとターボのブローオフ「プシュッ」。', en: 'All traffic uses real 3D models, the overtaking lane is yours, cars move over when you honk, recorded sounds replace the synthetic ones, and turbo cars go “pssshh”.' },
+    items: [
+      { type: "change", ko: "교통·주차·카밋 차량을 실제 3D 모델이 있는 차로만 (버스·트럭·하이에이스·경차 포함), 경찰차·택시도 실제 크라운 모델 + 경광등", ja: "交通・駐車・カーミートの車はすべて本物の3Dモデルのある車種に（バス・トラック・ハイエース・軽を含む）、パトカーとタクシーも本物のクラウンのモデル＋赤色灯", en: "Traffic, parked and meet cars only use models with a real 3D model (buses, trucks, the Hiace and kei cars included); police cars and taxis use the real Crown model with their lightbar" },
+      { type: "change", ko: "추월차로(중앙분리대 쪽 차로, 한국식 1차로)는 플레이어 전용 — 교통차량은 생성되지도 들어가지도 않음", ja: "追越車線（中央分離帯側）はプレイヤー専用——交通は出現も進入もしない", en: "The overtaking lane (median side) is yours alone — traffic never appears in it or changes into it" },
+      { type: "fix", ko: "경적을 울리면 앞차가 플레이어 반대쪽으로 비키고, 비킬 곳이 없으면 감속·가장자리로 붙어 길을 터 줌 (옆 차로 차가 내 차로로 끼어들던 문제)", ja: "クラクションを鳴らすと前の車はプレイヤーと反対側へ避け、避けられなければ減速して端に寄る（隣の車線の車が自分の車線に入ってきた問題）", en: "Honk and the car ahead moves away from you, or slows and hugs the edge if it can't (cars in the next lane used to swerve into yours)" },
+      { type: "new", ko: "터보차(GT-R 등) 액셀을 뗄 때마다 블로오프 「프슈욱」(실제 녹음) + 일부 차는 서지 플러터, 터보 스풀 휘슬 강화", ja: "ターボ車（GT-Rなど）はアクセルを抜くたびにブローオフ「プシュッ」（本物の録音）＋一部の車はサージ音、タービンの過給音を強化", en: "Turbo cars (GT-Rs and co.) blow off — a real recorded “pssshh” — every time you lift, some with compressor-surge flutter, and a louder spool whistle" },
+      { type: "change", ko: "경적·시동·충돌·문 여는 소리를 실제 녹음(CC0)으로 교체, 시내·PA에 실제 도쿄 밤거리 녹음 앰비언스", ja: "クラクション・セル・衝突・ドアを開ける音を本物の録音（CC0）に、街とPAには本物の東京の夜の街の環境音", en: "The horn, starter, crash and door sounds are real recordings (CC0), and the city and PA have a real Tokyo-at-night ambience" },
+      { type: "change", ko: "기계음 같던 TTS 음성 대사와 합성 군중 웅성거림 제거(자막은 그대로) — 설정에서 다시 켤 수 있음", ja: "機械的だった読み上げ音声と合成の人の声を廃止（字幕はそのまま）——設定で戻せる", en: "The robotic text-to-speech lines and the synthetic crowd murmur are gone (subtitles stay) — the voices can be switched back on in the settings" },
+    ]
+  },
   {
     version: '1.1.0', date: '2026-11-12', codename: 'Connected',
     summary: { ko: '맵 전체가 하나로 — 다이코쿠·요코하마·가와사키·하네다·도쿄 도심(C1)·레인보우 브리지·하코네까지 실제 도로로 막힘 없이 이어짐.', ja: 'マップがひとつに——大黒・横浜・川崎・羽田・都心（C1）・レインボーブリッジ・箱根まで、本物の道路で途切れずにつながる。', en: 'One connected map: Daikoku, Yokohama, Kawasaki, Haneda, central Tokyo (C1), the Rainbow Bridge and Hakone, all joined by the real roads.' },

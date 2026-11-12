@@ -3,7 +3,7 @@
 import * as THREE from 'three';
 import { mergeGeometries } from 'three/addons/utils/BufferGeometryUtils.js';
 import { CARS, CAR_BY_ID } from '../../data/cars.js';
-import { buildCarAuto } from './carfactory.js';
+import { buildCarAuto, requestGlb, glbEntry } from './carfactory.js';
 import { PA_RECT, PA, PA_LAYOUT } from './roads.js';
 
 const _pa = new THREE.Vector3(), _pb = new THREE.Vector3();
@@ -68,12 +68,26 @@ export class Traffic {
     const geo = new THREE.PlaneGeometry(3.2, 14); geo.rotateX(-Math.PI / 2); geo.translate(0, 0.04, 7.6 + 1.2);
     return { geo, mat: new THREE.MeshBasicMaterial({ map: t, transparent: true, opacity: 0, blending: THREE.AdditiveBlending, depthWrite: false }) };
   }
+  // load every traffic model up front; swap procedural stand-ins for the real model as soon as it is in
+  preloadModels() { if (this._pre) return; this._pre = true; for (const id of new Set([...TRAFFIC_POOL, ...MEET_POOL, ...CITY_POOL, 'police', 'crown'])) requestGlb(id).catch(() => {}); }
+  swapModels() {
+    let n = 0;
+    for (const ai of this.cars) {
+      if (n >= 30 || ai.model.isGlb || !glbEntry(ai.car.id)) continue;
+      const old = ai.model, L = { ...old.lights };
+      const model = buildCarAuto(ai.car, { lod: 'low', color: ai.color, glb: true, realLights: false }); if (!model.isGlb) continue;
+      old.root.remove(ai.beam); this.scene.remove(old.root); old.dispose?.();
+      model.root.add(ai.beam); model.root.position.copy(old.root.position); model.root.rotation.copy(old.root.rotation); Object.assign(model.lights, L);
+      this.scene.add(model.root); ai.model = model; n++;
+    }
+  }
   createAI(id, opts = {}) {
     const car = CAR_BY_ID[id];
     const color = opts.color || car.colors[Math.floor(Math.random() * car.colors.length)];
     // real glTF models for traffic only on medium+ quality (they cost more triangles than the low-LOD procedural cars)
-    const model = buildCarAuto(car, { lod: 'low', color, glb: this.g.quality !== 'low', realLights: false });
-    if (!model.isGlb) mergeModel(model);
+    // only real 3D models drive around (v1.1.1): until a model has loaded the car is built procedurally and swapped later
+    const model = buildCarAuto(car, { lod: 'low', color, glb: true, realLights: false });
+    if (!model.isGlb) { mergeModel(model); model.root.visible = false; } // hidden until its real model has loaded (swapModels)
     const beam = new THREE.Mesh(this.headPool.geo, this.headPool.mat); beam.position.z = 0; model.root.add(beam);
     this.scene.add(model.root);
     const ai = { car, model, beam, road: null, lane: null, s: 0, dir: 1, v: 0, vDes: 0, mode: 'road', t: 0, id: Math.random(), color, pos: new THREE.Vector3(), yaw: 0, radius: car.W / 2000, halfL: car.L / 2000, ...opts };
@@ -94,7 +108,10 @@ export class Traffic {
       if (ai.police || ai.incident || (ai.mode !== 'road' && ai.mode !== 'city')) continue;
       const dx = ai.pos.x - pos.x, dz = ai.pos.z - pos.z, d = Math.hypot(dx, dz); if (d > 45 || d < 1) continue;
       if ((dx * fwd.x + dz * fwd.z) / d < 0.75 || Math.sin(ai.yaw) * fwd.x + Math.cos(ai.yaw) * fwd.z < 0.5) continue;
-      ai.yieldT = 5; if (ai.mode === 'city') ai.v = Math.min(ai.v + 2, (ai.vDes || 12) * 1.15);
+      ai.yieldT = 5;
+      // which side of us is the honking car? (in our frame: +1 left, −1 right, 0 behind in our lane)
+      const rx = Math.cos(ai.yaw), rz = -Math.sin(ai.yaw), side = -(dx * rx + dz * rz); ai.yieldSide = Math.abs(side) < 2.2 ? 0 : side > 0 ? 1 : -1;
+      if (ai.mode === 'city') { ai.yieldSlow = 3; ai.cityBias = (ai.yieldSide >= 0 ? -1 : 1); }
     }
   }
   remove(ai) {
@@ -105,14 +122,19 @@ export class Traffic {
     if (ai.spot) ai.spot.taken = false;
     if (ai.driver) this.g.npc?.removeDriver(ai);
   }
+  // the overtaking lane (追越車線 — the median-side lane, "1st lane" to a Korean driver) of a multi-lane carriageway is
+  // left to the player: traffic never spawns in it, never changes into it, and leaves it if a junction drops it there
+  fastLane(road, dir) { const ls = road.lanes.filter(l => l.dir === dir); if (ls.length < 2 || road.kind === 'local') return null; return ls.reduce((a, b) => (b.lat * dir < a.lat * dir ? b : a)); }
   // put an AI on a road lane
   placeOnRoad(ai, road, lane, s) {
+    if (!ai.police && lane === this.fastLane(road, lane.dir)) { const ls = road.lanes.filter(l => l.dir === lane.dir && l !== lane); lane = ls.reduce((a, b) => (Math.abs(b.lat - lane.lat) < Math.abs(a.lat - lane.lat) ? b : a)); }
     ai.mode = 'road'; ai.road = road; ai.lane = lane; ai.dir = lane.dir; ai.s = s; ai.lat = lane.lat;
     ai.vDes = (road.speed / 3.6) * (0.85 + Math.random() * 0.35) * (ai.car.mass > 5000 ? 0.85 : 1);
     ai.v = ai.vDes * 0.9;
   }
 
   init() {
+    this.preloadModels();
     // initial highway traffic
     const bay = this.net.byId.bayshore, k5 = this.net.byId.k5, k5n = this.net.byId.k5_nb || k5, k1 = this.net.byId.k1 || bay, k3 = this.net.byId.k3 || bay;
     for (let i = 0; i < this.max; i++) {
@@ -233,7 +255,8 @@ export class Traffic {
     const a = 1.6, bComf = 2.5, s0 = 6 + ai.halfL, T = 1.3;
     const dv = ai.v - vLead;
     const sStar = s0 + Math.max(0, ai.v * T + ai.v * dv / (2 * Math.sqrt(a * bComf)));
-    let acc = a * (1 - Math.pow(ai.v / Math.max(1, ai.vDes), 4) - Math.pow(sStar / Math.max(0.1, gap - ai.halfL * 2), 2));
+    if (ai.yieldSlow > 0) ai.yieldSlow -= dt;
+    let acc = a * (1 - Math.pow(ai.v / Math.max(1, ai.yieldSlow > 0 ? ai.vDes * 0.7 : ai.vDes), 4) - Math.pow(sStar / Math.max(0.1, gap - ai.halfL * 2), 2));
     acc = clamp(acc, -8, a);
     ai.braking = acc < -1;
     ai.v = Math.max(0, ai.v + acc * dt);
@@ -244,14 +267,23 @@ export class Traffic {
     if (!ai.police && Math.abs(ai.lat - ai.lane.lat) < 0.5) {
       const same = road.lanes.filter(l => l.dir === ai.dir && l !== ai.lane && Math.abs(l.lat - ai.lane.lat) < 4);
       const lft = l => l.lat * ai.dir, free = (l, ahead, behind) => !(byLane.get(road.index * 100 + l.lat) || []).some(o => { const d = (o.s - ai.s) * ai.dir; return d < ahead && d > -behind; });
-      const right = same.find(l => lft(l) < lft(ai.lane)), left = same.find(l => lft(l) > lft(ai.lane));
+      const fast = this.fastLane(road, ai.dir);
+      let right = same.filter(l => lft(l) < lft(ai.lane)).sort((a, b) => lft(b) - lft(a))[0], left = same.filter(l => lft(l) > lft(ai.lane)).sort((a, b) => lft(a) - lft(b))[0];
+      if (right === fast) right = null;
       let target = null;
-      if (ai.yieldT > 0 && Math.random() < dt * 3) target = (left && free(left, 25, 15)) ? left : (right && free(right, 25, 15)) ? right : null;
+      if (ai.lane === fast && left) target = left; // dropped into the overtaking lane by a junction → move over
+      else if (ai.yieldT > 0 && Math.random() < dt * 4) {
+        // honked at: move AWAY from the player (who is behind) — never across into their lane
+        const ps = ai.yieldSide ?? 0; // −1 player on our right, +1 on our left, 0 same lane
+        target = ps <= 0 ? ((left && free(left, 25, 15)) ? left : (ps === 0 && right && free(right, 25, 15)) ? right : null) : ((right && free(right, 25, 15)) ? right : null);
+        if (!target) ai.yieldSlow = 3; // nowhere to go: ease off and let them by
+      }
       else if (gap < 45 && vLead < ai.vDes * 0.85 && right && Math.random() < dt * 0.6 && free(right, 30, 25)) target = right; // overtake on the right
       else if (left && Math.random() < dt * 0.25 && free(left, 60, 25)) target = left;                                       // keep left
       if (target) { ai.signal = lft(target) > lft(ai.lane) ? 1 : -1; ai.lane = target; if (ai.yieldT > 0) ai.yieldT = 0; }
     }
-    ai.lat = lerp(ai.lat, ai.lane.lat, 1 - Math.exp(-dt * 0.9));
+    const yb = ai.yieldSlow > 0 ? (ai.yieldSide > 0 ? -0.9 : 0.9) * ai.dir : 0; // squeeze over within the lane, away from the player
+    ai.lat = lerp(ai.lat, ai.lane.lat + yb, 1 - Math.exp(-dt * 0.9));
     if (Math.abs(ai.lat - ai.lane.lat) < 0.2) ai.signal = 0;
     // ramp decisions: westbound Bayshore near the PA diverge
     if (road.id === 'bayshore' && ai.dir === -1 && !ai.decided) {
@@ -412,6 +444,7 @@ export class Traffic {
     return false;
   }
   manage() {
+    this.preloadModels(); this.swapModels();
     // keep highway population
     const roadCars = this.cars.filter(c => c.mode === 'road' && !c.police).length;
     // traffic follows the clock: quiet before dawn, busiest in the morning and evening rush
@@ -502,7 +535,8 @@ export class Traffic {
     const S = this.segOf(ai.c, ai.i);
     const toV = ai.dir > 0 ? S.L - ai.d : ai.d;                       // distance to the vertex ahead
     if (!ai.next) ai.next = this.chooseNext(ai, net) || 'end';
-    let vMax = ai.vDes;
+    if (ai.yieldSlow > 0) ai.yieldSlow -= dt;
+    let vMax = ai.yieldSlow > 0 ? ai.vDes * 0.55 : ai.vDes;
     if (ai.next !== 'end' && ai.next.dot < 0.85) vMax = Math.min(vMax, toV < 22 ? lerp(4.2, ai.vDes, clamp((toV - 4) / 18, 0, 1)) : vMax);
     if (ai.next === 'end') vMax = Math.min(vMax, Math.max(1, toV * 0.6));
     // gap to the nearest obstacle ahead: other city cars, the player, a red light
@@ -549,6 +583,7 @@ export class Traffic {
     if (!v) return;
     const pr = v.car.W / 2000, pL = v.car.L / 2000, f = v.forward;
     for (const ai of this.cars) {
+      if (!ai.model.root.visible) continue;
       const dx = ai.pos.x - v.pos.x, dz = ai.pos.z - v.pos.z;
       if (dx * dx + dz * dz > 100 || Math.abs(ai.pos.y - v.pos.y) > 2) continue;
       const af = new THREE.Vector3(Math.sin(ai.yaw), 0, Math.cos(ai.yaw));

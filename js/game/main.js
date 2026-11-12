@@ -51,13 +51,14 @@ const isMobile = /Android|iPhone|iPad|iPod|Mobile|SamsungBrowser/i.test(navigato
 export const DEFAULT_SETTINGS = {
   quality: isMobile ? 'low' : 'high', resScale: isMobile ? 0.75 : 1, transmission: 'auto', assist: true, units: 'kmh', etc: true,
   difficulty: 'standard', steerAssist: 'standard', stm: 'sport', tcs: 'sport', abs: true, police: 'normal',
-  master: 0.8, engine: 0.85, sfx: 0.8, ambient: 0.6, radio: 0.7, dj: true, spawn: 'pa', weather: 'auto', damage: true, tilt: false, shake: true, fps: true, timeSpeed: 1, bloom: true, online: true, touch: isMobile ? 'on' : 'auto',
+  master: 0.8, engine: 0.85, sfx: 0.8, ambient: 0.6, radio: 0.7, dj: false, voice: false, spawn: 'pa', weather: 'auto', damage: true, tilt: false, shake: true, fps: true, timeSpeed: 1, bloom: true, online: true, touch: isMobile ? 'on' : 'auto',
 };
 
 class Game {
   constructor() {
     this.settings = load(SETTINGS_KEY, DEFAULT_SETTINGS);
-    if (!this.settings.fpsOn) { this.settings.fps = true; this.settings.fpsOn = 1; } // v0.3.3: FPS + version shown by default
+    if (!this.settings.fpsOn) { this.settings.fps = true; this.settings.fpsOn = 1; }
+    if (!this.settings.v111) { this.settings.dj = false; this.settings.voice = false; this.settings.v111 = 1; } // v1.1.1: robotic text-to-speech voices off by default // v0.3.3: FPS + version shown by default
     this.garage = load(GARAGE_KEY, { car: 'r34', cars: {} });
     this.quality = this.settings.quality;
     this.mode = 'loading'; this.frame = 0; this.money = 500000; // enough for tolls, fuel, konbini and the odd fine — the game is about driving, not budgeting
@@ -193,7 +194,7 @@ class Game {
     this.camera.aspect = innerWidth / innerHeight; this.camera.updateProjectionMatrix();
     this.renderer.setSize(innerWidth, innerHeight); this.composer.setSize(innerWidth, innerHeight);
   }
-  applyVolumes() { const s = this.settings; this.audio.setVolumes({ master: s.master, engine: s.engine, sfx: s.sfx, ambient: s.ambient, radio: s.radio }); }
+  applyVolumes() { const s = this.settings; this.audio.setVolumes({ master: s.master, engine: s.engine, sfx: s.sfx, ambient: s.ambient, radio: s.radio }); this.audio.voiceOn = !!s.voice; if (this.radio) this.radio.djVoice = !!s.dj; }
   async unlockAudio() { try { await this.audio.unlock(); this.applyVolumes(); if (!this.radio) { this.radio = this.audio.createRadio(); this.radio.djVoice = this.settings.dj; } } catch (e) { console.warn(e); } }
 
   // ───────────────────────── spawning ─────────────────────────

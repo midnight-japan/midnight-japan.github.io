@@ -291,6 +291,7 @@
  "game.set.time1": "Normale (30 min = 12 h)",
  "game.set.touch": "Commandes tactiles",
  "game.set.transmission": "Boîte de vitesses",
+ "game.set.voice": "Spoken lines (TTS)",
  "game.set.weather": "Météo",
  "game.shop.bought": "Acheté : {item}",
  "game.shop.nomoney": "Pas assez d'argent",

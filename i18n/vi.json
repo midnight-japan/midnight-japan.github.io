@@ -291,6 +291,7 @@
  "game.set.time1": "Bình thường (30 phút = 12 giờ)",
  "game.set.touch": "Điều khiển cảm ứng",
  "game.set.transmission": "Hộp số",
+ "game.set.voice": "Spoken lines (TTS)",
  "game.set.weather": "Weather",
  "game.shop.bought": "Đã mua: {item}",
  "game.shop.nomoney": "Không đủ tiền",

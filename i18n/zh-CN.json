@@ -291,6 +291,7 @@
  "game.set.time1": "正常（30 分钟 = 12 小时）",
  "game.set.touch": "触屏操作",
  "game.set.transmission": "变速箱",
+ "game.set.voice": "Spoken lines (TTS)",
  "game.set.weather": "天气",
  "game.shop.bought": "已购买：{item}",
  "game.shop.nomoney": "钱不够",

@@ -291,6 +291,7 @@
  "game.set.time1": "Normal (30 min = 12 h)",
  "game.set.touch": "Touchkontroller",
  "game.set.transmission": "Växellåda",
+ "game.set.voice": "Spoken lines (TTS)",
  "game.set.weather": "Weather",
  "game.shop.bought": "Köpt: {item}",
  "game.shop.nomoney": "Inte tillräckligt med pengar",

@@ -334,6 +334,8 @@ export class Vehicle {
       const rpm = e.rpm, red = car.engine.redline;
       if (e.running) {
         // turbo spool
+        // lift off with boost up → blow-off valve (プシュー) — on every lift, not only on gear changes
+        if (car.engine.turbo) { if ((this._thrPrev ?? 0) > 0.5 && throttle < 0.15 && e.boost > 0.2 && (this._bovT ?? 0) <= 0) { this.events.push('blowoff'); this._bovT = 0.9; } this._thrPrev = throttle; this._bovT = (this._bovT ?? 0) - dt; }
         if (car.engine.turbo) { const target = throttle * sstep(red * 0.25, red * 0.6, rpm); e.boost = lerp(e.boost, target, 1 - Math.exp(-dt * (target > e.boost ? 2.6 : 6))); }
         let thr = throttle;
         // idle control

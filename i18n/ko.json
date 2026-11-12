@@ -291,6 +291,7 @@
  "game.set.time1": "보통 (30분 = 12시간)",
  "game.set.touch": "터치 조작",
  "game.set.transmission": "변속기",
+ "game.set.voice": "음성 대사 (TTS)",
  "game.set.weather": "날씨",
  "game.shop.bought": "구매: {item}",
  "game.shop.nomoney": "돈이 부족해요",

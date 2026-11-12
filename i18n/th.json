@@ -291,6 +291,7 @@
  "game.set.time1": "ปกติ (30 นาที = 12 ชม.)",
  "game.set.touch": "การควบคุมแบบสัมผัส",
  "game.set.transmission": "ระบบเกียร์",
+ "game.set.voice": "Spoken lines (TTS)",
  "game.set.weather": "Weather",
  "game.shop.bought": "ซื้อแล้ว: {item}",
  "game.shop.nomoney": "เงินไม่พอ",

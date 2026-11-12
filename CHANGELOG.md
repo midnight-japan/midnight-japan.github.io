@@ -1,9 +1,10 @@
 # 📜 MIDNIGHT JAPAN 업데이트 기록 · Changelog
 
-현재 버전 · Current: **v1.1.0** · [▶ 웹에서 플레이](https://midnight-japan.github.io/) · [🌐 업데이트 페이지](https://midnight-japan.github.io/changelog.html)
+현재 버전 · Current: **v1.1.1** · [▶ 웹에서 플레이](https://midnight-japan.github.io/) · [🌐 업데이트 페이지](https://midnight-japan.github.io/changelog.html)
 
 | 버전 | 날짜 | 이름 | 요약 |
 |---|---|---|---|
+| [v1.1.1](#v111--sound-&-traffic-2026-11-13) | 2026-11-13 | Sound & Traffic | 교통차량은 전부 실제 3D 모델, 추월차로(1차로)는 플레이어 전용, 경적에 비켜 주는 차들, 실제 녹음으로 바꾼 사운드와 터보 블로오프 「프슈욱」. |
 | [v1.1.0](#v110--connected-2026-11-12) | 2026-11-12 | Connected | 맵 전체가 하나로 — 다이코쿠·요코하마·가와사키·하네다·도쿄 도심(C1)·레인보우 브리지·하코네까지 실제 도로로 막힘 없이 이어짐. |
 | [v1.0.1](#v101--shakedown-2026-11-12) | 2026-11-12 | Shakedown | 직접 플레이하며 찾은 버그 대수술 — 고속도로의 보이지 않는 벽, PA 밖 허공, 하차 시 끼임, 터널 눈부심, 모바일 페달 실종 등 수정. |
 | [v1.0.0](#v100--real-japan-2026-11-06) | 2026-11-06 | Real Japan | 정식 1.0 — 실제 일본의 다섯 곳(C1·하코네·K1 루프·다이코쿠 PA와 만안선·요코하마/도쿄 시가지)을 달리는 게임으로. 홈페이지 전면 리뉴얼. |
@@ -30,6 +31,28 @@
 | [v0.2.0](#v020--bayshore-2026-11-05) | 2026-11-05 | Bayshore | 수도고속 완간선을 따라 하네다까지, 도쿄만 아쿠아라인 해저터널을 지나 우미호타루 PA까지. 실제 3D 차량 모델과 열리는 보닛도 들어왔어요. |
 | [v0.1.1](#v011--one-click-2026-11-04) | 2026-11-04 | One Click | 링크 하나로 바로 플레이. 크롬에서 공식 사이트 주소만 열면 설치 없이 실행돼요. |
 | [v0.1.0](#v010--first-meet-2026-11-04) | 2026-11-04 | First Meet | 첫 공개 버전. 다이코쿠 JCT·PA와 다이코쿠 부두 일대를 3D로 구현했습니다. |
+
+---
+
+## v1.1.1 — Sound & Traffic (2026-11-13)
+
+> 교통차량은 전부 실제 3D 모델, 추월차로(1차로)는 플레이어 전용, 경적에 비켜 주는 차들, 실제 녹음으로 바꾼 사운드와 터보 블로오프 「프슈욱」.
+> All traffic uses real 3D models, the overtaking lane is yours, cars move over when you honk, recorded sounds replace the synthetic ones, and turbo cars go “pssshh”.
+
+**✨ 추가 · New**
+
+- 터보차(GT-R 등) 액셀을 뗄 때마다 블로오프 「프슈욱」(실제 녹음) + 일부 차는 서지 플러터, 터보 스풀 휘슬 강화<br><sub>Turbo cars (GT-Rs and co.) blow off — a real recorded “pssshh” — every time you lift, some with compressor-surge flutter, and a louder spool whistle</sub>
+
+**🔧 변경 · Changed**
+
+- 교통·주차·카밋 차량을 실제 3D 모델이 있는 차로만 (버스·트럭·하이에이스·경차 포함), 경찰차·택시도 실제 크라운 모델 + 경광등<br><sub>Traffic, parked and meet cars only use models with a real 3D model (buses, trucks, the Hiace and kei cars included); police cars and taxis use the real Crown model with their lightbar</sub>
+- 추월차로(중앙분리대 쪽 차로, 한국식 1차로)는 플레이어 전용 — 교통차량은 생성되지도 들어가지도 않음<br><sub>The overtaking lane (median side) is yours alone — traffic never appears in it or changes into it</sub>
+- 경적·시동·충돌·문 여는 소리를 실제 녹음(CC0)으로 교체, 시내·PA에 실제 도쿄 밤거리 녹음 앰비언스<br><sub>The horn, starter, crash and door sounds are real recordings (CC0), and the city and PA have a real Tokyo-at-night ambience</sub>
+- 기계음 같던 TTS 음성 대사와 합성 군중 웅성거림 제거(자막은 그대로) — 설정에서 다시 켤 수 있음<br><sub>The robotic text-to-speech lines and the synthetic crowd murmur are gone (subtitles stay) — the voices can be switched back on in the settings</sub>
+
+**🐞 수정 · Fixed**
+
+- 경적을 울리면 앞차가 플레이어 반대쪽으로 비키고, 비킬 곳이 없으면 감속·가장자리로 붙어 길을 터 줌 (옆 차로 차가 내 차로로 끼어들던 문제)<br><sub>Honk and the car ahead moves away from you, or slows and hugs the edge if it can't (cars in the next lane used to swerve into yours)</sub>
 
 ---
 

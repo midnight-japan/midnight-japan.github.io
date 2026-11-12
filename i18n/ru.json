@@ -291,6 +291,7 @@
  "game.set.time1": "Обычная (30 мин = 12 ч)",
  "game.set.touch": "Сенсорное управление",
  "game.set.transmission": "Коробка передач",
+ "game.set.voice": "Spoken lines (TTS)",
  "game.set.weather": "Погода",
  "game.shop.bought": "Куплено: {item}",
  "game.shop.nomoney": "Недостаточно денег",

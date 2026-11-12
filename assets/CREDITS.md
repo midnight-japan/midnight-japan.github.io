@@ -116,6 +116,14 @@ All sources are freesound.org recordings released under **CC0 1.0** (public doma
 | `sfx/blink_on, sfx/blink_off` | VEHCar_NISSAN SENTRA-TURNING SIGNAL_MP | MPierluissi | https://freesound.org/people/MPierluissi/sounds/446322/ | [CC0 1.0](https://creativecommons.org/publicdomain/zero/1.0/) |
 | `sfx/ui_click` | Soft UI Button Click | Jummit | https://freesound.org/people/Jummit/sounds/528561/ | [CC0 1.0](https://creativecommons.org/publicdomain/zero/1.0/) |
 | `sfx/shift` | civic manual shifter noise | jrssandoval | https://freesound.org/people/jrssandoval/sounds/67135/ | [CC0 1.0](https://creativecommons.org/publicdomain/zero/1.0/) |
+| `sfx/pssh` (blow-off プシュー) | release_air_pffft.wav | reg7783 | https://freesound.org/people/reg7783/sounds/131302/ | [CC0 1.0](https://creativecommons.org/publicdomain/zero/1.0/) |
+| `sfx/hiss` (blow-off tail) | Steam/hiss | wubitog | https://freesound.org/people/wubitog/sounds/234782/ | [CC0 1.0](https://creativecommons.org/publicdomain/zero/1.0/) |
+| `sfx/horn` | car horn.wav | keweldog | https://freesound.org/people/keweldog/sounds/182474/ | [CC0 1.0](https://creativecommons.org/publicdomain/zero/1.0/) |
+| `sfx/starter` | Car Ignition Key - Engine Starting Running Idle | RutgerMuller | https://freesound.org/people/RutgerMuller/sounds/50898/ | [CC0 1.0](https://creativecommons.org/publicdomain/zero/1.0/) |
+| `sfx/crash_big` | Car Crash (with Glass) | magnuswaker | https://freesound.org/people/magnuswaker/sounds/592388/ | [CC0 1.0](https://creativecommons.org/publicdomain/zero/1.0/) |
+| `sfx/crash_hit` | Fast Collision | qubodup | https://freesound.org/people/qubodup/sounds/332056/ | [CC0 1.0](https://creativecommons.org/publicdomain/zero/1.0/) |
+| `sfx/door_open` | opening_Car_door.wav | rnl | https://freesound.org/people/rnl/sounds/335102/ | [CC0 1.0](https://creativecommons.org/publicdomain/zero/1.0/) |
+| `sfx/city_night` (first 50 s) | TokyoStreetAtNight_120.wav | markystar | https://freesound.org/people/markystar/sounds/42195/ | [CC0 1.0](https://creativecommons.org/publicdomain/zero/1.0/) |
 
 Everything else in the audio (synth engine layer, turbo whistle, EV drive, siren, radio, ambience, reverb impulse responses) is synthesised in code.
 

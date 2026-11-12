@@ -291,6 +291,7 @@
  "game.set.time1": "標準（30分＝12時間）",
  "game.set.touch": "タッチ操作",
  "game.set.transmission": "トランスミッション",
+ "game.set.voice": "音声読み上げ（TTS）",
  "game.set.weather": "天気",
  "game.shop.bought": "購入：{item}",
  "game.shop.nomoney": "お金が足りません",
