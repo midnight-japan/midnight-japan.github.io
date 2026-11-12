@@ -18,7 +18,7 @@ export class Accidents {
     // the AI car that was just hit
     const ai = tr.cars.filter(a => a.hitBy !== undefined && tr.t - a.hitBy < 0.25 && !a.police && !a.incident && !a.pursuit)
       .sort((a, b) => a.pos.distanceToSquared(g.vehicle.pos) - b.pos.distanceToSquared(g.vehicle.pos))[0];
-    if (!ai || impact < 3) return;
+    if (!ai || impact < 5) return; // a light bump (< 18 km/h) is not an accident scene
     this.cool = 4;
     const inc = { ai, t: 0, stage: 'stop', impact, pos: ai.pos.clone(), driver: null, officer: null, unit: null, said: {}, voice: { role: Math.random() < 0.55 ? 'male' : 'female', seed: Math.random() * 10 }, mood: 50 };
     ai.incident = inc; ai.model.lights.hazard = true;

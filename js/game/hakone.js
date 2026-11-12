@@ -20,11 +20,28 @@ export class Hakone {
     this.road.samples.forEach((q, i) => { const k = Math.floor(q.p.x / 40) + ',' + Math.floor(q.p.z / 40); (this.cell.get(k) || this.cell.set(k, []).get(k)).push(i); });
     world.group.add(this.group);
     Promise.all(['terrain', 'dem'].map(n => fetch(new URL(`../../data/hakone/${n}.bin`, import.meta.url)).then(r => r.arrayBuffer()))).then(([t, d]) => {
-      this.H = new Int16Array(t); this.D = new Int16Array(d); this.build(); this.ready = true;
+      this.H = new Int16Array(t); this.D = new Int16Array(d); this.carveLinks(); this.build(); this.ready = true;
     }).catch(e => console.warn('hakone', e));
   }
   grid(A, x, z) { const fx = (x - G.x0) / G.step, fz = (z - G.z0) / G.step; const i = Math.max(0, Math.min(G.w - 2, Math.floor(fx))), j = Math.max(0, Math.min(G.h - 2, Math.floor(fz))); const u = fx - i, v = fz - j, k = j * G.w + i;
     return ((A[k] * (1 - u) + A[k + 1] * u) * (1 - v) + (A[k + G.w] * (1 - u) + A[k + G.w + 1] * u) * v) * G.scale; }
+  // the road down to Odawara (Seishō bypass links, since v1.1) runs into the terrain box: lower the terrain under it
+  // (and blend it to the road over 30 m) so no hillside pokes through the carriageway
+  carveLinks() {
+    const H = this.H, sc = G.scale;
+    for (const r of this.w.net.roads) {
+      if (!/^hk/.test(r.id)) continue; const hw = (r.edgeL - r.edgeR) / 2 + 1;
+      for (const q of r.samples) {
+        if (!inHakone(q.p.x, q.p.z)) continue;
+        const i0 = Math.floor((q.p.x - 34 - G.x0) / G.step), i1 = Math.ceil((q.p.x + 34 - G.x0) / G.step), j0 = Math.floor((q.p.z - 34 - G.z0) / G.step), j1 = Math.ceil((q.p.z + 34 - G.z0) / G.step);
+        for (let j = Math.max(0, j0); j <= Math.min(G.h - 1, j1); j++) for (let i = Math.max(0, i0); i <= Math.min(G.w - 1, i1); i++) {
+          const d = Math.hypot(G.x0 + i * G.step - q.p.x, G.z0 + j * G.step - q.p.z); if (d > 34) continue;
+          const k = j * G.w + i, h = H[k] * sc, base = q.p.y - 0.6, t = ss(hw, 34, d);
+          const nh = d < hw + 12 ? Math.min(h, base) : base + (h - base) * t; if (d < hw + 12 || Math.abs(nh - h) > 0.1) H[k] = Math.round(Math.min(h, Math.max(nh, d < hw + 12 ? -1e4 : nh)) / sc);
+        }
+      }
+    }
+  }
   dem(x, z) { return this.D ? this.grid(this.D, x, z) : 0; }
   nearest(x, z) { let best = null; const cx = Math.floor(x / this.CS), cz = Math.floor(z / this.CS); const S = this.road.samples; for (let a = -1; a <= 1; a++) for (let b = -1; b <= 1; b++) for (const i of this.cell.get((cx + a) + ',' + (cz + b)) || []) { const q = S[i]; const d = (q.p.x - x) ** 2 + (q.p.z - z) ** 2; if (!best || d < best.d) best = { d, i }; } if (best) best.d = Math.sqrt(best.d); return best; }
   lotAt(x, z) { for (const L of HAKONE.lots) { const dx = x - L.x, dz = z - L.z, s = Math.sin(L.yaw), c = Math.cos(L.yaw); const a = dx * s + dz * c, b = dx * c - dz * s; if (Math.abs(a) < L.l / 2 && Math.abs(b) < L.w / 2) return L; } return null; }
@@ -118,8 +135,10 @@ export class Hakone {
     for (const dz of [-1.3, 1.3]) add(new THREE.CylinderGeometry(0.08, 0.08, 2.6, 8), dark, top, -top.l / 2 + 6 + dz * 0, top.y + 1.3, top.w / 2 - 1.2 + dz);
     // Odawara toll gate at the foot of the road
     const s0 = S[25], t0 = S[25].t;
-    const booth = new THREE.Mesh(new THREE.BoxGeometry(1.1, 2.6, 4), conc); booth.position.set(s0.p.x, s0.p.y + 1.3, s0.p.z); booth.rotation.y = Math.atan2(t0.x, t0.z); g.add(booth);
-    this.w.addCollider(s0.p.x, s0.p.z, 0.55, 2, Math.atan2(t0.x, t0.z), s0.p.y - 1, s0.p.y + 3);
+    // centre the booth island exactly on the road centreline (between the two lanes) so neither lane runs into it
+    const hc = this.w.net.hits(s0.p.x, s0.p.z).find(h => h.road.kind === 'mountain'); const bx = s0.p.x - (hc ? s0.left.x * hc.lat : 0), bz = s0.p.z - (hc ? s0.left.z * hc.lat : 0);
+    const booth = new THREE.Mesh(new THREE.BoxGeometry(0.9, 2.6, 4), conc); booth.position.set(bx, s0.p.y + 1.3, bz); booth.rotation.y = Math.atan2(t0.x, t0.z); g.add(booth);
+    this.w.addCollider(bx, bz, 0.45, 2, Math.atan2(t0.x, t0.z), s0.p.y - 1, s0.p.y + 3);
     const roof = new THREE.Mesh(new THREE.BoxGeometry(16, 0.6, 9), new THREE.MeshStandardMaterial({ color: 0xc7262e, roughness: 0.5 })); roof.position.set(s0.p.x, s0.p.y + 5.6, s0.p.z); roof.rotation.y = booth.rotation.y; g.add(roof);
     for (const o of [-7, 7]) { const pl = new THREE.Mesh(new THREE.BoxGeometry(0.5, 5.4, 0.5), conc); pl.position.set(s0.p.x + s0.left.x * o, s0.p.y + 2.7, s0.p.z + s0.left.z * o); g.add(pl); }
   }

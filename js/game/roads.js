@@ -8,6 +8,7 @@ import { surface, weather } from './textures.js';
 import { MAP } from '../../data/map-daikoku.js';
 import { HAKONE } from '../../data/map-hakone.js';
 import { C1 } from '../../data/map-c1.js';
+import { SHUTO } from '../../data/map-shuto.js';
 
 const LANE = 3.5;
 const UV_WRAP = 600; // metres; texture v coordinates restart every 600 m (all tile sizes divide it)
@@ -38,7 +39,7 @@ export const DECK_Z = PA.cz - 80; // legacy export
 // lanesF: lanes in point order (on the LEFT of the centreline); lanesB: opposite direction. median: gap between directions.
 // partner/edge: one-way roads that end at the map edge (K5 decks) → the player is turned onto the partner road there.
 export const UMI_LOTS = [];
-export const ROAD_DEFS = [...MAP.roads, ...umihotaruRamps(), HAKONE.road, ...C1.roads];
+export const ROAD_DEFS = [...MAP.roads, ...umihotaruRamps(), HAKONE.road, ...C1.roads, ...SHUTO.roads];
 
 // ── Umihotaru PA (海ほたる): the Aqua-Line runs along the island on the surface and under the ship-shaped PA building.
 // Each carriageway gets its own surface lot on its left (Japan: exits on the left) with an entry and an exit ramp.
@@ -104,6 +105,24 @@ export class Road {
       this.samples.push({ p, t, left: new THREE.Vector3(t.z, 0, -t.x), s, grade });
     }
     this.length = s;
+    // OSM bridge/viaduct heights come in steps (per way / layer), which left a ±5 m sawtooth on the long decks (the Bay
+    // Bridge rose and dipped every 100 m). Smooth elevated stretches with a ±100 m window (3 passes), leaving the road ends alone so
+    // junctions still meet.
+    if (def.kind !== 'local' && n > 60) {
+      const S = this.samples, mtn = def.kind === 'mountain', W = mtn ? 6 : Math.min(50, Math.floor(n / 6));
+      for (let pass = 0; pass < 3; pass++) {
+        const y0 = S.map(q => q.p.y), out = y0.slice();
+        for (let i = W; i <= n - W; i++) {
+          // decks (≥ 3 m) and trenches / tunnels (≤ −1 m) only — never pull a road across the ground plane (mountain roads: light despike only)
+          const deck = mtn || y0[i] >= 3; let sum = 0, ok = true; for (let k = i - W; k <= i + W; k++) { if (mtn ? false : deck ? y0[k] < 3 : y0[k] > -1) { ok = false; break; } sum += y0[k]; }
+          if (!ok) continue;
+          const w = Math.min(1, Math.min(S[i].s, s - S[i].s) / 150);
+          out[i] = y0[i] + (sum / (2 * W + 1) - y0[i]) * w;
+        }
+        S.forEach((q, i) => { q.p.y = out[i]; });
+      }
+      for (let i = 0; i <= n; i++) { const a = S[Math.max(0, i - 1)], b = S[Math.min(n, i + 1)]; S[i].grade = (b.p.y - a.p.y) / Math.max(0.01, Math.hypot(b.p.x - a.p.x, b.p.z - a.p.z)); }
+    }
     // lanes: lat positive = left of travel direction (point order)
     this.lanes = [];
     if (this.lanesB === 0) {
@@ -291,7 +310,7 @@ export class RoadNet {
       if (!best || (h.y > best.y && !(Math.abs(best.y - yHint) < 0.5 && h.y - yHint > 0.5))) best = h; // stay on our own deck
     }
     const gy = ground ? ground(x, z) : 0;
-    if (best && (best.y >= gy - 0.05 || best.y < -0.5)) return { y: best.y, hit: best, road: best.road, onRoad: true }; // below ground = tunnel / trench
+    if (best && (best.y >= gy - 0.6 || best.y < -0.5)) return { y: best.y, hit: best, road: best.road, onRoad: true }; // below ground = tunnel / trench
     return { y: gy, hit: null, road: null, onRoad: false };
   }
 }
@@ -415,8 +434,10 @@ export function tunnelPortals(net, isLand) {
   return out;
 }
 function buildTunnels(net, isLand, lampOut) {
-  const pos = [], idx = [], lamps = [];
-  const quad = (a, b, c, d) => { const v = pos.length / 3; pos.push(...a, ...b, ...c, ...d); idx.push(v, v + 1, v + 2, v, v + 2, v + 3); };
+  const pos = [], idx = [], lamps = [], uvs = [];
+  // uv: u runs along the road (s), v up the wall / across the ceiling — world-xz based uvs smeared the texture into streaks
+  const quad = (a, b, c, d, sa = 0, sb = 0, flat = false) => { const v = pos.length / 3; pos.push(...a, ...b, ...c, ...d); idx.push(v, v + 1, v + 2, v, v + 2, v + 3);
+    if (flat) uvs.push(sa * 0.25, 0, sb * 0.25, 0, sb * 0.25, 1.5, sa * 0.25, 1.5); else uvs.push(sa * 0.25, a[1] * 0.25, sb * 0.25, b[1] * 0.25, sb * 0.25, c[1] * 0.25, sa * 0.25, d[1] * 0.25); };
   const P = (q, lat, y) => [q.p.x + q.left.x * lat, y, q.p.z + q.left.z * lat];
   for (const r of net.roads) {
     if (r.kind === 'local') continue;
@@ -428,12 +449,12 @@ function buildTunnels(net, isLand, lampOut) {
         const ca = coveredAt(a, isLand), cb = coveredAt(b, isLand);
         const ta = ca ? a.p.y + TUN_H : 0.45, tb = cb ? b.p.y + TUN_H : 0.45;
         // side walls — not where the wall would stand on another carriageway (both C1 loops share one tunnel bore)
-        for (const lat of [L, R]) { const pa = P(a, lat, a.p.y), pb = P(b, lat, b.p.y); if (onOtherRoad(net, r, pa[0], pa[1], pa[2], 0.3) || onOtherRoad(net, r, pb[0], pb[1], pb[2], 0.3)) continue; quad(P(a, lat, a.p.y - 0.3), P(b, lat, b.p.y - 0.3), P(b, lat, Math.max(tb, b.p.y + 1)), P(a, lat, Math.max(ta, a.p.y + 1))); }
+        for (const lat of [L, R]) { const pa = P(a, lat, a.p.y), pb = P(b, lat, b.p.y); if (onOtherRoad(net, r, pa[0], pa[1], pa[2], 0.3) || onOtherRoad(net, r, pb[0], pb[1], pb[2], 0.3)) continue; quad(P(a, lat, a.p.y - 0.3), P(b, lat, b.p.y - 0.3), P(b, lat, Math.max(tb, b.p.y + 1)), P(a, lat, Math.max(ta, a.p.y + 1)), a.s, b.s); }
         if (ca && cb) {
-          quad(P(a, L, ta), P(b, L, tb), P(b, R, tb), P(a, R, ta));                 // ceiling
-          if (!isLand(a.p.x, a.p.z)) quad(P(a, L - 0.6, ta + 1.2), P(b, L - 0.6, tb + 1.2), P(b, R + 0.6, tb + 1.2), P(a, R + 0.6, ta + 1.2)); // roof of the immersed box
+          quad(P(a, L, ta), P(b, L, tb), P(b, R, tb), P(a, R, ta), a.s, b.s, true);  // ceiling
+          if (!isLand(a.p.x, a.p.z)) quad(P(a, L - 0.6, ta + 1.2), P(b, L - 0.6, tb + 1.2), P(b, R + 0.6, tb + 1.2), P(a, R + 0.6, ta + 1.2), a.s, b.s, true); // roof of the immersed box
         }
-        if (ca !== cb) { const q = ca ? a : b, t = q.p.y + TUN_H; if (t < 0.45) quad(P(q, L + 0.6, t), P(q, R - 0.6, t), P(q, R - 0.6, 1.2), P(q, L + 0.6, 1.2)); } // portal headwall
+        if (ca !== cb) { const q = ca ? a : b, t = q.p.y + TUN_H; if (t < 0.45) quad(P(q, L + 0.6, t), P(q, R - 0.6, t), P(q, R - 0.6, 1.2), P(q, L + 0.6, 1.2), L, R); } // portal headwall
         if (ca && (Math.floor(a.s / 9) !== Math.floor(b.s / 9))) { lamps.push(P(a, L - 1.0, a.p.y + TUN_H - 0.35), P(a, R + 1.0, a.p.y + TUN_H - 0.35)); if (Math.floor(a.s / 36) !== Math.floor(b.s / 36)) lampOut?.push(new THREE.Vector3(...P(a, 0, a.p.y + TUN_H - 1.0))); }
       }
     }
@@ -441,7 +462,7 @@ function buildTunnels(net, isLand, lampOut) {
   const g = new THREE.Group(); g.name = 'tunnels';
   if (!pos.length) return g;
   const geo = new THREE.BufferGeometry(); geo.setAttribute('position', new THREE.Float32BufferAttribute(pos, 3)); geo.setIndex(idx); geo.computeVertexNormals();
-  const uv = new Float32Array(pos.length / 3 * 2); for (let i = 0; i < pos.length / 3; i++) { uv[i * 2] = (pos[i * 3] + pos[i * 3 + 2]) * 0.25; uv[i * 2 + 1] = pos[i * 3 + 1] * 0.25; } geo.setAttribute('uv', new THREE.BufferAttribute(uv, 2));
+  geo.setAttribute('uv', new THREE.Float32BufferAttribute(uvs, 2));
   const wall = surface('concrete', { tile: 3 }).clone(); wall.side = THREE.DoubleSide; wall.color = new THREE.Color(0xc9c4b8);
   const m = new THREE.Mesh(geo, wall); m.castShadow = true; m.receiveShadow = true; g.add(m);
   if (lamps.length) {
@@ -490,7 +511,7 @@ export function buildRoadMeshes(net, opts = {}) {
 
   net.roads.forEach((r, ri) => {
     const mountain = r.kind === 'mountain';
-    const local = r.kind === 'local' || mountain;
+    const local = r.kind === 'local' || mountain || r.street; // r.street: ordinary national road (kerbs, pavements, no parapets)
     const deckMat = local ? 'asphaltOld' : 'asphalt';
     // deck surface (tiny y offset per road to avoid z-fighting where decks overlap)
     const yo = 0.0006 * ri; // tiny per-road lift (anti z-fight) — kept small so wheels never sink into a deck
@@ -591,7 +612,7 @@ export function buildRoadMeshes(net, opts = {}) {
   const legClear = (x, z, top) => {
     for (const [ox, oz] of [[0, 0], [1.7, 0], [-1.7, 0], [0, 1.7], [0, -1.7], [1.2, 1.2], [-1.2, -1.2], [1.2, -1.2], [-1.2, 1.2]]) {
       for (const h of net.hits(x + ox, z + oz)) {
-        if (h.beyond || h.y > top - 2.5) continue; // own deck / decks above
+        if (h.beyond || h.y > top + 1) continue; // own deck (top + 2) / decks above — a road passing just under the deck still blocks the leg
         const m = h.road.kind === 'local' ? (h.road.sidewalk || 3) + 0.6 : 0.9;
         if (h.lat <= h.road.edgeL + m && h.lat >= h.road.edgeR - m) return false;
       }

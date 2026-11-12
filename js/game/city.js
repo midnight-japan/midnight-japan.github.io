@@ -298,6 +298,9 @@ export class City {
       w.onmessage = ev => { const d = ev.data; const f = this.cb.get(d.id); this.cb.delete(d.id); w.busy = false; this.busy--; f?.(d); this.pump(); };
       w.onerror = e => { console.warn('city worker', e.message); w.busy = false; this.busy = Math.max(0, this.busy - 1); };
       w.postMessage({ land: MAP.land.filter(l => !l.main && l.name !== '海ほたるPA').map(l => l.pts) });
+      // the driveable expressway decks, so the tiles never stand a pier, building, pole or tree through one
+      { const dk = []; for (const r of world.net?.roads || []) { if (r.kind === 'local' || r.kind === 'mountain') continue; const hw = (r.edgeL - r.edgeR) / 2; const S = r.samples; for (let i = 0; i < S.length - 1; i += 2) { const a = S[i].p, b = S[Math.min(S.length - 1, i + 2)].p; dk.push(a.x, a.y, a.z, b.x, b.y, b.z, hw); } }
+        w.postMessage({ decks: new Float32Array(dk) }); }
       this.workers.push(w);
     }
     // materials

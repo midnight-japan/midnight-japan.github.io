@@ -53,7 +53,7 @@ export class Online {
     try {
       const { joinRoom, selfId } = await import('../../vendor/trystero/trystero-nostr.mjs');
       this.selfId = selfId;
-      const room = this.room = joinRoom({ appId: APP_ID, relayUrls: RELAYS, relayRedundancy: RELAYS.length }, roomName);
+      const room = this.room = joinRoom({ appId: APP_ID, relayConfig: { urls: RELAYS, redundancy: RELAYS.length } }, roomName);
       const aInfo = room.makeAction('info'), aSt = room.makeAction('st'), aChat = room.makeAction('chat');
       const send = a => (data, target) => a.send(data, target ? { target } : undefined);
       this._sendInfo = send(aInfo); this._sendSt = send(aSt); this._sendChat = send(aChat);

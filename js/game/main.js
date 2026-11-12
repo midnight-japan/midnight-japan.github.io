@@ -35,11 +35,13 @@ import { TollPlaza } from './toll.js';
 import { GameAudio } from './audio.js';
 import { createHuman, defaultOutfit, createNameTag } from './humans.js';
 import { UI } from './ui.js';
+import { Goals } from './goals.js';
 import { randomPlate } from './plates.js';
 
 // merging helpers call toNonIndexed() on geometries that may already be non-indexed: skip those quietly
 { const tni = THREE.BufferGeometry.prototype.toNonIndexed; THREE.BufferGeometry.prototype.toNonIndexed = function () { return this.index === null ? this : tni.call(this); }; }
 const clamp = (x, a, b) => Math.max(a, Math.min(b, x));
+const bothStartHk = net => net._hk ??= net.roads.some(x => /^hk/.test(x.id)); // the Turnpike is reached by road since v1.1
 const lerp = (a, b, t) => a + (b - a) * t;
 const SETTINGS_KEY = 'dn.settings', GARAGE_KEY = 'dn.garage';
 const load = (k, d) => { try { return { ...d, ...(JSON.parse(localStorage.getItem(k)) || {}) }; } catch { return d; } };
@@ -163,6 +165,7 @@ class Game {
     this.toll = new TollPlaza(this);
     this.online = new Online(this);
     this.accidents = new Accidents(this);
+    this.goals = new Goals(this);
     this.ui.loading(1, t('game.load.done'));
     this.applyVolumes();
     // title cam
@@ -197,7 +200,10 @@ class Game {
   spawnPoint() {
     // a free parking stall in the east meet area
     const spots = this.world.parkingSpots.filter(s => !s.taken && s.size === 's' && s.pos.x > 55);
-    const spot = spots[Math.floor(spots.length / 2)] || this.world.parkingSpots.find(s => !s.taken);
+    // nose out into the aisle: the 12 m in front must be clear (a lamp mast right ahead stopped the car dead)
+    const clear = s => { const yaw = s.yaw + Math.PI, fx = Math.sin(yaw), fz = Math.cos(yaw); for (let d = 2; d <= 12; d += 1.5) { const x = s.pos.x + fx * d, z = s.pos.z + fz * d; for (const list of this.world.colliderLists ? this.world.colliderLists(x, z) : [this.world.colliders]) for (const C of list) { if (C.y0 > 1.5 || C.y1 < 0.3) continue; const dx = x - C.x, dz = z - C.z, lx = dx * C.c - dz * C.s, lz = dx * C.s + dz * C.c; if (Math.abs(lx) < C.hx + 1.1 && Math.abs(lz) < C.hz + 1.1) return false; } } return true; };
+    const mid = Math.floor(spots.length / 2), order = spots.map((s, i) => [s, Math.abs(i - mid)]).sort((a, b) => a[1] - b[1]).map(a => a[0]);
+    const spot = order.find(clear) || spots[mid] || this.world.parkingSpots.find(s => !s.taken);
     spot.taken = true; this.mySpot = spot;
     // backed in, nose to the aisle (as people park in Japan) — a nose-in spawn faces the next row and can't drive off
     return { ...spot, yaw: spot.yaw + Math.PI };
@@ -221,8 +227,12 @@ class Game {
       // C1 Inner Circular Route (inner loop), central Tokyo
       if (region === 'c1' && net.byId.c1_in_a) { const r = net.byId.c1_in_a; const L = r.lanes.sort((a, b) => b.lat - a.lat)[0]; return at(r, 200, L.lat); }
       if (region === 'hakone' && net.byId.hakone_tp) { const r = net.byId.hakone_tp; const L = r.lanes.filter(l => l.dir === 1).sort((a, b) => b.lat - a.lat)[0]; return at(r, 140, L.lat); }
+      // v1.1 network: Route 11 before the Rainbow Bridge, Route 1 Haneda at Heiwajima, the Seishō bypass towards Hakone
+      const ROADSPAWN = { daiba: ['b_11', 1500], r1: ['r1_nb', 4500], seisho: ['hkw_6_seisho', 2000] };
+      if (ROADSPAWN[region] && net.byId[ROADSPAWN[region][0]]) { const [id, s] = ROADSPAWN[region], r = net.byId[id]; const L = r.lanes.filter(l => l.dir === 1).sort((a, b) => b.lat - a.lat)[0]; return at(r, s, L.lat); }
       if (region === 'k1' && net.byId.k1) { const r = net.byId.k1; const L = r.lanes.filter(l => l.dir === 1).sort((a, b) => b.lat - a.lat)[0]; return at(r, 1300, L.lat); }
-      if (region === 'umi') { const r = net.byId.umi_in_e || net.byId.umi_in_w; return at(r, Math.max(2, r.length - 10), 0); }
+      // Umihotaru: a stall in the PA lot, backed in (the old spot at the end of the entry ramp faced the seawall)
+      if (region === 'umi') { const U = this.world.umiSpots || []; if (U.length) { const sp = U[Math.floor(U.length * 0.3)]; return { pos: sp.pos.clone().setY(0.3), yaw: sp.yaw + Math.PI }; } const r = net.byId.umi_in_e || net.byId.umi_in_w; return at(r, r.length * 0.5, 0); }
       // city streets (real OpenStreetMap roads): keep to the left lane
       const CITY_SPAWN = { mm: [-3949.7, 1257.2, 1.01, 14], chinatown: [-2987.3, 2310, -1.04, 7.5], tsurumi: [-2109.4, -2792.6, -0.93, 7.5], kawasaki: [2598.8, -5144.9, -0.91, 7.5], haneda: [7756.1, -9056.3, 1.02, 7.5] };
       if (CITY_SPAWN[region]) { const [x, z, yaw, w] = CITY_SPAWN[region]; const o = w / 4; return { pos: new THREE.Vector3(x + Math.cos(yaw) * o, 0.3, z - Math.sin(yaw) * o), yaw }; }
@@ -283,9 +293,15 @@ class Game {
     if (door) { door.target = 1; setTimeout(() => door.target = 0, 1400); }
     this.audio.sfx('door_open', { position: v.pos });
     setTimeout(() => this.audio.sfx('door_close', { position: v.pos }), 1300);
-    if (!this.walkable(exit.x, exit.z, v.pos.y)) { // other side
-      exit.copy(this.model.parts.exitPoint).setX(-this.model.parts.exitPoint.x).applyAxisAngle(new THREE.Vector3(0, 1, 0), v.yaw).add(v.pos); exit.y = v.pos.y;
-      if (!this.walkable(exit.x, exit.z, v.pos.y)) { this.ui.toast(t('game.walk.noexit'), 'warn'); return; }
+    // a free spot: driver's door, passenger door, then behind / in front (parked neighbours count as blocked —
+    // before, you could step out straight into the next car and be stuck inside it)
+    const free = (x, z) => this.walkable(x, z, v.pos.y) && !this.carBlocks(x, z, v.pos.y) && !this.npc.blocked(x, z, 0.3);
+    if (!free(exit.x, exit.z)) {
+      const ep = this.model.parts.exitPoint, hl = v.car.L / 2000 + 0.7, Y = new THREE.Vector3(0, 1, 0);
+      const cands = [[-ep.x, ep.z], [0, -hl], [0, hl], [ep.x * 1.6, ep.z], [-ep.x * 1.6, ep.z], [ep.x, -hl], [-ep.x, -hl]];
+      const c = cands.map(([cx, cz]) => new THREE.Vector3(cx, 0, cz).applyAxisAngle(Y, v.yaw).add(v.pos)).find(q => free(q.x, q.z));
+      if (!c) { this.ui.toast(t('game.walk.noexit'), 'warn'); return; }
+      exit.set(c.x, v.pos.y, c.z);
     }
     exit.y = this.walkY(exit.x, exit.z, v.pos.y);
     const h = createHuman(this.outfit); h.object.position.copy(exit); this.scene.add(h.object);
@@ -319,7 +335,8 @@ class Game {
       let d = ang - p.yaw; while (d > Math.PI) d -= Math.PI * 2; while (d < -Math.PI) d += Math.PI * 2;
       p.yaw += d * (1 - Math.exp(-dt * 10));
       const nx = p.pos.x + Math.sin(p.yaw) * sp * dt, nz = p.pos.z + Math.cos(p.yaw) * sp * dt;
-      const ok = (x, z) => this.walkable(x, z, p.pos.y) && !this.npc.blocked(x, z, 0.3) && !this.carBlocks(x, z);
+      const stuck = this.carBlocks(p.pos.x, p.pos.z); // already overlapping a car (e.g. it parked next to us): let us walk out
+      const ok = (x, z) => this.walkable(x, z, p.pos.y) && !this.npc.blocked(x, z, 0.3) && (stuck || !this.carBlocks(x, z));
       if (ok(nx, nz)) { p.pos.x = nx; p.pos.z = nz; }
       else if (ok(nx, p.pos.z)) p.pos.x = nx; else if (ok(p.pos.x, nz)) p.pos.z = nz;
       else if (!this.walkable(nx, nz, p.pos.y) && !this._blockMsgT) { this.ui.toast(t('game.walk.blocked'), 'warn', 2); this._blockMsgT = 3; }
@@ -372,6 +389,7 @@ class Game {
   }
   talkTo(n) {
     const c = CHATTER[Math.floor(Math.random() * CHATTER.length)];
+    this.stats.talks = (this.stats.talks || 0) + 1;
     n.state = 'idle'; n.action = 'talk'; n.wait = 6; n.focus = { pos: this.player.pos };
     this.ui.toast(`「${c.ja}」 — ${t(c.k)}`, 'chat', 5);
     this.audio.speak(c.ja, 'ja-JP', { rate: 1.05, role: Math.random() < 0.5 ? 'male' : 'female', seed: Math.random() * 10 });
@@ -382,7 +400,7 @@ class Game {
     const v = this.vehicle, I = this.input, A = I.axes, m = this.model;
     if (I.act('ignition')) { if (v.engine.running) { v.stopEngine(); this.ui.toast(t('game.car.engineOff'), 'info'); } else v.startEngine(); }
     // easy start: pressing throttle with engine off starts it in auto mode
-    if (!v.engine.running && !v.engine.cranking && A.throttle > 0.5 && this.settings.transmission !== 'manual_clutch' && !this._autoStartBlock) { v.startEngine(); this._autoStartBlock = 1.5; }
+    if (!v.engine.running && !v.engine.cranking && (A.throttle > 0.5 || (A.brake > 0.5 && (this._brakeHold || 0) > 0.35)) && this.settings.transmission !== 'manual_clutch' && !this._autoStartBlock) { v.startEngine(); this._autoStartBlock = 1.5; }
     this._autoStartBlock = Math.max(0, (this._autoStartBlock || 0) - dt);
     // auto/EV selector: brake at standstill + S → R, W → D (simple controls)
     const auto = v.mode === 'auto' || v.ev;
@@ -409,7 +427,9 @@ class Game {
     // auto clutch for "manual" (sequential) mode: blip-free
     // lights & misc
     const L = m.lights;
-    if (I.act('lights')) { if (!L.head) L.head = true; else if (!L.high) L.high = true; else { L.head = false; L.high = false; } this.audio.sfx('ui_click'); }
+    if (I.act('lights')) { this._lightsManual = true; if (!L.head) L.head = true; else if (!L.high) L.high = true; else { L.head = false; L.high = false; } this.audio.sfx('ui_click'); }
+    // automatic headlights (dusk / night / tunnels) until the player switches them by hand — most people never found the key
+    if (!this._lightsManual && v.engine.running) { const want = (this.env?.night ?? 0) > 0.35 || v.pos.y < -1.5; if (want !== L.head) { L.head = want; if (!want) L.high = false; } }
     if (I.act('horn')) { this.engineSnd?.horn(true); this._hornT = 0.35; this.traffic.honk(v.pos, v.forward); }
     if (this._hornT > 0) { this._hornT -= dt; if (I.key('horn')) this._hornT = 0.1; if (this._hornT <= 0) this.engineSnd?.horn(false); }
     if (I.act('signalL')) { L.left = !L.left; L.right = false; L.hazard = false; }
@@ -455,8 +475,10 @@ class Game {
       // two-way roads: U-turn only where a carriageway really leaves the map (the Bayshore's forward side starts at
       // Honmoku JCT where the K3 Kariba Line flows into it, so cars arriving there carry straight on)
       const fwdSide = Math.sign(r.lanes.find(l => l.dir === 1)?.lat ?? 1), onFwd = h && Math.sign(h.lat) === fwdSide;
-      const fedStart = r.id === 'bayshore' && this.net.byId.k3, openEnd = r.id === 'hakone_tp'; // the Turnpike runs on into the Daikanyama car park
-      const atEdge = h && (r.lanesB ? ((h.s < 15 && !(fedStart && onFwd)) || (!openEnd && h.s > r.length - 15)) : r.edge === 'end' ? h.s > r.length - 15 : h.s < 15);
+      // since v1.1 the Bayshore runs on at both ends (K3 both ways at Honmoku, Bayshore north at Haneda)
+      const fedStart = (r.id === 'bayshore' && this.net.byId.k3) || (r.id === 'hakone_tp' && bothStartHk(this.net)), openEnd = r.id === 'hakone_tp' || (r.id === 'bayshore' && this.net.byId.b_nb); // the Turnpike runs on into the Daikanyama car park
+      const bothStart = (r.id === 'bayshore' && this.net.byId.k3_wb) || (r.id === 'hakone_tp' && this.net.roads.some(x => /^hk/.test(x.id)));
+      const atEdge = h && (r.lanesB ? ((h.s < 15 && !(fedStart && (onFwd || bothStart))) || (!openEnd && h.s > r.length - 15)) : r.edge === 'end' ? h.s > r.length - 15 : h.s < 15);
       if (atEdge && (r.lanesB ? (r.id === 'bayshore' || r.id === 'k5' || r.id === 'hakone_tp') : true)) this.uturn(v, h);
     }
     // model visuals
@@ -505,6 +527,7 @@ class Game {
     }
     if (this.mode === 'walk') this.enterCar();
     const v = this.vehicle; if (!v) return;
+    if (this.police?.state === 'pursuit') this.police.endPursuit(false); // a fast-travel is not an escape
     if (this.mySpot) { this.mySpot.taken = false; this.mySpot = null; }
     // nearest expressway lane within 60 m
     let best = null; for (const r of this.net.roads) for (let i = 0; i < r.samples.length; i += 2) { const q = r.samples[i]; const d = (q.p.x - x) ** 2 + (q.p.z - z) ** 2; if (!best || d < best.d) best = { d, r, s: q.s }; }
@@ -528,6 +551,7 @@ class Game {
   respawnPA() {
     const v = this.vehicle; if (!v) return;
     if (this.mySpot) this.mySpot.taken = false;
+    if (this.police?.state === 'pursuit') this.police.endPursuit(false);
     const s = this.spawnPoint(); v.place(s.pos.clone(), s.yaw); v.handbrakeOn = true; this.camSnap = true; this.fx?.repair(this.model);
   }
 
@@ -659,6 +683,7 @@ class Game {
       this.toll.update(dt);
       this.online.update(dt);
       this.accidents.update(dt);
+      this.goals.update(dt);
     }
     if (I.act('map')) this.ui.toggleMap();
     if (I.act('photo')) this.ui.togglePhoto();
@@ -684,7 +709,7 @@ class Game {
     }
     this.ui.update(dt);
     I.endFrame();
-    if (this.bloom) this.bloom.strength = 0.16 + 0.3 * (this.env?.night ?? 1);
+    if (this.bloom) { const under = this.focus.y < -1.5; this.bloom.strength = (0.16 + 0.3 * (this.env?.night ?? 1)) * (under ? 0.4 : 1); this.bloom.threshold = under ? 1.15 : 0.9; } // tunnels: lit walls everywhere → glare
     if (this.grade) this.grade.uniforms.night.value = this.env?.night ?? 1;
     if (this.composer && (this.bloom.enabled || this.quality !== 'low')) this.composer.render(); else this.renderer.render(this.scene, this.camera);
   }

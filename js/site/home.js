@@ -294,7 +294,9 @@ const ROUTES = [
   { id: 'hakone', img: '29-hakone_dusk', route: 'TP', km: '13.5', ja: 'アネスト岩田ターンパイク箱根' },
   { id: 'k1', img: '26-k1-night', route: 'K1', km: '17', ja: '横浜ループ（K5・K1・K3・湾岸線）' },
   { id: 'pa', img: '07-ae86-loops', route: 'B', km: '30', ja: '大黒PA · 首都高速湾岸線' },
-  { id: 'mm', img: '18-minatomirai', route: 'Y', km: '546k', ja: '横浜・川崎・東京の街並み' },
+  { id: 'daiba', img: '33-rainbow', route: '11', km: '40', ja: '湾岸線・11号台場線・1号羽田線' },
+  { id: 'seisho', img: '34-seisho', route: '1', km: '59', ja: '横浜新道・新湘南・西湘バイパス' },
+  { id: 'mm', img: '18-minatomirai', route: 'Y', km: '790k', ja: '横浜・川崎・東京・湘南の街並み' },
 ];
 function renderRoutes() {
   const g = document.getElementById('route-grid'); if (!g) return;

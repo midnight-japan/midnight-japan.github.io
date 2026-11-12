@@ -280,9 +280,10 @@ export class Traffic {
       const L = ai.dir === 1 ? this.net.links?.get(road) : null;
       // a road that ends exactly where the next one starts (K5 → Namamugi → K1 → Ishikawachō → K3 …) shows up as a
       // diverge at its very end rather than a link: carry on along one of those
-      const cont = !L && ai.dir === 1 ? (dvs || []).filter(d => d.dir === 1 && d.s >= road.length - 3 && d.to !== road) : [];
+      const cont = !L ? (dvs || []).filter(d => d.dir === ai.dir && (ai.dir === 1 ? d.s >= road.length - 60 : d.s <= 60) && d.to !== road) : []; // (dir −1: a two-way road's back lanes running into a road at its start, e.g. Bayshore → K3 at Honmoku)
       if (L && L.to !== road) { const lane = this.net.laneNear(L.to, L.dir, L.lat); this.transfer(ai, L.to, lane, L.s); ai.vDes = Math.max(ai.vDes, (L.to.speed / 3.6) * 0.9); }
-      else if (cont.length) { const d = cont[Math.floor(Math.random() * cont.length)]; this.transfer(ai, d.to, d.to.lanes.find(l => l.dir === 1) || d.to.lanes[0], 0); ai.vDes = Math.max(ai.vDes, (d.to.speed / 3.6) * 0.9); }
+      else if (cont.length) { const d = cont[Math.floor(Math.random() * cont.length)]; const h = this.net.hits(ai.pos.x, ai.pos.z).find(h => h.road === d.to); this.transfer(ai, d.to, d.to.lanes.find(l => l.dir === 1) || d.to.lanes[0], h ? Math.max(0, h.s) : 0); ai.vDes = Math.max(ai.vDes, (d.to.speed / 3.6) * 0.9); }
+      else if (/^x_/.test(road.id) && this.toCity(ai)) {} // off the exit ramp onto the street it meets
       else this.recycle(ai);
       return;
     }
@@ -304,9 +305,11 @@ export class Traffic {
     if (road.id === 'pa_in') return true;                       // through traffic on the JCT link continues onto K5 north
     if (id === 'k5_pa') { const want = !this.paClosed && MEET_POOL.includes(ai.car.id) && this.meetCount() < this.meetMax && Math.random() < 0.5; if (want) ai.toLot = true; return want; }
     if (/^futo_/.test(id)) return Math.random() < 0.08;
+    if (/^x_/.test(id)) return Math.random() < 0.12; // exits to the city streets
     return Math.random() < 0.35;
   }
   recycle(ai) {
+    if (this.spawnNear(ai)) return;
     const bay = this.net.byId.bayshore, k5 = this.net.byId.k5, k5n = this.net.byId.k5_nb || k5;
     const playerPos = this.g.focus;
     for (let tries = 0; tries < 6; tries++) {
@@ -394,9 +397,10 @@ export class Traffic {
   // fill the expressways around the player too (not only at the far ends of the Bayshore Route)
   spawnNear(reuse = null) {
     const f = this.g.focus; if (!f) return false;
-    const roads = this.net.roads.filter(r => r.kind !== 'local' && r.kind !== 'ramp' && r.lanes?.length && r.length > 300);
-    for (let tries = 0; tries < 6; tries++) {
-      const r = roads[Math.floor(Math.random() * roads.length)]; if (!r) return;
+    // only roads that pass within reach of the player (the network is ~150 km of carriageway since v1.1)
+    const roads = this.net.roads.filter(r => { if (r.kind === 'local' || r.kind === 'ramp' || !r.lanes?.length || r.length < 300) return false; const b = r._bb ||= r.samples.reduce((b, q) => [Math.min(b[0], q.p.x), Math.min(b[1], q.p.z), Math.max(b[2], q.p.x), Math.max(b[3], q.p.z)], [1e9, 1e9, -1e9, -1e9]); return f.x > b[0] - 900 && f.x < b[2] + 900 && f.z > b[1] - 900 && f.z < b[3] + 900; });
+    for (let tries = 0; tries < 14; tries++) {
+      const r = roads[Math.floor(Math.random() * roads.length)]; if (!r) return false;
       const s = 20 + Math.random() * (r.length - 40), p = r.at(s, 0, _pa), d = Math.hypot(p.x - f.x, p.z - f.z);
       if (d < 180 || d > 900) continue; // out of sight, but close enough to meet
       const lane = r.lanes[Math.floor(Math.random() * r.lanes.length)];
@@ -448,6 +452,18 @@ export class Traffic {
       const ai = this.createAI(CITY_POOL[Math.floor(Math.random() * CITY_POOL.length)]);
       if (!this.placeCity(ai, net, f, fill ? 35 : 150)) { this.remove(ai); break; }
     }
+  }
+  // hand a car leaving an expressway exit over to the city-street traffic, on the street right at the ramp foot
+  toCity(ai) {
+    const net = this.world.city?.net; if (!net) return false;
+    const x = ai.pos.x, z = ai.pos.z, hx = Math.sin(ai.yaw), hz = Math.cos(ai.yaw); let best = null;
+    for (const c of net.chains.values()) { if (c.dead || c.cls > 4 || c.bb[0] > x + 40 || c.bb[2] < x - 40 || c.bb[1] > z + 40 || c.bb[3] < z - 40) continue;
+      for (let i = 0; i < c.pts.length - 1; i++) { const a = c.pts[i], b = c.pts[i + 1], dx = b[0] - a[0], dz = b[1] - a[1], L2 = dx * dx + dz * dz || 1; const t = Math.max(0, Math.min(1, ((x - a[0]) * dx + (z - a[1]) * dz) / L2)); const d = Math.hypot(x - a[0] - dx * t, z - a[1] - dz * t); if (d < 30 && (!best || d < best.d)) best = { d, c, i, t, dot: (dx * hx + dz * hz) / Math.sqrt(L2) }; } }
+    if (!best) return false;
+    const { c, i, t } = best, dir = best.dot >= 0 ? 1 : -1, seg = Math.hypot(c.pts[i + 1][0] - c.pts[i][0], c.pts[i + 1][1] - c.pts[i][1]);
+    ai.mode = 'city'; ai.road = null; ai.c = c; ai.i = i; ai.dir = dir; ai.d = t * seg; ai.stuck = 0; ai.next = null;
+    ai.vDes = [16, 13.5, 12, 11, 8.5, 6][c.cls] * (0.85 + Math.random() * 0.25); ai.v = Math.min(ai.v, ai.vDes);
+    this.cityPose(ai, true); return true;
   }
   placeCity(ai, net, f, rMin = 150) {
     const sp = net.randomNear(f.x, f.z, rMin, 480); if (!sp) { ai.mode = 'city'; ai.c = { dead: true }; return false; }

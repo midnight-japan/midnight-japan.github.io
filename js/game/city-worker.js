@@ -128,6 +128,18 @@ class SegGrid {
   dist(x, z, filter) { let best = null; for (const s of this.near(x, z)) { if (filter && !filter(s)) continue; const dx = s.bx - s.ax, dz = s.bz - s.az; const L2 = dx * dx + dz * dz || 1e-9; const t = Math.max(0, Math.min(1, ((x - s.ax) * dx + (z - s.az) * dz) / L2)); const px = s.ax + dx * t, pz = s.az + dz * t; const d = Math.hypot(x - px, z - pz); if (!best || d < best.d) best = { d, s, t, px, pz }; } return best; }
 }
 
+// ── driveable expressway decks (world coords, sent once by the main thread) ──
+let DECKS = null;
+// a deck at (x, z) whose surface lies between y0 and y1 (within its half-width + pad): returns its height or null
+function deckIn(x, z, y0, y1, pad = 0.5) {
+  if (!DECKS) return null;
+  for (const s of DECKS.near(x, z)) {
+    const dx = s.bx - s.ax, dz = s.bz - s.az, L2 = dx * dx + dz * dz || 1e-9; const t = Math.max(0, Math.min(1, ((x - s.ax) * dx + (z - s.az) * dz) / L2));
+    const d = Math.hypot(x - s.ax - dx * t, z - s.az - dz * t); if (d > s.w / 2 + pad) continue;
+    const y = s.ay + (s.by - s.ay) * t; if (y > y0 && y < y1) return y;
+  }
+  return null;
+}
 // ── coastline land rings (sent once by the main thread) → per-tile clipped ground ──
 let LAND = [];
 function clipRect(pts, x0, z0, x1, z1) {
@@ -392,6 +404,14 @@ function buildTile(T, lod, opts) {
     if (!mid && h < 14 && cls !== B.TANK) continue; // far LOD: only the skyline
     const ob = obb(pts); if (!ob) continue;
     const fill = A / (ob.hl * ob.hw * 4);
+    // OSM footprints that sit across a driveable street (covered passages, mapping overlaps) walled the road off: skip them
+    { let hits = 0; for (let u = -0.75; u <= 0.75 && hits < 2; u += 0.25) for (let v = -0.75; v <= 0.75 && hits < 2; v += 0.25) {
+        const x = ob.x + ob.tx * u * ob.hl - ob.tz * v * ob.hw, z = ob.z + ob.tz * u * ob.hl + ob.tx * v * ob.hw;
+        if (!inPoly(x, z, pts)) continue; const sd = segs.dist(x, z); if (sd && !(sd.s.st?.flags & 16) && sd.s.cls <= 5 && sd.d < sd.s.w / 2 - 0.5) hits++; }
+      if (hits >= 2) continue;
+      // …or that a driveable deck runs through (below the roof)
+      let dh = 0; for (let u = -0.75; u <= 0.75 && dh < 1; u += 0.25) for (let v = -0.75; v <= 0.75 && dh < 1; v += 0.25) { const x = ob.x + ob.tx * u * ob.hl - ob.tz * v * ob.hw, z = ob.z + ob.tz * u * ob.hl + ob.tx * v * ob.hw; if (inPoly(x, z, pts) && deckIn(OX + x, OZ + z, -3, h + 1, 0.3) !== null) dh++; }
+      if (dh) continue; }
     // outward normals: test one edge
     const cwSign = (() => { const p = pts[0], q2 = pts[1]; const ex = q2[0] - p[0], ez = q2[1] - p[1], l = Math.hypot(ex, ez) || 1; const mx = (p[0] + q2[0]) / 2 + (ez / l) * 0.05, mz = (p[1] + q2[1]) / 2 - (ex / l) * 0.05; return inPoly(mx, mz, pts) ? -1 : 1; })();
     const outN = (p, q2) => { const ex = q2[0] - p[0], ez = q2[1] - p[1], l = Math.hypot(ex, ez) || 1; return [cwSign * ez / l, 0, -cwSign * ex / l]; };
@@ -483,7 +503,7 @@ function buildTile(T, lod, opts) {
       for (const [i0, i1, i2] of tris) { const a0 = pts[i0], a1 = pts[i1], a2 = pts[i2]; bm.tri([a0[0], wallTop, a0[1]], [a1[0], wallTop, a1[1]], [a2[0], wallTop, a2[1]], [0, 1, 0], [a0[0], a0[1]], [a1[0], a1[1]], [a2[0], a2[1]], rc, rinfo); }
     }
     // collider: oriented box when the footprint is box-like, else one thin wall per edge
-    if (fill > 0.8) cols.push([cx, cz, ob.hl, ob.hw, Math.atan2(-ob.tz, ob.tx), -1, h]);
+    if (fill > 0.95) cols.push([cx, cz, ob.hl, ob.hw, Math.atan2(-ob.tz, ob.tx), -1, h]);
     else for (let k = 0; k < pts.length; k++) { const p = pts[k], q2 = pts[(k + 1) % pts.length]; const l = Math.hypot(q2[0] - p[0], q2[1] - p[1]); if (l < 0.3) continue; cols.push([(p[0] + q2[0]) / 2, (p[1] + q2[1]) / 2, l / 2, 0.3, Math.atan2(-(q2[1] - p[1]) / l, (q2[0] - p[0]) / l), -1, h]); }
 
     if (!near) continue;
@@ -659,11 +679,16 @@ function buildTile(T, lod, opts) {
       // piers + catenary masts at a fixed spacing along the line
       for (let s = Math.ceil(acc / 25) * 25; s < acc + l; s += 25) {
         const t = (s - acc) / l; const x = p[0] + (q2[0] - p[0]) * t, z = p[1] + (q2[1] - p[1]) * t;
+        const sdP = segs.dist(x, z); if ((deck > 0.5 || cls === 2) && ((sdP && sdP.d < sdP.s.w / 2 + 1.2) || deckIn(OX + x, OZ + z, -2, y + 1, 1.6) !== null)) continue; // never stand a pier on a street or through a driveable deck
         if (deck > 0.5 || cls === 2) { bm.box(x, (y - 1.4) / 2, z, tx, tz, 0.9, cls === 2 ? 0.6 : 1.1, (y - 1.4) / 2, [0.7, 0.7, 0.68], [PLAIN, 0, 0, 0]); cols.push([x, z, 1, 1.2, Math.atan2(-tz, tx), -1, y - 1]); }
         if (cls === 0 && near && Math.round(s / 25) % 2 === 0) { const ox = x - tz * 2.4, oz = z + tx * 2.4; pm.cyl(ox, oz, y, y + 7.5, 0.12, 6, [0.55, 0.56, 0.55], [PLAIN, 0, 0, 0]); pm.box(ox + tz * 1.4, y + 7.0, oz - tx * 1.4, -tz, tx, 1.5, 0.05, 0.05, [0.55, 0.56, 0.55], [PLAIN, 0, 0, 0]); if (deck < 0.5) cols.push([ox, oz, 0.15, 0.15, 0, -1, 8]); }
       }
       // fence along ground-level lines (blocks driving onto the tracks)
-      if (deck < 0.5 && cls === 0) for (const o of [-2.9, 2.9]) { if (near) pm.box(mx - tz * o, 0.9, mz + tx * o, tx, tz, l / 2, 0.02, 0.9, [0.5, 0.55, 0.5], [PLAIN, 0, 0, 0], 15); cols.push([mx - tz * o, mz + tx * o, l / 2, 0.1, Math.atan2(-tz, tx), -1, 2]); }
+      // …broken where a street crosses the line (level crossings used to be fenced off)
+      if (deck < 0.5 && cls === 0) for (const o of [-2.9, 2.9]) { const step = 3, n = Math.max(1, Math.ceil(l / step)); let r0 = -1;
+        const flush = (a, b) => { const c0 = a * l / n, c1 = b * l / n, cl = (c0 + c1) / 2 - l / 2, hl2 = (c1 - c0) / 2; const cx = mx + tx * cl - tz * o, cz = mz + tz * cl + tx * o; if (near) pm.box(cx, 0.9, cz, tx, tz, hl2, 0.02, 0.9, [0.5, 0.55, 0.5], [PLAIN, 0, 0, 0], 15); cols.push([cx, cz, hl2, 0.1, Math.atan2(-tz, tx), -1, 2]); };
+        for (let j = 0; j <= n; j++) { let free = j < n; if (free) { const u = (j + 0.5) * l / n - l / 2, x = mx + tx * u - tz * o, z = mz + tz * u + tx * o; const sd = segs.dist(x, z); free = !(sd && sd.d < sd.s.w / 2 + 2); }
+          if (free && r0 < 0) r0 = j; else if (!free && r0 >= 0) { flush(r0, j); r0 = -1; } } }
       acc += l;
     }
   }
@@ -679,7 +704,11 @@ function buildTile(T, lod, opts) {
       if (mid) for (const o of [-w / 2 + 0.25, w / 2 - 0.25]) bm.box(mx - tz * o, deck + 0.55, mz + tx * o, tx, tz, l / 2 + 0.3, 0.25, 0.55, [0.7, 0.7, 0.68], [PLAIN, 0, 0, 0]);
       if (near) { road.quad([p[0] - tz * (w / 2 - 0.5), deck + 0.01, p[1] + tx * (w / 2 - 0.5)], [q2[0] - tz * (w / 2 - 0.5), deck + 0.01, q2[1] + tx * (w / 2 - 0.5)], [q2[0] + tz * (w / 2 - 0.5), deck + 0.01, q2[1] - tx * (w / 2 - 0.5)], [p[0] + tz * (w / 2 - 0.5), deck + 0.01, p[1] - tx * (w / 2 - 0.5)], [0.75, 0.75, 0.77]); }
       for (let s = Math.ceil(acc / 32) * 32; s < acc + l; s += 32) {
-        const t = (s - acc) / l; const x = p[0] + (q2[0] - p[0]) * t, z = p[1] + (q2[1] - p[1]) * t;
+        let t = (s - acc) / l, x = p[0] + (q2[0] - p[0]) * t, z = p[1] + (q2[1] - p[1]) * t;
+        { // slide the pier along the deck off any street below (or drop it — the deck spans)
+          const blocked = (px, pz) => { const sd = segs.dist(px, pz); return (sd && sd.d < sd.s.w / 2 + 1.6) || deckIn(OX + px, OZ + pz, -2, deck - 1, 1.6) !== null; };
+          if (blocked(x, z)) { const alt = [5, -5, 10, -10, 14].map(d => [x + tx * d, z + tz * d]).find(([px, pz]) => !blocked(px, pz)); if (!alt) continue; [x, z] = alt; }
+        }
         bm.box(x, (deck - 2.2) / 2, z, tx, tz, 1.2, 1.4, (deck - 2.2) / 2, [0.68, 0.68, 0.66], [PLAIN, 0, 0, 0]);
         if (mid) bm.box(x, deck - 2.9, z, tx, tz, 1.3, w / 2 - 0.5, 0.7, [0.66, 0.66, 0.64], [PLAIN, 0, 0, 0]);
         cols.push([x, z, 1.3, 1.5, Math.atan2(-tz, tx), -1, deck - 2.2]);
@@ -726,12 +755,19 @@ function buildTile(T, lod, opts) {
   { const P2 = T.p || []; for (let k = 0; k < P2.length; k += 4) if (P2[k] === PT.STATION) stations.push(P2[k + 1] * D, P2[k + 2] * D); }
   const net = [];
   if (mid) for (const st of streets) { if (st.cls >= S.SERVICE || st.pts.length < 2 || st.flags & 16) continue; const a = [st.cls, st.w, st.flags & 2 ? 1 : 0]; for (const [x, z] of st.pts) a.push(Math.round(x * 10) / 10, Math.round(z * 10) / 10); net.push(a); }
+  // nothing static may stick up through a driveable deck (street lamps, poles, signal masts, trees under a viaduct …)
+  if (DECKS) {
+    for (let k = cols.length - 1; k >= 0; k--) { const [x, z, hx, hz, , y0, y1] = cols[k]; if (deckIn(OX + x, OZ + z, y0 + 0.3, y1 + 0.5, Math.min(hx, hz) + 0.4) !== null) cols.splice(k, 1); }
+    for (let k = lamps.length - 1; k >= 0; k--) { const [x, y, z] = lamps[k]; if (deckIn(OX + x, OZ + z, 0.3, y + 1.5, 1) !== null) lamps.splice(k, 1); }
+    { let w = 0; const A = trees.a, st = trees.stride; for (let k = 0; k < trees.n; k++) { const x = A[k * st], z = A[k * st + 1]; if (deckIn(OX + x, OZ + z, 0.3, 12, 1.5) !== null) continue; if (w !== k) A.copyWithin(w * st, k * st, k * st + st); w++; } trees.n = w; }
+  }
   const out = { runways, gates, rails, stations, net, sigs, land: landF.out(), bm: bm.out(), pm: pm.out(), gm: gm.out(), sg: sg.out(), road: road.out(), walk: walk.out(), paint: paint.out(), wires: wires.out(), trees: trees.out(), cols, lamps, water, bridges, ground: {} };
   for (const c in ground) out.ground[c] = ground[c].out();
   return out;
 }
 
 self.onmessage = async ev => {
+  if (ev.data.decks) { const a = ev.data.decks; DECKS = new SegGrid(); for (let k = 0; k < a.length; k += 7) DECKS.add({ ax: a[k], ay: a[k + 1], az: a[k + 2], bx: a[k + 3], by: a[k + 4], bz: a[k + 5], w: a[k + 6] * 2 }); return; }
   if (ev.data.land) { LAND = ev.data.land.map(pts => { let x0 = 1e9, x1 = -1e9, z0 = 1e9, z1 = -1e9; for (const [x, z] of pts) { x0 = Math.min(x0, x); x1 = Math.max(x1, x); z0 = Math.min(z0, z); z1 = Math.max(z1, z); } return { pts, x0, x1, z0, z1 }; }); return; }
   const { id, url, lod, opts } = ev.data;
   try {

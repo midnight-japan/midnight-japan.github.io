@@ -25,7 +25,21 @@ function textTexture(lines, { w = 1024, h = 256, bg = null, color = '#fff', font
 /** Piers must not stand in these spans (cable-stayed main spans). */
 export function noPierBay(net) {
   const ts = LM.tsubasa; if (!ts) return () => false;
-  return (x, z) => Math.hypot(x - ts.x, z - ts.z) < 265;
+  const rb = LM.rainbow;
+  return (x, z) => Math.hypot(x - ts.x, z - ts.z) < 265 || (!!rb && !!net.byId.b_11 && rainbowSpan(net, x, z));
+}
+// the 570 m main span of the Rainbow Bridge (no piers between the towers)
+function rainbowSpan(net, x, z) { const R = rainbowFrame(net); if (!R) return false; const u = (x - R.c.x) * R.ax.x + (z - R.c.z) * R.ax.z, v = (x - R.c.x) * R.ax.z - (z - R.c.z) * R.ax.x; return Math.abs(u) < 280 && Math.abs(v) < 60; }
+let _rbF;
+function rainbowFrame(net) {
+  if (_rbF !== undefined) return _rbF; const r = net.byId.b_11, o = net.byId.r1_11, L = LM.rainbow; if (!r || !L) return (_rbF = null);
+  let best = null; for (const q of r.samples) { const d = Math.hypot(q.p.x - L.x, q.p.z - L.z); if (!best || d < best.d) best = { d, q }; }
+  // centre between the two carriageways at the deck's high point (the main span is the stretch at the top of the climb)
+  let top = best.q; for (const q of r.samples) if (Math.abs(q.s - best.q.s) < 900 && q.p.y > top.p.y + 0.01) top = q;
+  const ax = top.t.clone(); let oq = null; if (o) for (const q of o.samples) { const d = Math.hypot(q.p.x - top.p.x, q.p.z - top.p.z); if (!oq || d < oq.d) oq = { d, q }; }
+  const c = oq && oq.d < 60 ? top.p.clone().lerp(oq.q.p, 0.5) : top.p.clone();
+  const half = (oq && oq.d < 60 ? oq.d / 2 : 0) + 7;
+  return (_rbF = { c, ax, half, y: top.p.y, road: r, s: top.s });
 }
 
 export function buildBay(W, S, H) {
@@ -35,6 +49,7 @@ export function buildBay(W, S, H) {
   buildUmihotaru(W, S, H);
   buildKaze(W, far);
   buildTsubasa(W, S, H);
+  buildRainbow(W, S, H);
   buildTokyo(W, far);
   buildIndustry(W, far);
   buildFuji(W, far);
@@ -63,7 +78,9 @@ function buildUmihotaru(W, S, H) {
     const ry = Math.atan2(b[0] - a[0], b[1] - a[1]), mx = (a[0] + b[0]) / 2, mz = (a[1] + b[1]) / 2;
     S.add(boxGeo(2, 9, L + 2), wall, mx, -4.2, mz, ry);
     S.add(boxGeo(0.12, 1.1, L), steel, mx, 0.55, mz, ry);
-    W.addCollider(mx, mz, 0.6, L / 2, ry, -10, 2, 'wall');
+    // no collider where the Aqua-Line carriageways cross the seawall (on the bridge deck or into the tunnel)
+    let crossed = false; for (let u = 0; u <= L && !crossed; u += 1.5) { const x = a[0] + (b[0] - a[0]) * u / L, z = a[1] + (b[1] - a[1]) * u / L; crossed = W.net.hits(x, z).some(h => h.lat <= h.road.edgeL + 1.5 && h.lat >= h.road.edgeR - 1.5 && !h.beyond); }
+    if (!crossed) W.addCollider(mx, mz, 0.6, L / 2, ry, -10, 2, 'wall');
   }
   // the island's land is walkable
   W.umiRing = R;
@@ -173,8 +190,8 @@ function buildTsubasa(W, S, H) {
   const steel = new THREE.MeshStandardMaterial({ color: 0xeef1f4, roughness: 0.4, metalness: 0.45 });
   const PH = T.h || 183;
   // pylon in the median (slender, slightly tapered), from the water up
-  S.add(boxGeo(4.5, PH + 6, 9), steel, p0.x, (PH + 6) / 2 - 6, p0.z, ry);
-  W.addCollider(p0.x, p0.z, 2.6, 5, ry, -10, PH);
+  S.add(boxGeo(3.4, PH + 6, 9), steel, p0.x, (PH + 6) / 2 - 6, p0.z, ry);
+  W.addCollider(p0.x, p0.z, 1.8, 5, ry, -10, PH); // fits the 3.9 m median: the fast lanes stay clear
   // box girder under the deck along the cable-stayed span
   for (let s = sP - 510; s < sP + 510; s += 10) { const p = r.at(s), d = r.dirAt(s); S.add(boxGeo(r.edgeL - r.edgeR + 2, 3, 10.4), steel, p.x, p.y - 2.2, p.z, Math.atan2(d.x, d.z)); }
   // fan of stay cables (single plane, in the median) + lights
@@ -189,6 +206,39 @@ function buildTsubasa(W, S, H) {
   W.night(lg.material, 0, 1).userData.opacityMode = true; W.group.add(lg);
   W.blink.push(W.warnLight(p0.x, PH + 1, p0.z));
   void left;
+}
+
+// ───────────────────────── レインボーブリッジ (suspension bridge, towers 126 m, main span 570 m) ─────────────────────────
+// Built around the driveable Route 11 decks: two white portal towers straddling both carriageways, the main cables
+// sagging to just above the deck mid-span, vertical hangers, side spans down to the anchorages, and the night lighting.
+function buildRainbow(W, S, H) {
+  const R = rainbowFrame(W.net); if (!R) return;
+  const { boxGeo } = H; const { c, ax, half, y } = R; const yaw = Math.atan2(ax.x, ax.z), side = new THREE.Vector3(ax.z, 0, -ax.x);
+  const white = new THREE.MeshStandardMaterial({ color: 0xf4f5f2, roughness: 0.45, metalness: 0.25 });
+  const P = (u, v, h) => new THREE.Vector3(c.x + ax.x * u + side.x * v, h, c.z + ax.z * u + side.z * v);
+  const TOP = 126, SPAN = 285, SIDE = 170, legV = half + 3;
+  for (const sd of [-1, 1]) {
+    const u = sd * SPAN;
+    for (const lv of [-legV, legV]) { const p = P(u, lv, 0); S.add(boxGeo(5, TOP + 10, 8), white, p.x, (TOP + 10) / 2 - 10, p.z, yaw); }
+    for (const hb of [y - 4, 92, TOP - 4]) { const p = P(u, 0, hb); S.add(boxGeo(legV * 2 + 5, 5, 6), white, p.x, hb, p.z, yaw); }
+    const wl = P(u, 0, TOP + 2); W.blink.push(W.warnLight(wl.x, TOP + 2, wl.z));
+  }
+  // main cables (parabola in the main span, straight-ish side spans) + hangers
+  const cable = (u) => { const a = Math.abs(u); return a <= SPAN ? y + 6 + (TOP - 2 - y - 6) * (u / SPAN) ** 2 : TOP - 2 - (a - SPAN) / SIDE * (TOP - 2 - y - 2); };
+  const segs = [], hang = [], lights = [];
+  for (const lv of [-legV, legV]) {
+    let prev = null;
+    for (let u = -(SPAN + SIDE); u <= SPAN + SIDE + 0.1; u += 10) { const p = P(u, lv, cable(u)); if (prev) segs.push(prev, p); prev = p; lights.push(p); if (Math.abs(u) < SPAN - 4 && Math.round(u) % 20 === 0) hang.push(p, P(u, lv, y + 1)); }
+  }
+  const lm = new THREE.LineBasicMaterial({ color: 0xe8ecef });
+  const cg = new THREE.Group(); cg.add(new THREE.LineSegments(new THREE.BufferGeometry().setFromPoints(segs), lm), new THREE.LineSegments(new THREE.BufferGeometry().setFromPoints(hang), lm));
+  // thicker look for the main cables: a second, slightly offset strand
+  cg.add(new THREE.LineSegments(new THREE.BufferGeometry().setFromPoints(segs.map(p => p.clone().setY(p.y + 0.6))), lm));
+  W.group.add(cg);
+  const lp = new THREE.Points(new THREE.BufferGeometry().setFromPoints(lights), new THREE.PointsMaterial({ color: 0xffffff, size: 3, transparent: true, opacity: 0 }));
+  W.night(lp.material, 0, 1).userData.opacityMode = true; W.group.add(lp);
+  // white girder skirt under the deck along the main span
+  for (let u = -SPAN; u <= SPAN; u += 15) { const p = P(u, 0, y - 2.6); S.add(boxGeo(half * 2 + 2, 3.2, 15.2), white, p.x, y - 2.6, p.z, yaw); }
 }
 
 // ───────────────────────── far Tokyo: Tokyo Tower, Skytree, Rainbow Bridge, Gate Bridge, Haneda ─────────────────────────
@@ -207,7 +257,7 @@ function buildTokyo(W, far) {
     for (const [y, rr] of [[350, 22], [450, 15]]) add(new THREE.Mesh(new THREE.CylinderGeometry(rr, rr, 10, 20), W.night(new THREE.MeshStandardMaterial({ color: 0xcfd8e2, emissive: 0xb07aff, emissiveIntensity: 0 }), 0, 1.6)), x, y, z);
     W.blink.push(W.warnLight(x, 636, z)); }
   // Rainbow Bridge (suspension, towers 126 m), between Shibaura and Daiba
-  if (LM.rainbow) { const { x, z } = LM.rainbow; const ax = new THREE.Vector3(1495, 0, 298).normalize(); const yaw = Math.atan2(ax.x, ax.z);
+  if (LM.rainbow && !W.net.byId.b_11) { const { x, z } = LM.rainbow; const ax = new THREE.Vector3(1495, 0, 298).normalize(); const yaw = Math.atan2(ax.x, ax.z);
     const steel = new THREE.MeshStandardMaterial({ color: 0xf2f2f2, roughness: 0.4, metalness: 0.4 });
     const deck = new THREE.Mesh(new THREE.BoxGeometry(30, 8, 920), steel); deck.rotation.y = yaw; add(deck, x, 52, z);
     const pts = [], lights = [];

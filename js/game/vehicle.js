@@ -5,6 +5,7 @@
 // Driver assists (FH-style): speed-sensitive steering with slip-angle limiting & auto counter-steer,
 // stability management (STM), traction control (TCS) and ABS — see ASSIST_PRESETS.
 import * as THREE from 'three';
+import { PA } from './roads.js';
 
 const G = 9.81;
 const RPM2W = Math.PI * 2 / 60;
@@ -540,6 +541,18 @@ export class Vehicle {
         }
       }
     }
+    // Daikoku PA sits inside the JCT loops on fenced, unlit waste ground: once past the lot fence the car must stay on the
+    // ramps / streets (before, it could leave a ground-level ramp sideways and roam a black void under the viaducts)
+    if (Math.abs(this.pos.y) < 1.5 && PA.inLot(this.pos.x, this.pos.z, 170) && !PA.inLot(this.pos.x, this.pos.z, 0.3)) {
+      const ok = q.onRoad || net.hits(this.pos.x, this.pos.z).some(h => { if (h.beyond || Math.abs(h.y - this.pos.y) > 2) return false; const m = h.road.kind === 'local' ? (h.road.sidewalk || 3) + 1 : 1.2; return h.lat <= h.road.edgeL + m && h.lat >= h.road.edgeR - m; });
+      const o = this._okPos;
+      if (!ok && o && Math.hypot(o.x - this.pos.x, o.z - this.pos.z) < 6) {
+        let nx = o.x - this.pos.x, nz = o.z - this.pos.z; const d = Math.hypot(nx, nz) || 1; nx /= d; nz /= d;
+        this.pos.x = o.x; this.pos.z = o.z;
+        const vn = this.vel.x * nx + this.vel.z * nz;
+        if (vn < 0) { this.wallHit(nx, nz, -vn); if (vn < -3) this.events.push('crash'); }
+      } else (this._okPos ||= { x: 0, z: 0 }, this._okPos.x = this.pos.x, this._okPos.z = this.pos.z);
+    } else (this._okPos ||= { x: 0, z: 0 }, this._okPos.x = this.pos.x, this._okPos.z = this.pos.z);
     // static colliders (3 circles along the car)
     const rad = this.car.W / 2000 * 0.95, halfL = this.car.L / 2000;
     for (const off of [-halfL + rad, 0, halfL - rad]) {

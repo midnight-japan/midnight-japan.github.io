@@ -1,9 +1,11 @@
 # 📜 MIDNIGHT JAPAN 업데이트 기록 · Changelog
 
-현재 버전 · Current: **v1.0.0** · [▶ 웹에서 플레이](https://midnight-japan.github.io/) · [🌐 업데이트 페이지](https://midnight-japan.github.io/changelog.html)
+현재 버전 · Current: **v1.1.0** · [▶ 웹에서 플레이](https://midnight-japan.github.io/) · [🌐 업데이트 페이지](https://midnight-japan.github.io/changelog.html)
 
 | 버전 | 날짜 | 이름 | 요약 |
 |---|---|---|---|
+| [v1.1.0](#v110--connected-2026-11-12) | 2026-11-12 | Connected | 맵 전체가 하나로 — 다이코쿠·요코하마·가와사키·하네다·도쿄 도심(C1)·레인보우 브리지·하코네까지 실제 도로로 막힘 없이 이어짐. |
+| [v1.0.1](#v101--shakedown-2026-11-12) | 2026-11-12 | Shakedown | 직접 플레이하며 찾은 버그 대수술 — 고속도로의 보이지 않는 벽, PA 밖 허공, 하차 시 끼임, 터널 눈부심, 모바일 페달 실종 등 수정. |
 | [v1.0.0](#v100--real-japan-2026-11-06) | 2026-11-06 | Real Japan | 정식 1.0 — 실제 일본의 다섯 곳(C1·하코네·K1 루프·다이코쿠 PA와 만안선·요코하마/도쿄 시가지)을 달리는 게임으로. 홈페이지 전면 리뉴얼. |
 | [v0.11.1](#v0111--coin-parking-2026-11-06) | 2026-11-06 | Coin Parking | 시내 주차장에 코인파킹 디테일(주차선·차막이·P 간판·정산기). |
 | [v0.11.0](#v0110--inner-circular-2026-11-06) | 2026-11-06 | Inner Circular | C1 도심환상선 개통 — 도쿄 도심의 터널과 고가를 도는 내·외회선 루프, 주변 도쿄 도심 시가지. |
@@ -28,6 +30,61 @@
 | [v0.2.0](#v020--bayshore-2026-11-05) | 2026-11-05 | Bayshore | 수도고속 완간선을 따라 하네다까지, 도쿄만 아쿠아라인 해저터널을 지나 우미호타루 PA까지. 실제 3D 차량 모델과 열리는 보닛도 들어왔어요. |
 | [v0.1.1](#v011--one-click-2026-11-04) | 2026-11-04 | One Click | 링크 하나로 바로 플레이. 크롬에서 공식 사이트 주소만 열면 설치 없이 실행돼요. |
 | [v0.1.0](#v010--first-meet-2026-11-04) | 2026-11-04 | First Meet | 첫 공개 버전. 다이코쿠 JCT·PA와 다이코쿠 부두 일대를 3D로 구현했습니다. |
+
+---
+
+## v1.1.0 — Connected (2026-11-12)
+
+> 맵 전체가 하나로 — 다이코쿠·요코하마·가와사키·하네다·도쿄 도심(C1)·레인보우 브리지·하코네까지 실제 도로로 막힘 없이 이어짐.
+> One connected map: Daikoku, Yokohama, Kawasaki, Haneda, central Tokyo (C1), the Rainbow Bridge and Hakone, all joined by the real roads.
+
+**✨ 추가 · New**
+
+- 레인보우 브리지를 실제 모습으로: 높이 126m 하얀 주탑 2기, 주경간 570m 현수 케이블·행어, 야간 조명<br><sub>The Rainbow Bridge as it really is: two white 126 m towers, the 570 m main span's suspension cables and hangers, lit at night</sub>
+- 요코하마 서쪽에 실제 해안선의 사가미만 바다 — 세이쇼 바이패스가 바다를 따라 달림<br><sub>Sagami Bay west of Yokohama, from the real coastline — the Seishō bypass runs along the sea</sub>
+- 시작 시 새 버전 소개 창(레인보우 브리지·하코네에서 바로 출발), 화면 좌상단 다음 도전 과제 진행 표시, 달성 시 큰 배너<br><sub>A what's-new screen at start (jump straight to the Rainbow Bridge or Hakone), the next accolade and its progress top-left, and a big banner when you earn one</sub>
+- 수도고 K1 요코하네선·K3 가리바선 양방향, 1호 하네다선, 만안선 북부(도쿄항 터널), 11호 다이바선(레인보우 브리지)을 실제 OSM 형상·JCT 그대로 추가 — 요코하마 루프에서 C1까지 고속도로로 직행<br><sub>Shuto K1 Yokohane and K3 Kariba both ways, Route 1 Haneda, the Bayshore north (Tokyo Port Tunnel) and Route 11 Daiba (Rainbow Bridge), from OpenStreetMap with the real junctions — drive from the Yokohama loop straight to the C1</sub>
+- 하코네까지 도로로: 요코하마 신도 → 국도1호 → 신쇼난 바이패스 → 국도134호 → 세이쇼 바이패스 → 턴파이크 (편도 약 59km, 주변 시가지 포함)<br><sub>Drive to Hakone: Yokohama Shindō → Route 1 → Shin-Shōnan bypass → Route 134 → Seishō bypass → the Turnpike (about 59 km, with the towns along the way)</sub>
+- 실제 출입 램프 13곳(하네다공항·헤이와지마·시바우라·다이바·아리아케·다이시 등)으로 고속도로와 시내 도로가 연결 — 출구로 나간 교통차량은 그대로 시내를 달림<br><sub>13 real exits and entrances (Haneda Airport, Heiwajima, Shibaura, Daiba, Ariake, Daishi …) join the expressways to the city streets — traffic leaving an exit carries on through town</sub>
+- 도전 과제(13+2개, 보상금): 베이브리지·쓰바사교·레인보우 브리지 횡단, 우미호타루, 다이칸야마 정상, C1 러너, 하코네 로드트립, 드리프트, 200km/h, 추격 따돌리기 등 — 일시정지 메뉴에서 진행 확인<br><sub>Accolades (15, with cash rewards): the Bay, Tsubasa and Rainbow bridges, Umihotaru, the Daikanyama summit, C1 runner, a road trip to Hakone, drifting, 200 km/h, escaping the police … — progress in the pause menu</sub>
+- 스폰 지역 추가: 레인보우 브리지(11호 다이바선), 1호 하네다선, 세이쇼 바이패스(하코네 방면)<br><sub>New spawn points: the Rainbow Bridge (Route 11), Route 1 Haneda and the Seishō bypass (towards Hakone)</sub>
+
+**🔧 변경 · Changed**
+
+- 일반국도(1호·134호)는 보도·연석이 있는 실제 국도 모습으로, 고가 구간만 난간 있는 육교로<br><sub>Ordinary national roads (Routes 1 and 134) look like the real thing — kerbs and pavements, parapets only on their overpasses</sub>
+- 만안선 양 끝 U턴 제거, 교통차량은 플레이어 주변 도로에 생성, 새 JCT의 녹색 방향 안내판(羽田·台場·都心·有明 등)<br><sub>No more U-turns at the Bayshore's ends, traffic appears on the roads around you, and green direction signs (Haneda, Daiba, City Centre, Ariake …) at the new junctions</sub>
+
+**🐞 수정 · Fixed**
+
+- PA 시작 주차칸 바로 앞에 가로등 기둥이 있어 출발하자마자 부딪히던 문제<br><sub>The starting stall at the PA could face a lamp mast right ahead</sub>
+- 시가지의 교각·건물·가로등·나무가 주행 가능한 고가를 관통하던 문제 — 고가 위치를 알고 자동으로 비켜 배치<br><sub>City piers, buildings, street lamps and trees no longer stand through a driveable deck — the tiles know where the decks are</sub>
+- 가벼운 접촉(시속 18km 미만)으로는 사고 장면이 시작되지 않음, 순간이동하면 경찰 추격 종료, 지면보다 살짝 낮은 도로에서 도로 인식이 끊기던 문제<br><sub>A light bump (under 18 km/h) no longer starts an accident scene, fast travel ends a pursuit, and roads lying just below ground level are recognised</sub>
+
+---
+
+## v1.0.1 — Shakedown (2026-11-12)
+
+> 직접 플레이하며 찾은 버그 대수술 — 고속도로의 보이지 않는 벽, PA 밖 허공, 하차 시 끼임, 터널 눈부심, 모바일 페달 실종 등 수정.
+> A full playtest pass: invisible walls on the expressways, the void outside the PA, getting stuck when stepping out, tunnel glare, missing mobile pedals and more — fixed.
+
+**🔧 변경 · Changed**
+
+- 자동 헤드라이트: 해 질 녘·밤·터널에서 자동으로 켜짐(직접 조작하면 수동으로 전환)<br><sub>Automatic headlights at dusk, at night and in tunnels (switching them by hand turns the automatic off)</sub>
+
+**🐞 수정 · Fixed**
+
+- K5 고가도로(다이코쿠 PA 위)에 PA 건물 충돌판정이 20m 높이까지 솟아 있어 보이지 않는 벽에 부딪히던 문제<br><sub>PA buildings had 20 m-tall collision boxes that formed invisible walls on the K5 viaduct above the lot</sub>
+- 다이코쿠 JCT 램프(PA→K5)에서 지상 차량 야적장의 충돌판정 때문에 차가 멈추던 문제, 교각이 바로 아래 램프를 뚫고 서던 문제<br><sub>Cars stopped dead on the Daikoku JCT ramp (PA→K5) against the ground-level car yard's collision box; piers no longer stand through a ramp passing just below</sub>
+- 우미호타루 섬 방파제 충돌판정이 아쿠아라인 본선과 터널 입구를 막던 문제, 쓰루미 쓰바사교 주탑이 추월차로를 침범하던 문제<br><sub>The Umihotaru seawall blocked the Aqua-Line carriageway and tunnel mouth; the Tsurumi Tsubasa pylon stuck into the fast lane</sub>
+- PA 출구 램프 옆으로 빠져 고가 아래 검은 허공을 달릴 수 있던 문제 — 이제 램프와 도로를 벗어날 수 없음<br><sub>You could leave the PA exit ramp sideways and roam a black void under the viaducts — the car now stays on the ramps and streets</sub>
+- 요코하마 베이브리지 노면이 100m마다 ±5m씩 출렁이던 문제 — 고가·터널 구간 노면을 매끄럽게<br><sub>The Bay Bridge deck rose and dipped ±5 m every 100 m — elevated and tunnel profiles are now smooth</sub>
+- 시내: 철도 펜스가 건널목 도로를 막고, 고가 교각이 도로 한가운데 서고, 도로 위에 겹친 건물이 길을 막던 문제<br><sub>City: rail fences sealed off level crossings, viaduct piers stood in the street and buildings overlapping a road walled it off</sub>
+- 차에서 내리면 옆 주차 차량 안에 들어가 움직일 수 없던 문제 — 빈 쪽(조수석·뒤·앞)으로 내림<br><sub>Stepping out could put you inside the neighbouring parked car, unable to move — you now step out on a free side</sub>
+- 정지 상태에서 S를 꾹 눌러 후진할 때 시동이 안 걸려 R단만 들어가고 움직이지 않던 문제<br><sub>Holding S from a standstill selected R but never started the engine, so the car didn't reverse</sub>
+- C1 터널: 조명·블룸이 과해 벽이 하얗게 날아가던 문제, 벽 텍스처가 길게 늘어지던 문제, 터널·고가 아래에서도 비가 내리던 문제<br><sub>C1 tunnels: lamps and bloom blew the walls out white, the wall texture was smeared into streaks, and it rained inside tunnels and under decks</sub>
+- 모바일: 가속·브레이크 페달과 좌우 조향 버튼이 화면 밖에 그려져 보이지 않던 문제, 버튼이 미니맵·속도계와 겹치던 문제<br><sub>Mobile: the GAS/BRAKE pedals and steering buttons were drawn off-screen, and the buttons overlapped the minimap and speedometer</sub>
+- 우미호타루 스폰이 방파제를 향해 시작하던 문제 — PA 주차칸에서 시작, 하코네 요금소 부스가 하행 차로를 막던 문제<br><sub>Umihotaru spawn faced the seawall — you now start in a PA stall; the Hakone toll booth no longer blocks the downhill lane</sub>
+- 온라인: 지정한 안정적인 릴레이 대신 무작위 릴레이(일부 다운)에 접속하던 문제<br><sub>Online: the game connected to random (partly dead) relays instead of the chosen stable ones</sub>
 
 ---
 

@@ -2,7 +2,7 @@
 // pause & settings, car-action menu, konbini shop, outfit editor, map, photo mode, touch controls.
 import * as THREE from 'three';
 import { CARS, CAR_BY_ID, CATEGORIES } from '../../data/cars.js';
-import { GAME, LANGS } from '../../data/meta.js';
+import { GAME, LANGS, CHANGELOG } from '../../data/meta.js';
 import { reading } from './names.js';
 import { t, pick, setLang, getLang } from '../i18n.js';
 import { displayName, currentUser } from '../account.js';
@@ -11,6 +11,7 @@ import { STROBE_MODES } from './carmodel.js';
 import { TUNE_PRESETS, resolveTune } from './vehicle.js';
 import { OUTFIT_OPTIONS } from './humans.js';
 import { PA_RECT, MAP } from './roads.js';
+import { GOALS } from './goals.js';
 import { PLACES } from '../../data/places.js';
 import { ASSIST_SETTING_KEYS, assistsFromSettings, applyDifficulty } from './vehicle.js';
 
@@ -46,7 +47,7 @@ export class UI {
         <button class="btn" data-a="quick"><span data-i18n="game.title.quick"></span> <small class="sub" id="quick-car"></small></button>
         <label class="spawn-sel"><span data-i18n="game.spawn.label"></span> <select id="t-spawn">
           <option value="pa" data-i18n="game.spawn.pa"></option><option value="bay" data-i18n="game.spawn.bay"></option>
-          <option value="k1" data-i18n="game.spawn.k1"></option><option value="hakone" data-i18n="game.spawn.hakone"></option><option value="c1" data-i18n="game.spawn.c1"></option><option value="umi" data-i18n="game.spawn.umi"></option><option value="futo" data-i18n="game.spawn.futo"></option>
+          <option value="k1" data-i18n="game.spawn.k1"></option><option value="hakone" data-i18n="game.spawn.hakone"></option><option value="c1" data-i18n="game.spawn.c1"></option><option value="daiba" data-i18n="game.spawn.daiba"></option><option value="r1" data-i18n="game.spawn.r1"></option><option value="seisho" data-i18n="game.spawn.seisho"></option><option value="umi" data-i18n="game.spawn.umi"></option><option value="futo" data-i18n="game.spawn.futo"></option>
           <option value="mm" data-i18n="game.spawn.mm"></option><option value="chinatown" data-i18n="game.spawn.chinatown"></option><option value="tsurumi" data-i18n="game.spawn.tsurumi"></option><option value="kawasaki" data-i18n="game.spawn.kawasaki"></option><option value="haneda" data-i18n="game.spawn.haneda"></option></select></label>
         <div class="lobby-online" id="lobby-online"></div>
         <div class="lobby-row"><button class="btn sm" data-a="settings">⚙ <span data-i18n="game.menu.settings"></span></button>
@@ -88,7 +89,7 @@ export class UI {
         <button class="btn primary wide" data-a="drive" data-i18n="game.garage.drive"></button>
       </div></div>
       <div id="hud" class="hidden">
-        <div class="tl"><div class="loc"></div><div class="clock"></div><div class="money"></div></div>
+        <div class="tl"><div class="loc"></div><div class="clock"></div><div class="money"></div><div class="goaltrack" id="goaltrack"></div></div>
         <canvas id="minimap" width="200" height="200"></canvas><div id="navhud" class="navhud" hidden><span class="nav-arrow">↑</span><span class="nav-dist"></span><button class="nav-x" data-a="navClear" aria-label="clear">✕</button></div><div id="pursuit" class="pursuithud" hidden></div>
         <div class="speedo"><canvas id="speedo" width="260" height="260"></canvas><div class="icons"></div></div>
         <div class="radio-banner"></div>
@@ -118,6 +119,7 @@ export class UI {
         <h2 data-i18n="game.menu.paused"></h2>
         <button class="btn primary" data-a="resume" data-i18n="game.menu.resume"></button>
         <button class="btn" data-a="garage" data-i18n="game.menu.garage"></button>
+        <button class="btn" data-a="goals" id="goals-btn"></button>
         <button class="btn" data-a="outfit" data-i18n="game.menu.outfit"></button>
         <button class="btn" data-a="settings" data-i18n="game.menu.settings"></button>
         <button class="btn" data-a="controls" data-i18n="game.menu.controls"></button>
@@ -128,6 +130,8 @@ export class UI {
         <a class="btn ghost" href="index.html" data-i18n="game.menu.quit"></a>
       </div></div>
       <div id="settings" class="screen dim"><div class="menu wide"><h2 data-i18n="game.menu.settings"></h2><div class="sgrid" id="s-grid"></div><button class="btn primary" data-a="settingsClose" data-i18n="game.menu.back"></button></div></div>
+      <div id="whatsnew" class="screen dim"><div class="menu wide wn"><div class="wn-tag">NEW · v<span class="wn-ver"></span></div><h2 class="wn-title"></h2><p class="wn-sum"></p><ul class="wn-list"></ul><div class="wn-go"><button class="btn primary" data-a="wnDaiba"></button><button class="btn primary" data-a="wnSeisho"></button></div><button class="btn ghost" data-a="wnClose"></button></div></div>
+      <div id="goals" class="screen dim"><div class="menu wide"><h2 data-i18n="game.goal.title"></h2><div id="g-body" class="goals"></div><button class="btn primary" data-a="goalsClose" data-i18n="game.menu.back"></button></div></div>
       <div id="controls" class="screen dim"><div class="menu wide"><h2 data-i18n="game.menu.controls"></h2><div id="c-body"></div><button class="btn primary" data-a="controlsClose" data-i18n="game.menu.back"></button></div></div>
       <div id="outfit" class="screen side"><div class="panel"><div class="ph"><h2 data-i18n="game.menu.outfit"></h2><button class="x" data-a="outfitClose">✕</button></div><div id="o-body"></div></div></div>
       <div id="shop" class="popup"><h3 id="shop-title"></h3><div id="shop-list"></div><button class="btn sm" data-a="shopClose">✕</button></div>
@@ -149,8 +153,15 @@ export class UI {
   relabel() { this.root.querySelectorAll('[data-i18n]').forEach(e => e.textContent = t(e.dataset.i18n)); }
   loading(p, msg) { $('#loading .bar i').style.width = (p * 100) + '%'; $('#loading .load-msg').textContent = msg || ''; if (p >= 1) setTimeout(() => $('#loading').classList.remove('show'), 300); }
   fatal(msg) { $('#fatal').classList.add('show'); $('#fatal-msg').textContent = msg; }
-  screens(show) { for (const id of ['title', 'garage', 'pause', 'settings', 'controls', 'outfit', 'map', 'tutorial']) $('#' + id).classList.toggle('show', show === id); }
-  showTitle() { this.screens('title'); $('#hud').classList.add('hidden'); $('#title .who').innerHTML = `${esc(t('game.title.hello'))} <b>${esc(displayName())}</b>` + (currentUser() ? '' : ` · <a href="account.html">${esc(t('game.title.login'))}</a>`); this.touchMode(null); const sp = $('#t-spawn'); if (sp) { sp.value = this.g.settings.spawn || 'pa'; sp.onchange = () => { this.g.settings.spawn = sp.value; this.g.saveSettings?.(); }; } const qc = CAR_BY_ID[this.g.garage.car]; $('#quick-car').textContent = qc ? `${qc.maker} ${qc.name}` : ''; this.updateOnline(); }
+  screens(show) { for (const id of ['title', 'garage', 'pause', 'settings', 'goals', 'whatsnew', 'controls', 'outfit', 'map', 'tutorial']) $('#' + id).classList.toggle('show', show === id); }
+  showWhatsNew() {
+    const c = CHANGELOG[0]; $('#whatsnew .wn-ver').textContent = c.version; $('#whatsnew .wn-title').textContent = `${c.codename} — ${t('game.wn.title')}`;
+    $('#whatsnew .wn-sum').textContent = pick(c.summary);
+    $('#whatsnew .wn-list').innerHTML = c.items.filter(i => i.type === 'new' || i.type === 'change').slice(0, 6).map(i => `<li>${esc(pick(i))}</li>`).join('');
+    $('#whatsnew [data-a=wnDaiba]').textContent = '🌈 ' + t('game.wn.daiba'); $('#whatsnew [data-a=wnSeisho]').textContent = '🗻 ' + t('game.wn.seisho'); $('#whatsnew [data-a=wnClose]').textContent = t('game.wn.close');
+    this.screens('whatsnew');
+  }
+  showTitle() { let seen = null; try { seen = localStorage.getItem('dn.seenVer'); } catch {} if (seen !== GAME.version && !this._wnShown && !/[?&](auto|go)=/.test(location.search)) { this._wnShown = true; this.showWhatsNew(); return; } this.screens('title'); $('#hud').classList.add('hidden'); $('#title .who').innerHTML = `${esc(t('game.title.hello'))} <b>${esc(displayName())}</b>` + (currentUser() ? '' : ` · <a href="account.html">${esc(t('game.title.login'))}</a>`); this.touchMode(null); const sp = $('#t-spawn'); if (sp) { sp.value = this.g.settings.spawn || 'pa'; sp.onchange = () => { this.g.settings.spawn = sp.value; this.g.saveSettings?.(); }; } const qc = CAR_BY_ID[this.g.garage.car]; $('#quick-car').textContent = qc ? `${qc.maker} ${qc.name}` : ''; this.updateOnline(); }
   showHUD() { this.screens(null); $('#hud').classList.remove('hidden'); this.touchMode(this.g.mode); this.paused = false; }
   touchMode(mode) {
     const on = this.g.settings.touch === 'on' || (this.g.settings.touch === 'auto' && this.isTouch);
@@ -176,6 +187,10 @@ export class UI {
         if (g.mode === 'walk') g.enterCar();
         this.paused = false; g.openGarage(); break;
       }
+      case 'goals': this.screens('goals'); this.buildGoals(); break;
+      case 'wnClose': try { localStorage.setItem('dn.seenVer', GAME.version); } catch {} this.showTitle(); break;
+      case 'wnDaiba': case 'wnSeisho': try { localStorage.setItem('dn.seenVer', GAME.version); } catch {} g.settings.spawn = a === 'wnDaiba' ? 'daiba' : 'seisho'; g.saveSettings?.(); this.screens(null); g.quickStart(); break;
+      case 'goalsClose': this.screens('pause'); this.updateGoals(); break;
       case 'outfit': this.screens('outfit'); this.buildOutfit(); break;
       case 'outfitClose': this.screens('pause'); break;
       case 'settings': this.prevScreen = g.mode === 'title' ? 'title' : 'pause'; this.screens('settings'); this.buildSettings(); break;
@@ -204,7 +219,7 @@ export class UI {
   togglePause(force) {
     const on = force ?? !this.paused;
     if (this.g.mode !== 'drive' && this.g.mode !== 'walk') return;
-    this.paused = on; this.screens(on ? 'pause' : null);
+    this.paused = on; this.screens(on ? 'pause' : null); if (on) this.updateGoals();
     if (on) { const s = this.g.stats; $('#pause .stats').innerHTML = `${esc(t('game.stats.km'))} ${s.km.toFixed(1)} km · ${esc(t('game.stats.tolls'))} ${yen(s.tolls)} · ${esc(t('game.stats.tickets'))} ${s.tickets}`; }
   }
 
@@ -419,6 +434,12 @@ export class UI {
       this.mv.x -= (e.clientX - prev[0]) * d / this.mv.k; this.mv.z -= (e.clientY - prev[1]) * d / this.mv.k; this.drawBigMap();
     });
   }
+  updateGoals() { const b = $('#goals-btn'), G = this.g.goals; if (b && G) b.textContent = `🏆 ${t('game.goal.title')} (${G.count}/${GOALS.length})`; }
+  buildGoals() {
+    const G = this.g.goals;
+    $('#g-body').innerHTML = GOALS.map(d => { const done = G.done(d.id), p = G.progress(d); const bar = d.target ? `<div class="g-bar"><i style="width:${Math.min(100, p / d.target * 100)}%"></i></div><span class="g-num">${p}/${d.target}${d.id === 'c1' || d.id === 'distance' || d.id === 'roadtrip' ? ' km' : d.id === 'drift' ? ' s' : ''}</span>` : '';
+      return `<div class="g-item${done ? ' done' : ''}"><span class="g-ic">${d.icon}</span><div class="g-txt"><b>${esc(t('game.goal.' + d.id))}</b><small>${esc(t('game.goal.' + d.id + '.d'))}</small>${bar}</div><span class="g-rw">${done ? '✓' : '¥' + d.reward.toLocaleString()}</span></div>`; }).join('');
+  }
   togglePhoto() { this.photo = !this.photo; document.body.classList.toggle('photo', this.photo); if (this.photo) { this.g.audio.sfx('camera_shutter'); this.toast(t('game.photo.on'), 'info', 3); } }
 
   // ───── tutorial (first drive) ─────
@@ -493,6 +514,9 @@ export class UI {
     if (this._promptT !== undefined) { this._promptT -= dt; if (this._promptT <= 0) { $('#hud .prompt').classList.remove('show'); this._promptT = undefined; } }
     if (g.mode !== 'drive' && g.mode !== 'walk') return;
     if (g.mode === 'drive' && g.vehicle) this.drawSpeedo(g.vehicle, dt); // every frame: smooth needle/gear motion
+    if ((this._gtT = (this._gtT || 0) - dt) <= 0 && g.goals) { this._gtT = 0.5; const G = g.goals, el2 = $('#goaltrack');
+      const next = GOALS.find(d => !G.done(d.id) && d.target && G.progress(d) > 0) || GOALS.find(d => !G.done(d.id));
+      if (!next) el2.innerHTML = `🏆 ${esc(t('game.goal.all'))}`; else { const p = G.progress(next); el2.innerHTML = `<span class="gt-k">🏆 ${G.count}/${GOALS.length}</span> ${next.icon} ${esc(t('game.goal.' + next.id))}${next.target ? ` <b>${p}/${next.target}</b>` : ''}`; } }
     this._acc = (this._acc || 0) + dt; if (this._acc < 1 / 20) return; const step = this._acc; this._acc = 0;
     const v = g.vehicle;
     const pos = g.mode === 'walk' ? g.player.pos : v.pos;

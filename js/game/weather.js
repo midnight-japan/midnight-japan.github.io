@@ -59,7 +59,9 @@ export class Weather {
     const fog = this.g.scene.fog; if (fog) { fog.density += 0.00022 * this.rain + 0.00003 * oc; fog.color.lerp(new THREE.Color(env.night > 0.5 ? 0x1a2028 : 0x8a939c), 0.6 * Math.max(oc, this.rain)); }
     this.g.scene.environmentIntensity = (this.g.scene.environmentIntensity ?? 1) * (1 - 0.35 * oc);
     // rain streaks follow the camera
-    this.streaks.visible = this.rain > 0.03 && cam.position.y < 400;
+    // …but not in a tunnel or right under a viaduct deck
+    if ((this._covT = (this._covT || 0) - dt) <= 0) { this._covT = 0.25; const c = cam.position; this._covered = this.g.focus.y < -1.5 || c.y < -1 || this.g.net.hits(c.x, c.z).some(h => h.inside && h.y > c.y + 0.5 && h.y < c.y + 25); }
+    this.streaks.visible = this.rain > 0.03 && cam.position.y < 400 && !this._covered;
     this.uni.uT.value = this.t; this.uni.uCam.value.copy(cam.position); this.uni.uRain.value = this.rain; this.uni.uNight.value = env.night;
     // wet surfaces
     if (!this.wetMats || (this._ct = (this._ct || 0) - dt) <= 0) { this._ct = 10; this.collect(); }

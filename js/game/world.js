@@ -9,6 +9,7 @@ import { mergeGeometries } from 'three/addons/utils/BufferGeometryUtils.js';
 import { surface, chainlinkMaterial, windowTexture, glowTexture, weather } from './textures.js';
 import { buildPortals } from './portals.js';
 import { Hakone, inHakone } from './hakone.js';
+import { COAST_W } from '../../data/coast-west.js';
 import { buildRoadMeshes, lampSpots, bridgeSpan, trenchPolys, PA_RECT, PA, PA_LAYOUT, MAP } from './roads.js';
 import { buildBay, noPierBay, inUmihotaru } from './bay.js';
 import { signMesh } from './signs.js';
@@ -27,7 +28,9 @@ export const ISLAND = MAIN ? { ...MAIN.bb } : { x0: -462, x1: 925, z0: -205, z1:
 // Outside the imported coastline box only the far shores to the north (Kawasaki / Tokyo) and west (Yokohama) are land.
 const CR = MAP.coastRect || [-7000, -5800, 7900, 6100];
 // beyond the box: Tokyo / Kawasaki (north), Yokohama (west) and the Bōsō peninsula (east) are land
-const farLand = (x, z) => z < CR[1] || x < CR[0] || x > CR[2];
+// west of the imported coast: land north of the Sagami Bay shore (data/coast-west.js), sea south of it
+const coastW = x => { const i = Math.max(0, Math.min(COAST_W.length - 2, Math.floor((x - COAST_W[0][0]) / 100))); const a = COAST_W[i], b = COAST_W[i + 1], t = Math.max(0, Math.min(1, (x - a[0]) / 100)); return a[1] + (b[1] - a[1]) * t; };
+const farLand = (x, z) => z < CR[1] || (x < CR[0] && z < coastW(x)) || x > CR[2];
 
 // Box geometry with UVs in metres
 function boxGeo(w, h, d) {
@@ -137,7 +140,7 @@ export class World {
     return {
       F,
       add: (geo, mat, x = 0, y = 0, z = 0, ry = 0, sx = 1, sy = 1, sz = 1) => { const [a, b] = F.pt(x, z); S.add(geo, mat, a, y, b, ry + F.yaw, sx, sy, sz); },
-      col: (x, z, hx, hz, ry = 0, y0, y1, kind) => { const [a, b] = F.pt(x, z); W.addCollider(a, b, hx, hz, ry + F.yaw, y0, y1, kind); },
+      col: (x, z, hx, hz, ry = 0, y0 = -1, y1 = 9, kind) => { const [a, b] = F.pt(x, z); W.addCollider(a, b, hx, hz, ry + F.yaw, y0, y1, kind); }, // PA buildings are single-storey: the K5 viaduct above must stay clear
       sign: (kind, opts, x, y, z, ry = 0, s = 1) => { const [a, b] = F.pt(x, z); return W.sign(kind, opts, a, y, b, ry + F.yaw, s); },
       v: (x, y, z) => F.v(x, y, z),
       rect: (x0, x1, z0, z1) => ({ x0, x1, z0, z1, f: F }),
@@ -227,9 +230,17 @@ export class World {
       }
     }
     // far shores beyond the imported coastline (a ring of dark ground)
-    for (const [x0, z0, x1, z1] of [[-70000, -70000, 70000, CR[1]], [-70000, CR[1], CR[0], 70000], [CR[2], CR[1], 70000, 70000]]) {
+    for (const [x0, z0, x1, z1] of [[-70000, -70000, 70000, CR[1]], [CR[2], CR[1], 70000, 70000]]) {
       const m = new THREE.Mesh(planeGeo(x1 - x0, z1 - z0), land); m.position.set((x0 + x1) / 2, 0, (z0 + z1) / 2); m.receiveShadow = false; this.group.add(m);
     }
+    // western Kanagawa: land down to the Sagami Bay shore (sea beyond it), with a sand beach strip along the water
+    { const ring = [[-70000, CR[1]], [CR[0], CR[1]]]; for (let k = COAST_W.length - 1; k >= 0; k--) { const [x, z] = COAST_W[k]; if (x <= CR[0]) ring.push([x, z]); } ring.push([-70000, COAST_W[0][1]]);
+      const fields = surface('grass', { tile: 9, tint: 0x8a9a62 }); // farmland / green outside the towns
+      const m = new THREE.Mesh(polyGeo(ring, -0.04), fields); m.receiveShadow = false; this.group.add(m);
+      const sand = surface('sand', { tile: 6, tint: 0xc9b48a }); const bp = [];
+      for (const [x, z] of COAST_W) if (x <= CR[0]) bp.push([x, z]);
+      const beach = []; for (const p of bp) beach.push([p[0], p[1] - 35]); for (let k = bp.length - 1; k >= 0; k--) beach.push([bp[k][0], bp[k][1] + 4]);
+      const bm = new THREE.Mesh(polyGeo(beach, -0.02), sand); bm.receiveShadow = false; this.group.add(bm); }
     // PA ground: parking asphalt over the whole rest area, planted strips at the edges
     const lot = surface('parking', { tile: 5 });
     S.add(polyGeo(PA.area, 0.0), lot);
@@ -641,9 +652,13 @@ export class World {
       const near = b.onIsland || Math.hypot(b.pts[0][0], b.pts[0][1]) < 1300;
       const g = prismGeo(b.pts, b.h);
       if (!near) { farGeo.push(g); continue; }
+      const o = obb(b.pts); if (!o) continue;
+      // OSM footprints that straddle a street (gate-houses, covered loading bays) would wall the road off: drop them
+      { const c = Math.cos(o.ry), sn = Math.sin(o.ry); let blocks = false;
+        for (let a = -0.8; a <= 0.8 && !blocks; a += 0.4) for (let q = -0.8; q <= 0.8 && !blocks; q += 0.4) { const lx = a * o.hx, lz = q * o.hz; blocks = this.net.hits(o.x + lx * c + lz * sn, o.z - lx * sn + lz * c).some(h => h.inside && h.y < 2 && h.lat < h.road.edgeL - 0.5 && h.lat > h.road.edgeR + 0.5); }
+        if (blocks) { g.dispose(); continue; } }
       const mat = mats[(+b.id) % 3];
       S.add(g, mat);
-      const o = obb(b.pts); if (!o) continue;
       this.addCollider(o.x, o.z, o.hx, o.hz, o.ry, -1, b.h);
       this.buildingBoxes.push(o);
       // roof edge + roller shutters on the longer façade of big sheds, a lit sign at the corner
@@ -739,7 +754,7 @@ export class World {
         const m = yc[Math.floor(rnd() * yc.length)], x = gx - 40 + i * 5.2, z = gz - 12 + r * 3;
         S.add(yardBody, m, x, 0.62, z, 0); S.add(yardCab, glass, x - 0.2, 1.33, z, 0);
       }
-      this.addCollider(gx + 1.6, gz, 42, 14);
+      this.addCollider(gx + 1.6, gz, 42, 14, 0, -1, 2.2, "yard"); // ground-level car yard: the viaducts and ramps above must stay clear
       placed++;
     }
     // port lamp masts along the main avenue
@@ -907,9 +922,12 @@ export class World {
     const DEST = { bay_k5: ['横羽線', 'K1'], pa_in: ['大黒PA', 'B'], bay_aqua: ['アクアライン', 'CA'], aqua_e: ['木更津', 'CA'], k5_nb: ['大黒線', 'K5'],
       futo_out: ['大黒ふ頭', 'B'], k5_pa: ['大黒PA', 'K5'], k5_bay: ['湾岸線', 'B'], k5_bay_e: ['東京', 'B'], pa_k5: ['大黒線', 'K5'],
       umi_in_e: ['海ほたる', 'CA'], umi_in_w: ['海ほたる', 'CA'], aqua_bay: ['東京', 'B'],
-      k5_k1: ['横浜', 'K1'], k1_k5: ['大黒', 'K5'], k1_k3: ['本牧', 'K3'] };
-    const MAIN = { bayshore: { 1: '東京', '-1': '横浜' }, aqua_e: { 1: '木更津' }, aqua_w: { 1: '川崎' }, k5: { 1: '大黒' }, pa_in: { 1: '湾岸線' } };
-    const EN = { '横羽線': 'Yokohane Rte.', '大黒PA': 'Daikoku PA', 'アクアライン': 'Aqua-Line', '木更津': 'Kisarazu', '大黒線': 'Daikoku Rte.', '大黒ふ頭': 'Daikoku Wharf', '湾岸線': 'Bayshore Rte.', '東京': 'Tokyo', '海ほたる': 'Umihotaru', '横浜': 'Yokohama', '川崎': 'Kawasaki', '大黒': 'Daikoku', '本牧': 'Honmoku' };
+      k5_k1: ['横浜', 'K1'], k1_k5: ['大黒', 'K5'], k1_k3: ['本牧', 'K3'],
+      // v1.1 network: Namamugi / Ishikawachō / Honmoku / Shibaura / Ariake / Hamazakibashi
+      k5_k1n: ['羽田', 'K1'], k3_k1: ['羽田', 'K1'], k3_wb: ['横羽線', 'K3'], b_nb: ['東京港トンネル', 'B'], b_11: ['台場', '11'], r1_11: ['台場', '11'],
+      r1_sb: ['羽田', '1'], k1_sb_n: ['横浜', 'K1'], b_sb: ['横浜', 'B'] };
+    const MAIN = { bayshore: { 1: '東京', '-1': '横浜' }, k1_nb_y: { 1: '羽田' }, k1_nb: { 1: '羽田' }, r1_nb: { 1: '都心' }, r1_sb: { 1: '羽田' }, k1_sb_n: { 1: '横浜' }, k3_wb: { 1: '狩場' }, b_nb: { 1: '有明' }, b_sb: { 1: '横浜' }, aqua_e: { 1: '木更津' }, aqua_w: { 1: '川崎' }, k5: { 1: '大黒' }, pa_in: { 1: '湾岸線' } };
+    const EN = { '横羽線': 'Yokohane Rte.', '大黒PA': 'Daikoku PA', 'アクアライン': 'Aqua-Line', '木更津': 'Kisarazu', '大黒線': 'Daikoku Rte.', '大黒ふ頭': 'Daikoku Wharf', '湾岸線': 'Bayshore Rte.', '東京': 'Tokyo', '海ほたる': 'Umihotaru', '横浜': 'Yokohama', '川崎': 'Kawasaki', '大黒': 'Daikoku', '本牧': 'Honmoku', '羽田': 'Haneda', '台場': 'Daiba', '都心': 'City Centre', '有明': 'Ariake', '狩場': 'Kariba', '東京港トンネル': 'Tokyo Port Tunnel' };
     const texCache = new Map();
     const tex = (key, draw, w = 128, h = 512) => {
       if (texCache.has(key)) return texCache.get(key);
@@ -1102,7 +1120,7 @@ export class World {
       const near = [...this.lampHeads.map(p => [p, p.distanceToSquared(focus), 0]), ...(this.city ? this.city.lampsNear(focus).map(p => [p, p.distanceToSquared(focus), 0]) : []), ...(this.tunnelHeads || []).filter(p => Math.abs(p.x - focus.x) < 300 && Math.abs(p.z - focus.z) < 300).map(p => [p, p.distanceToSquared(focus), 1])].sort((a, b) => a[1] - b[1]).slice(0, this.dyn.length);
       this.dyn.forEach((l, i) => { if (near[i]) { l.position.copy(near[i][0]); l.userData.tun = near[i][2]; } });
     }
-    for (const l of this.dyn) l.intensity = l.userData.tun ? 220 : night * 140;
+    for (const l of this.dyn) l.intensity = l.userData.tun ? 60 : night * 140; // tunnel lamps every 9 m: a few strong points blew the walls out
   }
 
   // pedestrian walkability
