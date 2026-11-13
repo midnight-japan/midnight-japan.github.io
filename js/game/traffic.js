@@ -12,7 +12,8 @@ const lerp = (a, b, t) => a + (b - a) * t;
 const MEET_POOL = ['r34', 'r32', 'r33', 'r35', 's15', 'rps13', 'z33', 'gr86', 'ae86', 'jza80', 'a90', 'jzx100', 'fd3s', 'na1', 'ek9', 'fl5', 'evo9', 'gdb', 'lfa', 'p911', 'e46', 'mustang', 'model3', 'r34', 'jza80', 'fd3s'];
 const CITY_POOL = ['taxi', 'taxi', 'taxi', 'crown', 'crown', 'leaf', 'leaf', 'leaf', 'model3', 'hiace', 'hiace', 'hiace', 'truck', 'truck', 'jimny', 'jimny', 'altow', 'bus', 'gr86', 'ek9', 'jzx100', 'e46', 'z33'];
 // NPC traffic uses cars that have real 3D models (the procedural-only kei/hybrid models stay player-selectable)
-const TRAFFIC_POOL = ['taxi', 'taxi', 'crown', 'crown', 'leaf', 'leaf', 'model3', 'hiace', 'hiace', 'hiace', 'truck', 'truck', 'truck', 'bus', 'jimny', 'altow', 'gr86', 'fl5', 'r35', 'a90', 'mustang', 'jzx100', 'e46', 'ek9', 'z33', 'p911'];
+// v2.3: everyday Japanese traffic first (taxis, Crowns, vans, trucks, kei cars, Leafs, buses); sports cars are rare on the road
+const TRAFFIC_POOL = ['taxi', 'taxi', 'taxi', 'crown', 'crown', 'crown', 'leaf', 'leaf', 'leaf', 'hiace', 'hiace', 'hiace', 'hiace', 'truck', 'truck', 'truck', 'truck', 'bus', 'bus', 'jimny', 'jimny', 'altow', 'altow', 'altow', 'model3', 'jzx100', 'e46', 'gr86', 'fl5'];
 
 // Merge all static meshes of a car model by material (keeps wheels, doors, lights animatable).
 export function mergeModel(model) {
@@ -438,7 +439,7 @@ export class Traffic {
       if (d < 180 || d > 900) continue; // out of sight, but close enough to meet
       const lane = r.lanes[Math.floor(Math.random() * r.lanes.length)];
       if (this.cars.some(c => c.road === r && c.lane === lane && Math.abs(c.s - s) < 30)) continue;
-      const ai = reuse || this.createAI(Math.random() < 0.3 ? MEET_POOL[Math.floor(Math.random() * MEET_POOL.length)] : TRAFFIC_POOL[Math.floor(Math.random() * TRAFFIC_POOL.length)]);
+      const ai = reuse || this.createAI(Math.random() < 0.1 ? MEET_POOL[Math.floor(Math.random() * MEET_POOL.length)] : TRAFFIC_POOL[Math.floor(Math.random() * TRAFFIC_POOL.length)]);
       ai.decided = false; ai.toPA = false; ai.toLot = false;
       this.placeOnRoad(ai, r, lane, s); return true;
     }
@@ -455,7 +456,7 @@ export class Traffic {
       const q = Math.random(), bay = q < 0.8 ? this.net.byId.bayshore : (this.net.byId.k5 || this.net.byId.bayshore);
       const lane = bay.lanes[Math.floor(Math.random() * bay.lanes.length)];
       const s = lane.dir === 1 ? 0 : bay.length;
-      const ai = this.createAI(Math.random() < 0.35 ? MEET_POOL[Math.floor(Math.random() * MEET_POOL.length)] : TRAFFIC_POOL[Math.floor(Math.random() * TRAFFIC_POOL.length)]);
+      const ai = this.createAI(Math.random() < 0.12 ? MEET_POOL[Math.floor(Math.random() * MEET_POOL.length)] : TRAFFIC_POOL[Math.floor(Math.random() * TRAFFIC_POOL.length)]);
       this.placeOnRoad(ai, bay, lane, s);
       this.spawnNear(); this.spawnNear();
     }

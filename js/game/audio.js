@@ -547,7 +547,8 @@ class EngineSound {
     this.vol = this.prof.vol * catF * (0.72 + 0.28 * clamp(disp / 2500, 0.3, 2.2)) * (this.diesel ? 1.15 : 1);
     const sporty = cat === 'jdm' || cat === 'euro' || cat === 'us';
     this.crackle = sporty ? (this.turbo || ['R2', 'V8', 'F6', 'V10', 'F4'].includes(this.type) ? 1 : 0.45) : 0;
-    this.bovStyle = hashStr(String(this.car.id || '')) % 3 === 0 ? 'flutter' : 'bov';
+    // v2.3: five blow-off characters — stock recirculating 'pssh', atmospheric 'bov', surge 'flutter', short 'chirp', big 'whoosh'
+    this.bovStyle = ['pssh', 'bov', 'flutter', 'chirp', 'whoosh'][hashStr(String(this.car.id || '') + 'bov') % 5];
     // per-car voice: same engine layout still sounds different car to car (exhaust resonance, displacement, tune)
     const hv = hashStr(String(this.car.id || '') + (e.code || ''));
     const dispK = Math.pow(2500 / clamp(disp, 600, 10000), 0.18);
@@ -580,7 +581,16 @@ class EngineSound {
     N.int.connect(a.bus.engine);
     N.exSum = G(1); N.inSum = G(1); N.bay = G(1); N.tire = G(1); N.cabin = G(1);
     // exterior routing
-    N.exSum.connect(N.ext);
+    // v2.3 — per-car exhaust voice: muffler resonance, rasp (high shelf + soft clipping) and low-end weight by car and engine
+    {
+      const hx = hashStr(String(this.car.id || '') + 'ex'), code = (this.car.engine && this.car.engine.code) || '', sportyX = ['jdm', 'euro', 'us'].includes(this.car.cat);
+      const V = { RB26DETT: [230, 7, 5], '2JZ-GTE': [140, 6, 2], '1JZ-GTE': [160, 5, 2], '13B-REW': [320, 8, 7], '4A-GE': [260, 6, 4], 'B16B': [300, 6, 6], 'F20C': [310, 6, 6], 'K20C': [260, 5, 4], EJ207: [110, 9, 3], 'VR38DETT': [170, 5, 3], 'VQ35HR': [200, 6, 4], SR20DET: [210, 6, 4], '4G63': [190, 6, 4], '1LR-GUE': [380, 6, 7], 'C30A': [240, 5, 4] }[code];
+      const pkF = V ? V[0] : 90 + (hx % 260), pkG = V ? V[1] : (sportyX ? 4 + (hx >> 5) % 4 : 2), rasp = V ? V[2] : (sportyX ? 2 + (hx >> 9) % 4 : -2);
+      N.exPk = F('peaking', pkF, 2.2, pkG); N.exLo = F('lowshelf', 110, 0.7, clamp((num(this.car.engine?.disp, 1800) - 1500) / 600, -2, 5)); N.exHi = F('highshelf', 2600, 0.7, rasp);
+      N.exSum.connect(N.exPk); N.exPk.connect(N.exLo); N.exLo.connect(N.exHi);
+      if (sportyX && full) { const ws = ctx.createWaveShaper(), n = 512, c = new Float32Array(n), k = 1.5 + (hx >> 12) % 3; for (let i = 0; i < n; i++) { const x = i / (n - 1) * 2 - 1; c[i] = Math.tanh(k * x) / Math.tanh(k); } ws.curve = c; ws.oversample = '2x'; const wet = G(0.35), dry = G(0.75); N.exHi.connect(dry); N.exHi.connect(ws); ws.connect(wet); dry.connect(N.ext); wet.connect(N.ext); }
+      else N.exHi.connect(N.ext);
+    }
     N.inExt = G(0.45); N.inSum.connect(N.inExt); N.inExt.connect(N.ext);
     N.bay.connect(N.ext); N.tire.connect(N.ext);
     N.cabExt = G(0.08); N.cabin.connect(N.cabExt); N.cabExt.connect(N.ext);
@@ -1001,6 +1011,13 @@ class EngineSound {
       if (a.banks && a.banks.get('pssh')) {
         // プシュー: a real pneumatic release, pitched per car, then (flutter cars) the compressor-surge chatter on top
         const k = hashStr(String(this.car.id || '')), rate = 0.82 + (k % 17) / 60;
+        const st = this.bovStyle;
+        if (st === 'chirp') { // short sharp tweet: a fast high pass sweep over the release
+          smp(a, d, t, 'pssh', { offset: 0.3, dur: 0.22, rate: rate * 1.35, gain: 0.9 * b });
+          nz(a, d, t, { f: 3200, q: 4, gain: 0.35 * b, decay: 0.08 }); return;
+        }
+        if (st === 'whoosh') { smp(a, d, t, 'pssh', { offset: 0.2, dur: 0.95, rate: rate * 0.78, gain: 1.35 * b }); if (a.banks.get('hiss')) smp(a, d, t + 0.04, 'hiss', { offset: 0.3, dur: 1.1, rate: 0.85, gain: 0.5 * b, lp: 5000 }); return; }
+        if (st === 'bov' && a.banks.get('bov')) { smp(a, d, t, 'bov', { rate: rate * 1.05, gain: 0.85 * b }); return; }
         smp(a, d, t, 'pssh', { offset: 0.28, dur: 0.62, rate, gain: 1.15 * b });
         if (b > 0.75 && a.banks.get('hiss')) smp(a, d, t + 0.05, 'hiss', { offset: 0.35, dur: 0.8, rate: rate * 1.15, gain: 0.35 * b, lp: 6000 });
         if (this.bovStyle === 'flutter' && a.banks.get('bov')) {

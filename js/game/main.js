@@ -759,7 +759,7 @@ class Game {
     }
     this.ui.update(dt);
     I.endFrame();
-    if (this.bloom) { const under = this.focus.y < -1.5; this.bloom.strength = (0.16 + 0.3 * (this.env?.night ?? 1)) * (under ? 0.4 : 1); this.bloom.threshold = under ? 1.15 : 0.9; } // tunnels: lit walls everywhere → glare
+    if (this.bloom) { const under = this.focus.y < -1.5; this.bloom.strength = (0.08 + 0.14 * (this.env?.night ?? 1)) * (under ? 0.4 : 1); this.bloom.threshold = under ? 1.25 : 1.0; /* v2.3: subtler glow */ } // tunnels: lit walls everywhere → glare
     if (this.grade) this.grade.uniforms.night.value = this.env?.night ?? 1;
     if (this.gov?.halfShadows) { this.renderer.shadowMap.autoUpdate = false; if (this.frame % 2 === 0) this.renderer.shadowMap.needsUpdate = true; } else this.renderer.shadowMap.autoUpdate = true;
     // post-processing only when an effect needs it (bloom / AO); otherwise straight to the screen — one full-screen pass less
@@ -774,6 +774,8 @@ class Game {
     this.engineSnd?.update({ rpm: v.engine.rpm, throttle: 0, load: 0, running: v.engine.running, cranking: false, boost: 0, speed: 0, slip: 0, position: v.pos, interior: false, openness: this.openness ?? 0 });
   }
   // render scale: the display's own resolution, capped at 2× (3× phone panels are not visibly sharper and cost 2.25×)
+  // Apple M-series / Intel / mobile GPUs: start the governor with the cheaper shadows (60 fps on an M1 Air)
+  integratedGPU() { if (this._igpu !== undefined) return this._igpu; let r = ''; try { const gl = this.renderer.getContext(), ext = gl.getExtension('WEBGL_debug_renderer_info'); r = ext ? gl.getParameter(ext.UNMASKED_RENDERER_WEBGL) : gl.getParameter(gl.RENDERER); } catch {} return (this._igpu = /apple|intel|iris|uhd|mali|adreno|powervr/i.test(String(r))); }
   basePR() { return Math.min(devicePixelRatio || 1, 2) * (this.settings.resScale || 1); }
   // v2.2.1 — frame-rate governor aiming at 60 fps on every platform. It sheds the expensive extras one step at a time
   // and only lowers the render resolution as the very last resort (sharpness first); it climbs back when there is
@@ -781,7 +783,7 @@ class Game {
   // detail distance → shadows off → resolution 85 % → 70 %.
   autoQuality() {
     if (!this.fps || this.mode === 'title' || this._awaiting) return;
-    const G = this.gov ||= { lvl: isMobile ? 3 : 0, low: 0, high: 0, cool: 0, applied: -1 };
+    const G = this.gov ||= { lvl: isMobile ? 3 : this.integratedGPU() ? 2 : 0, low: 0, high: 0, cool: 0, applied: -1 };
     G.cool = Math.max(0, G.cool - 0.5);
     if (this.fps < 54) { G.low++; G.high = 0; } else if (this.fps > 63) { G.high++; G.low = 0; } else { G.low = 0; G.high = 0; }
     if (G.low >= 4 && G.cool <= 0 && G.lvl < 8) { G.lvl++; G.low = 0; G.cool = 3; }

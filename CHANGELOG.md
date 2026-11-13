@@ -1,9 +1,10 @@
 # 📜 MIDNIGHT JAPAN 업데이트 기록 · Changelog
 
-현재 버전 · Current: **v2.2.2** · [▶ 웹에서 플레이](https://midnight-japan.github.io/) · [🌐 업데이트 페이지](https://midnight-japan.github.io/changelog.html)
+현재 버전 · Current: **v2.3.0** · [▶ 웹에서 플레이](https://midnight-japan.github.io/) · [🌐 업데이트 페이지](https://midnight-japan.github.io/changelog.html)
 
 | 버전 | 날짜 | 이름 | 요약 |
 |---|---|---|---|
+| [v2.3.0](#v230--clean-cars-2026-11-13) | 2026-11-13 | Clean Cars | 깨져 보이던 차량 모델 전부 수정, 차마다 다른 엔진·블로오프 사운드, 일본 일상 교통, 더 멀리·선명한 실제 3D 건물, 과한 빛 효과 완화, M1 맥북 에어 60fps. |
 | [v2.2.2](#v222--bugfix-2026-11-13) | 2026-11-13 | Bugfix | 버그 수정: 지상으로 내려온 램프(다이시·헤이와지마·시바우라) 끝을 실제 시내 도로와 포장 연결로 이어 막다른 길 제거. |
 | [v2.2.1](#v221--60fps-2026-11-13) | 2026-11-13 | 60fps | 모든 기기에서 60프레임 목표: 선명한 해상도는 유지하고 무거운 효과부터 자동으로 줄이는 프레임 관리, 셰이더 미리 컴파일로 끊김 감소. |
 | [v2.2.0](#v220--open-road-2026-11-13) | 2026-11-13 | Open Road | 막다른 길·덮인 터널 입구·단차를 맵 전체에서 수정, 경찰은 NPC만 추격, 선명한 실해상도와 더 높은 프레임, 내 위치를 따라가는 반투명 지도, 날씨 버튼. |
@@ -37,6 +38,25 @@
 | [v0.2.0](#v020--bayshore-2026-11-05) | 2026-11-05 | Bayshore | 수도고속 완간선을 따라 하네다까지, 도쿄만 아쿠아라인 해저터널을 지나 우미호타루 PA까지. 실제 3D 차량 모델과 열리는 보닛도 들어왔어요. |
 | [v0.1.1](#v011--one-click-2026-11-04) | 2026-11-04 | One Click | 링크 하나로 바로 플레이. 크롬에서 공식 사이트 주소만 열면 설치 없이 실행돼요. |
 | [v0.1.0](#v010--first-meet-2026-11-04) | 2026-11-04 | First Meet | 첫 공개 버전. 다이코쿠 JCT·PA와 다이코쿠 부두 일대를 3D로 구현했습니다. |
+
+---
+
+## v2.3.0 — Clean Cars (2026-11-13)
+
+> 깨져 보이던 차량 모델 전부 수정, 차마다 다른 엔진·블로오프 사운드, 일본 일상 교통, 더 멀리·선명한 실제 3D 건물, 과한 빛 효과 완화, M1 맥북 에어 60fps.
+> Every broken-looking car model fixed, engine and blow-off sounds unique to each car, everyday Japanese traffic, real 3D buildings further and sharper, calmer lighting, 60 fps on an M1 MacBook Air.
+
+**🔧 변경 · Changed**
+
+- 엔진·블로오프 사운드 다양화: 차마다 다른 머플러 공명·고음 거친 소리·저음 무게(RB26·2JZ·13B 로터리·VTEC·EJ20 박서 등 엔진별 튜닝), 블로오프 5종(순정 「프슈」·대기개방 BOV·서지 플러터·짧은 처프·큰 「휘익」)<br><sub>Engine and blow-off sounds with far more character: every car gets its own muffler resonance, rasp and low-end weight (tuned for the RB26, 2JZ, 13B rotary, VTEC, EJ20 boxer …), and five blow-off styles — stock 'pssh', vent-to-atmosphere BOV, surge flutter, a short chirp and a big whoosh</sub>
+- 도로 위 NPC는 일본에서 흔히 보는 차 위주(택시·크라운·하이에이스·트럭·버스·경차·리프 등), 스포츠카는 가끔 — 모두 실제 3D 모델<br><sub>Road traffic is everyday Japan — taxis, Crowns, Hiaces, trucks, buses, kei cars, Leafs — with the odd sports car; all real 3D models</sub>
+- 더 멀리, 더 선명하게: 실제 3D 건물을 2배 먼 거리까지 표시, 안개를 옅게, 건물 텍스처를 3개 작업자로 병렬 처리해 더 빨리 선명해지고 비스듬한 각도에서도 선명(이방성 16배)<br><sub>Further and sharper: the real 3D buildings show twice as far, lighter haze, facade textures are processed by three workers in parallel so they sharpen sooner, and stay crisp at grazing angles (16× anisotropic)</sub>
+- 과한 빛 효과 완화: 블룸(빛 번짐) 절반, 가로등 조명 세기 60% 감소(건물 벽이 하얗게 날아가던 문제), 밤 창문 불빛도 차분하게<br><sub>Lighting toned down: half the bloom, street lamps 60 % dimmer (they washed building walls out white), calmer window lights at night</sub>
+- M1 맥북 에어 등 내장 GPU에서 60fps: 처음부터 가벼운 그림자 설정으로 시작하고 프레임 관리가 60fps를 유지<br><sub>60 fps on integrated GPUs such as the M1 MacBook Air: they start on the lighter shadow settings and the governor holds 60 fps</sub>
+
+**🐞 수정 · Fixed**
+
+- 깨져 보이던 차량 모델 전부 수정: 유리를 실제처럼 어두운 반투명 틴트로 통일(R32는 흰 판처럼, 모델 3는 지붕이 없는 것처럼 보였음), 한쪽 면만 그려져 각도에 따라 구멍이 나던 차체 패널을 양면으로<br><sub>Broken-looking car models fixed across the board: glass is a real dark tint everywhere (the R32 had white panes, the Model 3 looked roofless) and one-sided body panels that opened holes at some angles are drawn from both sides</sub>
 
 ---
 

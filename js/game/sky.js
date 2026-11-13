@@ -150,7 +150,7 @@ export class TimeOfDay {
     const fogDay = new THREE.Color(0x9fb6cf), fogNight = new THREE.Color(0x0a1220), fogGold = new THREE.Color(0xd9a37a);
     const fc = fogDay.clone().lerp(fogGold, golden * 0.6).lerp(fogNight, this.night);
     this.scene.fog.color.copy(fc);
-    this.scene.fog.density = 0.000045 + 0.00004 * this.night; // long view distance: Tokyo Bay skyline stays visible
+    this.scene.fog.density = 0.00003 + 0.00003 * this.night; // v2.3: see further // long view distance: Tokyo Bay skyline stays visible
     if (!this.sky.visible) this.scene.background = new THREE.Color(0x03060d); else this.scene.background = null;
     this.renderer.toneMappingExposure = 0.62 + 0.12 * day + 0.25 * this.night;
     // environment (reflections): blend between HDRIs by switching (PMREM textures can't be lerped cheaply)

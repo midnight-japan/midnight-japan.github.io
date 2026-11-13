@@ -1225,7 +1225,7 @@ export class World {
       const near = [...this.lampHeads.map(p => [p, p.distanceToSquared(focus), 0]), ...(this.city ? this.city.lampsNear(focus).map(p => [p, p.distanceToSquared(focus), 0]) : []), ...(this.tunnelHeads || []).filter(p => Math.abs(p.x - focus.x) < 300 && Math.abs(p.z - focus.z) < 300).map(p => [p, p.distanceToSquared(focus), 1])].sort((a, b) => a[1] - b[1]).slice(0, this.dyn.length);
       this.dyn.forEach((l, i) => { if (near[i]) { l.position.copy(near[i][0]); l.userData.tun = near[i][2]; } });
     }
-    for (const l of this.dyn) l.intensity = l.userData.tun ? 60 : night * 140; // tunnel lamps every 9 m: a few strong points blew the walls out
+    for (const l of this.dyn) l.intensity = l.userData.tun ? 30 : night * 55; // v2.3: softer (walls were washed out white) // tunnel lamps every 9 m: a few strong points blew the walls out
   }
 
   // v2.0 — may a car (walk = false) or a person (walk = true) be at (x, z) at height y? Everywhere on the map: only

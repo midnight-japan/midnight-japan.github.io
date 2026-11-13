@@ -16,20 +16,20 @@ const OWN = [[-3890, 686, 70], [-2648, 1979, 18], [-2700, 1585, 70], [17632, -31
 
 const A = 6378137, F = 1 / 298.257223563, B = A * (1 - F), E2 = F * (2 - F), EP2 = (A * A - B * B) / (B * B);
 const D2R = Math.PI / 180;
-const ON = { low: 1800, medium: 2600, high: 3400, ultra: 4200 };   // a dataset streams when its bounds are this close
+const ON = { low: 3000, medium: 4500, high: 6000, ultra: 8000 };  // coarse tiles are cheap: far skyline   // a dataset streams when its bounds are this close
 const ERR = { low: 130, medium: 90, high: 70, ultra: 52 };         // screen-space error target (px): leaf tiles within ≈1–2 km
 const MB = { low: 220, medium: 380, high: 620, ultra: 900 };      // tile cache budget (MB, shared by all datasets)
 const TEX = { low: 512, medium: 512, high: 1024, ultra: 2048 };  // facade atlas size cap (leaf tiles; coarser tiles get half)
 
 // facade atlases are scaled down in a worker (createImageBitmap on the main thread blocked it for 20+ ms per tile)
-let RW = null, rwId = 0; const rwCb = new Map();
-function resizeInWorker(bmp, w, h) {
+let RW = null, rwId = 0, rwNext = 0; const rwCb = new Map();
+function resizeInWorker(bmp, w, h) { // a pool of 3 workers: facades sharpen faster when many tiles arrive at once
   if (!RW) {
-    const src = "onmessage=async e=>{const{id,b,w,h}=e.data;try{const o=await createImageBitmap(b,{resizeWidth:w,resizeHeight:h,resizeQuality:'medium'});b.close();postMessage({id,o},[o]);}catch(x){postMessage({id,err:String(x)});}}";
-    RW = new Worker(URL.createObjectURL(new Blob([src], { type: 'text/javascript' })));
-    RW.onmessage = e => { const f = rwCb.get(e.data.id); rwCb.delete(e.data.id); f?.(e.data); };
+    const src = "onmessage=async e=>{const{id,b,w,h}=e.data;try{const o=await createImageBitmap(b,{resizeWidth:w,resizeHeight:h,resizeQuality:'high'});b.close();postMessage({id,o},[o]);}catch(x){postMessage({id,err:String(x)});}}";
+    const url = URL.createObjectURL(new Blob([src], { type: 'text/javascript' }));
+    RW = [0, 1, 2].map(() => { const w0 = new Worker(url); w0.onmessage = e => { const f = rwCb.get(e.data.id); rwCb.delete(e.data.id); f?.(e.data); }; return w0; });
   }
-  return new Promise((ok, no) => { const id = ++rwId; rwCb.set(id, d => d.o ? ok(d.o) : no(d.err)); RW.postMessage({ id, b: bmp, w, h }, [bmp]); });
+  return new Promise((ok, no) => { const id = ++rwId; rwCb.set(id, d => d.o ? ok(d.o) : no(d.err)); RW[rwNext++ % RW.length].postMessage({ id, b: bmp, w, h }, [bmp]); });
 }
 
 export class Plateau {
@@ -171,7 +171,7 @@ export class Plateau {
   // PLATEAU's own materials are glossy (roughness 0): a matte facade material with lit windows after dark
   material(old, tile, tiles) {
     const src = Array.isArray(old) ? old[0] : old;
-    const map = src?.map || null; if (map) { map.anisotropy = 8; map.colorSpace = THREE.SRGBColorSpace; }
+    const map = src?.map || null; if (map) { map.anisotropy = 16; map.colorSpace = THREE.SRGBColorSpace; }
     // the facade atlases are 2048–4096 px (20–85 MB each on the GPU): scale them down off the main thread
     const cap = tile.geometricError > 0 ? Math.min(256, TEX[this.q] || 512) : (TEX[this.q] || 512), im = map?.image;
     const m0 = new THREE.MeshStandardMaterial({ roughness: 0.86, metalness: 0.02 }); let pending = false;
@@ -206,7 +206,7 @@ export class Plateau {
           #endif
           float on = step(0.66, r) * step(0.25, r2) * glass * wall * step(1.0, vWP.y);
           vec3 warm = mix(vec3(1.0, 0.8, 0.55), vec3(0.82, 0.9, 1.0), step(0.85, r));
-          totalEmissiveRadiance += uNight * on * warm * (0.22 + 0.4 * r);
+          totalEmissiveRadiance += uNight * on * warm * (0.14 + 0.28 * r);
         }`);
     };
     m.customProgramCacheKey = () => 'plateau' + (m.map ? 1 : 0);

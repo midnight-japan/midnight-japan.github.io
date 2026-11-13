@@ -48,6 +48,23 @@ function splitLivery(scene, info) {
   });
   info.paint = [...new Set([...(info.paint || []), 'auto_paint'])];
 }
+// v2.3 — every car the same, clean way: glass = dark tinted see-through (some models had white opaque or fully clear
+// glass, so a car looked roofless or frosted), and body panels drawn from both sides (one-sided panels opened holes
+// at some angles — the "broken" models)
+function fixMaterials(scene, info) {
+  const glass = new Set(info.glass || []), done = new Set();
+  scene.traverse(o => {
+    if (!o.isMesh) return;
+    for (const m of Array.isArray(o.material) ? o.material : [o.material]) {
+      if (!m || done.has(m)) continue; done.add(m);
+      const isG = glass.has(m.name) || /glass|window|windscreen|windshield|cristal|vidrio/i.test(m.name || '') || m.transmission > 0 || (m.transparent && m.opacity < 0.9 && !/light|lamp|lens/i.test(m.name || ''));
+      if (isG) {
+        m.transparent = true; m.opacity = 0.42; if (m.color) m.color.setHex(0x0e1318); m.roughness = 0.05; m.metalness = 0.3;
+        if ('transmission' in m) m.transmission = 0; m.depthWrite = false; m.side = THREE.DoubleSide; m.map = null; m.needsUpdate = true;
+      } else if (!m.transparent) { m.side = THREE.DoubleSide; m.needsUpdate = true; }
+    }
+  });
+}
 export function requestGlb(id) {
   id = mid(id);
   let e = cache.get(id); if (e) return e.promise;
@@ -55,7 +72,7 @@ export function requestGlb(id) {
   e.promise = loadManifest().then(m => {
     const info = m[id]; if (!info) throw new Error('no model for ' + id);
     if (!gltf) { gltf = new GLTFLoader(); gltf.setMeshoptDecoder(MeshoptDecoder); }
-    return gltf.loadAsync(new URL(info.file, BASE).href).then(g => { e.scene = g.scene; e.info = info; e.scene.updateMatrixWorld(true); if (info.split) splitLivery(e.scene, info); return e; });
+    return gltf.loadAsync(new URL(info.file, BASE).href).then(g => { e.scene = g.scene; e.info = info; e.scene.updateMatrixWorld(true); if (info.split) splitLivery(e.scene, info); fixMaterials(e.scene, info); return e; });
   });
   e.promise.catch(err => { if (!/no model/.test(err.message)) console.warn('car model', id, err); });
   return e.promise;

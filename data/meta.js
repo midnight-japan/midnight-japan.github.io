@@ -1,8 +1,20 @@
 // Shared game metadata: version, changelog, regions. Update VERSION + CHANGELOG on every release.
-export const GAME = { title: 'MIDNIGHT JAPAN', titleJa: 'ミッドナイト・ジャパン', version: '2.2.2', build: '2026.11.13' };
+export const GAME = { title: 'MIDNIGHT JAPAN', titleJa: 'ミッドナイト・ジャパン', version: '2.3.0', build: '2026.11.13' };
 
 // Newest first. type: new | change | fix | known
 export const CHANGELOG = [
+  {
+    version: '2.3.0', date: '2026-11-13', codename: 'Clean Cars',
+    summary: { ko: '깨져 보이던 차량 모델 전부 수정, 차마다 다른 엔진·블로오프 사운드, 일본 일상 교통, 더 멀리·선명한 실제 3D 건물, 과한 빛 효과 완화, M1 맥북 에어 60fps.', ja: '崩れて見えた車のモデルをすべて修正、車ごとに違うエンジン・ブローオフ音、日本の日常の交通、もっと遠く・くっきりなリアル3Dの建物、やりすぎの光を抑制、M1 MacBook Airで60fps。', en: 'Every broken-looking car model fixed, engine and blow-off sounds unique to each car, everyday Japanese traffic, real 3D buildings further and sharper, calmer lighting, 60 fps on an M1 MacBook Air.' },
+    items: [
+      { type: "fix", ko: "깨져 보이던 차량 모델 전부 수정: 유리를 실제처럼 어두운 반투명 틴트로 통일(R32는 흰 판처럼, 모델 3는 지붕이 없는 것처럼 보였음), 한쪽 면만 그려져 각도에 따라 구멍이 나던 차체 패널을 양면으로", ja: "崩れて見えた車のモデルをすべて修正：ガラスを実車のような暗い半透明のスモークに統一（R32は白い板、モデル3は屋根がないように見えていた）、片面だけ描かれて角度によって穴が開いていたボディパネルを両面に", en: "Broken-looking car models fixed across the board: glass is a real dark tint everywhere (the R32 had white panes, the Model 3 looked roofless) and one-sided body panels that opened holes at some angles are drawn from both sides" },
+      { type: "change", ko: "엔진·블로오프 사운드 다양화: 차마다 다른 머플러 공명·고음 거친 소리·저음 무게(RB26·2JZ·13B 로터리·VTEC·EJ20 박서 등 엔진별 튜닝), 블로오프 5종(순정 「프슈」·대기개방 BOV·서지 플러터·짧은 처프·큰 「휘익」)", ja: "エンジン・ブローオフ音を多彩に：車ごとに違うマフラーの共鳴・高音のざらつき・低音の厚み（RB26・2JZ・13Bロータリー・VTEC・EJ20ボクサーなどエンジン別に調整）、ブローオフ5種（純正「プシュ」・大気開放BOV・サージのバタつき・短いチャープ・大きな「シュワー」）", en: "Engine and blow-off sounds with far more character: every car gets its own muffler resonance, rasp and low-end weight (tuned for the RB26, 2JZ, 13B rotary, VTEC, EJ20 boxer …), and five blow-off styles — stock 'pssh', vent-to-atmosphere BOV, surge flutter, a short chirp and a big whoosh" },
+      { type: "change", ko: "도로 위 NPC는 일본에서 흔히 보는 차 위주(택시·크라운·하이에이스·트럭·버스·경차·리프 등), 스포츠카는 가끔 — 모두 실제 3D 모델", ja: "道路のNPCは日本でよく見る車が中心（タクシー・クラウン・ハイエース・トラック・バス・軽・リーフなど）、スポーツカーはたまに——すべて本物の3Dモデル", en: "Road traffic is everyday Japan — taxis, Crowns, Hiaces, trucks, buses, kei cars, Leafs — with the odd sports car; all real 3D models" },
+      { type: "change", ko: "더 멀리, 더 선명하게: 실제 3D 건물을 2배 먼 거리까지 표시, 안개를 옅게, 건물 텍스처를 3개 작업자로 병렬 처리해 더 빨리 선명해지고 비스듬한 각도에서도 선명(이방성 16배)", ja: "もっと遠く、もっとくっきり：リアル3Dの建物を2倍遠くまで表示、霧を薄く、建物テクスチャを3つのワーカーで並列処理してより早くくっきり、斜めから見てもシャープ（異方性16倍）", en: "Further and sharper: the real 3D buildings show twice as far, lighter haze, facade textures are processed by three workers in parallel so they sharpen sooner, and stay crisp at grazing angles (16× anisotropic)" },
+      { type: "change", ko: "과한 빛 효과 완화: 블룸(빛 번짐) 절반, 가로등 조명 세기 60% 감소(건물 벽이 하얗게 날아가던 문제), 밤 창문 불빛도 차분하게", ja: "やりすぎの光を抑制：ブルーム（光のにじみ）を半分、街灯の明るさを60％減（建物の壁が白飛びしていた問題）、夜の窓明かりも控えめに", en: "Lighting toned down: half the bloom, street lamps 60 % dimmer (they washed building walls out white), calmer window lights at night" },
+      { type: "change", ko: "M1 맥북 에어 등 내장 GPU에서 60fps: 처음부터 가벼운 그림자 설정으로 시작하고 프레임 관리가 60fps를 유지", ja: "M1 MacBook Airなど内蔵GPUで60fps：最初から軽い影の設定で始め、フレーム管理が60fpsを維持", en: "60 fps on integrated GPUs such as the M1 MacBook Air: they start on the lighter shadow settings and the governor holds 60 fps" },
+    ]
+  },
   {
     version: '2.2.2', date: '2026-11-13', codename: 'Bugfix',
     summary: { ko: '버그 수정: 지상으로 내려온 램프(다이시·헤이와지마·시바우라) 끝을 실제 시내 도로와 포장 연결로 이어 막다른 길 제거.', ja: 'バグ修正：地上に下りたランプ（大師・平和島・芝浦）の終点を実際の街の道路と舗装でつなぎ、行き止まりを解消。', en: 'Bug fixes: the feet of the ramps brought down to the ground (Daishi, Heiwajima, Shibaura) are paved through to the real streets — no more dead ends there.' },
