@@ -181,7 +181,7 @@ export class Plateau {
       const real = map; real.image = null; pending = true;
       resizeInWorker(im, w, h).then(bmp => {
         if (!tile.engineData.scene) { bmp.close(); return; }
-        real.image = bmp; real.needsUpdate = true; m0.map = real; m0.color.set(0xffffff); m0.needsUpdate = true;
+        real.image = bmp; real.needsUpdate = true; try { this.renderer.initTexture(real); } catch {} m0.map = real; m0.color.set(0xffffff); m0.needsUpdate = true; // upload now, not inside a frame
         try { tiles._bytesUsed?.delete(tile); tiles.lruCache.setMemoryUsage(tile, tiles.getBytesUsed(tile)); } catch {}
       }).catch(() => {});
     }
@@ -226,7 +226,7 @@ export class Plateau {
       else if (d > R * 1.35 && this.live.has(i)) this.close(i);
     });
     this.camera.updateMatrixWorld(); this.group.updateMatrixWorld(true);
-    for (const t of this.live.values()) { t.setCamera(this.camera); t.setResolutionFromRenderer(this.camera, this.renderer); t.update(); }
+    for (const t of this.live.values()) { t.errorTarget = (ERR[this.q] || 70) * (this.detail || 1); t.setCamera(this.camera); t.setResolutionFromRenderer(this.camera, this.renderer); t.update(); }
   }
   // tiles still on their way (downloads, parses, facade resizes) — the spawn waits for the city around the player
   busy() { let n = rwCb.size; for (const t of this.live.values()) n += t.stats.queued + t.stats.downloading + t.stats.parsing; return n; }

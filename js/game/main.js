@@ -272,6 +272,8 @@ class Game {
       this.ui.loading(Math.min(0.97, 0.1 + 0.87 * Math.min(1, el / 4000) * (1 - b / peak)), t('game.load.plateau'));
       if (b === 0 && el > 3000) { if (++calm >= 4) break; } else calm = 0;
     }
+    // compile every shader now (behind the loading screen) instead of mid-drive — first-use compiles were 0.3–1.7 s hitches
+    try { if (this.renderer.compileAsync) await Promise.race([this.renderer.compileAsync(this.scene, this.camera), new Promise(r => setTimeout(r, 8000))]); } catch {}
     this.ui.loading(1, t('game.load.done')); this._awaiting = false;
   }
   startDrive(id, keepPos = false) {
@@ -758,7 +760,9 @@ class Game {
     I.endFrame();
     if (this.bloom) { const under = this.focus.y < -1.5; this.bloom.strength = (0.16 + 0.3 * (this.env?.night ?? 1)) * (under ? 0.4 : 1); this.bloom.threshold = under ? 1.15 : 0.9; } // tunnels: lit walls everywhere → glare
     if (this.grade) this.grade.uniforms.night.value = this.env?.night ?? 1;
-    if (this.composer && (this.bloom.enabled || this.quality !== 'low')) this.composer.render(); else this.renderer.render(this.scene, this.camera);
+    if (this.gov?.halfShadows) { this.renderer.shadowMap.autoUpdate = false; if (this.frame % 2 === 0) this.renderer.shadowMap.needsUpdate = true; } else this.renderer.shadowMap.autoUpdate = true;
+    // post-processing only when an effect needs it (bloom / AO); otherwise straight to the screen — one full-screen pass less
+    if (this.composer && (this.bloom.enabled || this.gtao?.enabled)) this.composer.render(); else this.renderer.render(this.scene, this.camera);
   }
   idleVehicle(dt) {
     const v = this.vehicle; if (!v) return;
@@ -768,16 +772,34 @@ class Game {
     this.model.root.position.copy(v.pos); this.model.root.rotation.y = v.yaw;
     this.engineSnd?.update({ rpm: v.engine.rpm, throttle: 0, load: 0, running: v.engine.running, cranking: false, boost: 0, speed: 0, slip: 0, position: v.pos, interior: false, openness: this.openness ?? 0 });
   }
-  basePR() { return Math.min(devicePixelRatio || 1, 3) * (this.settings.resScale || 1); }
+  // render scale: the display's own resolution, capped at 2× (3× phone panels are not visibly sharper and cost 2.25×)
+  basePR() { return Math.min(devicePixelRatio || 1, 2) * (this.settings.resScale || 1); }
+  // v2.2.1 — frame-rate governor aiming at 60 fps on every platform. It sheds the expensive extras one step at a time
+  // and only lowers the render resolution as the very last resort (sharpness first); it climbs back when there is
+  // headroom. Steps: AO → shadow map size + every-other-frame shadows → bloom → street-light point lights → building
+  // detail distance → shadows off → resolution 85 % → 70 %.
   autoQuality() {
-    // dynamic resolution if fps drops
-    if (!this.fps || this.mode === 'title') return;
-    const r = this.renderer; const pr = r.getPixelRatio();
-    const base = this.basePR(), floor = base * 0.85; // stay sharp: never drop far below native (it used to fall to 0.6×)
-    if (this.fps < 24 && pr > floor) r.setPixelRatio(Math.max(floor, pr * 0.95));
-    else if (this.fps > 55 && pr < base) r.setPixelRatio(Math.min(base, pr * 1.08));
-    else return;
-    this.composer.setPixelRatio?.(r.getPixelRatio()); this.composer.setSize(innerWidth, innerHeight);
+    if (!this.fps || this.mode === 'title' || this._awaiting) return;
+    const G = this.gov ||= { lvl: isMobile ? 3 : 0, low: 0, high: 0, cool: 0, applied: -1 };
+    G.cool = Math.max(0, G.cool - 0.5);
+    if (this.fps < 54) { G.low++; G.high = 0; } else if (this.fps > 63) { G.high++; G.low = 0; } else { G.low = 0; G.high = 0; }
+    if (G.low >= 4 && G.cool <= 0 && G.lvl < 8) { G.lvl++; G.low = 0; G.cool = 3; }
+    else if (G.high >= 16 && G.cool <= 0 && G.lvl > 0) { G.lvl--; G.high = 0; G.cool = 6; }
+    if (G.applied !== G.lvl) this.applyGov(G.lvl);
+  }
+  applyGov(L) {
+    const G = this.gov; G.applied = L; const r = this.renderer, sun = this.tod?.sun;
+    if (this.gtao) this.gtao.enabled = L < 1 && this.quality === 'ultra';
+    if (sun?.shadow) { const want = L >= 2 ? 1024 : (this.quality === 'ultra' ? 4096 : 2048); if (sun.shadow.mapSize.x !== want) { sun.shadow.mapSize.set(want, want); sun.shadow.map?.dispose(); sun.shadow.map = null; } }
+    G.halfShadows = L >= 2;
+    if (this.bloom) this.bloom.enabled = L < 3 && this.settings.bloom && this.quality !== 'low';
+    const nl = L >= 4 ? 0 : this.quality === 'low' ? 0 : this.quality === 'medium' ? 2 : this.quality === 'high' ? 4 : 6;
+    if (this.world.dyn && this.world.dyn.length !== nl) { for (const l of this.world.dyn) this.scene.remove(l); this.world.initDynamicLights(nl); }
+    this.world.city && (this.world.city.detail = L >= 5 ? 0.7 : 1);
+    if (this.plateau) this.plateau.detail = L >= 5 ? 1.6 : 1;
+    if (sun) { const cast = L < 6 && this.quality !== 'low'; if (sun.castShadow !== cast) sun.castShadow = cast; }
+    const pr = this.basePR() * (L >= 8 ? 0.7 : L >= 7 ? 0.85 : 1);
+    if (Math.abs(r.getPixelRatio() - pr) > 0.01) { r.setPixelRatio(pr); this.composer.setPixelRatio?.(pr); this.composer.setSize(innerWidth, innerHeight); }
   }
 
   // ───────────────────────── garage ─────────────────────────

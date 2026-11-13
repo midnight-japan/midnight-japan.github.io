@@ -378,8 +378,9 @@ export class City {
     if (!this.ready) return;
     this.uniforms.uTime.value += dt; this.uniforms.uNight.value = night;
     this.mSign.emissiveIntensity = 0.25 + night * 1.6; if (this.mDecal) this.mDecal.emissiveIntensity = 0.04 + night * 0.22;
+    if (this.installQ?.length) { const [k, t, lod, o] = this.installQ.shift(); if (this.tiles.get(k) === t && t.pending === lod) this.install(k, t, lod, o); }
     this._t = (this._t || 0) - dt; if (this._t > 0) return; this._t = 0.25;
-    const [R0, R1, R2] = this.R; const fx = focus.x, fz = focus.z;
+    const dk = this.detail || 1, R0 = this.R[0] * dk, R1 = this.R[1] * dk, R2 = this.R[2] * dk; const fx = focus.x, fz = focus.z;
     const want = new Map();
     const i0 = Math.floor((fx - R2) / TILE), i1 = Math.floor((fx + R2) / TILE), j0 = Math.floor((fz - R2) / TILE), j1 = Math.floor((fz + R2) / TILE);
     for (let i = i0; i <= i1; i++) for (let j = j0; j <= j1; j++) {
@@ -412,7 +413,7 @@ export class City {
       const job = this.queue.shift(); const t = this.tiles.get(job.k); if (!t || t.pending !== job.lod) continue;
       const id = ++this.reqId; w.busy = true; this.busy++;
       const url = new URL(`../../data/city/${job.k}.json`, import.meta.url).href;
-      this.cb.set(id, d => { if (!d.ok) { console.warn('city tile', job.k, d.err); t.pending = undefined; return; } if (this.tiles.get(job.k) !== t || t.pending !== job.lod) return; this.install(job.k, t, job.lod, d.o); });
+      this.cb.set(id, d => { if (!d.ok) { console.warn('city tile', job.k, d.err); t.pending = undefined; return; } if (this.tiles.get(job.k) !== t || t.pending !== job.lod) return; (this.installQ ||= []).push([job.k, t, job.lod, d.o]); }); // installed one per frame in update() (no hitches)
       w.postMessage({ id, url, lod: job.lod, opts: { signs: SIGNS.length } });
     }
   }

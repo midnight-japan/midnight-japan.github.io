@@ -1,9 +1,10 @@
 # 📜 MIDNIGHT JAPAN 업데이트 기록 · Changelog
 
-현재 버전 · Current: **v2.2.0** · [▶ 웹에서 플레이](https://midnight-japan.github.io/) · [🌐 업데이트 페이지](https://midnight-japan.github.io/changelog.html)
+현재 버전 · Current: **v2.2.1** · [▶ 웹에서 플레이](https://midnight-japan.github.io/) · [🌐 업데이트 페이지](https://midnight-japan.github.io/changelog.html)
 
 | 버전 | 날짜 | 이름 | 요약 |
 |---|---|---|---|
+| [v2.2.1](#v221--60fps-2026-11-13) | 2026-11-13 | 60fps | 모든 기기에서 60프레임 목표: 선명한 해상도는 유지하고 무거운 효과부터 자동으로 줄이는 프레임 관리, 셰이더 미리 컴파일로 끊김 감소. |
 | [v2.2.0](#v220--open-road-2026-11-13) | 2026-11-13 | Open Road | 막다른 길·덮인 터널 입구·단차를 맵 전체에서 수정, 경찰은 NPC만 추격, 선명한 실해상도와 더 높은 프레임, 내 위치를 따라가는 반투명 지도, 날씨 버튼. |
 | [v2.1.0](#v210--road-marks-2026-11-13) | 2026-11-13 | Road Marks | 실제 일본 도로처럼: 맵 전체에 노면 표시·표지판 — 급커브의 빨간 미끄럼 방지 포장과 감속 표시, 「速度落とせ」「合流注意」, 골목의 「止まれ」 정지선과 표지판, 속도 숫자, 그린벨트, 자전거 화살표. 다리·터널 부근의 하얀 네모 구조물 제거. |
 | [v2.0.0](#v200--real-3d-2026-11-13) | 2026-11-13 | Real 3D | 진짜 3D 일본: 일본 정부 3D 도시 모델(PLATEAU)로 도쿄 23구·요코하마·가와사키 등 46개 구·시의 실제 건물을 스트리밍. 맵 전체에서 차는 도로·갓길·주차장, 사람은 인도·주차장·건물 안으로만. 구멍 난 땅 메움, 실제 차량 그대로의 콕핏. |
@@ -35,6 +36,22 @@
 | [v0.2.0](#v020--bayshore-2026-11-05) | 2026-11-05 | Bayshore | 수도고속 완간선을 따라 하네다까지, 도쿄만 아쿠아라인 해저터널을 지나 우미호타루 PA까지. 실제 3D 차량 모델과 열리는 보닛도 들어왔어요. |
 | [v0.1.1](#v011--one-click-2026-11-04) | 2026-11-04 | One Click | 링크 하나로 바로 플레이. 크롬에서 공식 사이트 주소만 열면 설치 없이 실행돼요. |
 | [v0.1.0](#v010--first-meet-2026-11-04) | 2026-11-04 | First Meet | 첫 공개 버전. 다이코쿠 JCT·PA와 다이코쿠 부두 일대를 3D로 구현했습니다. |
+
+---
+
+## v2.2.1 — 60fps (2026-11-13)
+
+> 모든 기기에서 60프레임 목표: 선명한 해상도는 유지하고 무거운 효과부터 자동으로 줄이는 프레임 관리, 셰이더 미리 컴파일로 끊김 감소.
+> 60 fps on every device: sharpness is kept while the heaviest effects are dialled back automatically, and shaders compile behind the loading screen to stop the hitches.
+
+**🔧 변경 · Changed**
+
+- 프레임 관리: 60fps를 목표로 앰비언트 오클루전 → 그림자 해상도·갱신 주기 → 블룸 → 가로등 조명 → 건물 표시 거리 → 그림자 순서로 단계적으로 줄이고, 여유가 생기면 다시 올림. 해상도는 마지막 수단으로만 낮춤<br><sub>Frame-rate governor aiming at 60 fps: steps down ambient occlusion → shadow resolution and update rate → bloom → street-light lamps → building detail distance → shadows, and steps back up when there is headroom; resolution is lowered only as a last resort</sub>
+- 선명도: 화면 실제 해상도로 렌더링(최대 2배), 3배 밀도 휴대폰 화면은 2배로 — 눈으로 보이는 차이 없이 부하는 절반 이하<br><sub>Sharpness: rendering at the display's own resolution (up to 2×); 3× phone panels render at 2×, which looks the same at less than half the cost</sub>
+
+**🐞 수정 · Fixed**
+
+- 주행 중 끊김 감소: 모든 셰이더를 로딩 화면에서 미리 컴파일, 건물 텍스처는 도착 즉시 업로드, 시내 타일은 한 프레임에 하나씩 설치, 효과가 꺼지면 후처리 패스 생략<br><sub>Fewer hitches while driving: every shader compiles behind the loading screen, building textures upload as soon as they arrive, city tiles install one per frame, and the post-processing pass is skipped when no effect needs it</sub>
 
 ---
 

@@ -1,8 +1,17 @@
 // Shared game metadata: version, changelog, regions. Update VERSION + CHANGELOG on every release.
-export const GAME = { title: 'MIDNIGHT JAPAN', titleJa: 'ミッドナイト・ジャパン', version: '2.2.0', build: '2026.11.13' };
+export const GAME = { title: 'MIDNIGHT JAPAN', titleJa: 'ミッドナイト・ジャパン', version: '2.2.1', build: '2026.11.13' };
 
 // Newest first. type: new | change | fix | known
 export const CHANGELOG = [
+  {
+    version: '2.2.1', date: '2026-11-13', codename: '60fps',
+    summary: { ko: '모든 기기에서 60프레임 목표: 선명한 해상도는 유지하고 무거운 효과부터 자동으로 줄이는 프레임 관리, 셰이더 미리 컴파일로 끊김 감소.', ja: 'すべての端末で60fpsを目標に：くっきりした解像度は保ち、重い効果から自動で減らすフレーム管理、シェーダーの事前コンパイルでカクつきを軽減。', en: '60 fps on every device: sharpness is kept while the heaviest effects are dialled back automatically, and shaders compile behind the loading screen to stop the hitches.' },
+    items: [
+      { type: "change", ko: "프레임 관리: 60fps를 목표로 앰비언트 오클루전 → 그림자 해상도·갱신 주기 → 블룸 → 가로등 조명 → 건물 표시 거리 → 그림자 순서로 단계적으로 줄이고, 여유가 생기면 다시 올림. 해상도는 마지막 수단으로만 낮춤", ja: "フレーム管理：60fpsを目標に、アンビエントオクルージョン→影の解像度と更新頻度→ブルーム→街灯のライト→建物の表示距離→影の順に段階的に減らし、余裕があれば戻す。解像度は最後の手段としてだけ下げる", en: "Frame-rate governor aiming at 60 fps: steps down ambient occlusion → shadow resolution and update rate → bloom → street-light lamps → building detail distance → shadows, and steps back up when there is headroom; resolution is lowered only as a last resort" },
+      { type: "change", ko: "선명도: 화면 실제 해상도로 렌더링(최대 2배), 3배 밀도 휴대폰 화면은 2배로 — 눈으로 보이는 차이 없이 부하는 절반 이하", ja: "くっきり：画面の実解像度で描画（最大2倍）、3倍密度のスマホ画面は2倍に——見た目は変わらず負荷は半分以下", en: "Sharpness: rendering at the display's own resolution (up to 2×); 3× phone panels render at 2×, which looks the same at less than half the cost" },
+      { type: "fix", ko: "주행 중 끊김 감소: 모든 셰이더를 로딩 화면에서 미리 컴파일, 건물 텍스처는 도착 즉시 업로드, 시내 타일은 한 프레임에 하나씩 설치, 효과가 꺼지면 후처리 패스 생략", ja: "走行中のカクつきを軽減：全シェーダーをロード画面で事前コンパイル、建物のテクスチャは届いたらすぐ転送、街のタイルは1フレームに1つずつ設置、効果が切れたら後処理パスを省略", en: "Fewer hitches while driving: every shader compiles behind the loading screen, building textures upload as soon as they arrive, city tiles install one per frame, and the post-processing pass is skipped when no effect needs it" },
+    ]
+  },
   {
     version: '2.2.0', date: '2026-11-13', codename: 'Open Road',
     summary: { ko: '막다른 길·덮인 터널 입구·단차를 맵 전체에서 수정, 경찰은 NPC만 추격, 선명한 실해상도와 더 높은 프레임, 내 위치를 따라가는 반투명 지도, 날씨 버튼.', ja: '行き止まり・ふさがれたトンネル入口・段差をマップ全体で修正、警察はNPCだけを追跡、くっきり実解像度と高いフレーム、現在地を追う半透明マップ、天気ボタン。', en: 'Dead ends, lidded tunnel approaches and steps fixed across the map; police chase NPCs only; true resolution and a higher frame rate; a translucent map that follows you; a weather button.' },
