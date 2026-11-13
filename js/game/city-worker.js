@@ -128,6 +128,14 @@ class SegGrid {
   dist(x, z, filter) { let best = null; for (const s of this.near(x, z)) { if (filter && !filter(s)) continue; const dx = s.bx - s.ax, dz = s.bz - s.az; const L2 = dx * dx + dz * dz || 1e-9; const t = Math.max(0, Math.min(1, ((x - s.ax) * dx + (z - s.az) * dz) / L2)); const px = s.ax + dx * t, pz = s.az + dz * t; const d = Math.hypot(x - px, z - pz); if (!best || d < best.d) best = { d, s, t, px, pz }; } return best; }
 }
 
+// ── PLATEAU coverage (100 m cells → dataset index) and the datasets streaming fine in this session ──
+let PLAT = null, MAINLAND = null;
+function plateauAt(x, z) {
+  if (!PLAT) return false;
+  const row = PLAT.rows[Math.floor(z / PLAT.cell)]; if (!row) return false; const i = Math.floor(x / PLAT.cell);
+  for (let k = 0; k < row.length; k += 3) { if (i < row[k]) return false; if (i < row[k] + row[k + 1]) return PLAT.active.has(row[k + 2]); }
+  return false;
+}
 // ── driveable expressway decks (world coords, sent once by the main thread) ──
 let DECKS = null;
 // a deck at (x, z) whose surface lies between y0 and y1 (within its half-width + pad): returns its height or null
@@ -435,6 +443,12 @@ function buildTile(T, lod, opts) {
     const seedF = (seed % 997) / 997;
     const info = [kind, seedF, fh, lv];
     const cx = ob.x, cz = ob.z; C(cx, cz);
+    // v2.0: the real building comes from PLATEAU (js/game/plateau.js) — keep only its collider here
+    if (cls !== B.GAS && plateauAt(OX + cx, OZ + cz)) {
+      if (fill > 0.95) cols.push([cx, cz, ob.hl, ob.hw, Math.atan2(-ob.tz, ob.tx), -1, h]);
+      else for (let k = 0; k < pts.length; k++) { const p = pts[k], q2 = pts[(k + 1) % pts.length]; const l = Math.hypot(q2[0] - p[0], q2[1] - p[1]); if (l < 0.3) continue; cols.push([(p[0] + q2[0]) / 2, (p[1] + q2[1]) / 2, l / 2, 0.3, Math.atan2(-(q2[1] - p[1]) / l, (q2[0] - p[0]) / l), -1, h]); }
+      continue;
+    }
     // ── fuel station (ガソリンスタンド): open forecourt under a lit canopy on pillars, pump islands with dispensers,
     // a brand fascia that glows at night and a tall price pole at the kerb — drivable in, only pillars/pumps collide ──
     if (cls === B.GAS && ob.hl > 3 && ob.hw > 3) { gasStation(cx, cz, ob.tx, ob.tz, ob.hl, ob.hw, seed); continue; }
@@ -761,20 +775,106 @@ function buildTile(T, lod, opts) {
     for (let k = lamps.length - 1; k >= 0; k--) { const [x, y, z] = lamps[k]; if (deckIn(OX + x, OZ + z, 0.3, y + 1.5, 1) !== null) lamps.splice(k, 1); }
     { let w = 0; const A = trees.a, st = trees.stride; for (let k = 0; k < trees.n; k++) { const x = A[k * st], z = A[k * st + 1]; if (deckIn(OX + x, OZ + z, 0.3, 12, 1.5) !== null) continue; if (w !== k) A.copyWithin(w * st, k * st, k * st + st); w++; } trees.n = w; }
   }
-  const out = { runways, gates, rails, stations, net, sigs, land: landF.out(), bm: bm.out(), pm: pm.out(), gm: gm.out(), sg: sg.out(), road: road.out(), walk: walk.out(), paint: paint.out(), wires: wires.out(), trees: trees.out(), cols, lamps, water, bridges, ground: {} };
+  const mask = mid ? buildMask(T, streets) : null;
+  const landR = buildLand(T, streets, OX, OZ, landF);
+  const out = { mask, landR, runways, gates, rails, stations, net, sigs, land: landF.out(), bm: bm.out(), pm: pm.out(), gm: gm.out(), sg: sg.out(), road: road.out(), walk: walk.out(), paint: paint.out(), wires: wires.out(), trees: trees.out(), cols, lamps, water, bridges, ground: {} };
   for (const c in ground) out.ground[c] = ground[c].out();
   return out;
 }
 
+// ── where a car / a person may be (v2.0): 1 m raster over the tile, 0 = off limits (fields, yards, gardens, water),
+// 1 = on foot only (sidewalks, footpaths, squares), 2 = driveable (streets + shoulders, car parks, fuel forecourts,
+// konbini lots). The game keeps cars and walkers inside it everywhere in the city.
+function buildMask(T, streets) {
+  const N = 1000, M = new Uint8Array(N * N), D = 0.1;
+  const cap = (ax, az, bx, bz, r, v) => {
+    const x0 = Math.max(0, Math.floor(Math.min(ax, bx) - r)), x1 = Math.min(N - 1, Math.ceil(Math.max(ax, bx) + r));
+    const z0 = Math.max(0, Math.floor(Math.min(az, bz) - r)), z1 = Math.min(N - 1, Math.ceil(Math.max(az, bz) + r));
+    const dx = bx - ax, dz = bz - az, L2 = dx * dx + dz * dz || 1e-9, r2 = r * r;
+    for (let j = z0; j <= z1; j++) { const pz = j + 0.5; for (let i = x0; i <= x1; i++) { const px = i + 0.5; const t = Math.max(0, Math.min(1, ((px - ax) * dx + (pz - az) * dz) / L2)); const ex = px - ax - dx * t, ez = pz - az - dz * t; if (ex * ex + ez * ez <= r2) { const k = j * N + i; if (M[k] < v) M[k] = v; } } }
+  };
+  const poly = (pts, v, grow = 0) => {
+    let z0 = 1e9, z1 = -1e9; for (const p of pts) { z0 = Math.min(z0, p[1]); z1 = Math.max(z1, p[1]); }
+    for (let j = Math.max(0, Math.floor(z0)); j <= Math.min(N - 1, Math.ceil(z1)); j++) {
+      const pz = j + 0.5, xs = [];
+      for (let a = 0, b = pts.length - 1; a < pts.length; b = a++) { const A = pts[a], B2 = pts[b]; if ((A[1] > pz) !== (B2[1] > pz)) xs.push(A[0] + (pz - A[1]) / (B2[1] - A[1]) * (B2[0] - A[0])); }
+      xs.sort((p, q) => p - q);
+      for (let k = 0; k + 1 < xs.length; k += 2) for (let i = Math.max(0, Math.floor(xs[k])); i <= Math.min(N - 1, Math.ceil(xs[k + 1]) - 1); i++) { const q = j * N + i; if (M[q] < v) M[q] = v; }
+    }
+    if (grow > 0) for (let a = 0, b = pts.length - 1; a < pts.length; b = a++) cap(pts[b][0], pts[b][1], pts[a][0], pts[a][1], grow, v);
+  };
+  // walking first (lower value), driving on top
+  for (const st of streets) {
+    const hw = st.w / 2, ped = st.cls === S.PED;
+    const sw = (st.flags & 8) && st.cls <= S.TERTIARY ? (st.cls <= S.PRIMARY ? 3.5 : 2.5) : 0;
+    for (let k = 0; k < st.pts.length - 1; k++) { const [ax, az] = st.pts[k], [bx, bz] = st.pts[k + 1]; cap(ax, az, bx, bz, ped ? Math.max(1.6, hw + 0.8) : hw + sw + 2.2, 1); }
+  }
+  for (const a of T.l || []) { if (a[0] !== L.PARKING && a[0] !== 12) continue; const pts = []; for (let k = 1; k < a.length; k += 2) pts.push([a[k] * D, a[k + 1] * D]); if (pts.length >= 3) poly(pts, 2, 1.5); }
+  for (const a of T.b || []) {
+    if (a[0] !== B.GAS && a[0] !== B.KONBINI && a[0] !== B.PARKING) continue;
+    const pts = []; for (let k = 5; k < a.length; k += 2) pts.push([a[k] * D, a[k + 1] * D]); if (pts.length < 3) continue;
+    poly(pts, 2, a[0] === B.KONBINI ? 12 : a[0] === B.GAS ? 6 : 3); // the building itself stays solid (its collider)
+  }
+  for (const st of streets) {
+    if (st.cls === S.PED) continue;
+    const hw = st.w / 2 + 1.2; // carriageway + kerb / shoulder
+    for (let k = 0; k < st.pts.length - 1; k++) { const [ax, az] = st.pts[k], [bx, bz] = st.pts[k + 1]; cap(ax, az, bx, bz, hw, 2); }
+  }
+  return M;
+}
+
+// ── v2.0 land fill: piers, container yards and reclaimed land that the OSM coastline polygons miss used to be black
+// holes (and a car fell to the sea floor there). A 10 m raster of "land" = coastline land + everything a street,
+// building or land-use area stands on (minus rivers / water); cells outside the coastline get a ground quad.
+function buildLand(T, streets, OX, OZ, landF) {
+  const N = 100, C = 10, D = 0.1, have = new Uint8Array(N * N), want = new Uint8Array(N * N);
+  const fill = (pts, arr, v) => { // pts in tile metres
+    let z0 = 1e9, z1 = -1e9; for (const p of pts) { z0 = Math.min(z0, p[1]); z1 = Math.max(z1, p[1]); }
+    for (let j = Math.max(0, Math.floor(z0 / C)); j <= Math.min(N - 1, Math.floor(z1 / C)); j++) {
+      const pz = (j + 0.5) * C, xs = [];
+      for (let a = 0, b = pts.length - 1; a < pts.length; b = a++) { const A = pts[a], B2 = pts[b]; if ((A[1] > pz) !== (B2[1] > pz)) xs.push(A[0] + (pz - A[1]) / (B2[1] - A[1]) * (B2[0] - A[0])); }
+      xs.sort((p, q) => p - q);
+      for (let k = 0; k + 1 < xs.length; k += 2) for (let i = Math.max(0, Math.ceil(xs[k] / C - 0.5)); i <= Math.min(N - 1, Math.floor(xs[k + 1] / C - 0.5)); i++) arr[j * N + i] = v;
+    }
+  };
+  const cap = (ax, az, bx, bz, r) => {
+    const x0 = Math.max(0, Math.floor((Math.min(ax, bx) - r) / C)), x1 = Math.min(N - 1, Math.floor((Math.max(ax, bx) + r) / C));
+    const z0 = Math.max(0, Math.floor((Math.min(az, bz) - r) / C)), z1 = Math.min(N - 1, Math.floor((Math.max(az, bz) + r) / C));
+    const dx = bx - ax, dz = bz - az, L2 = dx * dx + dz * dz || 1e-9;
+    for (let j = z0; j <= z1; j++) for (let i = x0; i <= x1; i++) { const px = (i + 0.5) * C, pz = (j + 0.5) * C; const t = Math.max(0, Math.min(1, ((px - ax) * dx + (pz - az) * dz) / L2)); if (Math.hypot(px - ax - dx * t, pz - az - dz * t) <= r) want[j * N + i] = 1; }
+  };
+  for (const L0 of [...LAND, ...(MAINLAND ? [MAINLAND] : [])]) {
+    if (L0.x1 < OX || L0.x0 > OX + 1000 || L0.z1 < OZ || L0.z0 > OZ + 1000) continue;
+    const c = clipRect(L0.pts, OX, OZ, OX + 1000, OZ + 1000); if (c.length >= 3) fill(c.map(([x, z]) => [x - OX, z - OZ]), have, 1);
+  }
+  for (const st of streets) { if (st.flags & 5) continue; for (let k = 0; k < st.pts.length - 1; k++) cap(st.pts[k][0], st.pts[k][1], st.pts[k + 1][0], st.pts[k + 1][1], st.w / 2 + 6); }
+  for (const a of T.b || []) { const pts = []; for (let k = 5; k < a.length; k += 2) pts.push([a[k] * D, a[k + 1] * D]); if (pts.length < 3) continue; fill(pts, want, 1); let cx = 0, cz = 0; for (const p of pts) { cx += p[0]; cz += p[1]; } cap(cx / pts.length, cz / pts.length, cx / pts.length, cz / pts.length, 8); }
+  for (const a of T.l || []) { if (a[0] === L.WATER) continue; const pts = []; for (let k = 1; k < a.length; k += 2) pts.push([a[k] * D, a[k + 1] * D]); if (pts.length >= 3) fill(pts, want, 1); }
+  for (const a of T.l || []) { if (a[0] !== L.WATER) continue; const pts = []; for (let k = 1; k < a.length; k += 2) pts.push([a[k] * D, a[k + 1] * D]); if (pts.length >= 3) fill(pts, want, 0); }
+  const R = new Uint8Array(N * N);
+  for (let j = 0; j < N; j++) {
+    let i0 = -1;
+    for (let i = 0; i <= N; i++) {
+      const add = i < N && want[j * N + i] && !have[j * N + i];
+      if (i < N) R[j * N + i] = have[j * N + i] || want[j * N + i] ? 1 : 0;
+      if (add && i0 < 0) i0 = i;
+      if (!add && i0 >= 0) { const x0 = i0 * C, x1 = i * C, z0 = j * C, z1 = (j + 1) * C, y = -0.012; landF.tri([x0, y, z0], [x0, y, z1], [x1, y, z1], [1, 1, 1]); landF.tri([x0, y, z0], [x1, y, z1], [x1, y, z0], [1, 1, 1]); i0 = -1; }
+    }
+  }
+  return R;
+}
+
 self.onmessage = async ev => {
   if (ev.data.decks) { const a = ev.data.decks; DECKS = new SegGrid(); for (let k = 0; k < a.length; k += 7) DECKS.add({ ax: a[k], ay: a[k + 1], az: a[k + 2], bx: a[k + 3], by: a[k + 4], bz: a[k + 5], w: a[k + 6] * 2 }); return; }
+  if (ev.data.plateau) { const q = ev.data.plateau; PLAT = { cell: q.cell, rows: q.cov, active: new Set(q.active) }; return; }
+  if (ev.data.mainLand) { const pts = ev.data.mainLand; let x0 = 1e9, x1 = -1e9, z0 = 1e9, z1 = -1e9; for (const [x, z] of pts) { x0 = Math.min(x0, x); x1 = Math.max(x1, x); z0 = Math.min(z0, z); z1 = Math.max(z1, z); } MAINLAND = { pts, x0, x1, z0, z1 }; return; }
   if (ev.data.land) { LAND = ev.data.land.map(pts => { let x0 = 1e9, x1 = -1e9, z0 = 1e9, z1 = -1e9; for (const [x, z] of pts) { x0 = Math.min(x0, x); x1 = Math.max(x1, x); z0 = Math.min(z0, z); z1 = Math.max(z1, z); } return { pts, x0, x1, z0, z1 }; }); return; }
   const { id, url, lod, opts } = ev.data;
   try {
     let T = cache.get(url);
     if (!T) { const r = await fetch(url); if (!r.ok) throw new Error(r.status + ' ' + url); T = await r.json(); cache.set(url, T); if (cache.size > 80) cache.delete(cache.keys().next().value); }
     const o = buildTile(T, lod, opts || {});
-    const tr = [o.land.buffer, ...o.bm.map(b => b.buffer), ...o.pm.map(b => b.buffer), ...o.gm.map(b => b.buffer), ...o.sg.map(b => b.buffer), o.road.buffer, o.walk.buffer, o.paint.buffer, o.wires.buffer, o.trees.buffer, ...Object.values(o.ground).map(g => g.buffer)];
+    const tr = [o.land.buffer, ...o.bm.map(b => b.buffer), ...o.pm.map(b => b.buffer), ...o.gm.map(b => b.buffer), ...o.sg.map(b => b.buffer), o.road.buffer, o.walk.buffer, o.paint.buffer, o.wires.buffer, o.trees.buffer, ...Object.values(o.ground).map(g => g.buffer)]; if (o.mask) tr.push(o.mask.buffer); tr.push(o.landR.buffer);
     self.postMessage({ id, ok: true, o }, tr);
   } catch (e) { self.postMessage({ id, ok: false, err: String(e && e.stack || e) }); }
 };

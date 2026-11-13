@@ -9,6 +9,9 @@ import { carImage } from './carart.js';
 const ic = p => `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">${p}</svg>`;
 // (Desktop/mobile/PWA is covered by the "Start in 3 steps" section, so it is not repeated here.)
 const FEATURES = [
+  ['real3d', ic('<path d="M12 2 3 7l9 5 9-5z"/><path d="M3 7v10l9 5V12M21 7v10l-9 5"/>'), '3D都市'],
+  ['fence', ic('<path d="M4 21V7l2-3 2 3v14M16 21V7l2-3 2 3v14M8 10h8M8 16h8"/>'), '道路'],
+  ['cockpit', ic('<circle cx="12" cy="13" r="8"/><path d="M12 13l4-3M4 13h2M18 13h2M12 5v2"/>'), 'コックピット'],
   ['city', ic('<path d="M3 21V9l5-3v15M8 21V4l7 3v14M15 21v-9l6-2v11M2 21h20"/><path d="M11 9h1M11 12h1M11 15h1M18 13h1M18 16h1"/>'), '実在の街'],
   ['tune', ic('<circle cx="12" cy="12" r="3"/><path d="M12 2v3M12 19v3M2 12h3M19 12h3M4.9 4.9l2.1 2.1M17 17l2.1 2.1M4.9 19.1 7 17M17 7l2.1-2.1"/>'), 'チューン'],
   ['pa', ic('<path d="M4 20V5h7a4 4 0 0 1 0 8H4"/><path d="M15 20h5"/>'), '大黒PA'],
@@ -30,7 +33,7 @@ const FEATURES = [
 //    sips -s format jpeg -s formatOptions 78 -Z 1600 X.png --out X.jpg && sips -s format jpeg -s formatOptions 74 -Z 800 X.png --out X-800.jpg
 // Caption: i18n key site.shot.<first 2 chars> if it exists, otherwise the file name ("08-wangan-night" → "Wangan night").
 // 9 entries fill the grid exactly on desktop (first one large). Other shots on disk: 05-onfoot, 06-tollgate.
-const SHOTS = ['26-k1-night', '18-minatomirai', '25-k1-tunnel', '24-rain', '22-haneda', '19-city-aerial', '07-ae86-loops', '17-city-night', '23-foodcourt', '16-tsubasa', '21-tuning'];
+const SHOTS = ['42-tokyo-night', '40-real-yokohama', '43-real-cockpit', '44-mm-street', '26-k1-night', '18-minatomirai', '25-k1-tunnel', '24-rain', '22-haneda', '19-city-aerial', '07-ae86-loops', '17-city-night', '23-foodcourt', '16-tsubasa', '21-tuning'];
 const SHOT_DIR = 'docs/screenshots/';
 const shotSrc = (s, w) => SHOT_DIR + s + (w === 800 ? '-800' : '') + '.jpg';
 const shotCap = s => {
@@ -71,8 +74,11 @@ const ROADMAP = [
   ['0.9', 'done', ['nav', 'damage', 'talk', 'fuel']],
   ['0.10', 'done', ['touge']],
   ['0.11', 'done', ['c1']],
-  ['1.0', 'now', ['routes', 'site', 'money']],
-  ['1.1', 'next', ['07.cars', '03.events']],
+  ['1.0', 'done', ['routes', 'site', 'money']],
+  ['1.1', 'done', ['20.connected', '20.sound']],
+  ['1.2', 'done', ['20.autopilot', '20.mapall']],
+  ['2.0', 'now', ['20.real3d', '20.fence', '20.cockpit']],
+  ['2.1', 'next', ['07.cars', '03.events', '20.more3d']],
   ['Later', 'later', ['02.perf']],
 ];
 
@@ -277,6 +283,7 @@ onLang(() => { document.getElementById('hero-cars').textContent = t('site.show.a
 
 // ── v1.0 hero: cinematic slideshow (slow push-in + crossfade) with the location of each shot ──
 const SLIDES = [
+  ['40-real-yokohama', '横浜みなとみらい · 3D都市モデル'], ['42-tokyo-night', '東京 · 都心の夜'], ['41-real-tokyo', '東京タワー · 夕暮れ'],
   ['27-c1night', '首都高速都心環状線 · 銀座'], ['29-hakone_dusk', 'アネスト岩田ターンパイク箱根'], ['31-k1rain', '首都高速K1横羽線 · 横浜駅'],
   ['28-c1tunnel', '首都高速都心環状線 · 掘割'], ['30-hakone_day', '大観山 · 箱根'], ['32-bayday', '首都高速湾岸線 · 鶴見つばさ橋'], ['26-k1-night', '首都高速K1横羽線'],
 ];

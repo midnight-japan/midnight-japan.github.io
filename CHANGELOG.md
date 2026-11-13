@@ -1,9 +1,10 @@
 # 📜 MIDNIGHT JAPAN 업데이트 기록 · Changelog
 
-현재 버전 · Current: **v1.2.0** · [▶ 웹에서 플레이](https://midnight-japan.github.io/) · [🌐 업데이트 페이지](https://midnight-japan.github.io/changelog.html)
+현재 버전 · Current: **v2.0.0** · [▶ 웹에서 플레이](https://midnight-japan.github.io/) · [🌐 업데이트 페이지](https://midnight-japan.github.io/changelog.html)
 
 | 버전 | 날짜 | 이름 | 요약 |
 |---|---|---|---|
+| [v2.0.0](#v200--real-3d-2026-11-13) | 2026-11-13 | Real 3D | 진짜 3D 일본: 일본 정부 3D 도시 모델(PLATEAU)로 도쿄 23구·요코하마·가와사키 등 46개 구·시의 실제 건물을 스트리밍. 맵 전체에서 차는 도로·갓길·주차장, 사람은 인도·주차장·건물 안으로만. 구멍 난 땅 메움, 실제 차량 그대로의 콕핏. |
 | [v1.2.0](#v120--autopilot-2026-11-13) | 2026-11-13 | Autopilot | 자동주행(J / AUTO 버튼): 주차 칸에서 출발해 1차로(추월차로)로 맵 전체를 순회. 지도(M)는 실제 OSM 도로·건물·강·철도까지 전부 보이는 전체 지도로 열리고, 차량은 실제 순정 컬러로 도색. |
 | [v1.1.1](#v111--sound-&-traffic-2026-11-13) | 2026-11-13 | Sound & Traffic | 교통차량은 전부 실제 3D 모델, 추월차로(1차로)는 플레이어 전용, 경적에 비켜 주는 차들, 실제 녹음으로 바꾼 사운드와 터보 블로오프 「프슈욱」. |
 | [v1.1.0](#v110--connected-2026-11-12) | 2026-11-12 | Connected | 맵 전체가 하나로 — 다이코쿠·요코하마·가와사키·하네다·도쿄 도심(C1)·레인보우 브리지·하코네까지 실제 도로로 막힘 없이 이어짐. |
@@ -32,6 +33,28 @@
 | [v0.2.0](#v020--bayshore-2026-11-05) | 2026-11-05 | Bayshore | 수도고속 완간선을 따라 하네다까지, 도쿄만 아쿠아라인 해저터널을 지나 우미호타루 PA까지. 실제 3D 차량 모델과 열리는 보닛도 들어왔어요. |
 | [v0.1.1](#v011--one-click-2026-11-04) | 2026-11-04 | One Click | 링크 하나로 바로 플레이. 크롬에서 공식 사이트 주소만 열면 설치 없이 실행돼요. |
 | [v0.1.0](#v010--first-meet-2026-11-04) | 2026-11-04 | First Meet | 첫 공개 버전. 다이코쿠 JCT·PA와 다이코쿠 부두 일대를 3D로 구현했습니다. |
+
+---
+
+## v2.0.0 — Real 3D (2026-11-13)
+
+> 진짜 3D 일본: 일본 정부 3D 도시 모델(PLATEAU)로 도쿄 23구·요코하마·가와사키 등 46개 구·시의 실제 건물을 스트리밍. 맵 전체에서 차는 도로·갓길·주차장, 사람은 인도·주차장·건물 안으로만. 구멍 난 땅 메움, 실제 차량 그대로의 콕핏.
+> Real 3D Japan: the national 3D city model (PLATEAU) streams the real buildings of 46 wards and cities — all of Tokyo's 23 wards, Yokohama, Kawasaki and more. Map-wide fence: cars keep to roads, shoulders and car parks, people to sidewalks, car parks and buildings. No more holes in the ground, and cockpits built on the real cars.
+
+**✨ 추가 · New**
+
+- 실제 3D 도시: 일본 국토교통성 3D 도시 모델(Project PLATEAU)의 실제 건물을 달리는 동안 스트리밍 — 도쿄 23구 전체, 요코하마 전역, 가와사키·가마쿠라·후지사와·기사라즈·하코네 등 46개 구·시. 측량된 실제 형태와 실제 외벽 사진(LOD2 텍스처), 밤에는 창문에 불, 설치·다운로드 없이 브라우저에서<br><sub>Real 3D city: the real buildings of MLIT's 3D city model (Project PLATEAU) stream in as you drive — all 23 Tokyo wards, all of Yokohama, Kawasaki, Kamakura, Fujisawa, Kisarazu, Hakone: 46 wards and cities with their surveyed shapes and real facade photos (LOD2 textures), lit windows at night, in the browser with nothing to install</sub>
+- 맵 전체 경계: 차는 차도·갓길·주차장(PA·우미호타루·하코네·시내 모든 주차장·주유소·편의점 앞)에서만, 걸을 때는 인도·보행로·주차장·건물 안에서만 — 공터·정원·밭으로는 못 들어가고 벽처럼 미끄러지듯 막힘<br><sub>Map-wide fence: cars stay on carriageways, shoulders and car parks (the PA, Umihotaru, Hakone, every city car park, fuel forecourt and konbini lot); on foot you keep to sidewalks, footpaths, car parks and buildings — no more driving into yards, gardens or fields, you slide along the edge like a wall</sub>
+
+**🔧 변경 · Changed**
+
+- 콕핏을 실제 차량 그대로: 1인칭에서 실제 3D 모델의 A필러·지붕·보닛·사이드미러를 그대로 보여 주고, 계기판·핸들·시트를 실제 차 실내 치수(지붕 높이·앞유리·도어)에 맞춰 배치 — 화면을 가로지르던 검은 필러, 보닛 위에 떠 있던 미러, 겹쳐 보이던 핸들 제거<br><sub>Cockpits built on the real cars: first person keeps the real 3D model's A-pillars, roof, bonnet and door mirrors, and the dash, wheel and seats are fitted to the real cabin (roof height, windscreen, door) — no more black pillar across the screen, mirrors floating on the bonnet or doubled steering wheels</sub>
+- 새로 단장한 웹사이트(진짜 3D 일본 섹션·새 스크린샷)와 GitHub 소개<br><sub>Renewed website (Real 3D Japan section, new screenshots) and GitHub page</sub>
+
+**🐞 수정 · Fixed**
+
+- v1.1.0부터 시내(건물·도로·주차장 전부)가 아예 로드되지 않던 오류 수정 — 맵 곳곳이 텅 빈 구멍처럼 보이던 원인<br><sub>Fixed the streamed city (every building, street and car park) not loading at all since v1.1.0 — why the map looked like empty holes</sub>
+- 구멍 메움: 해안선 데이터에 빠져 있던 부두·컨테이너 야드·매립지에 땅을 깔고 물리도 적용 (차가 바다 밑으로 떨어지던 곳), 위에서 검게 보이던 바다는 남색으로<br><sub>No holes: piers, container yards and reclaimed land the coastline data missed now have ground — rendered and solid (cars used to drop to the sea floor there) — and the sea no longer looks like a black void from above</sub>
 
 ---
 

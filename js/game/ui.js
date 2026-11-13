@@ -54,7 +54,7 @@ export class UI {
         <button class="btn sm" data-a="controls">🎮 <span data-i18n="game.menu.controls"></span></button>
         <a class="btn sm ghost" href="index.html">🌐 <span data-i18n="game.title.site"></span></a></div>
         <p class="hint" data-i18n="game.title.hint"></p>
-        <div class="title-ver">MIDNIGHT JAPAN v${GAME.version} · ${GAME.build} · Map data © <a href="https://www.openstreetmap.org/copyright" target="_blank" rel="noopener">OpenStreetMap</a> contributors</div>
+        <div class="title-ver">MIDNIGHT JAPAN v${GAME.version} · ${GAME.build} · Map data © <a href="https://www.openstreetmap.org/copyright" target="_blank" rel="noopener">OpenStreetMap</a> contributors · Buildings: <a href="credits.html" target="_blank" rel="noopener">3D都市モデル（PLATEAU）国土交通省</a></div>
       </div></div>
       <div id="garage" class="screen side"><div class="panel">
         <div class="ph"><h2 data-i18n="game.garage.title"></h2><button class="x" data-a="garageBack">✕</button></div>

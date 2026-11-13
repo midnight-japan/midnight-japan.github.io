@@ -28,6 +28,7 @@ import { Trains } from './trains.js';
 import { Walkers } from './walkers.js';
 import { Planes } from './planes.js';
 import { Weather } from './weather.js';
+import { Plateau } from './plateau.js';
 import { NPCs, CHATTER } from './npc.js';
 import { Online } from './online.js';
 import { Accidents } from './accident.js';
@@ -109,6 +110,8 @@ class Game {
     await new Promise(r => setTimeout(r, 20));
     this.world = new World(this.scene, this.net, this.quality);
     await this.world.build();
+    // v2.0: the real buildings (PLATEAU 3D city models, streamed) — ?noplateau=1 keeps the procedural city
+    if (!/[?&]noplateau=1/.test(location.search)) { try { this.plateau = new Plateau(this.world, this.scene, this.camera, renderer, this.quality); if (!(await this.plateau.init())) this.plateau = null; } catch (e) { console.warn('plateau', e); this.plateau = null; } }
     this.world.initDynamicLights(this.quality === 'low' ? 0 : this.quality === 'medium' ? 4 : 8);
     this.ui.loading(0.65, t('game.load.sky'));
     this.tod = new TimeOfDay(this.scene, renderer, this.quality);
@@ -243,6 +246,19 @@ class Game {
     } catch (e) { console.warn('spawn', e); }
     return null;
   }
+  // v2.0: hold the loading screen while the real 3D city streams in around a fresh spawn (no empty blocks)
+  async awaitCity() {
+    const P = this.plateau; if (!P || this._awaiting) return; this._awaiting = true;
+    document.getElementById('loading')?.classList.add('show');
+    const t0 = performance.now(); let calm = 0, peak = 1;
+    while (performance.now() - t0 < 30000) {
+      await new Promise(r => setTimeout(r, 250));
+      const b = P.busy(), el = performance.now() - t0; peak = Math.max(peak, b);
+      this.ui.loading(Math.min(0.97, 0.1 + 0.87 * Math.min(1, el / 4000) * (1 - b / peak)), t('game.load.plateau'));
+      if (b === 0 && el > 3000) { if (++calm >= 4) break; } else calm = 0;
+    }
+    this.ui.loading(1, t('game.load.done')); this._awaiting = false;
+  }
   startDrive(id, keepPos = false) {
     this.unlockAudio();
     const prev = this.vehicle;
@@ -272,6 +288,7 @@ class Game {
     if (this.settings.online) { this.online.start(); this.online.announce(); }
     let seen = false; try { seen = localStorage.getItem('dn.tutorial') === '1'; } catch {}
     if (!seen && !new URLSearchParams(location.search).get('auto')) this.ui.startTutorial();
+    if (!keepPos) this.awaitCity();
   }
 
   swapPlayerModel(id) {
@@ -324,7 +341,14 @@ class Game {
   }
   // walkable = PA/lot walk areas, or any road deck (shoulder / stopped on the expressway) at our level
   roadAt(x, z, y) { const q = this.net.query(x, z, y + 0.6, (a, b) => this.world.ground(a, b)); return q.onRoad && Math.abs(q.y - y) < 0.9 ? q : null; }
-  walkable(x, z, y) { return (y < 1.2 && this.world.canWalk(x, z, true) && !this.cityBlocked(x, z)) || !!this.roadAt(x, z, y); }
+  // v2.0: on foot only on roads / sidewalks / footpaths, car parks and inside buildings (world.access), never through walls
+  walkable(x, z, y) {
+    if (this.roadAt(x, z, y)) return true;
+    const W = this.world; if (y > W.ground(x, z) + 1.2) return false;
+    const inR = r => { let px = x, pz = z; if (r.f) [px, pz] = r.f.local(x, z); return px > r.x0 && px < r.x1 && pz > r.z0 && pz < r.z1; };
+    if (W.pedBlock?.some(inR)) return false;
+    return W.access(x, z, y, true) && !this.cityBlocked(x, z);
+  }
   cityBlocked(x, z) { const c = this.world.city; if (!c) return false; for (const C of c.collidersAt(x, z)) { const dx = x - C.x, dz = z - C.z; const lx = dx * C.c - dz * C.s, lz = dx * C.s + dz * C.c; if (Math.abs(lx) < C.hx + 0.3 && Math.abs(lz) < C.hz + 0.3) return true; } return false; }
   walkY(x, z, y) { const q = this.roadAt(x, z, y); if (q && (y > 1.2 || !this.world.canWalk(x, z))) return q.y; return (z < -53.9 && z > -60.2) ? 0.15 : z < -60 && z > -84 && x > -55 && x < 55 ? 0.21 : 0; }
   updateWalk(dt) {
@@ -541,7 +565,7 @@ class Game {
       const r = best.r, L = r.lanes.filter(l => l.dir === 1).sort((a, b) => b.lat - a.lat)[0] || r.lanes[0];
       const p = r.at(best.s, L.lat), d = r.dirAt(best.s); v.place(p.clone().setY(p.y + 0.3), Math.atan2(d.x * L.dir, d.z * L.dir));
     } else { v.place(new THREE.Vector3(x, this.world.ground(x, z) + 0.4, z), v.yaw); this._snap = { x, z, t: 12 }; }
-    v.handbrakeOn = true; this.camSnap = true; this.ui.toast(t('game.map.tpDone'), 'info', 2);
+    v.handbrakeOn = true; this.camSnap = true; this.ui.toast(t('game.map.tpDone'), 'info', 2); this.awaitCity();
   }
   snapUpdate(dt) {
     const S = this._snap; if (!S) return; S.t -= dt; const N = this.world.city?.net; const v = this.vehicle;
@@ -563,6 +587,7 @@ class Game {
 
   // ───────────────────────── camera ─────────────────────────
   updateCamera(dt) {
+    if (window.__CAM) { const c = window.__CAM; this.camera.position.set(c[0], c[1], c[2]); this.camera.lookAt(c[3], c[4], c[5]); this.focus.set(c[3], 0, c[5]); return; } // QA: fixed camera
     // near plane: tight only inside the car; elsewhere 0.45 m keeps distant ground from z-fighting with the sea
     { const nr = (this.mode === 'drive' && (this.camMode === 'cockpit' || this.camMode === 'hood')) ? 0.08 : this.mode === 'walk' ? 0.2 : 0.45; if (this.camera.near !== nr) { this.camera.near = nr; this.camera.updateProjectionMatrix(); } }
     const cam = this.camera, I = this.input;
@@ -701,6 +726,7 @@ class Game {
     this.world.update(dt, this.env);
     this.world.updateDynamicLights(dt, this.focus, this.env.night);
     this.world.city?.update(dt, this.focus, this.env.night);
+    this.plateau?.update(this.focus);
     // audio listener & environment
     if (this.audio.ready) {
       const cam = this.camera; const fw = new THREE.Vector3(); cam.getWorldDirection(fw);

@@ -604,7 +604,8 @@ export function buildCar(car, opts = {}) {
 
   // ───── details: mirrors, exhaust, wing, plates, grille, wipers, trims ─────
   for (const sx of [1, -1]) {
-    const z = P.zA - 0.12, x = sx * (P.half(z) * 0.97 + 0.06), y = P.top(z) + 0.1;
+    // on the door at the A-pillar foot, just above the beltline (before: out on the bonnet corner, floating in the cockpit view)
+    const z = P.zA - 0.3, x = sx * (P.half(z) * 0.97 + 0.07), y = Math.max(S.belt, P.top(P.zA - 0.05)) + 0.07;
     const mg = new THREE.Group(); mg.position.set(x, y, z);
     const shell = new THREE.Mesh(new THREE.SphereGeometry(0.075, low ? 10 : 20, low ? 8 : 12), paintFlat); shell.scale.set(1.3, 0.75, 0.75);
     const arm = new THREE.Mesh(rbox(0.09, 0.03, 0.06, 0.012), m.trim); arm.position.x = -sx * 0.07; arm.position.y = -0.035;

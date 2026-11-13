@@ -298,8 +298,9 @@ export class City {
       w.onmessage = ev => { const d = ev.data; const f = this.cb.get(d.id); this.cb.delete(d.id); w.busy = false; this.busy--; f?.(d); this.pump(); };
       w.onerror = e => { console.warn('city worker', e.message); w.busy = false; this.busy = Math.max(0, this.busy - 1); };
       w.postMessage({ land: MAP.land.filter(l => !l.main && l.name !== '海ほたるPA').map(l => l.pts) });
+      { const M = MAP.land.find(l => l.main); if (M) w.postMessage({ mainLand: M.pts }); }
       // the driveable expressway decks, so the tiles never stand a pier, building, pole or tree through one
-      { const dk = []; for (const r of world.net?.roads || []) { if (r.kind === 'local' || r.kind === 'mountain') continue; const hw = (r.edgeL - r.edgeR) / 2; const S = r.samples; for (let i = 0; i < S.length - 1; i += 2) { const a = S[i].p, b = S[Math.min(S.length - 1, i + 2)].p; dk.push(a.x, a.y, a.z, b.x, b.y, b.z, hw); } }
+      { const dk = []; for (const r of this.world.net?.roads || []) { if (r.kind === 'local' || r.kind === 'mountain') continue; const hw = (r.edgeL - r.edgeR) / 2; const S = r.samples; for (let i = 0; i < S.length - 1; i += 2) { const a = S[i].p, b = S[Math.min(S.length - 1, i + 2)].p; dk.push(a.x, a.y, a.z, b.x, b.y, b.z, hw); } }
         w.postMessage({ decks: new Float32Array(dk) }); }
       this.workers.push(w);
     }
@@ -328,6 +329,12 @@ export class City {
     return true;
   }
 
+  // v2.0: hand the PLATEAU coverage to the workers (buildings there come from js/game/plateau.js) and rebuild
+  setPlateau(cell, cov, active) {
+    for (const w of this.workers || []) w.postMessage({ plateau: { cell, cov, active } });
+    for (const [k, t] of this.tiles) if (t.lod >= 0) this.request(k, { i: t.i, j: t.j, lod: t.lod, d: 0 });
+    this.pump();
+  }
   // ── streaming ──
   update(dt, focus, night) {
     if (!this.ready) return;
@@ -400,7 +407,7 @@ export class City {
     // swap in
     if (t.group) { this.group.remove(t.group); disposeGroup(t.group); }
     this.unindex(t);
-    t.group = grp; t.lod = lod; t.pending = undefined;
+    t.group = grp; t.lod = lod; t.pending = undefined; t.mask = o.mask || null; t.landR = o.landR || null;
     this.group.add(grp);
     // colliders → grid (world coords)
     t.cols = o.cols.map(([x, z, hx, hz, ry, y0, y1]) => ({ x: x + ox, z: z + oz, hx, hz, c: Math.cos(ry), s: Math.sin(ry), y0, y1, kind: 'city' }));
@@ -429,6 +436,18 @@ export class City {
   }
 
   // ── queries used by physics / pedestrians / lights ──
+  // v2.0 access mask: 2 driveable, 1 on foot, 0 off limits; -1 = city tile here but not built yet, -2 = no city here
+  maskAt(x, z) {
+    const i = Math.floor(x / TILE), j = Math.floor(z / TILE), k = i + '_' + j, t = this.tiles.get(k);
+    if (!t || !t.mask) return this.has?.has(k) ? -1 : -2;
+    return t.mask[Math.floor(z - j * TILE) * TILE + Math.floor(x - i * TILE)];
+  }
+  // v2.0 land raster (10 m): 1 land, 0 water; -1 = unknown here
+  landAt(x, z) {
+    const i = Math.floor(x / TILE), j = Math.floor(z / TILE), t = this.tiles.get(i + '_' + j);
+    if (!t || !t.landR) return -1;
+    return t.landR[Math.floor((z - j * TILE) / 10) * 100 + Math.floor((x - i * TILE) / 10)];
+  }
   collidersAt(x, z) { return this.cgrid.get(Math.floor(x / this.CG) * 100003 + Math.floor(z / this.CG)) || EMPTY; }
   inWater(x, z) {
     const a = this.wgrid.get(Math.floor(x / this.WG) * 100003 + Math.floor(z / this.WG)); if (!a || !a.w.length) return false;

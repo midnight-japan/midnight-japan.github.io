@@ -158,7 +158,7 @@ export class World {
     if (inHakone(x, z)) return true;
     if (x < CR[0] || x > CR[2] || z < CR[1] || z > CR[3]) return farLand(x, z);
     for (const l of LAND) { const b = l.bb; if (x > b.x0 && x < b.x1 && z > b.z0 && z < b.z1 && inPoly(x, z, l.pts)) return true; }
-    return false;
+    return this.city ? this.city.landAt(x, z) === 1 : false; // piers / yards the coastline misses (v2.0)
   }
   zoneAt(x, z, y) {
     if (inHakone(x, z)) { const L = this.hakone?.lotAt(x, z); if (L) return L.name === '大観山' ? '大観山 · 箱根' : L.name + ' · 箱根ターンパイク'; const h = this.net.query(x, z, y); return h.road ? h.road.name : '箱根'; }
@@ -251,7 +251,7 @@ export class World {
     const seaGeo = new THREE.PlaneGeometry(140000, 140000, 1, 1); seaGeo.rotateX(-Math.PI / 2);
     const seaNormal = makeWaterNormal();
     seaNormal.repeat.set(7000, 7000);
-    this.sea = new THREE.Mesh(seaGeo, new THREE.MeshStandardMaterial({ color: 0x0c1e2a, roughness: 0.18, metalness: 0.1, normalMap: seaNormal, normalScale: new THREE.Vector2(0.3, 0.3), envMapIntensity: 0.35 }));
+    this.sea = new THREE.Mesh(seaGeo, new THREE.MeshStandardMaterial({ color: 0x183543, roughness: 0.2, metalness: 0.1, normalMap: seaNormal, normalScale: new THREE.Vector2(0.3, 0.3), envMapIntensity: 0.35 }));
     this.sea.position.y = SEA_Y; this.sea.receiveShadow = true;
     this.group.add(this.sea);
   }
@@ -1121,6 +1121,31 @@ export class World {
       this.dyn.forEach((l, i) => { if (near[i]) { l.position.copy(near[i][0]); l.userData.tun = near[i][2]; } });
     }
     for (const l of this.dyn) l.intensity = l.userData.tun ? 60 : night * 140; // tunnel lamps every 9 m: a few strong points blew the walls out
+  }
+
+  // v2.0 — may a car (walk = false) or a person (walk = true) be at (x, z) at height y? Everywhere on the map: only
+  // carriageways and their shoulders, car parks (Daikoku PA, Umihotaru, Hakone, every OSM car park and forecourt),
+  // footpaths / sidewalks and building interiors for people. Returns true while the city tile there is still loading.
+  access(x, z, y, walk = false) {
+    for (const h of this.net.hits(x, z)) {
+      if (h.beyond || Math.abs(h.y - y) > 2.5) continue;
+      const m = h.road.kind === 'local' ? (h.road.sidewalk || 3) + (walk ? 2 : 1.2) : (walk ? 2.6 : 1.4);
+      if (h.lat <= h.road.edgeL + m && h.lat >= h.road.edgeR - m) return true;
+    }
+    if (PA.inLot(x, z, walk ? 1.5 : 0.3)) return true;
+    if (walk && this.walkRects.some(r => { let px = x, pz = z; if (r.f) [px, pz] = r.f.local(x, z); return px > r.x0 && px < r.x1 && pz > r.z0 && pz < r.z1; })) return true;
+    if (this.lotPolys) for (const P of this.lotPolys) if (inPoly(x, z, P)) return true;
+    if (walk && this.umiRing && inPoly(x, z, this.umiRing)) return true;
+    if (inHakone(x, z)) { const L = this.hakone?.lotAt(x, z); if (L) return true; }
+    const m = this.city ? this.city.maskAt(x, z) : -2;
+    if (m === -1) return true; // not streamed in yet: never trap the player
+    return m >= (walk ? 1 : 2);
+  }
+  // nearest allowed point (spiral search, 1 m steps) — for spawns, teleports and getting out of the car
+  nearestAccess(x, z, y, walk = false, R = 80) {
+    if (this.access(x, z, y, walk)) return { x, z };
+    for (let r = 1; r <= R; r += 1) { const n = Math.max(8, Math.round(r * 6.3)); for (let k = 0; k < n; k++) { const a = k / n * Math.PI * 2, px = x + Math.cos(a) * r, pz = z + Math.sin(a) * r; if (this.access(px, pz, y, walk)) return { x: px, z: pz }; } }
+    return null;
   }
 
   // pedestrian walkability

@@ -156,7 +156,7 @@ export class Vehicle {
   get speed() { return Math.hypot(this.vel.x, this.vel.z); }
   get forward() { return new THREE.Vector3(Math.sin(this.yaw), 0, Math.cos(this.yaw)); }
   get left() { return new THREE.Vector3(Math.cos(this.yaw), 0, -Math.sin(this.yaw)); }
-  place(pos, yaw) { this.pos.copy(pos); this.yaw = yaw; this.vel.set(0, 0, 0); this.yawRate = 0; this.vx = 0; this.vlat = 0; this.vy = 0; this.slip = 0; }
+  place(pos, yaw) { this.pos.copy(pos); this.yaw = yaw; this._okPos = null; this.vel.set(0, 0, 0); this.yawRate = 0; this.vx = 0; this.vlat = 0; this.vy = 0; this.slip = 0; }
 
   get gearLabel() {
     if (this.mode === 'auto' || this.ev) { if (this.atSel === 'D') return this.ev ? (this.regenLevel === 3 ? 'B' : 'D') : 'D' + (this.gear > 0 ? this.gear : ''); return this.atSel; }
@@ -544,18 +544,30 @@ export class Vehicle {
         }
       }
     }
-    // Daikoku PA sits inside the JCT loops on fenced, unlit waste ground: once past the lot fence the car must stay on the
-    // ramps / streets (before, it could leave a ground-level ramp sideways and roam a black void under the viaducts)
-    if (Math.abs(this.pos.y) < 1.5 && PA.inLot(this.pos.x, this.pos.z, 170) && !PA.inLot(this.pos.x, this.pos.z, 0.3)) {
-      const ok = q.onRoad || net.hits(this.pos.x, this.pos.z).some(h => { if (h.beyond || Math.abs(h.y - this.pos.y) > 2) return false; const m = h.road.kind === 'local' ? (h.road.sidewalk || 3) + 1 : 1.2; return h.lat <= h.road.edgeL + m && h.lat >= h.road.edgeR - m; });
+    // v2.0 — the whole map is fenced: the car stays on carriageways + shoulders and in car parks (world.access). Nose,
+    // centre and tail are tested; leaving the allowed area is a wall hit back to the last good position, sliding along
+    if (world.access) {
+      const hl = this.car.L / 2000 * 0.8; let bx = null, bz = 0;
+      for (const o of [0, hl, -hl]) { const x = this.pos.x + f.x * o, z = this.pos.z + f.z * o; if (!world.access(x, z, this.pos.y, false)) { bx = x; bz = z; break; } }
       const o = this._okPos;
-      if (!ok && o && Math.hypot(o.x - this.pos.x, o.z - this.pos.z) < 6) {
-        let nx = o.x - this.pos.x, nz = o.z - this.pos.z; const d = Math.hypot(nx, nz) || 1; nx /= d; nz /= d;
+      if (bx === null) { (this._okPos ||= { x: 0, z: 0 }); this._okPos.x = this.pos.x; this._okPos.z = this.pos.z; }
+      else if (o && Math.hypot(o.x - this.pos.x, o.z - this.pos.z) < 8) {
+        let nx = 0, nz = 0;
+        for (let k = 0; k < 8; k++) { const a = k * Math.PI / 4, cx = Math.cos(a), cz = Math.sin(a); if (world.access(bx + cx * 2.5, bz + cz * 2.5, this.pos.y, false)) { nx += cx; nz += cz; } }
+        let mx = this.pos.x - o.x, mz = this.pos.z - o.z; const ml = Math.hypot(mx, mz); // the step that left the area
+        if (ml > 1e-4) { mx /= ml; mz /= ml; }
+        if (Math.abs(nx) + Math.abs(nz) < 1e-3 || (ml > 1e-4 && nx * mx + nz * mz > -0.2)) { nx = -mx; nz = -mz; }
+        const d = Math.hypot(nx, nz) || 1; nx /= d; nz /= d;
         this.pos.x = o.x; this.pos.z = o.z;
         const vn = this.vel.x * nx + this.vel.z * nz;
         if (vn < 0) { this.wallHit(nx, nz, -vn); if (vn < -3) this.events.push('crash'); }
-      } else (this._okPos ||= { x: 0, z: 0 }, this._okPos.x = this.pos.x, this._okPos.z = this.pos.z);
-    } else (this._okPos ||= { x: 0, z: 0 }, this._okPos.x = this.pos.x, this._okPos.z = this.pos.z);
+        // never keep pushing into the boundary (the speedo used to climb while the car stood against it)
+        if (ml > 1e-4) { const vm = this.vel.x * mx + this.vel.z * mz; if (vm > 0) { this.vel.x -= mx * vm; this.vel.z -= mz * vm; this.vx = this.vel.dot(this.forward); this.vlat = this.vel.dot(this.left); } }
+      } else { // dropped somewhere off limits (teleport, old save): put the car on the nearest road / car park
+        const n = world.nearestAccess(this.pos.x, this.pos.z, this.pos.y, false, 120);
+        if (n) { this.pos.x = n.x; this.pos.z = n.z; this.vel.x = this.vel.z = 0; (this._okPos ||= { x: 0, z: 0 }); this._okPos.x = n.x; this._okPos.z = n.z; }
+      }
+    }
     // static colliders (3 circles along the car)
     const rad = this.car.W / 2000 * 0.95, halfL = this.car.L / 2000;
     for (const off of [-halfL + rad, 0, halfL - rad]) {

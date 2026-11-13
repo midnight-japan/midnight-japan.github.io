@@ -1,11 +1,12 @@
 # MIDNIGHT JAPAN — ミッドナイト・ジャパン · 미드나잇 재팬
 
-Free 3D browser driving game — one connected network of real Japanese roads, rebuilt from OpenStreetMap and elevation data:
-Daikoku PA and the Shuto Bayshore, the K1/K3 Yokohama loop, Route 1 Haneda, the Rainbow Bridge, the C1 Inner Circular through
-central Tokyo, and 59 km of coastal bypasses to the Hakone Turnpike touge — with the cities along the way (790,000 buildings,
-traffic, trains, people, Haneda, rain).
+**Real 3D Japan in your browser.** A free 3D driving game on one connected network of real Japanese roads — Daikoku PA and
+the Shuto Bayshore, the K1/K3 Yokohama loop, Route 1 Haneda, the Rainbow Bridge, the C1 Inner Circular and the Hakone
+Turnpike — through the real buildings of 46 wards and cities (all 23 Tokyo wards, Yokohama, Kawasaki and more) streamed
+from Japan's national 3D city model, Project PLATEAU.
 
-![MIDNIGHT JAPAN](docs/screenshots/27-c1night.jpg)
+![MIDNIGHT JAPAN](docs/screenshots/40-real-yokohama.jpg)
 **Play: https://midnight-japan.github.io/** — runs in the browser, no install.
 
-Credits & licences: [credits.html](https://midnight-japan.github.io/credits.html) · Map data © OpenStreetMap contributors (ODbL).
+Credits & licences: [credits.html](https://midnight-japan.github.io/credits.html) · Buildings: 3D都市モデル（Project PLATEAU）国土交通省 ·
+Map data © OpenStreetMap contributors (ODbL).

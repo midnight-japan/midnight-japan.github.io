@@ -109,7 +109,7 @@
   <!-- HERO — image: docs/screenshots/00-hero.jpg (2560w) + 00-hero-1440.jpg + 00-hero-800.jpg; keep the subject on the right third -->
   <section class="hero" aria-labelledby="hero-title">
     <div class="hero-media hero-slides" id="hero-slides" aria-hidden="true">
-      <img class="hero-shot slide on" src="docs/screenshots/27-c1night.jpg" srcset="docs/screenshots/27-c1night-800.jpg 800w, docs/screenshots/27-c1night.jpg 1600w" sizes="100vw" alt="" width="1600" height="900" fetchpriority="high" data-loc="首都高速都心環状線 · 銀座">
+      <img class="hero-shot slide on" src="docs/screenshots/40-real-yokohama.jpg" srcset="docs/screenshots/40-real-yokohama-800.jpg 800w, docs/screenshots/40-real-yokohama.jpg 1600w" sizes="100vw" alt="" width="1600" height="900" fetchpriority="high" data-loc="横浜みなとみらい · 3D都市モデル">
     </div>
     <div class="hero-loc" id="hero-loc" aria-hidden="true"></div>
     <div class="hero-grain" aria-hidden="true"></div>
@@ -118,7 +118,8 @@
         <a class="badge-ver" id="hero-badge" href="changelog.html"><i>NEW</i><span id="hero-version">v0.2.0</span><span class="badge-code" id="hero-code"></span></a>
         <h1 class="hero-title" id="hero-title"><span>Midnight</span><span class="glow">Japan</span></h1>
         <p class="hero-jp"><span lang="ja">ミッドナイト・ジャパン</span><span class="hero-ko" lang="ko">미드나잇 재팬</span></p>
-        <p class="hero-tag" data-i18n="site.hero.tagline">Midnight at Daikoku PA. Bring your car, pop the hood, and watch the city lights roll across Tokyo Bay.</p>
+        <p class="hero-r3" data-i18n="site.hero.r3">REAL 3D JAPAN · 2.0</p>
+        <p class="hero-tag" data-i18n="site.hero.tagline2">Every real building of Tokyo, Yokohama and Kawasaki — the national 3D city model, streamed straight into your browser. Drive the Shuto at midnight through the real Japan.</p>
         <div class="hero-cta">
           <a class="btn btn-play btn-xl" id="hero-play" href="play.html"><svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M7 4.5v15l13-7.5z"/></svg><span data-i18n="site.hero.play">Play now</span></a>
           <a class="btn btn-glass" id="hero-cars" href="cars.html">All cars →</a>
@@ -130,7 +131,7 @@
       <div class="wrap">
         <ul class="hero-meta">
           <li><b>7</b><span data-i18n="site.hero.statRoutes">drivable routes</span></li>
-          <li><b>546</b><span data-i18n="site.hero.statBuildings">k real buildings</span></li>
+          <li><b>46</b><span data-i18n="site.hero.statReal3d">wards &amp; cities in real 3D</span></li>
           <li><b id="hero-carcount">41</b><span data-i18n="site.hero.statCars">real cars</span></li>
           <li><b>20</b><span data-i18n="site.hero.statLangs">languages</span></li>
           <li class="hs-route"><span class="route">B</span><span class="route">K1</span><span class="route">C1</span><span class="route aq">TP</span><span lang="ja">湾岸線 · 横羽線 · 都心環状線 · 箱根</span></li>
@@ -141,6 +142,35 @@
 
   <!-- route-sign ticker (decorative) -->
   <div class="ticker" aria-hidden="true"><div class="ticker-track" id="ticker"></div></div>
+
+  <!-- v2.0 REAL 3D: the PLATEAU city, the fenced map, the real cockpit -->
+  <section class="section real3d" id="real3d" aria-labelledby="real3d-title">
+    <div class="wrap">
+      <div class="r3-grid">
+        <figure class="r3-media">
+          <img src="docs/screenshots/41-real-tokyo-800.jpg" srcset="docs/screenshots/41-real-tokyo-800.jpg 800w, docs/screenshots/41-real-tokyo.jpg 1600w" sizes="(min-width: 900px) 60vw, 100vw" alt="" loading="lazy" decoding="async" width="1600" height="900">
+          <figcaption lang="ja">東京 · 東京タワーと富士山 — 3D都市モデル（PLATEAU）</figcaption>
+        </figure>
+        <div class="r3-copy">
+          <span class="kicker"><span class="route aq">2.0</span><span data-i18n="site.r3.kicker">Real 3D Japan</span></span>
+          <h2 class="sec-title" id="real3d-title" data-i18n="site.r3.title">Not a model of Japan. Japan.</h2>
+          <p class="sec-lead" data-i18n="site.r3.lead">The same open 3D city model the Japanese government publishes for city planning — surveyed buildings with their real shapes and real facade photos — streams in around you as you drive. No install, nothing to download.</p>
+          <ul class="r3-points">
+            <li><b data-i18n="site.r3.p1">46 wards and cities, building by building</b><span data-i18n="site.r3.p1d">All 23 wards of Tokyo, all of Yokohama, Kawasaki, Kamakura, Fujisawa, Kisarazu and Hakone. Lit windows after dark.</span></li>
+            <li><b data-i18n="site.r3.p2">Roads are roads</b><span data-i18n="site.r3.p2d">Cars stay on carriageways, shoulders and car parks; on foot you keep to sidewalks, car parks and buildings — everywhere on the map.</span></li>
+            <li><b data-i18n="site.r3.p3">The real car around you</b><span data-i18n="site.r3.p3d">The cockpit view keeps the real model's pillars, roof, bonnet and mirrors, with a live dashboard fitted into its cabin.</span></li>
+          </ul>
+          <a class="btn btn-play" href="play.html?spawn=c1"><svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M7 4.5v15l13-7.5z"/></svg><span data-i18n="site.r3.cta">Drive central Tokyo</span></a>
+        </div>
+      </div>
+      <div class="r3-strip">
+        <figure><img src="docs/screenshots/42-tokyo-night-800.jpg" alt="" loading="lazy" decoding="async" width="800" height="450"><figcaption data-i18n="site.r3.cap1">Tokyo after dark</figcaption></figure>
+        <figure><img src="docs/screenshots/43-real-cockpit-800.jpg" alt="" loading="lazy" decoding="async" width="800" height="450"><figcaption data-i18n="site.r3.cap2">The real R34 from the driver's seat</figcaption></figure>
+        <figure><img src="docs/screenshots/44-mm-street-800.jpg" alt="" loading="lazy" decoding="async" width="800" height="450"><figcaption data-i18n="site.r3.cap3">Minato Mirai at street level</figcaption></figure>
+      </div>
+      <p class="r3-src" data-i18n="site.r3.src">Buildings: 3D City Model (Project PLATEAU), Ministry of Land, Infrastructure, Transport and Tourism · Roads: © OpenStreetMap contributors</p>
+    </div>
+  </section>
 
   <!-- ROUTES: five real places to drive, each opens the game there -->
   <section class="section routes" id="routes" aria-labelledby="routes-title">

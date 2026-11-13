@@ -168,21 +168,98 @@ export function buildGlbCar(car, e, opts = {}) {
   const bay = opts.openable === false || low ? null : analyseBay(e, REAR_ENGINE(car));
   let cut = null;
   if (bay) cut = makeOpenable(model, vis, bay, car, new Set(matMap.values()));
-  // first-person view: the procedural cabin (aligned with its own greenhouse, full interior) replaces the model
+  // first-person view (v2.0): the REAL model stays on screen — its own pillars, roof, bonnet, door mirrors — seen from
+  // inside as dark trim, and the detailed procedural cabin (dash, live cluster, wheel, seats, console) is fitted into the
+  // real model's cabin, measured by rays from the driver's eye (roof liner, windscreen, door) against both bodies.
   if (full && parts.eye) {
     model.cockpitView = false;
+    const interiorG = bodyG.getObjectByName('interior');
+    const inCabin = new Set(); interiorG?.traverse(o => inCabin.add(o));
+    const INTERIOR_RE = /interior|interier|seat|steer|dash|gauge|carpet|pedal|cabin|(^|[_\s.-])int([_\s.-]|$)|leather|stitch|visor/i;
+    const glbInside = [], glbMats = new Set();
+    const glassNames = new Set(info.glass || []);
+    const isGlass = m => glassNames.has(m.name) || /glass|window|windscreen|windshield/i.test(m.name || '') || (m.transmission > 0) || (m.opacity < 0.95);
+    vis.traverse(o => { if (!o.isMesh) return; const ms = Array.isArray(o.material) ? o.material : [o.material]; if (ms.some(m => INTERIOR_RE.test(m.name || '')) || INTERIOR_RE.test(o.name || '')) glbInside.push(o); });
+    // the player's copy of the body materials: double-sided in the cockpit, back faces = dark trim
+    const trimU = { uCk: { value: 0 }, uBodyInv: { value: new THREE.Matrix4() }, uCab: { value: new THREE.Vector4(0, 0.3, -9, 99) }, uWs: { value: new THREE.Vector3(0, 1, -99) } };
+    vis.traverse(o => {
+      if (!o.isMesh) return;
+      const ms = (Array.isArray(o.material) ? o.material : [o.material]).map(m => {
+        if (isGlass(m)) return m;
+        const c = own(m); if (glbMats.has(c)) return c; glbMats.add(c);
+        const prev = c.onBeforeCompile;
+        c.onBeforeCompile = (sh, r) => {
+          prev?.call(c, sh, r); Object.assign(sh.uniforms, trimU);
+          sh.vertexShader = sh.vertexShader.replace('#include <common>', '#include <common>\nuniform mat4 uBodyInv; varying vec3 vCk;').replace('#include <worldpos_vertex>', '#include <worldpos_vertex>\nvCk = (uBodyInv * modelMatrix * vec4(transformed, 1.0)).xyz;');
+          sh.fragmentShader = sh.fragmentShader.replace('#include <common>', '#include <common>\nuniform float uCk; uniform vec4 uCab; uniform vec3 uWs; varying vec3 vCk;')
+            .replace('#include <clipping_planes_fragment>', `#include <clipping_planes_fragment>
+            if (uCk > 0.5) { // the model's own cabin (seats, dash, wheel …) gives way to the fitted cockpit
+              float hw = uCab.x - 0.16 * clamp((vCk.y - uCab.y) / max(0.05, uCab.z - uCab.y), 0.0, 1.0);
+              if (abs(vCk.x) < hw && vCk.y > 0.22 && vCk.y < uCab.z && vCk.z > uCab.w && vCk.y * uWs.x + vCk.z * uWs.y < uWs.z) discard;
+            }`)
+            .replace('#include <color_fragment>', '#include <color_fragment>\nif (uCk > 0.5 && !gl_FrontFacing) diffuseColor.rgb = vec3(0.045, 0.045, 0.05);');
+        };
+        c.customProgramCacheKey = () => 'ck' + (prev ? 1 : 0) + c.type;
+        return c;
+      });
+      o.material = Array.isArray(o.material) ? ms : ms[0];
+    });
+    let fitted = false;
+    const fit = () => {
+      fitted = true; if (!interiorG) return;
+      root.updateMatrixWorld(true);
+      const rc = new THREE.Raycaster(); rc.near = 0.02; rc.far = 3.5;
+      const shellP = procShell.filter(o => o.isMesh && !inCabin.has(o) && o.name !== 'headliner'), shellG = [], glassG = [];
+      vis.traverse(o => { if (!o.isMesh) return; const ms = Array.isArray(o.material) ? o.material : [o.material]; if (ms.every(isGlass)) glassG.push(o); else if (!glbInside.includes(o)) shellG.push(o); });
+      const cast = (list, dir, from = null) => {
+        const sides = list.map(o => { const ms = Array.isArray(o.material) ? o.material : [o.material]; const k = ms.map(m => m.side); ms.forEach(m => { m.side = THREE.DoubleSide; }); return [ms, k]; });
+        const vis0 = list.map(o => o.visible); list.forEach(o => { o.visible = true; });
+        const E = bodyG.localToWorld((from || parts.eye).clone()), D = dir.clone().transformDirection(bodyG.matrixWorld);
+        rc.set(E, D); const h = rc.intersectObjects(list, false)[0];
+        list.forEach((o, i) => { o.visible = vis0[i]; }); sides.forEach(([ms, k]) => ms.forEach((m, i) => { m.side = k[i]; }));
+        if (!h) return null; const q = bodyG.worldToLocal(h.point.clone()); q.hit = h.object.name + '/' + ((Array.isArray(h.object.material) ? h.object.material[0] : h.object.material)?.name || ''); return q;
+      };
+      const fwd = new THREE.Vector3(0, 0.15, 1).normalize(), side = new THREE.Vector3(Math.sign(parts.eye.x) || -1, -0.9, 0).normalize();
+      const above = parts.eye.clone().setY(parts.eye.y + 2), down = new THREE.Vector3(0, -1, 0);
+      let rG = cast([...shellG, ...glassG], down, above);         // real roof (outer top; sunroof glass counts) over the head
+      if (rG && rG.y < parts.eye.y + 0.08) rG = null;             // fell through an opening
+      const wP = cast(shellP, fwd), wG = cast(glassG.length ? glassG : shellG, fwd) || cast(shellG, fwd); // windscreen, same ray, both bodies
+      const dP = cast(shellP, side), dG = cast(shellG, side);     // driver's door inner face
+      const off = new THREE.Vector3();
+      if (rG) off.y = THREE.MathUtils.clamp(rG.y - 0.24 - parts.eye.y, -0.2, 0.15); // seated eye ≈ 24 cm under the roof
+      if (wP && wG) off.z = THREE.MathUtils.clamp(wG.z - wP.z, -0.35, 0.35);
+      let sx = 1; if (dP && dG && Math.abs(dP.x) > 0.3) sx = THREE.MathUtils.clamp(Math.abs(dG.x) / Math.abs(dP.x), 0.88, 1.1);
+      interiorG.position.add(off); interiorG.scale.x *= sx;
+      parts.eye.x *= sx; parts.eye.add(off);
+      // cabin volume of the real model: door inner face, eye height, windscreen plane (two hits on the glass)
+      const gl = glassG.length ? glassG : shellG;
+      const A = cast(gl, fwd) || cast(shellG, fwd), B2 = cast(gl, new THREE.Vector3(0, -0.03, 1).normalize()) || cast(shellG, new THREE.Vector3(0, -0.03, 1).normalize());
+      if (dG && A) {
+        const Bp = B2 && B2.z > A.z - 0.05 && B2.y < A.y - 0.05 ? B2 : new THREE.Vector3(0, A.y - 0.35, A.z + 0.38); // fallback: a 45° screen
+        let ny = Bp.z - A.z, nz = -(Bp.y - A.y); const L = Math.hypot(ny, nz) || 1; ny /= L; nz /= L; if (nz < 0) { ny = -ny; nz = -nz; } // normal pointing forward
+        trimU.uWs.value.set(ny, nz, ny * A.y + nz * A.z - 0.035);
+        trimU.uCab.value.set(Math.abs(dG.x) - 0.035, parts.eye.y - 0.55, parts.eye.y + 0.06, parts.eye.z - 2.2);
+      }
+      model.cockpitFit = { off: off.toArray().map(v => +v.toFixed(3)), sx: +sx.toFixed(3), hits: [!!rG, !!wP, !!wG, !!dP, !!dG, !!A, !!B2], glass: glassG.length, roof: rG && [+rG.y.toFixed(2), rG.hit], ws: wG && [+wG.y.toFixed(2), +wG.z.toFixed(2), wG.hit], door: dG && [+dG.x.toFixed(2), dG.hit], eye: parts.eye.toArray().map(v => +v.toFixed(2)) };
+    };
     model.setCockpitView = on => {
       on = !!on; if (on === model.cockpitView) return; model.cockpitView = on;
-      for (const o of procShell) o.visible = on;
-      for (const d of parts.doors) d.pivot.visible = on;
-      vis.visible = !on;
-      if (procHood) procHood.visible = on;
-      if (model.parts.hood?.pivot && model.parts.hood.pivot !== procHood) model.parts.hood.pivot.visible = !on;
+      if (on && !fitted) fit();
+      for (const o of procShell) o.visible = on && inCabin.has(o);
+      for (const o of glbInside) o.visible = true;
+      for (const d of parts.doors) d.pivot.visible = false;
+      vis.visible = true; trimU.uCk.value = on ? 1 : 0;
+      for (const m of glbMats) { m.side = on ? THREE.DoubleSide : THREE.FrontSide; m.needsUpdate = true; }
+      if (procHood) procHood.visible = false;
+      if (model.parts.hood?.pivot && model.parts.hood.pivot !== procHood) model.parts.hood.pivot.visible = true;
     };
+    parts.doorMirrors = []; // the real model's own mirrors are on screen
+    model._trimU = trimU;
   }
   const base = model.onUpdate;
   model.onUpdate = dt => {
     base?.(dt);
+    if (model.cockpitView && model._trimU) model._trimU.uBodyInv.value.copy(bodyG.matrixWorld).invert();
     const L = model.lights; const blink = model.blinkOn;
     const headOn = L.head || L.drl === true, brake = L.brake, pos = L.head || L.pos;
     for (const m of head) { m.emissive.setHex(0xfff4e0); m.emissiveIntensity = headOn ? (L.high ? 3 : 2) : (L.hazard && blink ? 0.6 : 0); }

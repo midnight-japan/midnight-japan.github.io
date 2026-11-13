@@ -46,6 +46,16 @@ Attribution is not required, but credited here with thanks.
 | `hdri/highway_bridge_sunset_2k.hdr` | Highway Bridge Sunset | Dario Barresi, Jenelle van Heerden | Poly Haven | https://polyhaven.com/a/highway_bridge_sunset | CC0 |
 | `hdri/wide_street_01_2k.hdr` | Wide Street 01 | Sergej Majboroda | Poly Haven | https://polyhaven.com/a/wide_street_01 | CC0 |
 
+## Real 3D city — 3D City Model (Project PLATEAU)
+
+Buildings of the Tokyo wards, Yokohama, Kawasaki, Kamakura, Fujisawa, Kisarazu and Hakone: **3D都市モデル（Project PLATEAU）国土交通省** — the 3D city models published by Japan's Ministry of Land, Infrastructure, Transport and Tourism (MLIT), streamed at run time as 3D Tiles from PLATEAU's public CDN and re-projected into the game. Used under the [PLATEAU Site Policy](https://www.mlit.go.jp/plateau/site-policy/) (compatible with CC BY 4.0). Dataset list: [G空間情報センター / PLATEAU data catalogue](https://www.geospatial.jp/ckan/dataset/plateau). The game adjusts the models (heights set on the game's ground, simplified textures, night-time window lights); these changes are ours, not MLIT's.
+
+## Libraries
+
+- [three.js](https://threejs.org) r180 — MIT
+- [3d-tiles-renderer](https://github.com/NASA-AMMOS/3DTilesRendererJS) 0.5.4 (NASA-AMMOS) — Apache-2.0
+- [Draco](https://github.com/google/draco) mesh decoder (Google) — Apache-2.0
+
 ## 3D car models
 
 The car models in `assets/models/cars/` are third-party works downloaded from Sketchfab (via public mirrors of the original Sketchfab downloads) and licensed under **Creative Commons Attribution 4.0 International (CC BY 4.0)** — https://creativecommons.org/licenses/by/4.0/. All were modified for this game: optimized/compressed (rescaled to metres and re-oriented, wheels split into separate nodes, some materials recoloured, textures resized and converted to WebP, meshopt-compressed; high-poly models were geometry-simplified). `police`, `police_unmarked` and `taxi` reuse `crown.glb`. See `assets/models/cars/manifest.json` for per-model details.

@@ -94,7 +94,7 @@ function buildUmihotaru(W, S, H) {
     const ring = [];
     for (let s = L.s0; s <= L.s1 + 0.1; s += 5) { const p = r.at(s, L.lat1); ring.push([p.x, p.z]); }
     for (let s = L.s1; s >= L.s0 - 0.1; s -= 5) { const p = r.at(s, L.lat0); ring.push([p.x, p.z]); }
-    S.add(polyGeo(ring, 0.03), lot);
+    S.add(polyGeo(ring, 0.03), lot); (W.lotPolys ||= []).push(ring);
     // two rows of stalls: along the outer edge and along the inner edge, 2.5 m wide, 5 m deep
     const line = (s, la, lb) => { const a = r.at(s, la), b = r.at(s, lb); const len = Math.hypot(b.x - a.x, b.z - a.z); S.add(planeGeo(0.15, len), lineM, (a.x + b.x) / 2, 0.045, (a.z + b.z) / 2, Math.atan2(b.x - a.x, b.z - a.z)); };
     for (let s = L.s0 + 20; s <= L.s1 - 20 + 0.01; s += 2.5) {
