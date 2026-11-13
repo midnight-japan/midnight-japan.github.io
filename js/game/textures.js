@@ -5,13 +5,14 @@ import * as THREE from 'three';
 const BASE = new URL('../../assets/', import.meta.url);
 let manifest = null;
 let anisotropy = 4;
-let hiRes = false; // load 2K maps (manifest `hi`) on high/ultra
+let hiRes = false, loRes = false; // load 2K maps (manifest `hi`) on high/ultra
 const loader = new THREE.TextureLoader();
 const matCache = new Map();
 
 export async function initTextures(renderer, quality = 'high') {
   anisotropy = Math.min(renderer.capabilities.getMaxAnisotropy(), quality === 'low' ? 2 : quality === 'medium' ? 4 : quality === 'high' ? 12 : 16);
   hiRes = quality === 'high' || quality === 'ultra';
+  loRes = quality === 'low'; // v2.5.1: phones get 512 px copies (assets/textures/*/m/) — a fraction of the bytes
   try { const r = await fetch(new URL('textures/manifest.json', BASE)); manifest = r.ok ? await r.json() : null; } catch { manifest = null; }
 }
 
@@ -47,7 +48,7 @@ function findReal(role) {
 
 function loadMap(name, map, srgb, rep) {
   const hi = hiRes && manifest?.materials?.[name]?.hi?.includes(map);
-  const t = loader.load(new URL(`textures/${name}/${hi ? '2k/' : ''}${map}.jpg`, BASE).href);
+  const t = loader.load(new URL(`textures/${name}/${hi ? '2k/' : loRes ? 'm/' : ''}${map}.jpg`, BASE).href);
   t.wrapS = t.wrapT = THREE.RepeatWrapping; t.anisotropy = anisotropy;
   if (srgb) t.colorSpace = THREE.SRGBColorSpace;
   t.repeat.set(rep, rep);

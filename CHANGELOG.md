@@ -1,9 +1,10 @@
 # 📜 MIDNIGHT JAPAN 업데이트 기록 · Changelog
 
-현재 버전 · Current: **v2.5.0** · [▶ 웹에서 플레이](https://midnight-japan.github.io/) · [🌐 업데이트 페이지](https://midnight-japan.github.io/changelog.html)
+현재 버전 · Current: **v2.5.1** · [▶ 웹에서 플레이](https://midnight-japan.github.io/) · [🌐 업데이트 페이지](https://midnight-japan.github.io/changelog.html)
 
 | 버전 | 날짜 | 이름 | 요약 |
 |---|---|---|---|
+| [v2.5.1](#v251--fast-start-2026-11-14) | 2026-11-14 | Fast Start | 로딩 대폭 단축(PC 48초 → 13초, 시작 전 데이터 96MB → 25MB), 휴대폰 전용 가벼운 텍스처, 디테일한 후지산, 수도고 전역에 큰 방면 안내판·정보판·속도 표지, 다이코쿠 PA 분수 광장·이륜차 주차장·흡연소(OSM 위치). |
 | [v2.5.0](#v250--night-cruise-2026-11-14) | 2026-11-14 | Night Cruise | 왼쪽 아래 큰 지도(실제 지도·내 위치·차종), 더 똑똑한 자동변속, 실제 램프 위치에서 나오는 깜빡이·브레이크·전조등, 바다에 빠지지 않게, ETC 안내 음성, 엔진 개성 강화, 그 자리에서 차고·튜닝, 라디오 다음 곡, 字光式·お辞儀 번호판. |
 | [v2.4.0](#v240--smooth-stance-2026-11-13) | 2026-11-13 | Smooth Stance | 렉·끊김 대폭 감소(주행 중 셰이더 재컴파일 제거), 차 파손은 옵션(기본 끔), 더 간단한 설정 화면, 스탠스 프리셋 9종과 차종별 기본 세팅, 실제 3D 도쿄 타워. |
 | [v2.3.0](#v230--clean-cars-2026-11-13) | 2026-11-13 | Clean Cars | 깨져 보이던 차량 모델 전부 수정, 차마다 다른 엔진·블로오프 사운드, 일본 일상 교통, 더 멀리·선명한 실제 3D 건물, 과한 빛 효과 완화, M1 맥북 에어 60fps. |
@@ -40,6 +41,27 @@
 | [v0.2.0](#v020--bayshore-2026-11-05) | 2026-11-05 | Bayshore | 수도고속 완간선을 따라 하네다까지, 도쿄만 아쿠아라인 해저터널을 지나 우미호타루 PA까지. 실제 3D 차량 모델과 열리는 보닛도 들어왔어요. |
 | [v0.1.1](#v011--one-click-2026-11-04) | 2026-11-04 | One Click | 링크 하나로 바로 플레이. 크롬에서 공식 사이트 주소만 열면 설치 없이 실행돼요. |
 | [v0.1.0](#v010--first-meet-2026-11-04) | 2026-11-04 | First Meet | 첫 공개 버전. 다이코쿠 JCT·PA와 다이코쿠 부두 일대를 3D로 구현했습니다. |
+
+---
+
+## v2.5.1 — Fast Start (2026-11-14)
+
+> 로딩 대폭 단축(PC 48초 → 13초, 시작 전 데이터 96MB → 25MB), 휴대폰 전용 가벼운 텍스처, 디테일한 후지산, 수도고 전역에 큰 방면 안내판·정보판·속도 표지, 다이코쿠 PA 분수 광장·이륜차 주차장·흡연소(OSM 위치).
+> Much faster loading (48 s → 13 s on PC, 96 MB → 25 MB before you drive), lighter textures for phones, a detailed Mt Fuji, big direction signs / message boards / speed limits along every expressway, and Daikoku PA's fountain plaza, motorcycle bay and smoking corner at their OpenStreetMap positions.
+
+**✨ 추가 · New**
+
+- 수도고 전역의 큰 표지판: 분기점이 없는 구간에도 약 2km마다 머리 위 방면 안내판, 약 3.5km마다 전광 정보판(渋滞·事故多発·車線規制 등), 약 1.5km마다 속도 제한 표지 — 총 290여 개<br><sub>Big signs along every expressway: an overhead direction sign about every 2 km between junctions, a message board (congestion, accidents, lane closures…) every ~3.5 km and speed limits every ~1.5 km — about 290 in all</sub>
+- 다이코쿠 PA (OpenStreetMap 위치 그대로): 「フォンターナ・ダイコク」의 분수 광장과 벤치, 이륜차 주차장(초록 도색·표지), 남쪽 건물 앞 흡연소<br><sub>Daikoku PA (at their OpenStreetMap positions): the fountain plaza of "Fontana Daikoku" with benches, the motorcycle bay (green paint, sign) and the smoking corner by the south building</sub>
+
+**🔧 변경 · Changed**
+
+- 휴대폰: 시작 전에 받는 데이터 96MB → 25MB — NPC 차량 모델은 출발한 뒤에 두 개씩 차례로, 저품질(휴대폰 기본값)에서는 512px 텍스처<br><sub>Phones: 96 MB → 25 MB before you can drive — NPC car models stream in two at a time after you set off, and low quality (the phone default) uses 512 px textures</sub>
+- 후지산: 실제 성층화산 실루엣(완만한 기슭·가파른 정상부·분화구·호에이 분화구), 계곡을 따라 내려오는 눈 줄기, 햇빛 방향 음영, 밤에는 어둡게 — 멀리서도 또렷하게<br><sub>Mt Fuji: a real stratovolcano silhouette (gentle foot, steep top, summit crater, the Hōei crater), snow streaks down the ravines, sun-side shading, dark at night — clear from far away</sub>
+
+**🐞 수정 · Fixed**
+
+- 로딩 속도: 땅에서 지하 구간을 잘라내는 계산이 매번 모든 구간을 검사해 로딩의 3/4(35초)을 차지하던 문제를 공간 격자로 해결 — PC 기준 48초 → 13초<br><sub>Loading: cutting the open cuttings out of the ground tested every cutting each time — 35 s of a 48 s load; a spatial grid brings it to 13 s on a PC</sub>
 
 ---
 

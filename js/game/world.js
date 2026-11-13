@@ -56,8 +56,15 @@ function cutTrenches(geo, net, isLand) {
   geo.computeBoundingBox(); const bb = geo.boundingBox;
   const near = caps.filter(c => Math.max(c[0], c[2]) + c[4] > bb.min.x && Math.min(c[0], c[2]) - c[4] < bb.max.x && Math.max(c[1], c[3]) + c[4] > bb.min.z && Math.min(c[1], c[3]) - c[4] < bb.max.z);
   if (!near.length) return geo;
-  const inT = (x, z) => near.some(c => { const dx = c[2] - c[0], dz = c[3] - c[1], L2 = dx * dx + dz * dz || 1e-9, t = Math.max(0, Math.min(1, ((x - c[0]) * dx + (z - c[1]) * dz) / L2)); return Math.hypot(x - c[0] - dx * t, z - c[1] - dz * t) < c[4]; });
-  const nearBox = (x0, x1, z0, z1) => near.some(c => Math.max(c[0], c[2]) + c[4] > x0 && Math.min(c[0], c[2]) - c[4] < x1 && Math.max(c[1], c[3]) + c[4] > z0 && Math.min(c[1], c[3]) - c[4] < z1);
+  // v2.5.1: spatial grid of the cuttings (this was a linear scan per test — 35 s of the 48 s load)
+  const CS = 40, grid = new Map(), key = (i, j) => i * 73856093 ^ j * 19349663;
+  for (const c of near) { const i0 = Math.floor((Math.min(c[0], c[2]) - c[4]) / CS), i1 = Math.floor((Math.max(c[0], c[2]) + c[4]) / CS), j0 = Math.floor((Math.min(c[1], c[3]) - c[4]) / CS), j1 = Math.floor((Math.max(c[1], c[3]) + c[4]) / CS);
+    for (let i = i0; i <= i1; i++) for (let j = j0; j <= j1; j++) { const k = key(i, j); let a = grid.get(k); if (!a) grid.set(k, a = []); a.push(c); } }
+  const inT = (x, z) => { const a = grid.get(key(Math.floor(x / CS), Math.floor(z / CS))); return !!a && a.some(c => { const dx = c[2] - c[0], dz = c[3] - c[1], L2 = dx * dx + dz * dz || 1e-9, t = Math.max(0, Math.min(1, ((x - c[0]) * dx + (z - c[1]) * dz) / L2)); return Math.hypot(x - c[0] - dx * t, z - c[1] - dz * t) < c[4]; }); };
+  const nearBox = (x0, x1, z0, z1) => { const i0 = Math.floor(x0 / CS), i1 = Math.floor(x1 / CS), j0 = Math.floor(z0 / CS), j1 = Math.floor(z1 / CS);
+    if ((i1 - i0 + 1) * (j1 - j0 + 1) > 400) return near.some(c => Math.max(c[0], c[2]) + c[4] > x0 && Math.min(c[0], c[2]) - c[4] < x1 && Math.max(c[1], c[3]) + c[4] > z0 && Math.min(c[1], c[3]) - c[4] < z1);
+    for (let i = i0; i <= i1; i++) for (let j = j0; j <= j1; j++) { const a = grid.get(key(i, j)); if (a && a.some(c => Math.max(c[0], c[2]) + c[4] > x0 && Math.min(c[0], c[2]) - c[4] < x1 && Math.max(c[1], c[3]) + c[4] > z0 && Math.min(c[1], c[3]) - c[4] < z1)) return true; }
+    return false; };
   const src = geo.index ? geo.toNonIndexed() : geo, P = src.attributes.position, U = src.attributes.uv, pos = [], uv = [];
   const rec = (a, b, c, d) => { // a,b,c = [x,y,z,u,v]
     const x0 = Math.min(a[0], b[0], c[0]), x1 = Math.max(a[0], b[0], c[0]), z0 = Math.min(a[2], b[2], c[2]), z1 = Math.max(a[2], b[2], c[2]);
@@ -541,6 +548,28 @@ export class World {
       const lit = this.night(new THREE.MeshStandardMaterial({ color: 0x9fb4c0, emissive: 0xfff4e0, emissiveIntensity: 0.2, roughness: 0.2 }), 0.15, 1.2);
       P.add(boxGeo(16, 2.6, 0.1), lit, 48, 1.6, -54.0);
       P.sign('pa_facility', { type: 'toilet' }, 40, 3.4, -53.9, 0, 1);
+    }
+    // v2.5.1 — from OpenStreetMap: the fountain plaza that gives フォンターナ・ダイコク its name, the motorcycle bay, the
+    // smoking corner in front of the south building (world coordinates)
+    {
+      const stone = surface('concrete', { tile: 2, tint: 0xd8d2c6 }), water = new THREE.MeshStandardMaterial({ color: 0x5d8fb0, roughness: 0.08, metalness: 0.1, transparent: true, opacity: 0.85 });
+      const FX = 24, FZ = -117;
+      S.add(new THREE.CylinderGeometry(4.2, 4.4, 0.6, 40), stone, FX, 0.3, FZ); this.addCollider(FX, FZ, 4.2, 4.2, 0, -1, 0.6);
+      S.add(new THREE.CylinderGeometry(3.8, 3.8, 0.05, 40), water, FX, 0.5, FZ);
+      S.add(new THREE.CylinderGeometry(0.9, 1.1, 0.9, 24), stone, FX, 0.9, FZ);
+      const jet = new THREE.Mesh(new THREE.ConeGeometry(0.5, 2.6, 16, 1, true), new THREE.MeshBasicMaterial({ color: 0xdff2ff, transparent: true, opacity: 0.45, depthWrite: false, side: THREE.DoubleSide }));
+      jet.position.set(FX, 2.6, FZ); jet.rotation.x = Math.PI; this.group.add(jet);
+      for (let i = 0; i < 8; i++) { const a = i / 8 * Math.PI * 2; S.add(boxGeo(1.8, 0.45, 0.5), surface('wood', { tile: 1 }), FX + Math.cos(a) * 7, 0.45, FZ + Math.sin(a) * 7, -a + Math.PI / 2); }
+      // motorcycle parking (二輪駐車場): green-painted bay with white bike stalls
+      const paint = new THREE.MeshStandardMaterial({ color: 0x3f7f58, roughness: 0.8, polygonOffset: true, polygonOffsetFactor: -2 }), line = new THREE.MeshStandardMaterial({ color: 0xf2f2ee, roughness: 0.7, polygonOffset: true, polygonOffsetFactor: -3 });
+      S.add(boxGeo(14, 0.02, 6), paint, 27, 0.02, 50);
+      for (let i = 0; i <= 10; i++) S.add(boxGeo(0.1, 0.02, 2.4), line, 27 - 7 + i * 1.4, 0.035, 48.3);
+      try { this.sign('pa_facility', { type: 'bike' }, 20, 2.2, 53.3, 0, 0.8); } catch {}
+      try { this.sign('pa_facility', { type: 'smoking' }, -29.5, 2.6, 39.2, 0, 0.7); } catch {}
+      // smoking corner (喫煙所): partition, ashtray stand
+      const pan = new THREE.MeshStandardMaterial({ color: 0x8a949c, roughness: 0.6, metalness: 0.3 });
+      S.add(boxGeo(6, 2.2, 0.12), pan, -29.5, 1.1, 39); S.add(boxGeo(0.12, 2.2, 4), pan, -32.5, 1.1, 37); S.add(boxGeo(0.12, 2.2, 4), pan, -26.5, 1.1, 37);
+      S.add(new THREE.CylinderGeometry(0.22, 0.22, 0.9, 16), surface('metal'), -29.5, 0.45, 36.5);
     }
   }
 
@@ -1062,6 +1091,26 @@ export class World {
       const v = String(road.speed || 80);
       for (let s = 400; s < road.length - 400; s += 1200) for (const dir of [1, -1]) for (const L of road.lanes.filter(l => l.dir === dir)) { lay(textMat(v), road, s + (dir < 0 ? 600 : 0), L.lat, dir, 1.4, 4.2); }
     }
+    // v2.5.1 — more of the big signs the Shuto is full of: a route-confirmation guide (方面案内) over the carriageway
+    // every ~2 km away from junctions, 情報板 message boards every ~3.5 km and speed-limit posts every ~1.5 km
+    {
+      const MSGS = [['この先', '渋滞2km'], ['速度落とせ', '事故多発'], ['車間距離', '確保'], ['雨天時', 'スリップ注意'], ['工事中', '車線規制'], ['落下物', '注意'], ['路面凍結', '注意'], ['この先', 'ETC専用']];
+      let nG = 0, nB = 0, nL = 0;
+      for (const road of net.roads) {
+        if (road.kind !== 'expressway' || road.length < 1500) continue;
+        const dv = net.diverges?.get?.(road) || [];
+        const near = (s0, r) => dv.some(d => Math.abs(d.s - s0) < r);
+        for (const dir of [1, -1]) {
+          if (!road.lanes.some(l => l.dir === dir)) continue;
+          const dest = MAIN[road.id]?.[dir];
+          for (let k = 900; k < road.length - 600; k += 2100) { const s1 = dir > 0 ? k : road.length - k; if (near(s1, 700) || road.at(s1).y < -0.6) continue;
+            if (dest) { place(road, s1, 0, 'shuto_guide', { route: road.short || null, routeName: !!road.short, lines: [{ ja: dest, en: EN[dest] || '' }], arrow: 'up', mount: 'overhead', span: road.edgeL - road.edgeR, clearance: 5.5 }, dir < 0); nG++; } }
+          for (let k = 1700; k < road.length - 400; k += 3500) { const s1 = dir > 0 ? k : road.length - k; if (near(s1, 300)) continue; if (post(road, s1, dir, 'message_board', { lines: MSGS[(Math.abs(Math.round(s1)) + (dir > 0 ? 0 : 3)) % MSGS.length] }, 'left', 1.3)) nB++; }
+          for (let k = 450; k < road.length - 300; k += 1500) { const s1 = dir > 0 ? k : road.length - k; if (post(road, s1, dir, 'speed_limit', { value: road.speed || 80 }, 'left', 1.0)) nL++; }
+        }
+      }
+      this.stats = { ...(this.stats || {}), bigGuides: nG, infoBoards: nB, limits: nL };
+    }
     // ── v2.1 curves (急カーブ): red anti-skid pavement over the bend, 減速 transverse bars and 「速度落とせ」 before it,
     // a yellow curve warning sign and 矢羽根 chevron boards on the outside — as on the Shuto's tight bends ──
     const redPave = new THREE.MeshStandardMaterial({ color: 0x4a2a25, roughness: 0.95, polygonOffset: true, polygonOffsetFactor: -3, polygonOffsetUnits: -3 });
@@ -1195,6 +1244,7 @@ export class World {
     // v2.4: far-skyline stand-ins step aside where PLATEAU streams the real landmark
     if (this.farStand && this.viewPos) for (const f of this.farStand) { const on = !this.plateauR || Math.hypot(this.viewPos.x - f.x, this.viewPos.z - f.z) > this.plateauR; if (f.on !== on) { f.on = on; for (const o of f.objs) o.visible = on; for (const b of f.blinks) b.off = !on; } }
     for (const b of this.blink) b.mesh.visible = !b.off && n > 0.3 && ((this.t + b.phase) % 1.5) < 0.6;
+    if (this.fuji) { const k = 1 - 0.82 * n; if (Math.abs(this.fuji.material.color.r - k) > 0.01) this.fuji.material.color.setScalar(k); } // Fuji fades into the night
     updateLandmarks(this, dt, env.hours ?? 21);
     if (this.ferris) {
       this.ferris.rotation.z += dt * 0.01;

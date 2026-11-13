@@ -71,7 +71,14 @@ export class Traffic {
     return { geo, mat: new THREE.MeshBasicMaterial({ map: t, transparent: true, opacity: 0, blending: THREE.AdditiveBlending, depthWrite: false }) };
   }
   // load every traffic model up front; swap procedural stand-ins for the real model as soon as it is in
-  preloadModels() { if (this._pre) return; this._pre = true; for (const id of new Set([...TRAFFIC_POOL, ...MEET_POOL, ...CITY_POOL, 'police', 'crown'])) requestGlb(id).catch(() => {}); }
+  // v2.5.1: two at a time, the cars actually on screen first (was: every model at once, before the game started —
+  // ~90 MB competing with the essentials on a phone connection)
+  preloadModels() {
+    if (this._pre || (this.g.mode !== 'drive' && this.g.mode !== 'walk')) return; this._pre = true;
+    const want = new Set([...this.cars.map(a => a.car.id), ...TRAFFIC_POOL, 'police', ...CITY_POOL, ...MEET_POOL]);
+    const q = [...want]; const next = () => { const id = q.shift(); if (!id) return; requestGlb(id).catch(() => {}).finally(next); };
+    next(); next();
+  }
   swapModels() {
     let n = 0;
     for (const ai of this.cars) {
@@ -89,7 +96,7 @@ export class Traffic {
     const pal = car.colors.filter(c => !/^#e[0-9a-f]e[0-9a-f]e[0-9a-f]$|^#f/i.test(c)); const color = opts.color || (pal.length && Math.random() > 0.15 ? pal[Math.floor(Math.random() * pal.length)] : car.colors[Math.floor(Math.random() * car.colors.length)]);
     // real glTF models for traffic only on medium+ quality (they cost more triangles than the low-LOD procedural cars)
     // only real 3D models drive around (v1.1.1): until a model has loaded the car is built procedurally and swapped later
-    const model = buildCarAuto(car, { lod: 'low', color, glb: true, realLights: false });
+    const model = buildCarAuto(car, { lod: 'low', color, glb: true, realLights: false, lazy: true });
     if (!model.isGlb) { mergeModel(model); model.root.visible = false; } // hidden until its real model has loaded (swapModels)
     const beam = new THREE.Mesh(this.headPool.geo, this.headPool.mat); beam.position.z = 0; model.root.add(beam);
     this.scene.add(model.root);
@@ -137,7 +144,7 @@ export class Traffic {
   }
 
   init() {
-    this.preloadModels();
+    // v2.5.1: no model downloads before the first frame — manage() starts them once you are driving
     // initial highway traffic
     const bay = this.net.byId.bayshore, k5 = this.net.byId.k5, k5n = this.net.byId.k5_nb || k5, k1 = this.net.byId.k1 || bay, k3 = this.net.byId.k3 || bay;
     for (let i = 0; i < this.max; i++) {

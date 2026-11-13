@@ -8,7 +8,7 @@ export { requestGlb, loadManifest, hasGlb, glbEntry };
 export function buildCarAuto(car, opts = {}) {
   const e = opts.glb === false ? null : glbEntry(car.id);
   if (e) { try { return buildGlbCar(car, e, opts); } catch (err) { console.warn('glb car', car.id, err); } }
-  if (opts.glb !== false) requestGlb(car.id).catch(() => {});
+  if (opts.glb !== false && !opts.lazy) requestGlb(car.id).catch(() => {}); // lazy: the caller queues the download (traffic)
   return buildCar(car, opts);
 }
 /** Async: waits for the real model (if the car has one). */

@@ -696,6 +696,7 @@ const FAC = {
   information: { ja: '案内所', en: 'Information', icon: 'info' },
   highway_terminal: { ja: 'ハイウェイ情報ターミナル', en: 'Highway Information Terminal', icon: 'terminal' },
   ev: { ja: 'EV急速充電器', en: 'EV Quick Charger', icon: 'ev' },
+  bike: { ja: '二輪車駐車場', en: 'Motorcycle Parking' },
 };
 S.pa_facility = o => {
   const type = o.type ?? 'toilet';

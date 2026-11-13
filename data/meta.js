@@ -1,8 +1,19 @@
 // Shared game metadata: version, changelog, regions. Update VERSION + CHANGELOG on every release.
-export const GAME = { title: 'MIDNIGHT JAPAN', titleJa: 'ミッドナイト・ジャパン', version: '2.5.0', build: '2026.11.14' };
+export const GAME = { title: 'MIDNIGHT JAPAN', titleJa: 'ミッドナイト・ジャパン', version: '2.5.1', build: '2026.11.14' };
 
 // Newest first. type: new | change | fix | known
 export const CHANGELOG = [
+  {
+    version: '2.5.1', date: '2026-11-14', codename: 'Fast Start',
+    summary: { ko: '로딩 대폭 단축(PC 48초 → 13초, 시작 전 데이터 96MB → 25MB), 휴대폰 전용 가벼운 텍스처, 디테일한 후지산, 수도고 전역에 큰 방면 안내판·정보판·속도 표지, 다이코쿠 PA 분수 광장·이륜차 주차장·흡연소(OSM 위치).', ja: 'ロードを大幅短縮（PCで48秒→13秒、開始前のデータ96MB→25MB）、スマホ向けの軽いテクスチャ、ディテールのある富士山、首都高全域に大きな方面案内・情報板・速度標識、大黒PAに噴水広場・二輪車駐車場・喫煙所（OSMの位置）。', en: 'Much faster loading (48 s → 13 s on PC, 96 MB → 25 MB before you drive), lighter textures for phones, a detailed Mt Fuji, big direction signs / message boards / speed limits along every expressway, and Daikoku PA\'s fountain plaza, motorcycle bay and smoking corner at their OpenStreetMap positions.' },
+    items: [
+      { type: 'fix', ko: '로딩 속도: 땅에서 지하 구간을 잘라내는 계산이 매번 모든 구간을 검사해 로딩의 3/4(35초)을 차지하던 문제를 공간 격자로 해결 — PC 기준 48초 → 13초', ja: 'ロード速度：地面から掘割を切り抜く計算が毎回すべての区間を調べてロードの3/4（35秒）を占めていた問題を空間グリッドで解決——PCで48秒→13秒', en: 'Loading: cutting the open cuttings out of the ground tested every cutting each time — 35 s of a 48 s load; a spatial grid brings it to 13 s on a PC' },
+      { type: 'change', ko: '휴대폰: 시작 전에 받는 데이터 96MB → 25MB — NPC 차량 모델은 출발한 뒤에 두 개씩 차례로, 저품질(휴대폰 기본값)에서는 512px 텍스처', ja: 'スマホ：開始前に読み込むデータ96MB→25MB——NPC車のモデルは走り出してから2台ずつ順番に、低画質（スマホの初期設定）では512pxのテクスチャ', en: 'Phones: 96 MB → 25 MB before you can drive — NPC car models stream in two at a time after you set off, and low quality (the phone default) uses 512 px textures' },
+      { type: 'change', ko: '후지산: 실제 성층화산 실루엣(완만한 기슭·가파른 정상부·분화구·호에이 분화구), 계곡을 따라 내려오는 눈 줄기, 햇빛 방향 음영, 밤에는 어둡게 — 멀리서도 또렷하게', ja: '富士山：本物の成層火山のシルエット（なだらかな裾野・急な山頂部・火口・宝永火口）、沢に沿って下りる雪筋、日の当たる向きの陰影、夜は暗く——遠くからでもくっきり', en: 'Mt Fuji: a real stratovolcano silhouette (gentle foot, steep top, summit crater, the Hōei crater), snow streaks down the ravines, sun-side shading, dark at night — clear from far away' },
+      { type: 'new', ko: '수도고 전역의 큰 표지판: 분기점이 없는 구간에도 약 2km마다 머리 위 방면 안내판, 약 3.5km마다 전광 정보판(渋滞·事故多発·車線規制 등), 약 1.5km마다 속도 제한 표지 — 총 290여 개', ja: '首都高全域の大きな標識：分岐のない区間にも約2kmごとに頭上の方面案内、約3.5kmごとに情報板（渋滞・事故多発・車線規制など）、約1.5kmごとに速度規制標識——計290以上', en: 'Big signs along every expressway: an overhead direction sign about every 2 km between junctions, a message board (congestion, accidents, lane closures…) every ~3.5 km and speed limits every ~1.5 km — about 290 in all' },
+      { type: 'new', ko: '다이코쿠 PA (OpenStreetMap 위치 그대로): 「フォンターナ・ダイコク」의 분수 광장과 벤치, 이륜차 주차장(초록 도색·표지), 남쪽 건물 앞 흡연소', ja: '大黒PA（OpenStreetMapの位置どおり）：「フォンターナ・ダイコク」の噴水広場とベンチ、二輪車駐車場（緑の塗装・標識）、南の建物前の喫煙所', en: 'Daikoku PA (at their OpenStreetMap positions): the fountain plaza of "Fontana Daikoku" with benches, the motorcycle bay (green paint, sign) and the smoking corner by the south building' },
+    ]
+  },
   {
     version: '2.5.0', date: '2026-11-14', codename: 'Night Cruise',
     summary: { ko: '왼쪽 아래 큰 지도(실제 지도·내 위치·차종), 더 똑똑한 자동변속, 실제 램프 위치에서 나오는 깜빡이·브레이크·전조등, 바다에 빠지지 않게, ETC 안내 음성, 엔진 개성 강화, 그 자리에서 차고·튜닝, 라디오 다음 곡, 字光式·お辞儀 번호판.', ja: '左下に大きな地図（実際の地図・現在地・車種）、賢くなったAT、本物のランプ位置で光るウインカー・ブレーキ・ヘッドライト、海に落ちない、ETCの音声案内、エンジンの個性を強化、その場でガレージ・チューニング、ラジオの次の曲、字光式・お辞儀ナンバー。', en: 'A big map bottom-left (real map, your position and car), a smarter automatic gearbox, indicators / brake lights / headlights at the real lamps, no more falling into the sea, ETC voice announcements, more engine character, garage and tuning on the spot, radio skip, and illuminated / bowed plates.' },

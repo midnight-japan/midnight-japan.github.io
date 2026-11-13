@@ -350,13 +350,38 @@ function buildIndustry(W, far) {
 // ───────────────────────── Mt. Fuji on the western horizon (scaled & pulled in so it stays inside the view range) ─────────────────────────
 function buildFuji(W, far) {
   const F = LM.fuji; if (!F) return;
+  // v2.5.1: a real stratovolcano silhouette — concave flanks (gentle foot, ~30° near the top), the flat-topped summit
+  // with its crater, the Hōei crater bulge on the south-east flank, gullies (osawa-kuzure) and a ragged snow cap with
+  // streaks running down the ravines; tinted by the haze of ~90 km of air, darkened at night
   const D = Math.hypot(F.x, F.z), k = 46000 / D;
-  const x = F.x * k, z = F.z * k, h = 3776 * k, r = 17000 * k;
-  const g = new THREE.ConeGeometry(r, h, 64, 6, true);
-  const pos = g.attributes.position, col = new Float32Array(pos.count * 3);
-  for (let i = 0; i < pos.count; i++) { const y = (pos.getY(i) + h / 2) / h; const snow = y > 0.62 ? 1 : 0; const c = snow ? [0.93, 0.95, 1] : [0.36, 0.42, 0.52]; col.set(c, i * 3); }
-  g.setAttribute('color', new THREE.BufferAttribute(col, 3));
-  const m = new THREE.Mesh(g, new THREE.MeshBasicMaterial({ vertexColors: true, fog: false, transparent: true, opacity: 0.55, depthWrite: false }));
-  m.position.set(x, h / 2 - 40, z); m.renderOrder = -1; far.add(m);
+  const x = F.x * k, z = F.z * k, H = 3776 * k, R0 = 19000 * k, NR = 56, NA = 288;
+  const hash = (a, b) => { const v = Math.sin(a * 127.1 + b * 311.7) * 43758.5453; return v - Math.floor(v); };
+  const nz = (a, b) => { const i = Math.floor(a), j = Math.floor(b), fa = a - i, fb = b - j, u = fa * fa * (3 - 2 * fa), v = fb * fb * (3 - 2 * fb);
+    return (hash(i, j) * (1 - u) + hash(i + 1, j) * u) * (1 - v) + (hash(i, j + 1) * (1 - u) + hash(i + 1, j + 1) * u) * v; };
+  const prof = t => { const a = 3.1; const base = (Math.exp(-a * t) - Math.exp(-a)) / (1 - Math.exp(-a)); return t < 0.03 ? 1 - 0.012 * Math.cos(t / 0.03 * Math.PI * 0.5) : base / ((Math.exp(-a * 0.03) - Math.exp(-a)) / (1 - Math.exp(-a))); };
+  const pos = [], col = [], idx = [];
+  const ROCK = [0.24, 0.27, 0.36], ROCK2 = [0.19, 0.21, 0.3], FOOT = [0.2, 0.27, 0.3], SNOW = [0.94, 0.95, 0.99], HAZE = [0.62, 0.68, 0.78];
+  for (let i = 0; i <= NR; i++) {
+    const t = Math.pow(i / NR, 1.6);
+    for (let j = 0; j <= NA; j++) {
+      const th = j / NA * Math.PI * 2;
+      // gullies get deeper towards the middle slopes; the Hōei bulge sits SE (th ≈ 2.3 rad from +x, +z = south)
+      const gul = (nz(th * 9, t * 6) - 0.5) * 0.06 * Math.sin(Math.min(1, t * 2.2) * Math.PI);
+      const hoei = 0.05 * Math.exp(-((th - 1.05) ** 2) / 0.05 - ((t - 0.32) ** 2) / 0.006);
+      let y = Math.max(0, prof(t) + gul + hoei) * H; if (t < 0.012) y = H * (0.955 + 0.03 * nz(th * 3, 1)); // crater floor
+      const r = t * R0 * (1 + 0.04 * (nz(th * 2, 3) - 0.5));
+      pos.push(Math.cos(th) * r, y, Math.sin(th) * r);
+      const h = y / H, rag = 0.56 + 0.07 * nz(th * 14, 7) + 0.05 * nz(th * 40, 2), streak = h > 0.38 && nz(th * 22, 9) > 0.72 && h > 0.44 + 0.12 * nz(th * 5, h * 3);
+      const snow = h > rag || streak ? 1 : 0;
+      let c = snow ? SNOW : t > 0.62 ? FOOT : (nz(th * 30, t * 20) > 0.5 ? ROCK : ROCK2);
+      const sh = 0.72 + 0.28 * Math.max(0, Math.cos(th - 0.9)); // sunlit south-east face, shadowed north-west
+      const hz = 0.14 + 0.16 * (1 - h); c = c.map((v, q) => v * sh * (1 - hz) + HAZE[q] * hz);
+      col.push(c[0], c[1], c[2]);
+    }
+  }
+  for (let i = 0; i < NR; i++) for (let j = 0; j < NA; j++) { const a2 = i * (NA + 1) + j, b2 = a2 + NA + 1; idx.push(a2, b2, a2 + 1, a2 + 1, b2, b2 + 1); }
+  const g = new THREE.BufferGeometry(); g.setAttribute('position', new THREE.Float32BufferAttribute(pos, 3)); g.setAttribute('color', new THREE.Float32BufferAttribute(col, 3)); g.setIndex(idx);
+  const m = new THREE.Mesh(g, new THREE.MeshBasicMaterial({ vertexColors: true, fog: false, transparent: true, opacity: 0.93, depthWrite: false, side: THREE.DoubleSide }));
+  m.position.set(x, -40, z); m.renderOrder = -1; m.frustumCulled = false; far.add(m);
   W.fuji = m;
 }
