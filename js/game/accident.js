@@ -64,7 +64,8 @@ export class Accidents {
           inc.talked = true; inc.stage = 'talk'; d.action = 'talk'; d.speed = 0; if (me) this.face(d, me);
           g.dialog.accident(inc, res => this.resolve(inc, res)); break;
         }
-        if (inc.st > 12 && !inc.said.call) { inc.said.call = 1; d.action = 'phone'; g.audio?.speak('今、警察に電話しますね。', 'ja-JP', inc.voice); g.ui.toast(t('game.acc.call'), 'police', 5); this.dispatch(inc); inc.stage = 'wait'; }
+        // v2.5.3: no police unless you ask for it in the conversation — left alone, the other driver shrugs and drives on
+        if (inc.st > 14 && !inc.said.call) { inc.said.call = 1; g.audio?.speak('気をつけてくださいね。', 'ja-JP', inc.voice); inc.stage = 'leave'; inc.st = 0; }
         break;
       }
       case 'talk': { const d = inc.driver; if (d) { d.speed = 0; d.action = 'talk'; if (me) this.face(d, me); } break; }

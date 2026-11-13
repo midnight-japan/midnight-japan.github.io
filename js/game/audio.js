@@ -845,18 +845,18 @@ class EngineSound {
       const fC = Math.max(0.5, rpmEff / 120 * dop * (1 + this._jit));
       sp(N.exOsc.frequency, fC, t, 0.012);
       const vt = this.vtec ? clamp((rpm - this.vtec) / 110 + 0.5, 0, 1) * (0.35 + 0.65 * power) : 0; // v2.4.1: a sharper cam changeover
-      const exAmp = (cranking ? 0.25 : 0.15 + 0.5 * power + 0.18 * rpmN - 0.05 * ov) * this.vol * alive * 0.42;
-      let cut = (420 + 1500 * rpmN + 6500 * Math.pow(power, 1.3) + 2500 * vt) * this.prof.bright * (1 - 0.35 * ov);
+      const exAmp = (cranking ? 0.25 : 0.15 + 0.5 * power + 0.18 * rpmN - 0.05 * ov) * this.vol * alive * 0.42 * (1 + 0.28 * vt);
+      let cut = (420 + 1500 * rpmN + 6500 * Math.pow(power, 1.3) + 5200 * vt) * this.prof.bright * (1 - 0.35 * ov); // v2.5.3: VTEC opens the top end right up
       if (cranking) cut = 350;
       sp(N.exGain.gain, Math.max(0, exAmp) * synW, t, 0.025);
       sv(N.exLP.frequency, clamp(cut, 150, 16000), 0.02);
       if (N.inOsc) {
         sp(N.inOsc.frequency, fC, t, 0.012);
-        const inAmp = (0.03 + 0.3 * power * (0.3 + rpmN) * (this.naSport ? 1.55 : 1) + 0.26 * vt + 0.04 * ov * rpmN) * this.vol * alive * 0.4; // NA sports engines: louder induction roar
+        const inAmp = (0.03 + 0.3 * power * (0.3 + rpmN) * (this.naSport ? 1.55 : 1) + 0.42 * vt + 0.04 * ov * rpmN) * this.vol * alive * 0.4; // NA sports engines: louder induction roar
         sp(N.inGain.gain, inAmp * (1 - 0.45 * smpW), t, 0.03);
         sv(N.inBP.frequency, 500 + 1400 * rpmN + 600 * vt, 0.02);
-        sv(N.vtecPk.gain, 14 * vt, 0.02);
-        if (N.exHi && this._hi0 !== undefined) sv(N.exHi.gain, this._hi0 + 7 * vt, 0.03); // the top-end scream above the crossover
+        sv(N.vtecPk.gain, 19 * vt, 0.02); sv(N.vtecPk.frequency, 2300 + 900 * vt, 0.03); // the cam change: a hard metallic howl
+        if (N.exHi && this._hi0 !== undefined) sv(N.exHi.gain, this._hi0 + 10 * vt, 0.03); // the top-end scream above the crossover
         sp(N.amDepth.gain, (0.02 + 0.12 * power * (0.3 + rpmN) + (this.diesel ? 0.08 : 0)) * this.vol * alive * synW, t, 0.03);
         sv(N.combBP.frequency, 1200 + 2000 * rpmN, 0.03);
       }
@@ -1123,8 +1123,9 @@ class Siren {
     N.rev = ctx.createGain(); N.rev.gain.value = 0.3;
     N.o1.connect(g1); N.o2.connect(g2); g1.connect(N.ws); g2.connect(N.ws);
     N.ws.connect(N.hp); N.hp.connect(N.pk); N.pk.connect(N.lp); N.lp.connect(N.amp);
-    N.amp.connect(N.panner); N.panner.connect(a.bus.sfx);
-    N.amp.connect(N.rev); N.rev.connect(a.revIn);
+    N.quiet = a.ctx.createGain(); N.quiet.gain.value = 0.22; // v2.5.3: the siren was far too loud
+    N.amp.connect(N.quiet); N.quiet.connect(N.panner); N.panner.connect(a.bus.sfx);
+    N.quiet.connect(N.rev); N.rev.connect(a.revIn);
     for (const o of [N.o1, N.o2]) { o.frequency.value = 430; o.start(t); }
     this.cur = 'off'; this.nextT = 0;
   }

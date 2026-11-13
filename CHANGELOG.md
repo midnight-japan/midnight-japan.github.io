@@ -1,9 +1,10 @@
 # 📜 MIDNIGHT JAPAN 업데이트 기록 · Changelog
 
-현재 버전 · Current: **v2.5.2** · [▶ 웹에서 플레이](https://midnight-japan.github.io/) · [🌐 업데이트 페이지](https://midnight-japan.github.io/changelog.html)
+현재 버전 · Current: **v2.5.3** · [▶ 웹에서 플레이](https://midnight-japan.github.io/) · [🌐 업데이트 페이지](https://midnight-japan.github.io/changelog.html)
 
 | 버전 | 날짜 | 이름 | 요약 |
 |---|---|---|---|
+| [v2.5.3](#v253--night-fixes-2026-11-14) | 2026-11-14 | Night Fixes | 베이브리지 서쪽 끝 막다른 길 연결, 나란한 고가 사이 구멍 메움과 중앙 방호벽, 터널에서 내려 점프하면 바다 위로 가던 버그, 시빅 번호판, 전체 음량·사이렌 낮춤, 경찰·NPC가 따라붙지 않게, VTEC 소리 강화. |
 | [v2.5.2](#v252--every-phone-2026-11-14) | 2026-11-14 | Every Phone | 아이폰 사파리에서 게임이 시작되지 않던 치명적 버그 수정, 휴대폰 HUD 겹침 정리와 버튼 이름 표시, 중앙분리대 통과 금지, 내비 경로 탐색 개선, 번호판(꺾인·字光式) 묻힘 수정, 엔진음 통일감, 젖은 노면·라이트 빛 과함 완화. |
 | [v2.5.1](#v251--fast-start-2026-11-14) | 2026-11-14 | Fast Start | 로딩 대폭 단축(PC 48초 → 13초, 시작 전 데이터 96MB → 25MB), 휴대폰 전용 가벼운 텍스처, 디테일한 후지산, 수도고 전역에 큰 방면 안내판·정보판·속도 표지, 다이코쿠 PA 분수 광장·이륜차 주차장·흡연소(OSM 위치). |
 | [v2.5.0](#v250--night-cruise-2026-11-14) | 2026-11-14 | Night Cruise | 왼쪽 아래 큰 지도(실제 지도·내 위치·차종), 더 똑똑한 자동변속, 실제 램프 위치에서 나오는 깜빡이·브레이크·전조등, 바다에 빠지지 않게, ETC 안내 음성, 엔진 개성 강화, 그 자리에서 차고·튜닝, 라디오 다음 곡, 字光式·お辞儀 번호판. |
@@ -42,6 +43,26 @@
 | [v0.2.0](#v020--bayshore-2026-11-05) | 2026-11-05 | Bayshore | 수도고속 완간선을 따라 하네다까지, 도쿄만 아쿠아라인 해저터널을 지나 우미호타루 PA까지. 실제 3D 차량 모델과 열리는 보닛도 들어왔어요. |
 | [v0.1.1](#v011--one-click-2026-11-04) | 2026-11-04 | One Click | 링크 하나로 바로 플레이. 크롬에서 공식 사이트 주소만 열면 설치 없이 실행돼요. |
 | [v0.1.0](#v010--first-meet-2026-11-04) | 2026-11-04 | First Meet | 첫 공개 버전. 다이코쿠 JCT·PA와 다이코쿠 부두 일대를 3D로 구현했습니다. |
+
+---
+
+## v2.5.3 — Night Fixes (2026-11-14)
+
+> 베이브리지 서쪽 끝 막다른 길 연결, 나란한 고가 사이 구멍 메움과 중앙 방호벽, 터널에서 내려 점프하면 바다 위로 가던 버그, 시빅 번호판, 전체 음량·사이렌 낮춤, 경찰·NPC가 따라붙지 않게, VTEC 소리 강화.
+> The Bay Bridge west-end dead end is connected, the slot between twin viaducts is closed with a centre barrier, jumping out of the car in a tunnel no longer lands you on the sea, the Civic's plate, quieter sound and siren, police and NPCs no longer tail you, and a stronger VTEC.
+
+**🔧 변경 · Changed**
+
+- 음량: 기본 음량 전체 낮춤(기존 설정도 75%로), 사이렌은 지금의 약 1/4 크기<br><sub>Volume: all defaults lowered (existing settings scaled to 75 %), the siren to about a quarter</sub>
+- 경찰·NPC가 따라붙지 않게: 경찰의 NPC 단속은 내 차에서 220m 이상 떨어진 곳에서만, 사고 후 경찰은 대화에서 직접 부를 때만, 뒤따르는 차는 2.8초 간격을 두고 떨어져서<br><sub>Nobody tails you: police only chase NPCs more than 220 m from you, police come to an accident only if you call them in the conversation, and cars behind you hang back 2.8 s</sub>
+- VTEC: 캠 전환 순간 흡기 「하울링」과 고음이 확 열리도록 강화(EK9·AP1·NSX)<br><sub>VTEC: the cam changeover now opens up with a hard intake howl and top end (EK9, AP1, NSX)</sub>
+
+**🐞 수정 · Fixed**
+
+- 요코하마 베이브리지 서쪽 끝: 서쪽으로 달리면 다리 끝(높이 14m)에서 길이 끊기고 K3 서행이 9m 아래에서 시작하던 문제 → 다리 위 같은 높이에서 K3 서행으로 자연스럽게 이어짐(자동주행으로 확인)<br><sub>Yokohama Bay Bridge, west end: driving west the deck ended at 14 m while K3 westbound began 9 m lower — K3 westbound now continues from the bridge at the same height (checked on autopilot)</sub>
+- 나란히 달리는 두 고가(아쿠아라인·만안선 등) 사이가 구멍처럼 보이던 틈을 상판으로 메우고, 반대 방향 차로 사이에는 콘크리트 중앙 방호벽(충돌 포함) — 합류 구간은 막지 않음<br><sub>The slot between twin viaducts (Aqua-Line, Bayshore…) that looked like a hole is decked over, with a concrete centre barrier (solid) between opposite carriageways — merges are left open</sub>
+- 터널(아쿠아라인 등)에서 내려 점프하면 바다 위로 올라가던 버그: 점프 중에도 발밑 노면을 기준으로, 해수면 아래에서는 절대 수면으로 튀어오르지 않음<br><sub>Jumping after getting out in a tunnel (Aqua-Line…) put you on top of the sea — the floor under you now counts mid-jump, and below sea level you never pop up to the surface</sub>
+- 혼다 시빅(EK9): 차체 텍스처에 그려진 외국 번호판이 일본 번호판 위로 보이던 문제 → 차체색 커버로 가리고 일본 번호판을 실제 번호판 자리·각도에<br><sub>Honda Civic (EK9): the foreign plate painted into the body texture showed above the Japanese plate — covered in body colour, with the Japanese plate at the real plate position and angle</sub>
 
 ---
 

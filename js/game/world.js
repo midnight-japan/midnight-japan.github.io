@@ -240,6 +240,7 @@ export class World {
     const roadMeshes = buildRoadMeshes(this.net, { isLand: (x, z) => this.isLand(x, z), tunnelLamps: this.tunnelHeads, noPier: noPierBay(this.net) });
     this.group.add(roadMeshes);
     for (const l of roadMeshes.userData.piers || []) if (l.top > 3) this.addCollider(l.x, l.z, 1.2 * l.thick, 1.2 * l.thick, 0, -6, l.top - 1.4, 'pier');
+    for (const w of roadMeshes.userData.gapWalls || []) this.addCollider(w.x, w.z, w.hx, w.hz, w.ry, w.y0, w.y1, 'barrier'); // v2.5.3: centre barrier between twin decks
     this.buildPA(S);
     this.buildKonbini(S);
     this.buildPolicePost(S);

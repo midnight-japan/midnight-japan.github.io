@@ -302,6 +302,17 @@ export function buildGlbCar(car, e, opts = {}) {
     const pz = e.plateZ ||= {}, ck = (k, y, fr) => pz[k + (low ? 'l' : 'h')] ??= surf(y, fr);
     if (pf) { const S = spots.f; if (S) pf.position.set(S.x, S.y, S.z); else pf.position.set(0, 0.42, ck('f', 0.42, true)); }
     if (pr) { const S = spots.r; if (S) pr.position.set(S.x, S.y, S.z); else pr.position.set(0, 0.55, ck('r', 0.55, false)); }
+    // v2.5.3: plates painted into the body texture (no mesh to hide) — manifest plateAt {r|f: [x, y, z, w, h, tiltDeg]}:
+    // a body-coloured cover over the foreign plate, the Japanese plate on it at the same angle
+    for (const [k, pm] of [['f', pf], ['r', pr]]) {
+      const A = info.plateAt?.[k]; if (!A || !pm) continue;
+      const [x, y, z, w, h, tilt = 0] = A, out = k === 'f' ? 1 : -1, tr = tilt * Math.PI / 180;
+      const cover = new THREE.Mesh(new THREE.PlaneGeometry(w, h), paintMats[0] || new THREE.MeshStandardMaterial({ color: 0x333333 }));
+      const yb = y + vis.position.y, zb = z + zoff, rx = out > 0 ? -tr : tr; // rear hatch leans forward going up
+      cover.position.set(x, yb, zb + out * 0.004); cover.rotation.set(rx, out > 0 ? 0 : Math.PI, 0); bodyG.add(cover);
+      pm.position.set(x, yb, zb + out * 0.009); pm.rotation.x = rx;
+      pm.userData.rx0 = pm.rotation.x; pm.userData.p0 = pm.position.clone();
+    }
   }
   const dy = by1 - (P.H || by1);
   bodyG.traverse(o => { if (o.userData.glbKeep) o.position.y += dy; if (o.userData.glbDecal !== undefined) o.position.x = o.userData.glbDecal * (Math.max(bx1, -bx0) + 0.004); });

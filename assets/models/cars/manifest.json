@@ -391,7 +391,17 @@
    1.358,
    2.09
   ],
-  "notes": "Author states it is a retextured/remodelled version of a widebody Civic Type R by Louweee___ (also credit that author). Body_MAT is textured. Normalized on export: units = metres, car length scaled to the real vehicle, front = +Z, up = +Y, ground at y=0, centred on X/Z (wrapper node MJ_root). Wheel nodes wheel_fl/fr/rl/rr have their pivot at the wheel centre (axle = local X). fl = car's left = +X side."
+  "notes": "Author states it is a retextured/remodelled version of a widebody Civic Type R by Louweee___ (also credit that author). Body_MAT is textured. Normalized on export: units = metres, car length scaled to the real vehicle, front = +Z, up = +Y, ground at y=0, centred on X/Z (wrapper node MJ_root). Wheel nodes wheel_fl/fr/rl/rr have their pivot at the wheel centre (axle = local X). fl = car's left = +X side.",
+  "plateAt": {
+   "r": [
+    0,
+    0.73,
+    -1.985,
+    0.56,
+    0.17,
+    12
+   ]
+  }
  },
  "evo9": {
   "file": "evo9.glb",

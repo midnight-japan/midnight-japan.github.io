@@ -1,8 +1,21 @@
 // Shared game metadata: version, changelog, regions. Update VERSION + CHANGELOG on every release.
-export const GAME = { title: 'MIDNIGHT JAPAN', titleJa: 'ミッドナイト・ジャパン', version: '2.5.2', build: '2026.11.14' };
+export const GAME = { title: 'MIDNIGHT JAPAN', titleJa: 'ミッドナイト・ジャパン', version: '2.5.3', build: '2026.11.14' };
 
 // Newest first. type: new | change | fix | known
 export const CHANGELOG = [
+  {
+    version: '2.5.3', date: '2026-11-14', codename: 'Night Fixes',
+    summary: { ko: '베이브리지 서쪽 끝 막다른 길 연결, 나란한 고가 사이 구멍 메움과 중앙 방호벽, 터널에서 내려 점프하면 바다 위로 가던 버그, 시빅 번호판, 전체 음량·사이렌 낮춤, 경찰·NPC가 따라붙지 않게, VTEC 소리 강화.', ja: 'ベイブリッジ西端の行き止まりを接続、並んだ高架の間の穴を塞ぎ中央分離帯、トンネルで降りてジャンプすると海の上に出たバグ、シビックのナンバー、全体の音量とサイレンを下げた、警察・NPCが付きまとわない、VTECの音を強化。', en: 'The Bay Bridge west-end dead end is connected, the slot between twin viaducts is closed with a centre barrier, jumping out of the car in a tunnel no longer lands you on the sea, the Civic\'s plate, quieter sound and siren, police and NPCs no longer tail you, and a stronger VTEC.' },
+    items: [
+      { type: 'fix', ko: '요코하마 베이브리지 서쪽 끝: 서쪽으로 달리면 다리 끝(높이 14m)에서 길이 끊기고 K3 서행이 9m 아래에서 시작하던 문제 → 다리 위 같은 높이에서 K3 서행으로 자연스럽게 이어짐(자동주행으로 확인)', ja: '横浜ベイブリッジ西端：西へ走ると橋の端（高さ14m）で道が切れ、K3下りが9m下から始まっていた問題→橋の上で同じ高さのままK3へ自然につながる（自動運転で確認）', en: 'Yokohama Bay Bridge, west end: driving west the deck ended at 14 m while K3 westbound began 9 m lower — K3 westbound now continues from the bridge at the same height (checked on autopilot)' },
+      { type: 'fix', ko: '나란히 달리는 두 고가(아쿠아라인·만안선 등) 사이가 구멍처럼 보이던 틈을 상판으로 메우고, 반대 방향 차로 사이에는 콘크리트 중앙 방호벽(충돌 포함) — 합류 구간은 막지 않음', ja: '並んで走る2本の高架（アクアライン・湾岸線など）の間が穴のように見えていた隙間を床版で塞ぎ、反対方向の車線の間にはコンクリートの中央分離帯（衝突あり）——合流区間はふさがない', en: 'The slot between twin viaducts (Aqua-Line, Bayshore…) that looked like a hole is decked over, with a concrete centre barrier (solid) between opposite carriageways — merges are left open' },
+      { type: 'fix', ko: '터널(아쿠아라인 등)에서 내려 점프하면 바다 위로 올라가던 버그: 점프 중에도 발밑 노면을 기준으로, 해수면 아래에서는 절대 수면으로 튀어오르지 않음', ja: 'トンネル（アクアラインなど）で降りてジャンプすると海の上に出てしまうバグ：ジャンプ中も足元の路面を基準に、海面より下では水面に飛び出さない', en: 'Jumping after getting out in a tunnel (Aqua-Line…) put you on top of the sea — the floor under you now counts mid-jump, and below sea level you never pop up to the surface' },
+      { type: 'fix', ko: '혼다 시빅(EK9): 차체 텍스처에 그려진 외국 번호판이 일본 번호판 위로 보이던 문제 → 차체색 커버로 가리고 일본 번호판을 실제 번호판 자리·각도에', ja: 'ホンダ シビック（EK9）：ボディのテクスチャに描かれた外国のナンバーが日本のナンバーの上に見えていた問題→ボディ色のカバーで隠し、日本のナンバーを本来の位置・角度に', en: 'Honda Civic (EK9): the foreign plate painted into the body texture showed above the Japanese plate — covered in body colour, with the Japanese plate at the real plate position and angle' },
+      { type: 'change', ko: '음량: 기본 음량 전체 낮춤(기존 설정도 75%로), 사이렌은 지금의 약 1/4 크기', ja: '音量：初期音量を全体に下げた（既存の設定も75％に）、サイレンは今の約1/4', en: 'Volume: all defaults lowered (existing settings scaled to 75 %), the siren to about a quarter' },
+      { type: 'change', ko: '경찰·NPC가 따라붙지 않게: 경찰의 NPC 단속은 내 차에서 220m 이상 떨어진 곳에서만, 사고 후 경찰은 대화에서 직접 부를 때만, 뒤따르는 차는 2.8초 간격을 두고 떨어져서', ja: '警察・NPCが付きまとわない：警察のNPC取り締まりは自分の車から220m以上離れた所でのみ、事故後の警察は会話で自分で呼んだ時だけ、後ろの車は2.8秒の車間で離れて', en: 'Nobody tails you: police only chase NPCs more than 220 m from you, police come to an accident only if you call them in the conversation, and cars behind you hang back 2.8 s' },
+      { type: 'change', ko: 'VTEC: 캠 전환 순간 흡기 「하울링」과 고음이 확 열리도록 강화(EK9·AP1·NSX)', ja: 'VTEC：カムが切り替わる瞬間に吸気の「咆哮」と高音がぐっと開くように強化（EK9・AP1・NSX）', en: 'VTEC: the cam changeover now opens up with a hard intake howl and top end (EK9, AP1, NSX)' },
+    ]
+  },
   {
     version: '2.5.2', date: '2026-11-14', codename: 'Every Phone',
     summary: { ko: '아이폰 사파리에서 게임이 시작되지 않던 치명적 버그 수정, 휴대폰 HUD 겹침 정리와 버튼 이름 표시, 중앙분리대 통과 금지, 내비 경로 탐색 개선, 번호판(꺾인·字光式) 묻힘 수정, 엔진음 통일감, 젖은 노면·라이트 빛 과함 완화.', ja: 'iPhoneのSafariでゲームが始まらなかった致命的なバグを修正、スマホHUDの重なりを整理しボタンに名前、中央分離帯をすり抜けない、ナビのルート探索を改善、ナンバー（お辞儀・字光式）の埋もれを修正、エンジン音に統一感、濡れた路面とライトの光りすぎを抑制。', en: 'Fixed a critical bug that stopped the game starting in iPhone Safari, a phone HUD with nothing overlapping and labelled buttons, no driving through the central reservation, better navigation routing, plates (bowed / illuminated) no longer buried, a more coherent engine sound, and calmer wet roads and lamp glows.' },

@@ -265,11 +265,13 @@ export class Traffic {
     let gap = 1e9, vLead = ai.vDes;
     for (const o of list) { if (o === ai) continue; const d = (o.s - ai.s) * ai.dir; if (d > 0 && d < gap) { gap = d; vLead = o.v; } }
     // player as obstacle
-    if (ph && player) for (const h of ph) if (h.road === road && Math.abs(h.lat - ai.lat) < 2.6) { const d = (h.s - ai.s) * ai.dir; if (d > 0 && d < gap) { gap = d; vLead = Math.max(0, player.vel.dot(road.dirAt(h.s)) * ai.dir); } }
+    let behindMe = false;
+    if (ph && player) for (const h of ph) if (h.road === road && Math.abs(h.lat - ai.lat) < 2.6) { const d = (h.s - ai.s) * ai.dir; if (d > 0 && d < gap) { gap = d; behindMe = true; vLead = Math.max(0, player.vel.dot(road.dirAt(h.s)) * ai.dir); } }
     // closures
     if (ai.stopAt !== undefined) { const d = (ai.stopAt - ai.s) * ai.dir; if (d > 0 && d < gap) { gap = d; vLead = 0; } }
     // IDM
-    const a = 1.6, bComf = 2.5, s0 = 6 + ai.halfL, T = 1.3;
+    // v2.5.3: behind the player they hang well back (2.8 s, +14 m) instead of sitting on your bumper
+    const a = 1.6, bComf = 2.5, s0 = 6 + ai.halfL + (behindMe && gap < 120 ? 14 : 0), T = behindMe && gap < 120 ? 2.8 : 1.3;
     const dv = ai.v - vLead;
     const sStar = s0 + Math.max(0, ai.v * T + ai.v * dv / (2 * Math.sqrt(a * bComf)));
     if (ai.yieldSlow > 0) ai.yieldSlow -= dt;
@@ -566,7 +568,7 @@ export class Traffic {
       if (Math.sin(o.yaw) * hx + Math.cos(o.yaw) * hz < 0.2) continue;
       if (fwd < gap) { gap = fwd; vLead = o.v; }
     }
-    if (player) { const dx = player.pos.x - ai.pos.x, dz = player.pos.z - ai.pos.z; const fwd = dx * hx + dz * hz; if (fwd > 0 && fwd < 35 && Math.abs(dx * hz - dz * hx) < 2.2 && Math.abs(player.pos.y - ai.pos.y) < 2) { if (fwd < gap) { gap = fwd; vLead = Math.max(0, player.vel.x * hx + player.vel.z * hz); } } }
+    if (player) { const dx = player.pos.x - ai.pos.x, dz = player.pos.z - ai.pos.z; const fwd = dx * hx + dz * hz; if (fwd > 0 && fwd < 45 && Math.abs(dx * hz - dz * hx) < 2.2 && Math.abs(player.pos.y - ai.pos.y) < 2) { if (fwd - 10 < gap) { gap = Math.max(0.5, fwd - 10); vLead = Math.max(0, player.vel.x * hx + player.vel.z * hz); } } }
     const k = ai.c.keys[ai.dir > 0 ? ai.i + 1 : ai.i];
     const light = net.light(k, hx, hz, this.world.city.uniforms.uTime.value);
     if (light !== 'go' && toV > 7) { const stop = toV - 7.5; if (light === 'stop' || stop > ai.v * 1.2) { if (stop < gap) { gap = Math.max(0.1, stop + ai.halfL * 2 + 4); vLead = 0; } } }

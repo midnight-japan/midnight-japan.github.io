@@ -357,7 +357,7 @@ export class UI {
       `<div class="row center"><button class="btn sm ghost" id="s-reset">${esc(L3('기본값으로 되돌리기', '初期設定に戻す', 'Reset to defaults'))}</button></div>`;
     $('#s-grid').querySelectorAll('details.ssec').forEach(d => d.ontoggle = () => { this._sOpen[d.dataset.sec] = d.open; });
     $('#s-reset').onclick = () => {
-      const keep = { v22: s.v22, v24: s.v24, v111: s.v111, fpsOn: s.fpsOn };
+      const keep = { v22: s.v22, v24: s.v24, v111: s.v111, fpsOn: s.fpsOn, v253: 1 };
       for (const k of Object.keys(s)) delete s[k]; Object.assign(s, DEFAULT_SETTINGS, keep);
       g.saveSettings(); g.applyVolumes(); g.vehicle?.setAssists(assistsFromSettings(s));
       if (g.bloom) g.bloom.enabled = s.bloom && g.quality !== 'low';

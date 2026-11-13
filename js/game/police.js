@@ -53,6 +53,8 @@ export class Police {
   // pick a car ahead of the patrol on its carriageway, make it a speeder, chase it, pull it over, let it go
   chaseNpc(pol) {
     const g = this.g, cand = g.traffic.cars.filter(c => c !== pol && c.mode === 'road' && !c.police && !c.incident && c.road === pol.road && c.dir === pol.dir && (c.s - pol.s) * pol.dir > 50 && (c.s - pol.s) * pol.dir < 350);
+    // v2.5.3: never a chase that runs alongside you — the patrol and its suspect stay well clear of the player
+    const me = g.vehicle?.pos; if (me && (pol.pos.distanceTo(me) < 260)) return; for (let i = cand.length - 1; i >= 0; i--) if (me && cand[i].pos.distanceTo(me) < 220) cand.splice(i, 1);
     const c = cand[Math.floor(Math.random() * cand.length)]; if (!c) return;
     this.state = 'npc'; this.suspect = c; this.npcStage = 'chase'; this.npcT2 = 0;
     c.speeder = true; c.vDesSaved = c.vDes; c.vDes = Math.max(c.vDes, 34); pol.pursuit = true;

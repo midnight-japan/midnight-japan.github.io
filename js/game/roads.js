@@ -241,11 +241,29 @@ function joinLocalEnds(defs) {
 }
 
 // ───────────────────────── spatial index & surface query ─────────────────────────
+// v2.5.3 — Yokohama Bay Bridge, west end: westbound Bayshore traffic ran off the end of the deck at 14 m while K3
+// westbound began 9 m lower, 50 m away under the bridge. K3 westbound now starts ON the bridge in the westbound lanes
+// (same height) and swings onto its own alignment ~230 m later; the stub under the deck is dropped.
+function joinBayBridgeK3(defs) {
+  const B = defs.find(d => d.id === 'bayshore'), K = defs.find(d => d.id === 'k3_wb'); if (!B || !K || K._joined) return defs;
+  const p0 = B.pts[0]; let j = 1; while (j < B.pts.length - 1 && Math.hypot(B.pts[j][0] - p0[0], B.pts[j][2] - p0[2]) < 25) j++;
+  const tx = B.pts[j][0] - p0[0], tz = B.pts[j][2] - p0[2], tl = Math.hypot(tx, tz) || 1, t = [tx / tl, tz / tl], left = [t[1], -t[0]];
+  const lat = -((B.median || 0) / 2 + (B.lanesB || 3) * 3.5 / 2), y0 = p0[1];
+  const A = sd => [p0[0] + t[0] * sd + left[0] * lat, y0, p0[2] + t[1] * sd + left[1] * lat];
+  let i = 1, acc = 0; while (i < K.pts.length - 1 && acc < 230) { acc += Math.hypot(K.pts[i][0] - K.pts[i - 1][0], K.pts[i][2] - K.pts[i - 1][2]); i++; }
+  const lead = [A(70), A(40), A(15), A(0), A(-25)];
+  const tail = K.pts.slice(i); const yT = tail[0][1];
+  // ease the height from the deck to the K3 profile over the gap
+  const g0 = lead[lead.length - 1], g1 = tail[0], mid = [1, 2, 3].map(k => { const f = k / 4, e = f * f * (3 - 2 * f); return [g0[0] + (g1[0] - g0[0]) * f, y0 + (yT - y0) * e, g0[2] + (g1[2] - g0[2]) * f]; });
+  K.pts = [...lead, ...mid, ...tail]; K._joined = true;
+  return defs;
+}
+
 export class RoadNet {
   constructor(defs = ROAD_DEFS) {
     // drop degenerate polylines from the OSM import (zero-length ways would put signs/lamps on one point of another road)
     const plen = d => d.pts.reduce((a, q, i) => i ? a + Math.hypot(q[0] - d.pts[i - 1][0], q[2] - d.pts[i - 1][2]) : 0, 0);
-    this.roads = landHangingRamps(fixFlatRamps(joinLocalEnds(defs.filter(d => d.pts?.length > 1 && plen(d) > 8)))).map((d, i) => new Road(d, i));
+    this.roads = landHangingRamps(fixFlatRamps(joinLocalEnds(joinBayBridgeK3(defs.filter(d => d.pts?.length > 1 && plen(d) > 8))))).map((d, i) => new Road(d, i));
     this.byId = Object.fromEntries(this.roads.map(r => [r.id, r]));
     this.cell = 24; this.grid = new Map();
     for (const r of this.roads) {
@@ -548,6 +566,7 @@ export function buildRoadMeshes(net, opts = {}) {
   // keep piers off the PA lot and out of its main building (the viaducts span over them)
   const noPier = (x, z) => PA.inLot(x, z, 2) || (() => { const [lx, lz] = PA.toLocal(x, z); return lx > -112 && lx < -84 && Math.abs(lz) < 46; })();
   const geoms = { asphalt: [], asphaltOld: [], concrete: [], concreteOld: [], sidewalk: [], white: [], yellow: [], wallSteel: [], wallClear: [], rail: [] };
+  const gapWalls = [];
   // 防音壁 (Shutoko noise barriers): galvanised lower panel + clear acrylic upper panel curving inwards, H-posts every 4 m.
   // Only where an elevated expressway runs over land (not over the sea / on the long bridges).
   const steelPanel = [[0.36, 1.05], [0.36, 2.15], [0.44, 2.15], [0.44, 1.05]];
@@ -601,6 +620,33 @@ export function buildRoadMeshes(net, opts = {}) {
       // jersey barriers along both edges (gaps wherever the edge runs over another deck: merges / diverges) + girder skirt
       const runL = freeRuns(net, r, r.edgeL + 0.3), runR = freeRuns(net, r, r.edgeR - 0.3);
       for (const [s0, s1] of runL) geoms.concrete.push(sweep(r, jersey, r.edgeL, yo, 1, s0, s1));
+      // v2.5.3: twin viaducts side by side (Aqua-Line, Bayshore …) — the slot between the two decks read as a hole in
+      // the road; it is closed with a deck slab at road level wherever another carriageway runs within 9 m
+      if (r.lanesB === 0 && r.kind !== 'mountain') for (const [side, edge] of [[1, r.edgeL], [-1, r.edgeR]]) {
+        const S = r.samples, pos = [], idx = [], midSeg = []; let prev = null, prevMid = null;
+        for (let i = 0; i < S.length; i += 3) {
+          const q = S[i]; let g = null;
+          const hitAt = d => { const l = edge + side * d; return onOtherRoad(net, r, q.p.x + q.left.x * l, q.p.y, q.p.z + q.left.z * l, 0); };
+          if (q.p.y > 1.5 && hitAt(9.5)) for (const d of [1.2, 2.2, 3.4, 4.8, 6.4, 8.2]) if (hitAt(d)) { g = d; break; }
+          const cur = g ? [q.p.x + q.left.x * (edge - side * 0.4), q.p.y + yo - 0.03, q.p.z + q.left.z * (edge - side * 0.4), q.p.x + q.left.x * (edge + side * (g + 0.6)), q.p.y + yo - 0.03, q.p.z + q.left.z * (edge + side * (g + 0.6))] : null;
+          if (prev && cur) { const v = pos.length / 3; pos.push(...prev, ...cur); if (side > 0) idx.push(v, v + 2, v + 1, v + 1, v + 2, v + 3); else idx.push(v, v + 1, v + 2, v + 1, v + 3, v + 2); }
+          // a central barrier in the middle of the slot (built once per pair: by the road whose id sorts first) — and a wall
+          let mid = null;
+          if (g) { const lm = edge + side * (g / 2 + 0.1), mx = q.p.x + q.left.x * lm, mz = q.p.z + q.left.z * lm; const o = net.hits(q.p.x + q.left.x * (edge + side * (g + 0.4)), q.p.z + q.left.z * (edge + side * (g + 0.4))).find(h => h.road !== r && !h.beyond && Math.abs(h.y - q.p.y) < 1.5);
+            if (o && r.id < o.road.id) { const to = o.road.dirAt(o.s); if (to.x * q.t.x + to.z * q.t.z < -0.8) mid = [mx, q.p.y + yo, mz]; } } // opposite carriageways only — never across a merge
+          if (mid && prevMid) { midSeg.push([prevMid, mid]); }
+          prevMid = mid;
+          prev = cur;
+        }
+        if (idx.length) { const gg = new THREE.BufferGeometry(); gg.setAttribute('position', new THREE.Float32BufferAttribute(pos, 3)); gg.setAttribute('uv', new THREE.Float32BufferAttribute(new Float32Array(pos.length / 3 * 2), 2)); gg.setIndex(idx); gg.computeVertexNormals(); geoms.concrete.push(gg); }
+        // the barrier itself: a 0.5 m × 0.9 m concrete wall along the slot centre, plus colliders
+        if (midSeg.length) { const bp = [], bi = [];
+          for (const [a, b] of midSeg) { const dx = b[0] - a[0], dz = b[2] - a[2], L = Math.hypot(dx, dz) || 1, nx = -dz / L * 0.25, nz = dx / L * 0.25, v = bp.length / 3;
+            for (const [p, h] of [[a, 0], [b, 0], [a, 0.9], [b, 0.9]]) bp.push(p[0] + nx, p[1] + h, p[2] + nz); for (const [p, h] of [[a, 0], [b, 0], [a, 0.9], [b, 0.9]]) bp.push(p[0] - nx, p[1] + h, p[2] - nz);
+            bi.push(v, v + 1, v + 2, v + 1, v + 3, v + 2, v + 4, v + 6, v + 5, v + 5, v + 6, v + 7, v + 2, v + 3, v + 6, v + 3, v + 7, v + 6);
+            gapWalls.push({ x: (a[0] + b[0]) / 2, z: (a[2] + b[2]) / 2, hx: 0.3, hz: L / 2 + 0.2, ry: Math.atan2(dx, dz), y0: Math.min(a[1], b[1]) - 1, y1: Math.max(a[1], b[1]) + 1.1 }); }
+          const bg = new THREE.BufferGeometry(); bg.setAttribute('position', new THREE.Float32BufferAttribute(bp, 3)); bg.setAttribute('uv', new THREE.Float32BufferAttribute(new Float32Array(bp.length / 3 * 2), 2)); bg.setIndex(bi); bg.computeVertexNormals(); geoms.concrete.push(bg); }
+      }
       for (const [s0, s1] of runR) geoms.concrete.push(sweep(r, jersey, r.edgeR, yo, -1, s0, s1));
       for (const [side, edge, runs] of [[1, r.edgeL, runL], [-1, r.edgeR, runR]]) {
         for (const [s0, s1] of landRuns(r, runs)) {
@@ -727,6 +773,7 @@ export function buildRoadMeshes(net, opts = {}) {
     colMesh.name = 'piers'; capMesh.name = 'pier_caps';
     group.add(colMesh, capMesh);
     group.userData.piers = legs; // for collision
+    group.userData.gapWalls = gapWalls;
     group.userData.pierStats = { spots: pierSpots.length, placed: caps.length };
   }
   return group;

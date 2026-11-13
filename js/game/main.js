@@ -55,13 +55,14 @@ const isMobile = /Android|iPhone|iPad|iPod|Mobile|SamsungBrowser/i.test(navigato
 export const DEFAULT_SETTINGS = {
   quality: isMobile ? 'low' : 'high', resScale: 1, transmission: 'auto', assist: true, units: 'kmh', etc: true,
   difficulty: 'standard', steerAssist: 'standard', stm: 'sport', tcs: 'sport', abs: true, police: 'normal',
-  master: 0.8, engine: 0.85, sfx: 0.8, ambient: 0.6, radio: 0.7, dj: false, voice: false, spawn: 'pa', weather: 'auto', damage: false, tilt: false, shake: true, fps: true, timeSpeed: 1, bloom: true, online: true, touch: isMobile ? 'on' : 'auto',
+  master: 0.6, engine: 0.7, sfx: 0.6, ambient: 0.45, radio: 0.5, dj: false, voice: false, spawn: 'pa', weather: 'auto', damage: false, tilt: false, shake: true, fps: true, timeSpeed: 1, bloom: true, online: true, touch: isMobile ? 'on' : 'auto',
 };
 
 class Game {
   constructor() {
     this.settings = load(SETTINGS_KEY, DEFAULT_SETTINGS);
     if (!this.settings.fpsOn) { this.settings.fps = true; this.settings.fpsOn = 1; }
+    if (!this.settings.v253) { for (const k of ['master', 'engine', 'sfx', 'ambient', 'radio']) if (typeof this.settings[k] === 'number') this.settings[k] = +(this.settings[k] * 0.75).toFixed(2); this.settings.v253 = 1; } // v2.5.3: everything was too loud
     if (!this.settings.v24) { this.settings.damage = false; this.settings.v24 = 1; } // v2.4: body damage is an option, off by default
     if (!this.settings.v22) { this.settings.resScale = 1; this.settings.v22 = 1; } // v2.2: full resolution by default (phones were at 75 %)
     if (!this.settings.v111) { this.settings.dj = false; this.settings.voice = false; this.settings.v111 = 1; } // v1.1.1: robotic text-to-speech voices off by default // v0.3.3: FPS + version shown by default
@@ -375,7 +376,13 @@ class Game {
     return W.access(x, z, y, true) && !this.cityBlocked(x, z);
   }
   cityBlocked(x, z) { const c = this.world.city; if (!c) return false; for (const C of c.collidersAt(x, z)) { const dx = x - C.x, dz = z - C.z; const lx = dx * C.c - dz * C.s, lz = dx * C.s + dz * C.c; if (Math.abs(lx) < C.hx + 0.3 && Math.abs(lz) < C.hz + 0.3) return true; } return false; }
-  walkY(x, z, y) { const q = this.roadAt(x, z, y); if (q && (y > 1.2 || !this.world.canWalk(x, z))) return q.y; return (z < -53.9 && z > -60.2) ? 0.15 : z < -60 && z > -84 && x > -55 && x < 55 ? 0.21 : 0; }
+  walkY(x, z, y) {
+    // v2.5.3: the deck / tunnel floor under you counts even mid-jump (up to 8 m below) — a jump in the Aqua-Line tunnel
+    // used to fall back to sea level and put you on top of the sea
+    const q = this.net.query(x, z, y + 0.6, (a, b) => this.world.ground(a, b));
+    if (q.onRoad && q.y <= y + 0.9 && y - q.y < 8 && (y > 1.2 || q.y < -0.5 || !this.world.canWalk(x, z))) return q.y;
+    if (y < -1) return q.onRoad ? q.y : y; // below sea level (tunnels): never pop up to the surface
+    return (z < -53.9 && z > -60.2) ? 0.15 : z < -60 && z > -84 && x > -55 && x < 55 ? 0.21 : 0; }
   updateWalk(dt) {
     const p = this.player, I = this.input.axes, W = this.world;
     // camera-relative movement
