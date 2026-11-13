@@ -63,7 +63,7 @@ function makeRoadAtlas() {
     g.fillStyle = '#fff'; g.textAlign = 'center'; g.textBaseline = 'middle';
     ch.forEach((t, k) => { g.save(); g.translate(x0 + 64, 512 - cell * (k + 0.5)); g.scale(1, cell / 128 * (n === 1 ? 0.8 : 0.92)); g.font = `900 ${n === 1 ? 92 : 112}px "Noto Sans JP","Hiragino Sans","Yu Gothic",sans-serif`; g.fillText(t, 0, 0); g.restore(); });
   });
-  const SG = [['stop'], ['speed_limit', { value: 30 }], ['speed_limit', { value: 40 }], ['speed_limit', { value: 50 }], ['speed_limit', { value: 60 }], ['pedestrian_crossing'], ['no_parking'], ['caution_board', { lines: ['通学路'] }], ['slow']];
+  const SG = [['stop'], ['speed_limit', { value: 30 }], ['speed_limit', { value: 40 }], ['speed_limit', { value: 50 }], ['speed_limit', { value: 60 }], ['pedestrian_crossing'], ['no_parking'], ['caution_board', { lines: ['通学路'] }], ['slow'], ['one_way', { dir: 'left' }]];
   SG.forEach(([kind, opts], i) => {
     try { const sc = signCanvas(kind, opts || {}); const cx = (i % 8) * 256, cy = 512 + Math.floor(i / 8) * 256; const k = Math.min(240 / sc.width, 240 / sc.height); const w = sc.width * k, h = sc.height * k; g.drawImage(sc, cx + (256 - w) / 2, cy + (256 - h) / 2, w, h); } catch (e) { console.warn('road atlas', kind, e); }
   });
@@ -319,6 +319,8 @@ export class City {
       // the driveable expressway decks, so the tiles never stand a pier, building, pole or tree through one
       { const dk = []; for (const r of this.world.net?.roads || []) { if (r.kind === 'local' || r.kind === 'mountain') continue; const hw = (r.edgeL - r.edgeR) / 2; const S = r.samples; for (let i = 0; i < S.length - 1; i += 2) { const a = S[i].p, b = S[Math.min(S.length - 1, i + 2)].p; dk.push(a.x, a.y, a.z, b.x, b.y, b.z, hw); } }
         w.postMessage({ decks: new Float32Array(dk) }); }
+      // v2.2: open cuttings before tunnel mouths — city ground is cut away there (it used to lid the road over)
+      w.postMessage({ trench: this.trenchCaps() });
       this.workers.push(w);
     }
     // materials
@@ -351,6 +353,20 @@ export class City {
     return true;
   }
 
+  // open-cut road sections (below ground, on land, roof not yet closed): [ax, az, bx, bz, halfWidth] …
+  trenchCaps() {
+    if (this._tc) return this._tc; const out = [], W = this.world;
+    const open = q => q.p.y < -0.3 && q.p.y > -6.2 && W.isLand(q.p.x, q.p.z);
+    for (const r of W.net?.roads || []) { if (r.kind === 'local') continue; const S = r.samples, hw = (r.edgeL - r.edgeR) / 2 + 1.6, c = (r.edgeL + r.edgeR) / 2;
+      for (let i = 0; i < S.length - 1; i++) { if (!open(S[i]) && !open(S[i + 1])) continue; const a = S[i], b = S[i + 1]; out.push(a.p.x + a.left.x * c, a.p.z + a.left.z * c, b.p.x + b.left.x * c, b.p.z + b.left.z * c, hw); } }
+    return (this._tc = new Float32Array(out));
+  }
+  inTrench(x, z) {
+    const a = this.trenchCaps();
+    const g = this._tg || (this._tg = (() => { const m = new Map(); for (let k = 0; k < a.length; k += 5) { const x0 = Math.floor((Math.min(a[k], a[k + 2]) - a[k + 4]) / 50), x1 = Math.floor((Math.max(a[k], a[k + 2]) + a[k + 4]) / 50), z0 = Math.floor((Math.min(a[k + 1], a[k + 3]) - a[k + 4]) / 50), z1 = Math.floor((Math.max(a[k + 1], a[k + 3]) + a[k + 4]) / 50); for (let i = x0; i <= x1; i++) for (let j = z0; j <= z1; j++) { const kk = i * 100003 + j; (m.get(kk) || m.set(kk, []).get(kk)).push(k); } } return m; })());
+    for (const k of g.get(Math.floor(x / 50) * 100003 + Math.floor(z / 50)) || []) { const dx = a[k + 2] - a[k], dz = a[k + 3] - a[k + 1], L2 = dx * dx + dz * dz || 1e-9, t = Math.max(0, Math.min(1, ((x - a[k]) * dx + (z - a[k + 1]) * dz) / L2)); if (Math.hypot(x - a[k] - dx * t, z - a[k + 1] - dz * t) < a[k + 4]) return true; }
+    return false;
+  }
   // v2.0: hand the PLATEAU coverage to the workers (buildings there come from js/game/plateau.js) and rebuild
   setPlateau(cell, cov, active) {
     for (const w of this.workers || []) w.postMessage({ plateau: { cell, cov, active } });
@@ -463,7 +479,14 @@ export class City {
   maskAt(x, z) {
     const i = Math.floor(x / TILE), j = Math.floor(z / TILE), k = i + '_' + j, t = this.tiles.get(k);
     if (!t || !t.mask) return this.has?.has(k) ? -1 : -2;
-    return t.mask[Math.floor(z - j * TILE) * TILE + Math.floor(x - i * TILE)];
+    // own tile + any neighbour whose margin reaches here (rasters are 1160 m: 80 m past every edge)
+    const MG = 80, N = TILE + 2 * MG; let v = 0;
+    for (let a = Math.floor((x - MG) / TILE); a <= Math.floor((x + MG) / TILE); a++) for (let b = Math.floor((z - MG) / TILE); b <= Math.floor((z + MG) / TILE); b++) {
+      const T = a === i && b === j ? t : this.tiles.get(a + '_' + b); if (!T || !T.mask || T.mask.length !== N * N) continue;
+      const lx = Math.floor(x - a * TILE) + MG, lz = Math.floor(z - b * TILE) + MG; if (lx < 0 || lz < 0 || lx >= N || lz >= N) continue;
+      const m = T.mask[lz * N + lx]; if (m > v) { v = m; if (v === 2) return 2; }
+    }
+    return v;
   }
   // v2.0 land raster (10 m): 1 land, 0 water; -1 = unknown here
   landAt(x, z) {

@@ -75,7 +75,19 @@ class Router {
 // simple mesh for paint / ground: position(3) uv(2) color(3)
 class Flat {
   constructor() { this.v = new Buf(8); }
-  tri(a, b, c, col, uv) { // always facing up
+  tri(a, b, c, col, uv, d = 0) { // always facing up
+    if (this.clip && TRENCH && d < 18) { // ground over an open cutting: split the triangle down and drop the pieces over the road
+      const ox = this.clip[0], oz = this.clip[1];
+      const x0 = Math.min(a[0], b[0], c[0]) + ox, x1 = Math.max(a[0], b[0], c[0]) + ox, z0 = Math.min(a[2], b[2], c[2]) + oz, z1 = Math.max(a[2], b[2], c[2]) + oz;
+      let near = false; for (let i = Math.floor(x0 / 20) - 1; i <= Math.floor(x1 / 20) + 1 && !near; i++) for (let j = Math.floor(z0 / 20) - 1; j <= Math.floor(z1 / 20) + 1 && !near; j++) if (TRENCH.g.has(i * 4099 + j)) near = true;
+      if (near) {
+        const cx = (a[0] + b[0] + c[0]) / 3 + ox, cz = (a[2] + b[2] + c[2]) / 3 + oz, big = Math.max(x1 - x0, z1 - z0);
+        if (big < 1.5 || d >= 17) { if (inTrench(cx, cz)) return; }
+        else { const e = [[a, b, Math.hypot(a[0] - b[0], a[2] - b[2])], [b, c, Math.hypot(b[0] - c[0], b[2] - c[2])], [c, a, Math.hypot(c[0] - a[0], c[2] - a[2])]].sort((p, q) => q[2] - p[2])[0];
+          const m = [(e[0][0] + e[1][0]) / 2, (e[0][1] + e[1][1]) / 2, (e[0][2] + e[1][2]) / 2], o = [a, b, c].find(p => p !== e[0] && p !== e[1]);
+          this.tri(e[0], m, o, col, uv, d + 1); this.tri(m, e[1], o, col, uv, d + 1); return; }
+      }
+    }
     const cr = (b[0] - a[0]) * (c[2] - a[2]) - (b[2] - a[2]) * (c[0] - a[0]);
     if (cr > 0) [b, c] = [c, b];
     for (const p of [a, b, c]) this.v.push(p[0], p[1], p[2], uv ? uv(p)[0] : p[0], uv ? uv(p)[1] : p[2], col[0], col[1], col[2]);
@@ -131,11 +143,12 @@ class SegGrid {
 // ── v2.1 road markings / traffic sign atlas (js/game/city.js makeRoadAtlas): text cells 128×512 in the top half,
 // sign cells 256×256 below. TXT index → cell, SGN index → cell.
 const TXT = { '止まれ': 0, '30': 1, '40': 2, '50': 3, '60': 4, '通学路': 5, 'とまれ': 6, '徐行': 7 };
-const SGN = { stop: 0, s30: 1, s40: 2, s50: 3, s60: 4, cross: 5, nopark: 6, school: 7, slow: 8 };
+const SGN = { stop: 0, s30: 1, s40: 2, s50: 3, s60: 4, cross: 5, nopark: 6, school: 7, slow: 8, oneway: 9 };
 const txtUV = i => [i * 128 / 2048, (i + 1) * 128 / 2048, 0.5, 1];               // u0 u1 v0 v1
 const sgnUV = i => { const c = i % 8, r = Math.floor(i / 8); return [c * 256 / 2048, (c + 1) * 256 / 2048, 1 - (512 + (r + 1) * 256) / 1024, 1 - (512 + r * 256) / 1024]; };
 // ── PLATEAU coverage (100 m cells → dataset index) and the datasets streaming fine in this session ──
-let PLAT = null, MAINLAND = null;
+let PLAT = null, MAINLAND = null, TRENCH = null;
+function inTrench(x, z) { if (!TRENCH) return false; for (const s of TRENCH.near(x, z)) { const dx = s.bx - s.ax, dz = s.bz - s.az, L2 = dx * dx + dz * dz || 1e-9, t = Math.max(0, Math.min(1, ((x - s.ax) * dx + (z - s.az) * dz) / L2)); if (Math.hypot(x - s.ax - dx * t, z - s.az - dz * t) < s.w) return true; } return false; }
 function plateauAt(x, z) {
   if (!PLAT) return false;
   const row = PLAT.rows[Math.floor(z / PLAT.cell)]; if (!row) return false; const i = Math.floor(x / PLAT.cell);
@@ -187,8 +200,8 @@ function buildTile(T, lod, opts) {
   const near = lod === 0, mid = lod <= 1;
   const signN = opts.signs || 64;
   // ground: coastline land clipped to this tile (the big coast rings don't triangulate reliably in one piece)
-  const landF = new Flat();
   const OX = T.i * 1000, OZ = T.j * 1000;
+  const landF = new Flat(); landF.clip = [OX, OZ];
   for (const L0 of LAND) {
     if (L0.x1 < OX || L0.x0 > OX + 1000 || L0.z1 < OZ || L0.z0 > OZ + 1000) continue;
     const c = clipRect(L0.pts, OX, OZ, OX + 1000, OZ + 1000); if (c.length < 3) continue;
@@ -203,6 +216,8 @@ function buildTile(T, lod, opts) {
   const nearJunction = (x, z, r) => { for (let i = Math.floor((x - r) / 25); i <= Math.floor((x + r) / 25); i++) for (let j = Math.floor((z - r) / 25); j <= Math.floor((z + r) / 25); j++) for (const p of jGrid.get(i * 4099 + j) || []) if (Math.hypot(p[0] - x, p[1] - z) < r) return true; return false; };
   const streets = (T.s || []).map(a => { const pts = []; for (let k = 3; k < a.length; k += 2) pts.push([a[k] * D, a[k + 1] * D]); return { cls: a[0], w: a[1] * D, flags: a[2], pts }; });
   for (const st of streets) for (let k = 0; k < st.pts.length - 1; k++) { const [ax, az] = st.pts[k], [bx, bz] = st.pts[k + 1]; segs.add({ ax, az, bx, bz, w: st.w, cls: st.cls, st }); if (st.flags & 1) bridges.push([ax, az, bx, bz, st.w / 2 + 0.5]); }
+  // v2.2: nothing may stand on a carriageway (poles, trees, lamps, vending machines, signal poles, bus stops)
+  const onCarriage = (x, z, pad = 0.2) => { const d = segs.dist(x, z, sg => sg.cls <= S.SERVICE); return !!d && d.d < d.s.w / 2 + pad; };
 
   const asphaltCol = c => c <= S.PRIMARY ? [0.5, 0.5, 0.52] : c <= S.TERTIARY ? [0.55, 0.55, 0.56] : c === S.PED ? [0.95, 0.9, 0.85] : [0.6, 0.6, 0.6];
   const WHITE = [0.92, 0.92, 0.9], YEL = [0.95, 0.68, 0.12];
@@ -261,6 +276,7 @@ function buildTile(T, lod, opts) {
       for (let s = 6 + rnd() * 10; s < acc - 4; s += 28 + rnd() * 8) {
         const p = at(s, side * (hw + (swW ? swW - 0.4 : 0.45)));
         if (nearJunction(p[0], p[1], 5)) continue;
+        if (onCarriage(p[0], p[1])) continue;
         poles.push(p);
       }
       const CON = [0.62, 0.62, 0.6], DARK = [0.22, 0.22, 0.22];
@@ -290,6 +306,7 @@ function buildTile(T, lod, opts) {
       // street lamps both sides, trees + guard rails on sidewalks
       for (const sd of [1, -1]) for (let s = 10 + (sd > 0 ? 0 : 17); s < acc - 5; s += 34) {
         const p = at(s, sd * (hw + 0.6)); if (nearJunction(p[0], p[1], hw + 4)) continue;
+        if (onCarriage(p[0], p[1], 0)) continue;
         const [x, z, tx, tz] = p; const nx = -tz * sd, nz = tx * sd; C(x, z); // toward the outside
         pm.cyl(x, z, 0, 9, 0.12, 6, [0.5, 0.52, 0.54], [PLAIN, 0, 0, 0], true, 0.09);
         pm.box(x - nx * 1.2, 9.0, z - nz * 1.2, -nx, -nz, 1.2, 0.06, 0.06, [0.5, 0.52, 0.54], [PLAIN, 0, 0, 0]);
@@ -298,7 +315,7 @@ function buildTile(T, lod, opts) {
         lamps.push([x - nx * 2.3, 8.6, z - nz * 2.3]);
       }
       if (swW) for (const sd of [1, -1]) {
-        for (let s = 6 + rnd() * 4; s < acc - 4; s += 13 + rnd() * 3) { const p = at(s, sd * (hw + swW * 0.62)); if (nearJunction(p[0], p[1], hw + 6)) continue; trees.push(p[0], p[1], 0.75 + rnd() * 0.4, rnd() * 6.28, cls <= S.PRIMARY ? 1 : 0); cols.push([p[0], p[1], 0.3, 0.3, 0, -1, 4]); }
+        for (let s = 6 + rnd() * 4; s < acc - 4; s += 13 + rnd() * 3) { const p = at(s, sd * (hw + swW * 0.62)); if (nearJunction(p[0], p[1], hw + 6) || onCarriage(p[0], p[1], 0.3)) continue; trees.push(p[0], p[1], 0.75 + rnd() * 0.4, rnd() * 6.28, cls <= S.PRIMARY ? 1 : 0); cols.push([p[0], p[1], 0.3, 0.3, 0, -1, 4]); }
         // white pipe guard rail along the kerb (6 m panels: two rails + a post)
         for (let s0 = 2; s0 < acc - 2; s0 += 6) {
           const s1 = Math.min(acc - 1, s0 + 6); const p = at(s0, sd * (hw + 0.25)), q2 = at(s1, sd * (hw + 0.25)); if (nearJunction(p[0], p[1], hw + 5) || nearJunction(q2[0], q2[1], hw + 5)) continue;
@@ -353,14 +370,17 @@ function buildTile(T, lod, opts) {
       // find the street directions through this node
       const dirs = [];
       for (const sgm of segs.near(x, z)) {
+        if (sgm.cls > S.SERVICE || sgm.st.flags & 16) continue;
         for (const [ex, ez, ox, oz] of [[sgm.ax, sgm.az, sgm.bx, sgm.bz], [sgm.bx, sgm.bz, sgm.ax, sgm.az]]) {
           if (Math.hypot(ex - x, ez - z) > 1.5) continue;
           const dx = ox - ex, dz = oz - ez, l = Math.hypot(dx, dz) || 1; const d = [dx / l, dz / l, sgm.w / 2];
           if (!dirs.some(o => o[0] * d[0] + o[1] * d[1] > 0.9)) dirs.push(d);
         }
       }
+      if (dirs.length < 2) continue; // a signal tag with no street through it (meaningless spot): leave it out
       const ph = hash2(Math.round(x * 10), Math.round(z * 10)) * 60; sigs.push(x, z, ph);
       for (const [dx, dz, hw] of dirs.slice(0, 4)) {
+        { const lx0 = dz, lz0 = -dx, qx = x + dx * (hw + 3) + lx0 * (hw + 1), qz = z + dz * (hw + 3) + lz0 * (hw + 1); if (onCarriage(qx, qz, 0.1)) continue; }
         const axis = Math.abs(dx) > Math.abs(dz) ? 0 : 1;
         // approaching traffic moves along −d and keeps left; pole on its left kerb, arm over the lanes
         const lx = dz, lz = -dx; // left of a car travelling −d … (−d rotated) → pick the kerb on that side
@@ -385,15 +405,19 @@ function buildTile(T, lod, opts) {
         paint.quad([sx + lx * 0.1 - dx * 0.22, 0.075, sz + lz * 0.1 - dz * 0.22], [sx + lx * hw - dx * 0.22, 0.075, sz + lz * hw - dz * 0.22], [sx + lx * hw + dx * 0.22, 0.075, sz + lz * hw + dz * 0.22], [sx + lx * 0.1 + dx * 0.22, 0.075, sz + lz * 0.1 + dz * 0.22], WHITE);
       }
     } else if (ty === PT.VEND) {
+      if (onCarriage(x, z, 0.5)) continue;
       vending(x, z, rnd() * 6.28, 1 + Math.floor(rnd() * 3));
     } else if (ty === PT.BUS) {
+      if (onCarriage(x, z, 0.5)) continue;
       const b = segs.dist(x, z); const ry = b ? Math.atan2(b.s.bx - b.s.ax, b.s.bz - b.s.az) : 0;
       pm.cyl(x, z, 0, 2.3, 0.05, 6, [0.6, 0.6, 0.6], [PLAIN, 0, 0, 0]);
       gm.box(x, 2.3, z, Math.sin(ry), Math.cos(ry), 0.02, 0.32, 0.32, [0.9, 0.95, 1], [2, 0, 0, 0]);
       cols.push([x, z, 0.3, 0.3, 0, -1, 2.5]);
     } else if (ty === PT.POST) {
+      if (onCarriage(x, z, 0.5)) continue;
       pm.box(x, 0.65, z, 1, 0, 0.22, 0.22, 0.65, [0.82, 0.08, 0.06], [PLAIN, 0, 0, 0]); cols.push([x, z, 0.3, 0.3, 0, -1, 1.3]);
     } else if (ty === PT.LAMP) {
+      if (onCarriage(x, z, 0.5)) continue;
       pm.cyl(x, z, 0, 6.5, 0.1, 6, [0.5, 0.52, 0.54], [PLAIN, 0, 0, 0]); gm.box(x, 6.5, z, 1, 0, 0.3, 0.3, 0.1, [1, 0.93, 0.8], [1, 0, 0, 0]); lamps.push([x, 6.3, z]); cols.push([x, z, 0.15, 0.15, 0, -1, 6.5]);
     }
   }
@@ -439,6 +463,14 @@ function buildTile(T, lod, opts) {
       for (const a of ap) {
         const st = a.st, hw = st.w / 2, lx = a.dz, lz = -a.dx; // left of a car travelling −d (towards the junction)
         if (st.cls === S.PED || hw < 1.6) continue;
+        if (signal) {
+          // 横断歩道 sign beside the crossing, and straight-ahead lane arrows before the stop line (wide approaches)
+          { const px = jx + a.dx * (hw + 2.6) + lx * (hw + 0.9), pz = jz + a.dz * (hw + 2.6) + lz * (hw + 0.9); if (!onCarriage(px, pz, 0.1)) signPost(px, pz, a.dx, a.dz, SGN.cross, 0.6, 2.7); }
+          if (st.w >= 7) { const nL = Math.max(1, Math.round((st.flags & 2 ? st.w : hw) / 3.25)), lw = (st.flags & 2 ? st.w : hw) / nL;
+            for (let li = 0; li < nL; li++) { const off = (st.flags & 2 ? -hw : 0) + lw * (li + 0.5), cx = jx + a.dx * (hw + 14) + lx * off, cz = jz + a.dz * (hw + 14) + lz * off; if (!onStreet(cx, cz, st)) continue;
+              const fx = -a.dx, fz = -a.dz; bar(cx - fx * 2.2, cz - fz * 2.2, cx + fx * 1.2, cz + fz * 1.2, 0.18, WHITE2);
+              const tx = cx + fx * 2.2, tz = cz + fz * 2.2, sx = -fz * 0.45, sz = fx * 0.45; paint.quad([tx + fx * 1.0, yDec, tz + fz * 1.0], [tx + sx, yDec, tz + sz], [tx, yDec, tz], [tx - sx, yDec, tz - sz], WHITE2); } }
+        }
         if (signal) { // ◇ before the crossing, 30 m and 50 m out, in the approach lane
           for (const back of [30, 50]) { const cx = jx + a.dx * (hw + back) + lx * hw / 2, cz = jz + a.dz * (hw + back) + lz * hw / 2; if (!onStreet(cx, cz, st)) continue;
             const ex = a.dx * 2.4, ez = a.dz * 2.4, wx = lx * 0.75, wz = lz * 0.75;
@@ -482,6 +514,9 @@ function buildTile(T, lod, opts) {
           const px = x + lx * (hw + (st.flags & 8 ? 2.2 : 0.6)), pz = z + lz * (hw + (st.flags & 8 ? 2.2 : 0.6));
           const sd = segs.dist(px, pz); if (!sd || sd.d > sd.s.w / 2 + 0.3) signPost(px, pz, -fx, -fz, SGN['s' + speed] ?? SGN.s40, 0.6, 2.5);
         }
+        // 駐車禁止 signs along arterials, 一方通行 at the start of one-way streets
+        if (st.cls <= S.SECONDARY) for (let s = 120 + seed * 80; s < acc - 60; s += 260) { const ss = dir > 0 ? s : acc - s, [x, z, tx, tz] = at(ss), fx = tx * dir, fz = tz * dir, lx = -fz, lz = fx, o = hw + (st.flags & 8 ? 2.4 : 0.7); const px = x + lx * o, pz = z + lz * o; if (!onCarriage(px, pz, 0.2)) signPost(px, pz, -fx, -fz, SGN.nopark, 0.6, 2.6); }
+        if (st.flags & 2 && dir > 0 && acc > 30) { const [x, z, tx, tz] = at(6), lx = -tz, lz = tx, px = x + lx * (hw + 0.7), pz = z + lz * (hw + 0.7); if (!onCarriage(px, pz, 0.2)) signPost(px, pz, tz, -tx, SGN.oneway, 0.7, 2.6); } // parallel to the street, arrow along the travel direction
         // blue bicycle arrows (自転車ナビマーク) along the left edge of arterials
         if (st.cls <= S.TERTIARY && st.w >= 9) for (let s = 12; s < acc - 12; s += 22) {
           const ss = dir > 0 ? s : acc - s, [x, z, tx, tz] = at(ss), fx = tx * dir, fz = tz * dir, lx = -fz, lz = fx, o = hw - 0.75;
@@ -530,7 +565,7 @@ function buildTile(T, lod, opts) {
         if (!inPoly(x, z, pts)) continue; const sd = segs.dist(x, z); if (sd && !(sd.s.st?.flags & 16) && sd.s.cls <= 5 && sd.d < sd.s.w / 2 - 0.5) hits++; }
       if (hits >= 2) continue;
       // …or that a driveable deck runs through (below the roof)
-      let dh = 0; for (let u = -0.75; u <= 0.75 && dh < 1; u += 0.25) for (let v = -0.75; v <= 0.75 && dh < 1; v += 0.25) { const x = ob.x + ob.tx * u * ob.hl - ob.tz * v * ob.hw, z = ob.z + ob.tz * u * ob.hl + ob.tx * v * ob.hw; if (inPoly(x, z, pts) && deckIn(OX + x, OZ + z, -3, h + 1, 0.3) !== null) dh++; }
+      let dh = 0; for (let u = -0.75; u <= 0.75 && dh < 1; u += 0.25) for (let v = -0.75; v <= 0.75 && dh < 1; v += 0.25) { const x = ob.x + ob.tx * u * ob.hl - ob.tz * v * ob.hw, z = ob.z + ob.tz * u * ob.hl + ob.tx * v * ob.hw; if (inPoly(x, z, pts) && (deckIn(OX + x, OZ + z, -3, h + 1, 0.3) !== null || inTrench(OX + x, OZ + z))) dh++; }
       if (dh) continue; }
     // outward normals: test one edge
     const cwSign = (() => { const p = pts[0], q2 = pts[1]; const ex = q2[0] - p[0], ez = q2[1] - p[1], l = Math.hypot(ex, ez) || 1; const mx = (p[0] + q2[0]) / 2 + (ez / l) * 0.05, mz = (p[1] + q2[1]) / 2 - (ex / l) * 0.05; return inPoly(mx, mz, pts) ? -1 : 1; })();
@@ -557,6 +592,12 @@ function buildTile(T, lod, opts) {
     const cx = ob.x, cz = ob.z; C(cx, cz);
     // v2.0: the real building comes from PLATEAU (js/game/plateau.js) — keep only its collider here
     if (cls !== B.GAS && plateauAt(OX + cx, OZ + cz)) {
+      if (cls === B.KONBINI && near) { // the real building comes from PLATEAU, the storefront / sign / lot stay ours
+        const cwS = (() => { const p = pts[0], q2 = pts[1]; const ex = q2[0] - p[0], ez = q2[1] - p[1], l = Math.hypot(ex, ez) || 1; return inPoly((p[0] + q2[0]) / 2 + (ez / l) * 0.05, (p[1] + q2[1]) / 2 - (ex / l) * 0.05, pts) ? -1 : 1; })();
+        const E2 = []; for (let k = 0; k < pts.length; k++) { const p = pts[k], q2 = pts[(k + 1) % pts.length]; const l = Math.hypot(q2[0] - p[0], q2[1] - p[1]); if (l < 2.5) continue; const n = [cwS * (q2[1] - p[1]) / l, 0, -cwS * (q2[0] - p[0]) / l]; const mx = (p[0] + q2[0]) / 2, mz = (p[1] + q2[1]) / 2; const sd = sideOf(mx + n[0] * 4, mz + n[2] * 4); E2.push({ p, q: q2, l, n, mx, mz, street: sd && sd.d < sd.s.w / 2 + 6 ? sd.s : null, tx: (q2[0] - p[0]) / l, tz: (q2[1] - p[1]) / l }); }
+        E2.sort((a, b) => b.l - a.l); const fr = E2.find(e => e.street) || E2[0];
+        if (fr) { const n = fr.n; fr.p = [fr.p[0] + n[0] * 0.25, fr.p[1] + n[2] * 0.25]; fr.q = [fr.q[0] + n[0] * 0.25, fr.q[1] + n[2] * 0.25]; fr.mx += n[0] * 0.25; fr.mz += n[2] * 0.25; konbini(fr, seed, Math.max(h, 4.6)); }
+      }
       if (fill > 0.95) cols.push([cx, cz, ob.hl, ob.hw, Math.atan2(-ob.tz, ob.tx), -1, h]);
       else for (let k = 0; k < pts.length; k++) { const p = pts[k], q2 = pts[(k + 1) % pts.length]; const l = Math.hypot(q2[0] - p[0], q2[1] - p[1]); if (l < 0.3) continue; cols.push([(p[0] + q2[0]) / 2, (p[1] + q2[1]) / 2, l / 2, 0.3, Math.atan2(-(q2[1] - p[1]) / l, (q2[0] - p[0]) / l), -1, h]); }
       continue;
@@ -735,6 +776,16 @@ function buildTile(T, lod, opts) {
     sign(px + E.n[0] * 0.2, 6.6, pz + E.n[2] * 0.2, E.tx, E.tz, E.n, 2.2, 1.6, brand, 4, true);
     cols.push([px, pz, 0.25, 0.25, 0, -1, 7]);
     lamps.push([E.mx + E.n[0] * 3, 3.5, E.mz + E.n[2] * 3]);
+    // v2.2: the bits that make a konbini lot feel lived-in — recycling bins by the door, an ashtray stand, a bike rack
+    // with bicycles, car stops in every bay and two lot lights
+    { const dx = E.tx, dz = E.tz, nx = E.n[0], nz = E.n[2], bx = E.mx + dx * (E.l / 2 - 1.2) + nx * 0.7, bz = E.mz + dz * (E.l / 2 - 1.2) + nz * 0.7;
+      [[0.2, 0.45, 0.85], [0.9, 0.75, 0.1], [0.85, 0.15, 0.12], [0.2, 0.6, 0.3]].forEach((c, k) => { pm.box(bx - dx * k * 0.55, 0.5, bz - dz * k * 0.55, dx, dz, 0.24, 0.3, 0.5, c, [PLAIN, 0, 0, 0]); });
+      cols.push([bx - dx * 0.8, bz - dz * 0.8, 1.2, 0.4, Math.atan2(-dz, dx), -1, 1]);
+      const ax = E.mx - dx * (E.l / 2 - 0.8) + nx * 0.8, az = E.mz - dz * (E.l / 2 - 0.8) + nz * 0.8; pm.cyl(ax, az, 0, 0.9, 0.18, 8, [0.6, 0.62, 0.64], [PLAIN, 0, 0, 0]);
+      const rx = E.mx - dx * (E.l / 2 + 2.2) + nx * 1.5, rz = E.mz - dz * (E.l / 2 + 2.2) + nz * 1.5;
+      for (let k = 0; k < 4; k++) { const ox = rx + nx * k * 0.65, oz = rz + nz * k * 0.65; pm.box(ox, 0.5, oz, nx, nz, 0.03, 0.85, 0.32, [[0.75, 0.75, 0.78], [0.12, 0.3, 0.6], [0.6, 0.1, 0.1], [0.15, 0.15, 0.16]][(seed + k) % 4], [PLAIN, 0, 0, 0]); }
+      for (const sd of [-1, 1]) { const lx = E.mx + dx * sd * (E.l / 2 + 1) + nx * 10, lz = E.mz + dz * sd * (E.l / 2 + 1) + nz * 10; if (onCarriage(lx, lz, 0.3)) continue; pm.cyl(lx, lz, 0, 6, 0.08, 6, [0.55, 0.57, 0.58], [PLAIN, 0, 0, 0]); gm.box(lx, 6.05, lz, dx, dz, 0.35, 0.35, 0.08, [1, 0.97, 0.9], [1, 0, 0, 0]); cols.push([lx, lz, 0.12, 0.12, 0, -1, 6]); lamps.push([lx, 5.8, lz]); }
+    }
     // parking stalls in front
     for (let k = -2; k <= 2; k++) { const sx = E.mx + E.n[0] * 5 + E.tx * k * 2.6, sz = E.mz + E.n[2] * 5 + E.tz * k * 2.6; paint.quad([sx - E.n[0] * 2.5 - E.tx * 0.06, 0.06, sz - E.n[2] * 2.5 - E.tz * 0.06], [sx + E.n[0] * 2.5 - E.tx * 0.06, 0.06, sz + E.n[2] * 2.5 - E.tz * 0.06], [sx + E.n[0] * 2.5 + E.tx * 0.06, 0.06, sz + E.n[2] * 2.5 + E.tz * 0.06], [sx - E.n[0] * 2.5 + E.tx * 0.06, 0.06, sz - E.n[2] * 2.5 + E.tz * 0.06], WHITE); }
   }
@@ -745,7 +796,7 @@ function buildTile(T, lod, opts) {
     if (pts.length < 3) continue;
     if (c === L.WATER) water.push(pts);
     if (!mid && c !== L.WATER && c !== L.GREEN && c !== L.WOOD) continue;
-    const g = ground[c] || (ground[c] = new Flat());
+    const g = ground[c] || (ground[c] = new Flat()); g.clip = [OX, OZ];
     const y = c === L.WATER ? 0.02 : c === L.PARKING ? 0.028 : 0.012 + (c % 5) * 0.002;
     // coin parking (コインパーキング): white bay lines across the lot, wheel stops, a yellow 「P」 sign pole with the
     // tariff board and a pay machine at the entrance corner
@@ -874,7 +925,7 @@ function buildTile(T, lod, opts) {
   { const G = T.g || []; for (let k = 0; k < G.length; k += 3) gates.push(G[k] * D, G[k + 1] * D, G[k + 2] / 100); }
 
   // ── OSM trees ──
-  if (mid) { const tr = T.t || []; for (let k = 0; k < tr.length; k += near ? 2 : 6) { const x = tr[k] * D, z = tr[k + 1] * D; const sd = segs.dist(x, z); if (sd && sd.s.st?.flags & 16 && sd.d < sd.s.w / 2 + 3) continue; trees.push(x, z, 0.8 + rnd() * 0.5, rnd() * 6.28, near ? Math.floor(rnd() * 3) : 3); } }
+  if (mid) { const tr = T.t || []; for (let k = 0; k < tr.length; k += near ? 2 : 6) { const x = tr[k] * D, z = tr[k + 1] * D; const sd = segs.dist(x, z); if ((sd && sd.s.st?.flags & 16 && sd.d < sd.s.w / 2 + 3) || onCarriage(x, z, 0.4)) continue; trees.push(x, z, 0.8 + rnd() * 0.5, rnd() * 6.28, near ? Math.floor(rnd() * 3) : 3); } }
 
   const rails = [], stations = [];
   if (mid) for (const a of T.r || []) { if (a.length < 6) continue; const o = [a[0], a[1] * D]; for (let k = 2; k < a.length; k += 2) o.push(Math.round(a[k] * D * 10) / 10, Math.round(a[k + 1] * D * 10) / 10); rails.push(o); }
@@ -898,14 +949,18 @@ function buildTile(T, lod, opts) {
 // 1 = on foot only (sidewalks, footpaths, squares), 2 = driveable (streets + shoulders, car parks, fuel forecourts,
 // konbini lots). The game keeps cars and walkers inside it everywhere in the city.
 function buildMask(T, streets) {
-  const N = 1000, M = new Uint8Array(N * N), D = 0.1;
+  // the raster reaches MG metres past each tile edge: a street segment belongs to the tile of its midpoint, so its
+  // overhang into the neighbouring tile used to be missing there (a wall across the street at tile borders)
+  const MG = 80, N = 1000 + 2 * MG, M = new Uint8Array(N * N), D = 0.1;
   const cap = (ax, az, bx, bz, r, v) => {
+    ax += MG; az += MG; bx += MG; bz += MG;
     const x0 = Math.max(0, Math.floor(Math.min(ax, bx) - r)), x1 = Math.min(N - 1, Math.ceil(Math.max(ax, bx) + r));
     const z0 = Math.max(0, Math.floor(Math.min(az, bz) - r)), z1 = Math.min(N - 1, Math.ceil(Math.max(az, bz) + r));
     const dx = bx - ax, dz = bz - az, L2 = dx * dx + dz * dz || 1e-9, r2 = r * r;
     for (let j = z0; j <= z1; j++) { const pz = j + 0.5; for (let i = x0; i <= x1; i++) { const px = i + 0.5; const t = Math.max(0, Math.min(1, ((px - ax) * dx + (pz - az) * dz) / L2)); const ex = px - ax - dx * t, ez = pz - az - dz * t; if (ex * ex + ez * ez <= r2) { const k = j * N + i; if (M[k] < v) M[k] = v; } } }
   };
-  const poly = (pts, v, grow = 0) => {
+  const poly = (pts0, v, grow = 0) => {
+    const pts = pts0.map(p => [p[0] + MG, p[1] + MG]);
     let z0 = 1e9, z1 = -1e9; for (const p of pts) { z0 = Math.min(z0, p[1]); z1 = Math.max(z1, p[1]); }
     for (let j = Math.max(0, Math.floor(z0)); j <= Math.min(N - 1, Math.ceil(z1)); j++) {
       const pz = j + 0.5, xs = [];
@@ -913,7 +968,7 @@ function buildMask(T, streets) {
       xs.sort((p, q) => p - q);
       for (let k = 0; k + 1 < xs.length; k += 2) for (let i = Math.max(0, Math.floor(xs[k])); i <= Math.min(N - 1, Math.ceil(xs[k + 1]) - 1); i++) { const q = j * N + i; if (M[q] < v) M[q] = v; }
     }
-    if (grow > 0) for (let a = 0, b = pts.length - 1; a < pts.length; b = a++) cap(pts[b][0], pts[b][1], pts[a][0], pts[a][1], grow, v);
+    if (grow > 0) for (let a = 0, b = pts0.length - 1; a < pts0.length; b = a++) cap(pts0[b][0], pts0[b][1], pts0[a][0], pts0[a][1], grow, v);
   };
   // walking first (lower value), driving on top
   for (const st of streets) {
@@ -978,6 +1033,7 @@ function buildLand(T, streets, OX, OZ, landF) {
 
 self.onmessage = async ev => {
   if (ev.data.decks) { const a = ev.data.decks; DECKS = new SegGrid(); for (let k = 0; k < a.length; k += 7) DECKS.add({ ax: a[k], ay: a[k + 1], az: a[k + 2], bx: a[k + 3], by: a[k + 4], bz: a[k + 5], w: a[k + 6] * 2 }); return; }
+  if (ev.data.trench) { const a = ev.data.trench; TRENCH = new SegGrid(); for (let k = 0; k < a.length; k += 5) TRENCH.add({ ax: a[k], az: a[k + 1], bx: a[k + 2], bz: a[k + 3], w: a[k + 4] }); return; }
   if (ev.data.plateau) { const q = ev.data.plateau; PLAT = { cell: q.cell, rows: q.cov, active: new Set(q.active) }; return; }
   if (ev.data.mainLand) { const pts = ev.data.mainLand; let x0 = 1e9, x1 = -1e9, z0 = 1e9, z1 = -1e9; for (const [x, z] of pts) { x0 = Math.min(x0, x); x1 = Math.max(x1, x); z0 = Math.min(z0, z); z1 = Math.max(z1, z); } MAINLAND = { pts, x0, x1, z0, z1 }; return; }
   if (ev.data.land) { LAND = ev.data.land.map(pts => { let x0 = 1e9, x1 = -1e9, z0 = 1e9, z1 = -1e9; for (const [x, z] of pts) { x0 = Math.min(x0, x); x1 = Math.max(x1, x); z0 = Math.min(z0, z); z1 = Math.max(z1, z); } return { pts, x0, x1, z0, z1 }; }); return; }

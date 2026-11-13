@@ -249,3 +249,8 @@ body.photo .online-pill,body.photo .chat{display:none}
 .autobtn.on{background:#2fbf74;border-color:#2fbf74;color:#04150c;box-shadow:0 0 14px rgba(47,191,116,.6)}
 .navhud{top:226px}
 @media (max-width:760px){.autobtn{top:calc(max(14px,env(safe-area-inset-top)) + 126px)}}
+/* v2.2: the map is a translucent layer — the game (and the touch pedals/steering) stay live underneath */
+#map.screen.dim{background:transparent;backdrop-filter:none}
+#map.show ~ #touch,#ui:has(#map.show) #touch{z-index:30}
+#touch{z-index:20}
+.wxbtn{right:calc(max(14px,env(safe-area-inset-right)) + 78px);padding:4px 10px;font-size:14px}

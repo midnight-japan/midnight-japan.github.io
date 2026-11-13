@@ -24,16 +24,14 @@ export class Police {
     if (!pol) return;
     if (!this.siren && g.audio?.ready) this.siren = g.audio.createSiren();
     // ── enforcement
-    if (v && g.mode === 'drive' && this.state === 'patrol') {
-      const over = v.kmh - this.speedLimit(v);
-      const d = pol.pos.distanceTo(v.pos);
-      if (over > ({ lenient: 60, strict: 25 }[g.settings?.police] ?? 40) && d < 140 && Math.abs(pol.pos.y - v.pos.y) < 4) this.startPursuit(over);
-    }
-    if (this.state === 'pursuit') this.pursue(dt, v, pol);
+    // v2.2: the police never chase the player — they go after speeding NPC cars instead
+    this.npcT = (this.npcT ?? 40) - dt;
+    if (this.state === 'patrol' && this.npcT <= 0 && pol.mode === 'road' && !pol.accident) { this.npcT = 70 + Math.random() * 90; this.chaseNpc(pol); }
+    if (this.state === 'npc') this.npcStep(dt, pol);
     // siren audio
     // siren: only in an emergency (pursuit / responding to an accident) and only within earshot of the player
     const near = pol.pos.distanceTo(g.focus || pol.pos);
-    if (this.siren) this.siren.update(pol.pos, near > 700 ? 'off' : this.state === 'pursuit' ? (pol.pos.distanceTo(v?.pos || pol.pos) < 25 ? 'yelp' : 'wail') : pol.accident ? 'wail' : 'off');
+    if (this.siren) this.siren.update(pol.pos, near > 700 ? 'off' : this.state === 'npc' ? (this.npcStage === 'chase' ? 'wail' : 'off') : this.state === 'pursuit' ? (pol.pos.distanceTo(v?.pos || pol.pos) < 25 ? 'yelp' : 'wail') : pol.accident ? 'wail' : 'off');
     if (this.lastSeen) { this.lastSeen.t -= dt; if (this.lastSeen.t <= 0) this.lastSeen = null; }
     this.dlgCool = Math.max(0, (this.dlgCool || 0) - dt);
     // ── revving in the PA (空ぶかし)
@@ -42,7 +40,7 @@ export class Police {
     }
     this.revT -= dt; if (this.revT <= 0) this.revCount = 0;
     this.warnT -= dt;
-    if (this.revCount >= 3 && this.warnT <= 0) {
+    if (false && this.revCount >= 3 && this.warnT <= 0) { // v2.2: no warnings aimed at the player
       this.warnT = 25; this.revCount = 0;
       g.audio?.speak('空ぶかしはやめてください。近隣の迷惑になります。', 'ja-JP', { role: 'police' });
       g.ui.toast(t('game.police.rev'), 'police');
@@ -52,6 +50,24 @@ export class Police {
     this.closureUpdate(dt);
   }
 
+  // pick a car ahead of the patrol on its carriageway, make it a speeder, chase it, pull it over, let it go
+  chaseNpc(pol) {
+    const g = this.g, cand = g.traffic.cars.filter(c => c !== pol && c.mode === 'road' && !c.police && !c.incident && c.road === pol.road && c.dir === pol.dir && (c.s - pol.s) * pol.dir > 50 && (c.s - pol.s) * pol.dir < 350);
+    const c = cand[Math.floor(Math.random() * cand.length)]; if (!c) return;
+    this.state = 'npc'; this.suspect = c; this.npcStage = 'chase'; this.npcT2 = 0;
+    c.speeder = true; c.vDesSaved = c.vDes; c.vDes = Math.max(c.vDes, 34); pol.pursuit = true;
+    if (g.vehicle && pol.pos.distanceTo(g.vehicle.pos) < 400) g.ui.toast(L({ ko: '🚨 경찰이 과속 차량을 추적 중', ja: '🚨 パトカーが速度超過の車を追跡中', en: '🚨 Police chasing a speeding car' }), 'police', 4);
+  }
+  npcStep(dt, pol) {
+    const c = this.suspect, g = this.g; this.npcT2 += dt;
+    const done = () => { if (c) { c.speeder = false; c.stopAt = undefined; c.vDes = c.vDesSaved ?? 22; } pol.pursuit = false; pol.stopAt = undefined; pol.vDes = 22; this.suspect = null; this.state = 'patrol'; };
+    if (!c || !g.traffic.cars.includes(c) || c.mode !== 'road' || c.road !== pol.road || pol.mode !== 'road') return done();
+    const gap = (c.s - pol.s) * pol.dir;
+    pol.lane = c.lane; pol.stopAt = c.s - pol.dir * 12; pol.vDes = Math.max(4, (c.v || 0) + (gap - 14) * 0.6);
+    if (this.npcStage === 'chase' && (this.npcT2 > 25 || gap < 30)) { this.npcStage = 'stop'; this.npcT2 = 0; const lanes = c.road.lanes.filter(l => l.dir === c.dir); c.lane = lanes.reduce((a, b) => (b.lat - a.lat) * c.dir > 0 ? b : a); c.stopAt = c.s + c.dir * 70; c.vDes = 0; }
+    else if (this.npcStage === 'stop' && this.npcT2 > 45) done();
+    else if (this.npcT2 > 120) done();
+  }
   startPursuit(over) {
     this.state = 'pursuit'; this.over = over; this.stillT = 0; this.lostT = 0;
     const pol = this.unit; pol.pursuit = true; pol.vDes = 45;

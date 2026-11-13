@@ -19,7 +19,7 @@ const D2R = Math.PI / 180;
 const ON = { low: 1800, medium: 2600, high: 3400, ultra: 4200 };   // a dataset streams when its bounds are this close
 const ERR = { low: 130, medium: 90, high: 70, ultra: 52 };         // screen-space error target (px): leaf tiles within ≈1–2 km
 const MB = { low: 220, medium: 380, high: 620, ultra: 900 };      // tile cache budget (MB, shared by all datasets)
-const TEX = { low: 256, medium: 512, high: 512, ultra: 1024 };  // facade atlas size cap (leaf tiles; coarser tiles get half)
+const TEX = { low: 512, medium: 512, high: 1024, ultra: 2048 };  // facade atlas size cap (leaf tiles; coarser tiles get half)
 
 // facade atlases are scaled down in a worker (createImageBitmap on the main thread blocked it for 20+ ms per tile)
 let RW = null, rwId = 0; const rwCb = new Map();
@@ -128,7 +128,8 @@ export class Plateau {
       const BI = new Uint32Array(n); if (bid) for (let k = 0; k < n; k++) BI[k] = bid.getX(k);
       let nb = 1; for (let k = 0; k < n; k++) if (BI[k] >= nb) nb = BI[k] + 1;
       const minH = new Float64Array(nb).fill(1e9), sx = new Float64Array(nb), sz = new Float64Array(nb), cnt = new Uint32Array(nb);
-      for (let k = 0; k < n; k++) { const b = BI[k]; if (H[k] < minH[b]) minH[b] = H[k]; sx[b] += X[k]; sz[b] += Z[k]; cnt[b]++; }
+      const bx0 = new Float64Array(nb).fill(1e9), bx1 = new Float64Array(nb).fill(-1e9), bz0 = new Float64Array(nb).fill(1e9), bz1 = new Float64Array(nb).fill(-1e9);
+      for (let k = 0; k < n; k++) { const b = BI[k]; if (H[k] < minH[b]) minH[b] = H[k]; sx[b] += X[k]; sz[b] += Z[k]; cnt[b]++; if (X[k] < bx0[b]) bx0[b] = X[k]; if (X[k] > bx1[b]) bx1[b] = X[k]; if (Z[k] < bz0[b]) bz0[b] = Z[k]; if (Z[k] > bz1[b]) bz1[b] = Z[k]; }
       const maxH = new Float64Array(nb).fill(-1e9); for (let k = 0; k < n; k++) { const b = BI[k]; if (H[k] > maxH[b]) maxH[b] = H[k]; }
       const base = new Float64Array(nb), drop = new Uint8Array(nb);
       for (let b = 0; b < nb; b++) {
@@ -136,7 +137,10 @@ export class Plateau {
         base[b] = gy - minH[b];
         // left out: the game's own models, and anything a carriageway would run through (its deck between foot and roof)
         if (bid && (PA.inLot(cx, cz, 14) || OWN.some(([x, z, r]) => Math.hypot(cx - x, cz - z) < r))) { drop[b] = 1; this.stats.dropOwn = (this.stats.dropOwn || 0) + 1; }
-        else if (bid) { const top = gy + maxH[b] - minH[b]; for (const h of this.world.net.hits(cx, cz)) if (h.inside && h.y > gy - 1 && h.y < top - 1.5) { drop[b] = 1; this.stats.dropRoad = (this.stats.dropRoad || 0) + 1; break; } }
+        else if (bid) { // a carriageway through it (deck between its foot and roof + 3 m) or an open cutting under it
+          const top = gy + maxH[b] - minH[b], city = this.world.city, pts = [[cx, cz], [bx0[b] * 0.8 + bx1[b] * 0.2, bz0[b] * 0.8 + bz1[b] * 0.2], [bx0[b] * 0.2 + bx1[b] * 0.8, bz0[b] * 0.2 + bz1[b] * 0.8], [bx0[b] * 0.8 + bx1[b] * 0.2, bz0[b] * 0.2 + bz1[b] * 0.8], [bx0[b] * 0.2 + bx1[b] * 0.8, bz0[b] * 0.8 + bz1[b] * 0.2]];
+          for (const [px, pz] of pts) { if (city?.inTrench(px, pz) || this.world.net.hits(px, pz).some(h => h.inside && h.road.kind !== 'local' && h.y > gy - 12 && h.y < top + 3)) { drop[b] = 1; break; } }
+        }
       }
       const tB = performance.now(); this.stats.tb = (this.stats.tb || 0) + tB - tA;
       const out = new Float32Array(n * 3);
@@ -155,7 +159,7 @@ export class Plateau {
       const tD = performance.now(); this.stats.tbb = (this.stats.tbb || 0) + tD - tC;
       m.material = this.material(m.material, tile, tiles);
       this.stats.tm = (this.stats.tm || 0) + performance.now() - tD;
-      m.castShadow = this.q !== 'low'; m.receiveShadow = true; m.frustumCulled = true;
+      m.castShadow = this.q === 'ultra'; m.receiveShadow = true; // v2.2: shadow pass over whole PLATEAU tiles cost most of the frame m.frustumCulled = true;
       this.stats.verts += n;
     }
     // identity below the tile root; the root undoes the tileset group's frame → world = game coordinates

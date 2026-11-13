@@ -51,7 +51,7 @@ const save = (k, v) => { try { localStorage.setItem(k, JSON.stringify(v)); } cat
 
 const isMobile = /Android|iPhone|iPad|iPod|Mobile|SamsungBrowser/i.test(navigator.userAgent) || (navigator.maxTouchPoints > 1 && /Mac/.test(navigator.platform));
 export const DEFAULT_SETTINGS = {
-  quality: isMobile ? 'low' : 'high', resScale: isMobile ? 0.75 : 1, transmission: 'auto', assist: true, units: 'kmh', etc: true,
+  quality: isMobile ? 'low' : 'high', resScale: 1, transmission: 'auto', assist: true, units: 'kmh', etc: true,
   difficulty: 'standard', steerAssist: 'standard', stm: 'sport', tcs: 'sport', abs: true, police: 'normal',
   master: 0.8, engine: 0.85, sfx: 0.8, ambient: 0.6, radio: 0.7, dj: false, voice: false, spawn: 'pa', weather: 'auto', damage: true, tilt: false, shake: true, fps: true, timeSpeed: 1, bloom: true, online: true, touch: isMobile ? 'on' : 'auto',
 };
@@ -60,6 +60,7 @@ class Game {
   constructor() {
     this.settings = load(SETTINGS_KEY, DEFAULT_SETTINGS);
     if (!this.settings.fpsOn) { this.settings.fps = true; this.settings.fpsOn = 1; }
+    if (!this.settings.v22) { this.settings.resScale = 1; this.settings.v22 = 1; } // v2.2: full resolution by default (phones were at 75 %)
     if (!this.settings.v111) { this.settings.dj = false; this.settings.voice = false; this.settings.v111 = 1; } // v1.1.1: robotic text-to-speech voices off by default // v0.3.3: FPS + version shown by default
     this.garage = load(GARAGE_KEY, { car: 'r34', cars: {} });
     this.quality = this.settings.quality;
@@ -91,7 +92,7 @@ class Game {
     this.renderer = renderer;
     renderer.localClippingEnabled = true; // openable bonnets on the real car models
     loadManifest();
-    renderer.setPixelRatio(Math.min(devicePixelRatio, isMobile ? 1.5 : 2) * this.settings.resScale);
+    renderer.setPixelRatio(this.basePR()); // v2.2: the screen's true resolution (Retina / 4K / phones)
     renderer.setSize(innerWidth, innerHeight);
     renderer.toneMapping = THREE.ACESFilmicToneMapping;
     renderer.outputColorSpace = THREE.SRGBColorSpace;
@@ -110,9 +111,23 @@ class Game {
     await new Promise(r => setTimeout(r, 20));
     this.world = new World(this.scene, this.net, this.quality);
     await this.world.build();
+    // v2.2: invisible depth-only covers over the open cuttings, drawn after the roads and before the sea — the sea
+    // plane runs under the whole map and used to fill every cutting before a tunnel mouth with water
+    try {
+      const tc = this.world.city?.trenchCaps(); const sea = this.world.sea;
+      if (tc && tc.length && sea) {
+        const pos = []; for (let k = 0; k < tc.length; k += 5) { const ax = tc[k], az = tc[k + 1], bx = tc[k + 2], bz = tc[k + 3], w = tc[k + 4] + 0.5, dx = bx - ax, dz = bz - az, L = Math.hypot(dx, dz) || 1, nx = -dz / L * w, nz = dx / L * w, ex = dx / L * 1.5, ez = dz / L * 1.5, y = -0.2;
+          const A = [ax - ex + nx, y, az - ez + nz], B = [bx + ex + nx, y, bz + ez + nz], C = [bx + ex - nx, y, bz + ez - nz], D = [ax - ex - nx, y, az - ez - nz];
+          const up = (B[0] - A[0]) * (C[2] - A[2]) - (B[2] - A[2]) * (C[0] - A[0]) < 0; // keep the front face pointing up
+          if (up) pos.push(...A, ...B, ...C, ...A, ...C, ...D); else pos.push(...A, ...C, ...B, ...A, ...D, ...C); }
+        const geo = new THREE.BufferGeometry(); geo.setAttribute('position', new THREE.Float32BufferAttribute(pos, 3));
+        const cap = new THREE.Mesh(geo, new THREE.MeshBasicMaterial({ colorWrite: false, side: THREE.FrontSide })); cap.renderOrder = 1; cap.frustumCulled = false; cap.name = 'trench-sea-cover';
+        sea.renderOrder = 2; this.scene.add(cap);
+      }
+    } catch (e) { console.warn('trench covers', e); }
     // v2.0: the real buildings (PLATEAU 3D city models, streamed) — ?noplateau=1 keeps the procedural city
     if (!/[?&]noplateau=1/.test(location.search)) { try { this.plateau = new Plateau(this.world, this.scene, this.camera, renderer, this.quality); if (!(await this.plateau.init())) this.plateau = null; } catch (e) { console.warn('plateau', e); this.plateau = null; } }
-    this.world.initDynamicLights(this.quality === 'low' ? 0 : this.quality === 'medium' ? 4 : 8);
+    this.world.initDynamicLights(this.quality === 'low' ? 0 : this.quality === 'medium' ? 2 : this.quality === 'high' ? 4 : 6); // v2.2: each point light costs every pixel
     this.ui.loading(0.65, t('game.load.sky'));
     this.tod = new TimeOfDay(this.scene, renderer, this.quality);
     // post-processing
@@ -150,7 +165,7 @@ class Game {
         }`
     });
     this.composer.addPass(this.grade);
-    if (this.quality === 'high' || this.quality === 'ultra') { try { this.composer.addPass(new SMAAPass(innerWidth * renderer.getPixelRatio(), innerHeight * renderer.getPixelRatio())); } catch {} }
+    if ((this.quality === 'high' || this.quality === 'ultra') && renderer.getPixelRatio() < 1.75) { try { this.composer.addPass(new SMAAPass(innerWidth * renderer.getPixelRatio(), innerHeight * renderer.getPixelRatio())); } catch {} }
     addEventListener('resize', () => this.resize());
     this.input = new Input(canvas);
     this.input.tilt = this.settings.tilt;
@@ -388,7 +403,7 @@ class Game {
     else {
       const it = W.interact.find(i => i.pos.distanceTo(p.pos) < i.r);
       if (it) { prompt = ['F', t('game.walk.' + it.type)]; if (this.input.act('interact')) this.ui.interaction(it); }
-      else { const n = this.npc.nearest(p.pos, 2.2); if (n) { prompt = ['F', t('game.walk.talk')]; if (this.input.act('interact')) this.talkTo(n); } }
+      else { const inc = this.accidents?.talkable(p.pos); if (inc) { prompt = ['F', t('game.walk.talk')]; if (this.input.act('interact')) inc.wantTalk = true; } else { const n = this.npc.nearest(p.pos, 2.2); if (n) { prompt = ['F', t('game.walk.talk')]; if (this.input.act('interact')) this.talkTo(n); } } }
     }
     if (prompt) this.ui.prompt(...prompt); else this.ui.prompt(null);
     // konbini chime
@@ -753,12 +768,13 @@ class Game {
     this.model.root.position.copy(v.pos); this.model.root.rotation.y = v.yaw;
     this.engineSnd?.update({ rpm: v.engine.rpm, throttle: 0, load: 0, running: v.engine.running, cranking: false, boost: 0, speed: 0, slip: 0, position: v.pos, interior: false, openness: this.openness ?? 0 });
   }
+  basePR() { return Math.min(devicePixelRatio || 1, 3) * (this.settings.resScale || 1); }
   autoQuality() {
     // dynamic resolution if fps drops
     if (!this.fps || this.mode === 'title') return;
     const r = this.renderer; const pr = r.getPixelRatio();
-    const base = Math.min(devicePixelRatio, isMobile ? 1.5 : 2) * this.settings.resScale;
-    if (this.fps < 28 && pr > 0.6) r.setPixelRatio(Math.max(0.6, pr * 0.85));
+    const base = this.basePR(), floor = base * 0.85; // stay sharp: never drop far below native (it used to fall to 0.6×)
+    if (this.fps < 24 && pr > floor) r.setPixelRatio(Math.max(floor, pr * 0.95));
     else if (this.fps > 55 && pr < base) r.setPixelRatio(Math.min(base, pr * 1.08));
     else return;
     this.composer.setPixelRatio?.(r.getPixelRatio()); this.composer.setSize(innerWidth, innerHeight);

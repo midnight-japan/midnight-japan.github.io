@@ -123,6 +123,26 @@ export class Road {
       }
       for (let i = 0; i <= n; i++) { const a = S[Math.max(0, i - 1)], b = S[Math.min(n, i + 1)]; S[i].grade = (b.p.y - a.p.y) / Math.max(0.01, Math.hypot(b.p.x - a.p.x, b.p.z - a.p.z)); }
     }
+    // v2.2 — no steps: one-sample spikes from the spline overshooting stepped OSM heights are flattened, and any grade
+    // above the road type's limit is spread out over the neighbours (ends stay put so junctions still meet). Ramps used
+    // to drop 10 m within a few metres at their start (a cliff / bump in the car) and decks had ±1.5 m spikes.
+    if (def.kind !== 'local') {
+      const S = this.samples, N = S.length - 1, y = S.map(q => q.p.y), gmax = def.kind === 'mountain' ? 0.15 : def.kind === 'ramp' ? 0.09 : 0.07;
+      for (let pass = 0; pass < 4; pass++) for (let i = 1; i < N; i++) { const m = (y[i - 1] + y[i + 1]) / 2; if (Math.abs(y[i] - m) > 0.15) y[i] = m; }
+      for (let it = 0; it < 400; it++) {
+        let moved = false;
+        for (let i = 0; i < N; i++) {
+          const ds = Math.max(0.3, S[i + 1].s - S[i].s), d = y[i + 1] - y[i], lim = gmax * ds;
+          if (Math.abs(d) <= lim + 1e-4) continue;
+          const ex = (Math.abs(d) - lim) * Math.sign(d); moved = true;
+          if (i === 0) y[1] -= ex; else if (i + 1 === N) y[i] += ex; else { y[i] += ex / 2; y[i + 1] -= ex / 2; }
+        }
+        if (!moved) break;
+      }
+      for (let pass = 0; pass < 24; pass++) { const z = y.slice(); for (let i = 1; i < N; i++) y[i] = (z[i - 1] + 2 * z[i] + z[i + 1]) / 4; } // round crests / sags (vertical curves)
+      S.forEach((q, i) => { q.p.y = y[i]; });
+      for (let i = 0; i <= N; i++) { const a = S[Math.max(0, i - 1)], b = S[Math.min(N, i + 1)]; S[i].grade = (b.p.y - a.p.y) / Math.max(0.01, Math.hypot(b.p.x - a.p.x, b.p.z - a.p.z)); }
+    }
     // lanes: lat positive = left of travel direction (point order)
     this.lanes = [];
     if (this.lanesB === 0) {
@@ -153,6 +173,26 @@ export class Road {
 
 // Some OSM ramps have no / wrong height where they join a tunnel or trench (Ukishima JCT: the ramp left the Aqua-Line
 // tunnel 16 m above it) → a step = a hole at the joint. Blend each ramp end to the height of the road it joins.
+// v2.2 — exit / entry ramps whose OpenStreetMap chain stops in mid-air (大師, 平和島, 芝浦, 羽田 …: the real ramp goes on
+// down to the street below) are continued along their own heading at a 6 % grade until they reach the ground
+function landHangingRamps(defs) {
+  const hwOf = o => ((o.lanesF || 1) + (o.lanesB || 0)) * 1.75 + (o.median || 0) / 2 + (o.shoulder || 1) + 1.5;
+  const near = (self, q) => defs.some(o => o !== self && o.pts.some((p, i) => { const n = o.pts[Math.min(o.pts.length - 1, i + 1)], dx = n[0] - p[0], dz = n[2] - p[2], L2 = dx * dx + dz * dz || 1e-9, t = Math.max(0, Math.min(1, ((q[0] - p[0]) * dx + (q[2] - p[2]) * dz) / L2)); return Math.hypot(q[0] - p[0] - dx * t, q[2] - p[2] - dz * t) < hwOf(o) && Math.abs(p[1] + (n[1] - p[1]) * t - q[1]) < 2.5; }));
+  return defs.map(d => {
+    if (d.kind !== 'ramp' || d.pts.length < 3) return d;
+    let pts = d.pts.slice(); let changed = false;
+    for (const end of [1, 0]) {
+      const P = end ? pts[pts.length - 1] : pts[0], Q = end ? pts[pts.length - 3] : pts[2];
+      if (P[1] < 3 || near(d, P)) continue;
+      let hx = P[0] - Q[0], hz = P[2] - Q[2]; const L = Math.hypot(hx, hz) || 1; hx /= L; hz /= L;
+      const add = []; let y = P[1];
+      for (let k = 1; y > 0.05 && k < 60; k++) { y = Math.max(0.05, P[1] - 0.06 * 10 * k); add.push([+(P[0] + hx * 10 * k).toFixed(2), +y.toFixed(2), +(P[2] + hz * 10 * k).toFixed(2)]); }
+      add.push([+(P[0] + hx * 10 * (add.length + 1)).toFixed(2), 0.05, +(P[2] + hz * 10 * (add.length + 1)).toFixed(2)]);
+      pts = end ? pts.concat(add) : add.reverse().concat(pts); changed = true;
+    }
+    return changed ? { ...d, pts, landed: true } : d;
+  });
+}
 function fixFlatRamps(defs) {
   const dyNear = (self, x, z, y) => { let b = null; for (const o of defs) { if (o === self) continue; for (const q of o.pts) { if (Math.hypot(q[0] - x, q[2] - z) > 12) continue; const dy = q[1] - y; if (b === null || Math.abs(dy) < Math.abs(b)) b = dy; } } return b ?? 0; };
   const sm = t => t * t * (3 - 2 * t), BL = 260;
@@ -205,7 +245,7 @@ export class RoadNet {
   constructor(defs = ROAD_DEFS) {
     // drop degenerate polylines from the OSM import (zero-length ways would put signs/lamps on one point of another road)
     const plen = d => d.pts.reduce((a, q, i) => i ? a + Math.hypot(q[0] - d.pts[i - 1][0], q[2] - d.pts[i - 1][2]) : 0, 0);
-    this.roads = fixFlatRamps(joinLocalEnds(defs.filter(d => d.pts?.length > 1 && plen(d) > 8))).map((d, i) => new Road(d, i));
+    this.roads = landHangingRamps(fixFlatRamps(joinLocalEnds(defs.filter(d => d.pts?.length > 1 && plen(d) > 8)))).map((d, i) => new Road(d, i));
     this.byId = Object.fromEntries(this.roads.map(r => [r.id, r]));
     this.cell = 24; this.grid = new Map();
     for (const r of this.roads) {
@@ -221,6 +261,7 @@ export class RoadNet {
       }
     }
     this._res = [];
+    this.snapSeams();
     this.findJunctions();
     this.flushJoins();
   }
@@ -269,6 +310,25 @@ export class RoadNet {
     for (const l of this.diverges.values()) l.sort((x, y) => x.s - y.s);
     const bay = this.byId.bayshore, pin = this.byId.pa_in;
     this.sPAin = bay && pin ? (this.diverges.get(bay) || []).find(d => d.to === pin)?.s ?? 0 : 0;
+  }
+  // v2.2 — where a ramp runs on top of a carriageway (diverge / merge tapers) both decks must be the same surface: the
+  // lesser road's samples take the main road's height there (they differed by up to 1 m → a step when changing lanes)
+  snapSeams() {
+    const rank = r => (r.kind === 'expressway' ? 3 : r.kind === 'ramp' ? 2 : 1) * 1e6 + r.length;
+    for (const r of this.roads) {
+      if (r.kind === 'local') continue;
+      const S = r.samples, fixed = new Uint8Array(S.length); let any = false;
+      for (let i = 0; i < S.length; i++) {
+        const p = S[i].p; let best = null;
+        for (const h of this.hits(p.x, p.z)) { if (h.road === r || h.road.kind === 'local' || !h.inside || h.beyond) continue; const d = h.y - p.y; if (Math.abs(d) > 0.03 && Math.abs(d) < 1.3 && rank(h.road) > rank(r) && (!best || Math.abs(d) < Math.abs(best - p.y))) best = h.y; }
+        if (best !== null) { p.y = best; fixed[i] = 1; any = true; }
+      }
+      if (!any) continue;
+      const y = S.map(q => q.p.y);
+      for (let pass = 0; pass < 30; pass++) { const z = y.slice(); for (let i = 1; i < S.length - 1; i++) if (!fixed[i]) y[i] = (z[i - 1] + 2 * z[i] + z[i + 1]) / 4; }
+      S.forEach((q, i) => { q.p.y = y[i]; });
+      for (let i = 0; i < S.length; i++) { const a = S[Math.max(0, i - 1)], b = S[Math.min(S.length - 1, i + 1)]; S[i].grade = (b.p.y - a.p.y) / Math.max(0.01, Math.hypot(b.p.x - a.p.x, b.p.z - a.p.z)); }
+    }
   }
   // lane of `road` in direction `dir` nearest to lateral offset `lat`
   laneNear(road, dir, lat) { return road.lanes.filter(l => l.dir === dir).sort((a, b) => Math.abs(a.lat - lat) - Math.abs(b.lat - lat))[0]; }

@@ -90,7 +90,7 @@ export class UI {
       </div></div>
       <div id="hud" class="hidden">
         <div class="tl"><div class="loc"></div><div class="clock"></div><div class="money"></div><div class="goaltrack" id="goaltrack"></div></div>
-        <canvas id="minimap" width="200" height="200"></canvas><button id="autobtn" class="autobtn" data-a="auto" title="J">AUTO</button><div id="navhud" class="navhud" hidden><span class="nav-arrow">↑</span><span class="nav-dist"></span><button class="nav-x" data-a="navClear" aria-label="clear">✕</button></div><div id="pursuit" class="pursuithud" hidden></div>
+        <canvas id="minimap" width="200" height="200"></canvas><button id="autobtn" class="autobtn" data-a="auto" title="J">AUTO</button><button id="wxbtn" class="autobtn wxbtn" data-a="weather" title="Weather">🌤</button><div id="navhud" class="navhud" hidden><span class="nav-arrow">↑</span><span class="nav-dist"></span><button class="nav-x" data-a="navClear" aria-label="clear">✕</button></div><div id="pursuit" class="pursuithud" hidden></div>
         <div class="speedo"><canvas id="speedo" width="260" height="260"></canvas><div class="icons"></div></div>
         <div class="radio-banner"></div>
         <div class="prompt"><kbd></kbd><span></span></div>
@@ -205,6 +205,10 @@ export class UI {
       case 'teleport': this.togglePause(false); this.toggleMap(true); this.toast(t('game.map.tpHint'), 'info', 5); break;
       case 'closeCar': $('#carmenu').classList.remove('show'); break;
       case 'shopClose': $('#shop').classList.remove('show'); break;
+      case 'weather': { // v2.2: one tap cycles the weather — auto → clear → cloudy → rain → storm → fog
+        const M = ['auto', 'clear', 'cloudy', 'rain', 'storm', 'fog'], i = (M.indexOf(g.settings.weather || 'auto') + 1) % M.length; g.settings.weather = M[i]; g.saveSettings();
+        const ic = { auto: '🌤', clear: '☀️', cloudy: '☁️', rain: '🌧', storm: '⛈', fog: '🌫' }; $('#wxbtn').textContent = ic[M[i]];
+        this.toast(t('game.weather.' + M[i]), 'info', 2); break; }
       case 'auto': g.autopilot?.toggle(); if (g.autopilot?.on) this.toast(t('game.auto.on'), 'info', 4); break;
       case 'mapClose': this.toggleMap(false); break;
       case 'mapNav': if (this.mapSel) { g.nav.set(this.mapSel.x, this.mapSel.z); this.toggleMap(false); this.toast(t('game.nav.set'), 'info', 3); } break;
@@ -305,7 +309,7 @@ export class UI {
       sel('transmission', [['auto', t('game.trans.auto')], ['manual', t('game.trans.manual')], ['manual_clutch', t('game.trans.manual_clutch')]], 'game.set.transmission') +
       sel('touch', [['auto', t('game.set.auto')], ['on', 'ON'], ['off', 'OFF']], 'game.set.touch') +
       sel('timeSpeed', [[1, t('game.set.time1')], [0.25, t('game.set.time025')], [0, t('game.set.time0')]], 'game.set.time') +
-      sel('weather', [['auto', t('game.weather.auto')], ['clear', t('game.weather.clear')], ['cloudy', t('game.weather.cloudy')], ['rain', t('game.weather.rain')]], 'game.set.weather') +
+      sel('weather', [['auto', t('game.weather.auto')], ['clear', t('game.weather.clear')], ['cloudy', t('game.weather.cloudy')], ['rain', t('game.weather.rain')], ['storm', t('game.weather.storm')], ['fog', t('game.weather.fog')]], 'game.set.weather') +
       chk('online', 'game.set.online') + chk('assist', 'game.set.assist') + chk('etc', 'game.set.etc') + chk('dj', 'game.set.dj') + chk('voice', 'game.set.voice') + chk('tilt', 'game.set.tilt') + chk('shake', 'game.set.shake') + chk('damage', 'game.set.damage') + chk('bloom', 'game.set.bloom') + chk('fps', 'game.set.fps') +
       rng('master', 'game.set.master') + rng('engine', 'game.set.engine') + rng('sfx', 'game.set.sfx') + rng('ambient', 'game.set.ambient') + rng('radio', 'game.set.radio');
     $('#s-lang').onchange = e => setLang(e.target.value).then(() => this.buildSettings());
@@ -314,6 +318,8 @@ export class UI {
       if (['resScale', 'timeSpeed'].includes(k)) v = +v;
       if (k === 'abs') v = v === 'true';
       s[k] = v; g.saveSettings(); g.applyVolumes();
+      if (k === 'resScale') { g.renderer.setPixelRatio(g.basePR()); g.composer.setPixelRatio?.(g.renderer.getPixelRatio()); g.composer.setSize(innerWidth, innerHeight); }
+      if (k === 'weather') { const ic = { auto: '🌤', clear: '☀️', cloudy: '☁️', rain: '🌧', storm: '⛈', fog: '🌫' }; const b = $('#wxbtn'); if (b) b.textContent = ic[v] || '🌤'; }
       if (k === 'tilt') { g.input.tilt = v; if (v && typeof DeviceOrientationEvent?.requestPermission === 'function') DeviceOrientationEvent.requestPermission().catch(() => {}); }
       if (k === 'dj' && g.radio) g.radio.djVoice = v;
       if (k === 'voice') g.audio.voiceOn = v;
@@ -412,11 +418,14 @@ export class UI {
     this.mapOpen = force ?? !this.mapOpen; $('#map').classList.toggle('show', this.mapOpen);
     if (!this.mapOpen) return;
     const cv = $('#bigmap'), dpr = Math.min(2, devicePixelRatio || 1); cv.width = innerWidth * dpr; cv.height = innerHeight * dpr;
-    if (!this.mv) { this.mv = { x: 0, z: 0, k: 0.35 * dpr }; this.wireMap(cv); } this.mapFitAll();
+    if (!this.mv) { this.mv = { x: 0, z: 0, k: 0.35 * dpr }; this.wireMap(cv); }
+    // v2.2: open on your own position (≈ 2.5 km across) and keep following you; driving / autopilot carry on underneath
+    this.mv.k = Math.min(cv.width, cv.height) / 2500; this.mapFollow = true; this.mapCenterMe();
+    clearInterval(this._mapLive); this._mapLive = setInterval(() => { if (!this.mapOpen) { clearInterval(this._mapLive); return; } if (this.mapFollow) { const p = this.mapPos(); if (p) { this.mv.x = p.x; this.mv.z = p.z; } } this.drawBigMap(); }, 150);
   }
   mapPos() { return this.g.mode === 'walk' ? this.g.player?.pos : this.g.vehicle?.pos; }
   mapZoom(f, cx, cy) { const cv = $('#bigmap'), m = this.mv; cx ??= cv.width / 2; cy ??= cv.height / 2; const wx = m.x + (cx - cv.width / 2) / m.k, wz = m.z + (cy - cv.height / 2) / m.k; m.k = Math.max(0.01, Math.min(12, m.k * f)); m.x = wx - (cx - cv.width / 2) / m.k; m.z = wz - (cy - cv.height / 2) / m.k; this.drawBigMap(); }
-  mapCenterMe() { const p = this.mapPos(); if (p) { this.mv.x = p.x; this.mv.z = p.z; } this.drawBigMap(); }
+  mapCenterMe() { this.mapFollow = true; const p = this.mapPos(); if (p) { this.mv.x = p.x; this.mv.z = p.z; } this.drawBigMap(); }
   mapFitAll() { const cv = $('#bigmap'); let a = [1e9, 1e9, -1e9, -1e9]; for (const r of this.g.net.roads) for (const q of r.samples) { a[0] = Math.min(a[0], q.p.x); a[1] = Math.min(a[1], q.p.z); a[2] = Math.max(a[2], q.p.x); a[3] = Math.max(a[3], q.p.z); } this.mv.x = (a[0] + a[2]) / 2; this.mv.z = (a[1] + a[3]) / 2; this.mv.k = 0.9 * Math.min(cv.width / (a[2] - a[0]), cv.height / (a[3] - a[1])); this.drawBigMap(); }
   wireMap(cv) {
     const pts = new Map(); let pinch = 0;
@@ -434,7 +443,7 @@ export class UI {
       const prev = pts.get(e.pointerId); if (!prev) return; const r = cv.getBoundingClientRect(), d = cv.width / r.width;
       pts.set(e.pointerId, [e.clientX, e.clientY]);
       if (pts.size === 2) { const [a, b] = [...pts.values()]; const dist = Math.hypot(a[0] - b[0], a[1] - b[1]); if (pinch) this.mapZoom(dist / pinch, ((a[0] + b[0]) / 2 - r.left) * d, ((a[1] + b[1]) / 2 - r.top) * d); pinch = dist; return; }
-      this.mv.x -= (e.clientX - prev[0]) * d / this.mv.k; this.mv.z -= (e.clientY - prev[1]) * d / this.mv.k; this.drawBigMap();
+      this.mapFollow = false; this.mv.x -= (e.clientX - prev[0]) * d / this.mv.k; this.mv.z -= (e.clientY - prev[1]) * d / this.mv.k; this.drawBigMap();
     });
   }
   updateGoals() { const b = $('#goals-btn'), G = this.g.goals; if (b && G) b.textContent = `🏆 ${t('game.goal.title')} (${G.count}/${GOALS.length})`; }
@@ -647,7 +656,7 @@ export class UI {
     const cv = $('#bigmap'), c = cv.getContext('2d'), W = cv.width, H = cv.height, m = this.mv, k = m.k;
     const P = (x, z) => [(x - m.x) * k + W / 2, (z - m.z) * k + H / 2];
     const dpr = W / innerWidth;
-    c.fillStyle = '#0a1a33'; c.fillRect(0, 0, W, H); // sea
+    c.clearRect(0, 0, W, H); c.fillStyle = 'rgba(10,26,51,.78)'; c.fillRect(0, 0, W, H); // sea (translucent: the drive goes on underneath)
     const poly = (pts, fill) => { c.beginPath(); pts.forEach(([x, z], i) => { const [a, b] = P(x, z); i ? c.lineTo(a, b) : c.moveTo(a, b); }); c.closePath(); c.fillStyle = fill; c.fill(); };
     for (const l of MAP.land || []) if (l.pts?.length > 2) poly(l.pts, l.main ? '#1d2633' : '#222c3a');
     if (k > 0.25) for (const b of MAP.buildings || []) poly(b.pts, '#3a4658');
@@ -687,7 +696,7 @@ export class UI {
     for (const l of MAP.landmarks || []) lab('◆ ' + l.name, l.x, l.z, 12, '#ffd38a');
     lab('大黒PA', (PA_RECT.x0 + PA_RECT.x1) / 2, (PA_RECT.z0 + PA_RECT.z1) / 2, 15, '#ffb347');
     // player
-    const p = this.mapPos(); if (p) { const [a, b] = P(p.x, p.z); const yaw = this.g.mode === 'walk' ? this.g.player.yaw : this.g.vehicle.yaw; c.save(); c.translate(a, b); c.rotate(-yaw + Math.PI); c.fillStyle = '#ffb347'; c.strokeStyle = '#000'; c.lineWidth = 2 * dpr; c.beginPath(); c.moveTo(0, -11 * dpr); c.lineTo(8 * dpr, 9 * dpr); c.lineTo(0, 4 * dpr); c.lineTo(-8 * dpr, 9 * dpr); c.closePath(); c.fill(); c.stroke(); c.restore(); }
+    const p = this.mapPos(); if (p) { const [a, b] = P(p.x, p.z); const yaw = this.g.mode === 'walk' ? this.g.player.yaw : this.g.vehicle.yaw; const pr = (performance.now() / 900) % 1; c.beginPath(); c.arc(a, b, (14 + pr * 26) * dpr, 0, 7); c.strokeStyle = `rgba(255,179,71,${1 - pr})`; c.lineWidth = 3 * dpr; c.stroke(); c.beginPath(); c.arc(a, b, 13 * dpr, 0, 7); c.fillStyle = 'rgba(255,179,71,.25)'; c.fill(); c.save(); c.translate(a, b); c.rotate(-yaw + Math.PI); c.fillStyle = '#ffb347'; c.strokeStyle = '#000'; c.lineWidth = 2.5 * dpr; c.beginPath(); c.moveTo(0, -16 * dpr); c.lineTo(12 * dpr, 13 * dpr); c.lineTo(0, 6 * dpr); c.lineTo(-12 * dpr, 13 * dpr); c.closePath(); c.fill(); c.stroke(); c.restore(); c.font = `800 ${13 * dpr}px system-ui,sans-serif`; c.textAlign = 'center'; c.fillStyle = '#fff'; c.strokeStyle = 'rgba(0,0,0,.8)'; c.lineWidth = 4 * dpr; c.strokeText((({ ko: '현재 위치', ja: '現在地' })[getLang()] || 'You'), a, b - 24 * dpr); c.fillText((({ ko: '현재 위치', ja: '現在地' })[getLang()] || 'You'), a, b - 24 * dpr); }
     // scale bar + north
     const nice = [10, 20, 50, 100, 200, 500, 1000, 2000, 5000, 10000]; const len = nice.find(n => n * k > 80 * dpr) || 10000;
     c.fillStyle = '#fff'; c.fillRect(20 * dpr, H - 30 * dpr, len * k, 3 * dpr); c.textAlign = 'left'; c.font = `600 ${12 * dpr}px system-ui`; c.fillText(len >= 1000 ? len / 1000 + ' km' : len + ' m', 20 * dpr, H - 42 * dpr);

@@ -42,6 +42,34 @@ function boxGeo(w, h, d) {
 }
 function planeGeo(w, d) { const g = new THREE.PlaneGeometry(w, d); g.rotateX(-Math.PI / 2); const uv = g.attributes.uv; for (let i = 0; i < uv.count; i++) uv.setXY(i, uv.getX(i) * w, uv.getY(i) * d); return g; }
 // flat polygon (x,z ring) at height y, UVs in metres
+// v2.2 — remove the ground over open cuttings (road below ground, before the tunnel roof closes) from a flat ground
+// geometry: triangles near a cutting are split down to ~1.5 m and the pieces over the road dropped
+let _caps = null;
+function trenchCapsOf(net, isLand) {
+  if (_caps) return _caps; const out = [];
+  for (const r of net.roads) { if (r.kind === 'local') continue; const S = r.samples, hw = (r.edgeL - r.edgeR) / 2 + 1.6, c = (r.edgeL + r.edgeR) / 2;
+    for (let i = 0; i < S.length - 1; i++) { const op = q => q.p.y < -0.3 && q.p.y > -6.2 && isLand(q.p.x, q.p.z); if (!op(S[i]) && !op(S[i + 1])) continue; out.push([S[i].p.x + S[i].left.x * c, S[i].p.z + S[i].left.z * c, S[i + 1].p.x + S[i + 1].left.x * c, S[i + 1].p.z + S[i + 1].left.z * c, hw]); } }
+  return (_caps = out);
+}
+function cutTrenches(geo, net, isLand) {
+  const caps = trenchCapsOf(net, isLand); if (!caps.length) return geo;
+  geo.computeBoundingBox(); const bb = geo.boundingBox;
+  const near = caps.filter(c => Math.max(c[0], c[2]) + c[4] > bb.min.x && Math.min(c[0], c[2]) - c[4] < bb.max.x && Math.max(c[1], c[3]) + c[4] > bb.min.z && Math.min(c[1], c[3]) - c[4] < bb.max.z);
+  if (!near.length) return geo;
+  const inT = (x, z) => near.some(c => { const dx = c[2] - c[0], dz = c[3] - c[1], L2 = dx * dx + dz * dz || 1e-9, t = Math.max(0, Math.min(1, ((x - c[0]) * dx + (z - c[1]) * dz) / L2)); return Math.hypot(x - c[0] - dx * t, z - c[1] - dz * t) < c[4]; });
+  const nearBox = (x0, x1, z0, z1) => near.some(c => Math.max(c[0], c[2]) + c[4] > x0 && Math.min(c[0], c[2]) - c[4] < x1 && Math.max(c[1], c[3]) + c[4] > z0 && Math.min(c[1], c[3]) - c[4] < z1);
+  const src = geo.index ? geo.toNonIndexed() : geo, P = src.attributes.position, U = src.attributes.uv, pos = [], uv = [];
+  const rec = (a, b, c, d) => { // a,b,c = [x,y,z,u,v]
+    const x0 = Math.min(a[0], b[0], c[0]), x1 = Math.max(a[0], b[0], c[0]), z0 = Math.min(a[2], b[2], c[2]), z1 = Math.max(a[2], b[2], c[2]);
+    if (!nearBox(x0, x1, z0, z1)) { for (const p of [a, b, c]) { pos.push(p[0], p[1], p[2]); uv.push(p[3], p[4]); } return; }
+    if (Math.max(x1 - x0, z1 - z0) < 1.5 || d >= 18) { if (!inT((a[0] + b[0] + c[0]) / 3, (a[2] + b[2] + c[2]) / 3)) for (const p of [a, b, c]) { pos.push(p[0], p[1], p[2]); uv.push(p[3], p[4]); } return; }
+    const L = (p, q) => Math.hypot(p[0] - q[0], p[2] - q[2]), e = [[a, b, c], [b, c, a], [c, a, b]].sort((p, q) => L(q[0], q[1]) - L(p[0], p[1]))[0];
+    const m = e[0].map((v, k) => (v + e[1][k]) / 2); rec(e[0], m, e[2], d + 1); rec(m, e[1], e[2], d + 1);
+  };
+  for (let i = 0; i < P.count; i += 3) { const v = k => [P.getX(k), P.getY(k), P.getZ(k), U ? U.getX(k) : 0, U ? U.getY(k) : 0]; rec(v(i), v(i + 1), v(i + 2), 0); }
+  const g = new THREE.BufferGeometry(); g.setAttribute('position', new THREE.Float32BufferAttribute(pos, 3)); g.setAttribute('uv', new THREE.Float32BufferAttribute(uv, 2)); g.computeVertexNormals();
+  return g;
+}
 function polyGeo(pts, y = 0, holes = []) {
   const sh = new THREE.Shape(pts.map(([x, z]) => new THREE.Vector2(x, -z)));
   for (const h of holes) sh.holes.push(new THREE.Path(h.map(([x, z]) => new THREE.Vector2(x, -z))));
@@ -134,6 +162,31 @@ export class World {
       return g;
     } catch (e) { console.warn('sign', kind, e); return null; }
   }
+  // v2.2 — ~2000 roadside signs were 3 draw calls and a material each: merge every static one by texture / material
+  mergeSigns() {
+    const boards = new Set(this.boards), groups = new Map(), drop = [];
+    this.group.updateMatrixWorld(true);
+    const inv = this.group.matrixWorld.clone().invert();
+    for (const g of [...this.group.children]) {
+      if (!g.name?.startsWith('sign:') || boards.has(g) || g.userData.dynamic) continue;
+      let ok = true; g.traverse(o => { if (o.isMesh && (Array.isArray(o.material) || o.isInstancedMesh)) ok = false; }); if (!ok) continue;
+      g.traverse(o => {
+        if (!o.isMesh) return; const m = o.material, key = m.map ? 'tex:' + m.map.uuid + ':' + m.emissiveIntensity : 'mat:' + m.uuid;
+        let e = groups.get(key); if (!e) groups.set(key, e = { m, geos: [] });
+        let geo = o.geometry.index ? o.geometry.toNonIndexed() : o.geometry.clone();
+        for (const n of Object.keys(geo.attributes)) if (!['position', 'normal', 'uv'].includes(n)) geo.deleteAttribute(n);
+        if (!geo.attributes.uv) geo.setAttribute('uv', new THREE.Float32BufferAttribute(new Float32Array(geo.attributes.position.count * 2), 2));
+        if (!geo.attributes.normal) geo.computeVertexNormals();
+        geo.applyMatrix4(new THREE.Matrix4().multiplyMatrices(inv, o.matrixWorld)); e.geos.push(geo);
+      });
+      drop.push(g);
+    }
+    for (const g of drop) this.group.remove(g);
+    const out = new THREE.Group(); out.name = 'signs_merged'; let n = 0;
+    for (const { m, geos } of groups.values()) { const geo = mergeGeometries(geos, false); if (!geo) continue; const mesh = new THREE.Mesh(geo, m); mesh.castShadow = false; mesh.receiveShadow = true; out.add(mesh); n++; }
+    this.group.add(out);
+    return { signs: drop.length, meshes: n };
+  }
   // helpers that place things in a local frame (PA-local, building-local)
   inFrame(F, S) {
     const W = this;
@@ -190,7 +243,7 @@ export class World {
     this.buildSigns();
     try { this.buildRoadPaint(); } catch (e) { console.warn('road paint', e); }
     this.buildSkyline();
-    buildBay(this, S, { boxGeo, planeGeo, polyGeo, prismGeo, Frame });
+    buildBay(this, S, { boxGeo, planeGeo, polyGeo, prismGeo, Frame, cut: g => cutTrenches(g, this.net, (x, z) => this.isLand(x, z)) });
     S.build(this.group);
     // streamed OpenStreetMap city (buildings, streets, rail, rivers) around the expressways
     try { if (/[?&]nocity=1/.test(location.search)) throw new Error('city disabled by ?nocity=1'); this.city = new City(this, this.scene, this.q); if (!(await this.city.init())) this.city = null; } catch (e) { console.warn('city', e); this.city = null; }
@@ -217,6 +270,7 @@ export class World {
       const holes = trenches.filter(tp => tp.every(([x, z]) => x > l.bb.x0 && x < l.bb.x1 && z > l.bb.z0 && z < l.bb.z1 && inPoly(x, z, l.pts)));
       let g = polyGeo(l.pts, l.main ? -0.02 : -0.03, holes);
       if (l.name === '海ほたるPA') g = polyGeo(l.pts, -0.03, holes);
+      g = cutTrenches(g, this.net, (x, z) => this.isLand(x, z)); // v2.2: cuttings that cross the polygon edge got no hole
       if (l.main || near) S.add(g, l.main ? port : land);
       else { const m = new THREE.Mesh(g, land); m.receiveShadow = false; this.group.add(m); }
       if (!near || l.skipSeawall) continue;
@@ -1010,7 +1064,7 @@ export class World {
     }
     // ── v2.1 curves (急カーブ): red anti-skid pavement over the bend, 減速 transverse bars and 「速度落とせ」 before it,
     // a yellow curve warning sign and 矢羽根 chevron boards on the outside — as on the Shuto's tight bends ──
-    const redPave = new THREE.MeshStandardMaterial({ color: 0x6a2a22, roughness: 0.95, polygonOffset: true, polygonOffsetFactor: -3, polygonOffsetUnits: -3 });
+    const redPave = new THREE.MeshStandardMaterial({ color: 0x4a2a25, roughness: 0.95, polygonOffset: true, polygonOffsetFactor: -3, polygonOffsetUnits: -3 });
     let nCurves = 0, nMerges = 0;
     for (const road of net.roads) {
       if (road.kind === 'local') continue;
@@ -1098,6 +1152,7 @@ export class World {
     for (const [m, list] of geos) { const mesh = new THREE.Mesh(mergeGeometries(list), m); mesh.receiveShadow = true; mesh.renderOrder = 2; grp.add(mesh); }
     this.group.add(grp);
     this.paintStats = { nText, nSigns, nStops, nCurves, nMerges };
+    try { this.paintStats.merged = this.mergeSigns(); } catch (e) { console.warn('merge signs', e); }
   }
 
   // ───────────────────────── skyline: Minato Mirai, Kawasaki factories, Tokyo ─────────────────────────

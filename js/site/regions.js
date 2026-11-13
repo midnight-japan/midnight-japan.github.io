@@ -7,7 +7,7 @@ import { initSite, onLang, esc } from './common.js';
 const POS = {
   daikoku_pa: [128, 318], daikoku_jct: [140, 306], daikoku_futo: [146, 330], baybridge: [118, 346],
   tsubasa: [168, 290], tatsumi: [262, 94], shibaura: [222, 106], umihotaru: [325, 315],
-  k1loop: [110, 279], haneda: [230, 210], c1: [205, 50],
+  k1loop: [110, 279], haneda: [230, 210], c1: [205, 50], tokyo3d: [180, 70], kisarazu: [470, 380], route1: [195, 160], rainbow: [245, 118],
 };
 const LABEL_SIDE = { daikoku_pa: 'l', daikoku_jct: 'r', daikoku_futo: 'r', baybridge: 'r', tsubasa: 'r', tatsumi: 'r', shibaura: 'l', umihotaru: 'r', k1loop: 'l', yokohama: 'l', kawasaki: 'l', haneda: 'r', c1: 'r' };
 

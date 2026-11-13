@@ -264,7 +264,7 @@ export const CARS = [
     engine: { type: 'I4', code: '4P10', disp: 2998, hp: 175, nm: 430, redline: 3500, idle: 650, turbo: true },
     trans: { type: 'AT', gears: [5.2, 2.8, 1.6, 1.0, 0.75, 0.65], final: 4.9, rev: 5 }, drive: 'FR',
     mass: 5500, L: 6990, W: 2010, H: 2490, wb: 3995, plate: 'commercial',
-    colors: ['#ece9e0'],
+    colors: ['#1f5fae', '#2b7a4b', '#c8102e', '#e8a317', '#ece9e0'],
     desc: { ko: '송영·관광에 쓰이는 마이크로버스.', ja: '送迎や観光で走るマイクロバス。', en: 'Microbus on shuttle and tour runs.' } },
 ];
 

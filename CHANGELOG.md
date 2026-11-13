@@ -1,9 +1,10 @@
 # 📜 MIDNIGHT JAPAN 업데이트 기록 · Changelog
 
-현재 버전 · Current: **v2.1.0** · [▶ 웹에서 플레이](https://midnight-japan.github.io/) · [🌐 업데이트 페이지](https://midnight-japan.github.io/changelog.html)
+현재 버전 · Current: **v2.2.0** · [▶ 웹에서 플레이](https://midnight-japan.github.io/) · [🌐 업데이트 페이지](https://midnight-japan.github.io/changelog.html)
 
 | 버전 | 날짜 | 이름 | 요약 |
 |---|---|---|---|
+| [v2.2.0](#v220--open-road-2026-11-13) | 2026-11-13 | Open Road | 막다른 길·덮인 터널 입구·단차를 맵 전체에서 수정, 경찰은 NPC만 추격, 선명한 실해상도와 더 높은 프레임, 내 위치를 따라가는 반투명 지도, 날씨 버튼. |
 | [v2.1.0](#v210--road-marks-2026-11-13) | 2026-11-13 | Road Marks | 실제 일본 도로처럼: 맵 전체에 노면 표시·표지판 — 급커브의 빨간 미끄럼 방지 포장과 감속 표시, 「速度落とせ」「合流注意」, 골목의 「止まれ」 정지선과 표지판, 속도 숫자, 그린벨트, 자전거 화살표. 다리·터널 부근의 하얀 네모 구조물 제거. |
 | [v2.0.0](#v200--real-3d-2026-11-13) | 2026-11-13 | Real 3D | 진짜 3D 일본: 일본 정부 3D 도시 모델(PLATEAU)로 도쿄 23구·요코하마·가와사키 등 46개 구·시의 실제 건물을 스트리밍. 맵 전체에서 차는 도로·갓길·주차장, 사람은 인도·주차장·건물 안으로만. 구멍 난 땅 메움, 실제 차량 그대로의 콕핏. |
 | [v1.2.0](#v120--autopilot-2026-11-13) | 2026-11-13 | Autopilot | 자동주행(J / AUTO 버튼): 주차 칸에서 출발해 1차로(추월차로)로 맵 전체를 순회. 지도(M)는 실제 OSM 도로·건물·강·철도까지 전부 보이는 전체 지도로 열리고, 차량은 실제 순정 컬러로 도색. |
@@ -34,6 +35,37 @@
 | [v0.2.0](#v020--bayshore-2026-11-05) | 2026-11-05 | Bayshore | 수도고속 완간선을 따라 하네다까지, 도쿄만 아쿠아라인 해저터널을 지나 우미호타루 PA까지. 실제 3D 차량 모델과 열리는 보닛도 들어왔어요. |
 | [v0.1.1](#v011--one-click-2026-11-04) | 2026-11-04 | One Click | 링크 하나로 바로 플레이. 크롬에서 공식 사이트 주소만 열면 설치 없이 실행돼요. |
 | [v0.1.0](#v010--first-meet-2026-11-04) | 2026-11-04 | First Meet | 첫 공개 버전. 다이코쿠 JCT·PA와 다이코쿠 부두 일대를 3D로 구현했습니다. |
+
+---
+
+## v2.2.0 — Open Road (2026-11-13)
+
+> 막다른 길·덮인 터널 입구·단차를 맵 전체에서 수정, 경찰은 NPC만 추격, 선명한 실해상도와 더 높은 프레임, 내 위치를 따라가는 반투명 지도, 날씨 버튼.
+> Dead ends, lidded tunnel approaches and steps fixed across the map; police chase NPCs only; true resolution and a higher frame rate; a translucent map that follows you; a weather button.
+
+**✨ 추가 · New**
+
+- 지도(M)가 내 위치를 중심으로 열리고 계속 따라감, 반투명이라 지도를 보면서도 계속 주행 가능(자동주행 포함)<br><sub>The map (M) opens on your position and follows you; it is translucent, so you keep driving (or autopilot) while it is open</sub>
+- 날씨 버튼(AUTO 옆): 자동 → 맑음 → 흐림 → 비 → 폭우 → 안개, 설정 메뉴에서도 선택<br><sub>Weather button next to AUTO: auto → clear → cloudy → rain → storm → fog, also in the settings</sub>
+- 표지판·노면 표시 추가: 신호 교차로의 횡단보도 표지와 차로 화살표, 간선도로 주차금지 표지, 일방통행 표지<br><sub>More signs and markings: crosswalk signs and lane arrows at signalised junctions, no-parking signs on arterials, one-way signs</sub>
+- 편의점이 다시: 실제 3D 건물 앞에 간판·매장 정면·주차장 + 분리수거함·자전거 거치대·재떨이·주차장 조명<br><sub>Konbini are back in front of the real 3D buildings — sign, storefront and car park, plus recycling bins, a bike rack, an ashtray and lot lights</sub>
+
+**🔧 변경 · Changed**
+
+- 경찰은 플레이어를 잡지 않음 — 과속하는 NPC 차량을 추격해 갓길에 세움. 사고 대화는 내려서 상대 운전자에게 F를 눌렀을 때만<br><sub>The police never chase you — they go after speeding NPC cars and pull them over. Accident conversations only start when you walk up to the other driver and press F</sub>
+- 자동주행 최고속도 = 차량의 최고속도 (커브·앞차에서만 감속)<br><sub>Autopilot drives up to the car's own top speed, slowing only for bends and traffic</sub>
+- 선명한 화면: 맥·윈도우·휴대폰 모두 화면의 실제 해상도로 렌더링(이전엔 프레임이 떨어지면 60%까지 낮아짐), PLATEAU 건물 텍스처 2배 해상도<br><sub>Sharp on every screen: Mac, Windows and phones render at the display's true resolution (it used to drop to 60 % when the frame rate dipped); PLATEAU facades at twice the texture resolution</sub>
+- 프레임 향상: 도로 표지판 1,952개를 188개 메쉬로 합침, PLATEAU 건물 그림자 계산 제거, 동적 조명 수 절반<br><sub>Higher frame rate: 1,952 roadside signs merged into 188 meshes, no shadow pass for the PLATEAU buildings, half the dynamic lights</sub>
+- 웹사이트 지역 페이지 최신화: 도쿄 23구(실제 3D)·기사라즈·쇼난 추가<br><sub>Website regions page brought up to date: Tokyo's 23 wards (real 3D), Kisarazu and Shōnan added</sub>
+
+**🐞 수정 · Fixed**
+
+- 맵 전체 막힌 길 수정: 1km 시내 타일 경계마다 도로 위에 보이지 않는 벽이 생기던 문제(구간이 이웃 타일로 넘어가는 부분이 빠져 있었음) 해결, 공중에서 끊긴 출입구 램프(다이시·헤이와지마·시바우라)를 실제처럼 지상 도로까지 연결<br><sub>Dead ends fixed across the map: an invisible wall stood across streets at every 1 km city-tile border (the part of a street running into the next tile was missing); exit/entry ramps cut off in mid-air (Daishi, Heiwajima, Shibaura) now continue down to street level</sub>
+- 터널 입구 앞 반지하(掘割) 구간이 땅·바다·블록으로 덮여 길이 사라지던 문제: 시내 지면을 도려내고, 바다가 차오르지 않게, 그 위의 건물 제거 — 맵 전체 64곳<br><sub>Open cuttings before tunnel mouths were lidded over by ground, filled with sea or covered by blocks — the city ground is cut away, the sea kept out and buildings over them removed, at all 64 of them</sub>
+- 오르막·램프·터널의 단차 제거: 도로 높이 데이터의 튀는 점과 몇 m 사이 10m씩 떨어지던 절벽을 매끈한 경사(고속 7%·램프 9%)로, 본선과 겹치는 램프 구간 높이를 일치<br><sub>No more steps on climbs, ramps and in tunnels: spikes in the height data and 10 m drops over a few metres became smooth grades (7 % main line, 9 % ramps), and ramps now match the main road where they overlap</sub>
+- 번호판이 두 개 겹쳐 보이던 모델(AE86·크라운·택시·경찰차·짐니·마크II 등) 수정 — 모델의 원래 번호판을 숨기고 그 자리에 일본 번호판, 없는 모델은 범퍼 표면에 정확히<br><sub>Doubled number plates fixed (AE86, Crown, taxi, police cars, Jimny, Mark II …): the model's own plate is hidden and the Japanese plate takes its exact place; on other models it now sits flush on the bumper</sub>
+- 도색 안 된 흰 차 수정: 버스 차체 도색(파랑·초록·빨강·노랑), 하이에이스는 차체·창문·하부를 나눠 도색<br><sub>Unpainted white vehicles fixed: buses get real liveries (blue, green, red, yellow), the Hiace is split into painted body, dark glass and chassis</sub>
+- 도로 위에 서 있던 전봇대·가로수·가로등·자판기·버스정류장 표지와 도로가 없는 이상한 곳의 신호등 제거<br><sub>Utility poles, street trees, lamps, vending machines and bus-stop signs standing on the carriageway are gone, and so are traffic signals in places with no road</sub>
 
 ---
 

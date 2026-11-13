@@ -29,6 +29,8 @@ export class Accidents {
     setTimeout(() => g.ui.toast(t('game.acc.tipHazard'), 'info', 6), 1800);
   }
 
+  // the other driver of an accident you are standing next to (on foot) — main.js shows 「F 話す」
+  talkable(pos) { return this.list.find(inc => !inc.talked && inc.stage === 'check' && inc.driver && inc.driver.pos.distanceTo(pos) < 3) || null; }
   update(dt) {
     this.cool = Math.max(0, this.cool - dt);
     for (const inc of [...this.list]) this.step(inc, dt);
@@ -46,7 +48,6 @@ export class Accidents {
     if (inc.stage !== 'done' && inc.stage !== 'leave' && dMe > 320 && g.mode === 'drive') {
       g.ui.toast(t('game.acc.hitrun'), 'police', 6);
       g.audio?.speak('当て逃げの車両、止まりなさい！', 'ja-JP', { role: 'police' });
-      if (g.police && g.police.state === 'patrol') g.police.startPursuit(45);
       return this.finish(inc);
     }
     switch (inc.stage) {
@@ -58,8 +59,9 @@ export class Accidents {
         const d = inc.driver; this.walkTo(d, me && dMe < 40 ? me : ai.pos, dt, 1.4, 2.2);
         if (inc.st > 2 && !inc.said.ok) { inc.said.ok = 1; g.audio?.speak('大丈夫ですか！？お怪我はありませんか？', 'ja-JP', inc.voice); g.ui.toast(t('game.acc.driver1'), 'info', 5); }
         // stopped next to them (or on foot) → talk it out (choices); otherwise they call the police themselves
-        if (!inc.talked && d && me && d.pos.distanceTo(me) < 5 && (g.mode === 'walk' || Math.abs(v?.kmh ?? 0) < 3) && g.dialog && !g.dialog.open) {
-          inc.talked = true; inc.stage = 'talk'; d.action = 'talk'; d.speed = 0; this.face(d, me);
+        // v2.2: a conversation only when YOU start it (walk up to the driver and press F — see talkable())
+        if (inc.wantTalk && !inc.talked && d && g.dialog && !g.dialog.open) {
+          inc.talked = true; inc.stage = 'talk'; d.action = 'talk'; d.speed = 0; if (me) this.face(d, me);
           g.dialog.accident(inc, res => this.resolve(inc, res)); break;
         }
         if (inc.st > 12 && !inc.said.call) { inc.said.call = 1; d.action = 'phone'; g.audio?.speak('今、警察に電話しますね。', 'ja-JP', inc.voice); g.ui.toast(t('game.acc.call'), 'police', 5); this.dispatch(inc); inc.stage = 'wait'; }

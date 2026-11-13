@@ -3,7 +3,7 @@
 // and the hiss of rain. Roads stay wet for a while after the rain stops.
 import * as THREE from 'three';
 
-export const WEATHER_MODES = ['auto', 'clear', 'cloudy', 'rain'];
+export const WEATHER_MODES = ['auto', 'clear', 'cloudy', 'rain', 'storm', 'fog'];
 
 export class Weather {
   constructor(game) {
@@ -47,16 +47,17 @@ export class Weather {
     this.autoT -= dt;
     if (this.autoT <= 0) { this.autoT = 240 + Math.random() * 360; const r = Math.random(); this.autoState = r < 0.5 ? 'clear' : r < 0.78 ? 'cloudy' : 'rain'; }
     const tg = this.target();
-    const rainT = tg === 'rain' ? 1 : 0, cloudT = tg === 'clear' ? 0.3 : tg === 'cloudy' ? 0.8 : 0.97;
-    this.rain += (rainT - this.rain) * Math.min(1, dt * 0.15);
+    const rainT = tg === 'rain' ? 1 : tg === 'storm' ? 1.7 : 0, cloudT = tg === 'clear' ? 0.3 : tg === 'cloudy' ? 0.8 : tg === 'fog' ? 0.88 : 0.97, fogT = tg === 'fog' ? 1 : 0;
+    this.rain += (rainT - this.rain) * Math.min(1, dt * 0.3);
+    this.fogK = (this.fogK || 0) + (fogT - (this.fogK || 0)) * Math.min(1, dt * 0.3);
     this.cloud += (cloudT - this.cloud) * Math.min(1, dt * 0.1);
-    this.wet += ((this.rain > 0.2 ? 1 : 0) - this.wet) * Math.min(1, dt * (this.rain > 0.2 ? 0.08 : 0.012));
+    this.wet += ((this.rain > 0.2 ? 1 : this.fogK > 0.5 ? 0.35 : 0) - this.wet) * Math.min(1, dt * (this.rain > 0.2 ? 0.08 : 0.012));
     // sky / light / fog on top of the time of day
     const tod = this.g.tod; const cu = tod.clouds?.material.uniforms;
     if (cu?.cover) cu.cover.value = this.cloud * 0.95;
     const oc = Math.max(0, this.cloud - 0.3) / 0.67; // 0 clear … 1 overcast
     tod.sun.intensity *= 1 - 0.8 * oc; tod.hemi.intensity *= 1 - 0.25 * oc;
-    const fog = this.g.scene.fog; if (fog) { fog.density += 0.00022 * this.rain + 0.00003 * oc; fog.color.lerp(new THREE.Color(env.night > 0.5 ? 0x1a2028 : 0x8a939c), 0.6 * Math.max(oc, this.rain)); }
+    const fog = this.g.scene.fog; if (fog) { fog.density += 0.00022 * this.rain + 0.00003 * oc + 0.0028 * this.fogK; fog.color.lerp(new THREE.Color(env.night > 0.5 ? 0x1a2028 : 0x8a939c), 0.6 * Math.max(oc, Math.min(1, this.rain), this.fogK)); }
     this.g.scene.environmentIntensity = (this.g.scene.environmentIntensity ?? 1) * (1 - 0.35 * oc);
     // rain streaks follow the camera
     // …but not in a tunnel or right under a viaduct deck

@@ -140,16 +140,16 @@ export class Autopilot {
         if (step && this.laneFree(step, 35, 22)) { this.signal = Math.sign((step.lat - this.lane.lat) * dir); this.lane = step; this.laneT = 2.5; this.sigT = 3; }
       }
       // target point on the lane centre, lookahead grows with speed
-      const look = clamp(6 + speed * 0.75, 8, 45);
+      const look = clamp(6 + speed * 0.75, 8, 70);
       target = r.at(this.s + look * dir, this.lane.lat, _p);
       if ((dir > 0 && this.s + look > r.length) || (dir < 0 && this.s - look < 0)) { const nx = this.nextAtEnd(); if (nx) target = nx.road.at(clamp(nx.s + (dir > 0 ? this.s + look - r.length : look - this.s) * nx.lane.dir, 0, nx.road.length), nx.lane.lat, _p); }
       // speed: limit + 15 %, slowed for the curvature ahead (3.2 m/s² lateral)
-      vDes = (r.speed / 3.6) * 1.15;
+      vDes = r.kind === 'local' ? (r.speed / 3.6) * 1.15 : 120; // v2.2: open road → as fast as the car will go (still slowed for bends and traffic)
       const t0 = r.dirAt(this.s); const h0 = Math.atan2(t0.x, t0.z);
       for (let d = 15; d <= Math.max(60, speed * speed / 4); d += 15) {
         const s2 = this.s + d * dir; if (s2 < 0 || s2 > r.length) break;
         const t1 = r.dirAt(s2), k = Math.abs(angle(Math.atan2(t1.x, t1.z) - h0)) / d;
-        const vc = Math.sqrt(3.2 / Math.max(k, 1e-4)); vDes = Math.min(vDes, Math.sqrt(vc * vc + 2 * 3 * Math.max(0, d - 15)));
+        const vc = Math.sqrt(5 / Math.max(k, 1e-4)); vDes = Math.min(vDes, Math.sqrt(vc * vc + 2 * 4.5 * Math.max(0, d - 15)));
       }
       if (this.sigT > 0) this.sigT -= dt; else this.signal = 0;
     }

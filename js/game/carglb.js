@@ -34,12 +34,17 @@ function splitLivery(scene, info) {
     for (let t = 0; t < n; t++) {
       let cy = 0, cz = 0; const ids = [0, 1, 2].map(k => (I ? I[t * 3 + k] : t * 3 + k));
       for (const i of ids) { v.fromBufferAttribute(pos, i).applyMatrix4(o.matrixWorld); cy += v.y / 3; cz += v.z / 3; }
+      if (S.van) { // one-material van: tyres/chassis below, glass band (steep faces between belt and roof), the rest painted
+        const a = new THREE.Vector3().fromBufferAttribute(pos, ids[0]).applyMatrix4(o.matrixWorld), b = new THREE.Vector3().fromBufferAttribute(pos, ids[1]).applyMatrix4(o.matrixWorld), c = new THREE.Vector3().fromBufferAttribute(pos, ids[2]).applyMatrix4(o.matrixWorld);
+        const ny = Math.abs(b.sub(a).cross(c.sub(a)).normalize().y), H = info.bbox?.[4] ?? 2;
+        B[cy < S.low ? 2 : (cy > H * S.belt && cy < H - 0.1 && ny < 0.55) ? 1 : 0].push(...ids); continue;
+      }
       B[cy < S.low ? 2 : cz > zFront - S.cab ? 0 : 1].push(...ids);
     }
     g.setIndex([...B[0], ...B[1], ...B[2]]); g.clearGroups();
     g.addGroup(0, B[0].length, 0); g.addGroup(B[0].length, B[1].length, 1); g.addGroup(B[0].length + B[1].length, B[2].length, 2);
     const base = o.material, mk = (name, col, metal, rough) => { const m = base.clone(); m.name = name; m.color.set(col); m.map = null; m.metalness = metal; m.roughness = rough; return m; };
-    o.material = [mk('auto_paint', 0xffffff, 0.3, 0.3), mk('auto_box', 0xd9dde1, 0.55, 0.38), mk('auto_dark', 0x232528, 0.2, 0.75)];
+    o.material = [mk('auto_paint', 0xffffff, 0.3, 0.3), S.van ? mk('auto_glass', 0x141a20, 0.3, 0.08) : mk('auto_box', 0xd9dde1, 0.55, 0.38), mk('auto_dark', 0x232528, 0.2, 0.75)];
   });
   info.paint = [...new Set([...(info.paint || []), 'auto_paint'])];
 }
@@ -154,8 +159,26 @@ export function buildGlbCar(car, e, opts = {}) {
   // plates at the real bumpers, lightbar on the real roof
   const [bx0, , bz0, bx1, by1, bz1] = info.bbox; const zoff = vis.position.z;
   const [pf, pr] = parts.plates || [];
-  if (pf) pf.position.set(0, 0.42, bz1 + zoff + 0.012);
-  if (pr) pr.position.set(0, 0.55, bz0 + zoff - 0.012);
+  // v2.2: the model's own (foreign) number plates are hidden and the Japanese plates take their exact place — before,
+  // many models showed two plates on top of each other. Without a plate on the model, the plate sits ON the bumper
+  // (ray against the body) instead of floating in front of its furthest point.
+  {
+    root.updateMatrixWorld(true);
+    const inv = bodyG.matrixWorld.clone().invert(), box = new THREE.Box3(), spots = { f: null, r: null };
+    vis.traverse(o => {
+      if (!o.isMesh) return; const ms = Array.isArray(o.material) ? o.material : [o.material];
+      if (!(/plate|licen|kennz|nummer|matric/i.test(o.name) || ms.some(m => /plate|licen|kennz|nummer|matric/i.test(m.name || ''))) || /top|rim/i.test(o.name)) return;
+      if (!o.geometry.boundingBox) o.geometry.computeBoundingBox();
+      box.copy(o.geometry.boundingBox).applyMatrix4(o.matrixWorld).applyMatrix4(inv);
+      o.visible = false; o.userData.plateHidden = true;
+      const c = box.getCenter(new THREE.Vector3()), sz = box.getSize(new THREE.Vector3());
+      if (sz.z > 1.5) return; // one mesh for both ends: hidden, plates placed by ray below
+      const k = c.z > 0 ? 'f' : 'r'; if (!spots[k] || sz.x * sz.y > spots[k].a) spots[k] = { x: c.x, y: c.y, z: c.z > 0 ? box.max.z + 0.006 : box.min.z - 0.006, a: sz.x * sz.y };
+    });
+    const rc = new THREE.Raycaster(), surf = (y, front) => { const o = new THREE.Vector3(0, y, front ? bz1 + zoff + 1 : bz0 + zoff - 1).applyMatrix4(bodyG.matrixWorld); rc.set(o, new THREE.Vector3(0, 0, front ? -1 : 1).transformDirection(bodyG.matrixWorld)); rc.far = 1.6; const h = rc.intersectObject(vis, true).find(h => h.object.visible); return h ? h.point.applyMatrix4(inv).z + (front ? 0.012 : -0.012) : (front ? bz1 + zoff + 0.012 : bz0 + zoff - 0.012); };
+    if (pf) { const S = spots.f; if (S) pf.position.set(S.x, S.y, S.z); else pf.position.set(0, 0.42, surf(0.42, true)); }
+    if (pr) { const S = spots.r; if (S) pr.position.set(S.x, S.y, S.z); else pr.position.set(0, 0.55, surf(0.55, false)); }
+  }
   const dy = by1 - (P.H || by1);
   bodyG.traverse(o => { if (o.userData.glbKeep) o.position.y += dy; if (o.userData.glbDecal !== undefined) o.position.x = o.userData.glbDecal * (Math.max(bx1, -bx0) + 0.004); });
   // paint

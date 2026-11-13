@@ -918,7 +918,8 @@
     "forward": "+z",
     "up": "+y",
     "paint": [
-      "PAINT"
+      "PAINT",
+      "Material.007"
     ],
     "glass": [
       "GLASS"
@@ -1072,9 +1073,7 @@
     "bytes": 1171332,
     "forward": "+z",
     "up": "+y",
-    "paint": [
-      "mat_0.001"
-    ],
+    "paint": [],
     "glass": [],
     "wheels": null,
     "hood": null,
@@ -1089,7 +1088,13 @@
       1.997,
       2.345
     ],
-    "notes": "Whole van is one untextured material; wheels not separable. Normalized on export: units = metres, car length scaled to the real vehicle, front = +Z, up = +Y, ground at y=0, centred on X/Z (wrapper node MJ_root). Wheel nodes wheel_fl/fr/rl/rr have their pivot at the wheel centre (axle = local X). fl = car's left = +X side."
+    "notes": "Whole van is one untextured material; wheels not separable. Normalized on export: units = metres, car length scaled to the real vehicle, front = +Z, up = +Y, ground at y=0, centred on X/Z (wrapper node MJ_root). Wheel nodes wheel_fl/fr/rl/rr have their pivot at the wheel centre (axle = local X). fl = car's left = +X side.",
+    "split": {
+      "mat": "mat_0.001",
+      "van": true,
+      "belt": 0.55,
+      "low": 0.55
+    }
   },
   "leaf": {
     "file": "leaf.glb",

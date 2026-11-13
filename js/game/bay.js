@@ -70,7 +70,7 @@ function buildUmihotaru(W, S, H) {
   const steel = new THREE.MeshStandardMaterial({ color: 0xd8dde2, roughness: 0.4, metalness: 0.6 });
   const lineM = new THREE.MeshStandardMaterial({ color: 0xeeeeea, roughness: 0.6, polygonOffset: true, polygonOffsetFactor: -3, polygonOffsetUnits: -3 });
   // island deck (paved plaza) + seawall + railing
-  S.add(polyGeo(U.ring, 0.01), plaza);
+  S.add(H.cut ? H.cut(polyGeo(U.ring, 0.01)) : polyGeo(U.ring, 0.01), plaza); // v2.2: the Aqua-Line cutting stays open
   for (const g of U.green || []) S.add(polyGeo(g, 0.05), grass);
   const R = U.ring;
   for (let i = 0; i < R.length; i++) {
