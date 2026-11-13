@@ -97,7 +97,7 @@ export class UI {
         <div class="tl"><div class="loc"></div><div class="clock"></div><div class="money"></div><div class="goaltrack" id="goaltrack"></div></div>
         <canvas id="minimap" width="680" height="500"></canvas><button id="autobtn" class="autobtn" data-a="auto" title="J">AUTO</button><button id="wxbtn" class="autobtn wxbtn" data-a="weather" title="Weather">🌤</button><button class="autobtn mapbtn" data-a="hudMap" title="M">🗺</button><button class="autobtn garbtn" data-a="hudGarage" title="U">🔧</button><div id="keyhint" class="keyhint" hidden></div><div id="navhud" class="navhud" hidden><span class="nav-arrow">↑</span><span class="nav-dist"></span><button class="nav-x" data-a="navClear" aria-label="clear">✕</button></div><div id="pursuit" class="pursuithud" hidden></div>
         <div class="speedo"><canvas id="speedo" width="520" height="520"></canvas><div class="icons"></div></div>
-        <div class="radio-banner"></div><div id="radiopill" class="radiopill" hidden><span class="rp-t"></span><button data-a="radioPrev" title="R">⏮</button><button data-a="radioSkip" title="Y">⏭</button><button data-a="radioNext" title="T">📻</button></div>
+        <div class="radio-banner"></div><div id="radiopill" class="radiopill" hidden><button class="rp-fold" data-a="radioFold" title="−">📻</button><span class="rp-t"></span><button data-a="radioPrev" title="R">⏮</button><button data-a="radioSkip" title="Y">⏭</button><button data-a="radioNext" title="T">📻</button></div>
         <div class="prompt"><kbd></kbd><span></span></div>
         <div class="toasts"></div>
         <button class="online-pill" data-a="chat" id="online-pill"></button>
@@ -167,7 +167,16 @@ export class UI {
     this.screens('whatsnew');
   }
   showTitle() { let seen = null; try { seen = localStorage.getItem('dn.seenVer'); } catch {} if (seen !== GAME.version && !this._wnShown && !/[?&](auto|go)=/.test(location.search)) { this._wnShown = true; this.showWhatsNew(); return; } this.screens('title'); $('#hud').classList.add('hidden'); $('#title .who').innerHTML = `${esc(t('game.title.hello'))} <b>${esc(displayName())}</b>` + (currentUser() ? '' : ` · <a href="account.html">${esc(t('game.title.login'))}</a>`); this.touchMode(null); const sp = $('#t-spawn'); if (sp) { sp.value = this.g.settings.spawn || 'pa'; sp.onchange = () => { this.g.settings.spawn = sp.value; this.g.saveSettings?.(); }; } const qc = CAR_BY_ID[this.g.garage.car]; $('#quick-car').textContent = qc ? `${qc.maker} ${qc.name}` : ''; this.updateOnline(); }
-  showHUD() { this.screens(null); $('#hud').classList.remove('hidden'); if (!this._khShown && this.g.mode === 'drive') { this._khShown = true; setTimeout(() => this.keyHint(), 1500); } this.touchMode(this.g.mode); this.paused = false; }
+  // v2.5.2: icon + word on every quick button (in the play language) — icons alone were guesswork
+  labelHUD() {
+    const L3 = (ko, ja, en) => ({ ko, ja, en })[getLang()] || en;
+    const set = (sel, ic, txt) => { const b = document.querySelector(sel); if (b) b.innerHTML = `<span class="ic">${ic}</span><span class="lb">${esc(txt)}</span>`; };
+    set('#hud .garbtn', '🔧', L3('차고', 'ガレージ', 'Garage')); set('#hud .mapbtn', '🗺', L3('지도', '地図', 'Map'));
+    const wx = { auto: '🌤', clear: '☀️', cloudy: '☁️', rain: '🌧', storm: '⛈', fog: '🌫' }[this.g.settings.weather] || '🌤'; set('#wxbtn', wx, L3('날씨', '天気', 'Weather'));
+    set('#autobtn', '🚘', L3('자동', '自動', 'Auto'));
+    const m = document.querySelector('#hud .hud-menu'); if (m) m.title = L3('메뉴', 'メニュー', 'Menu');
+  }
+  showHUD() { this.labelHUD(); this.screens(null); $('#hud').classList.remove('hidden'); if (!this._khShown && this.g.mode === 'drive') { this._khShown = true; setTimeout(() => this.keyHint(), 1500); } this.touchMode(this.g.mode); this.paused = false; }
   touchMode(mode) {
     const on = this.g.settings.touch === 'on' || (this.g.settings.touch === 'auto' && this.isTouch);
     $('#touch').classList.toggle('hidden', !on || !mode);
@@ -211,13 +220,14 @@ export class UI {
       case 'closeCar': $('#carmenu').classList.remove('show'); break;
       case 'shopClose': $('#shop').classList.remove('show'); break;
       case 'hudMap': this.toggleMap(); break;
+      case 'radioFold': { const pl = document.getElementById('radiopill'); pl.classList.toggle('folded'); try { localStorage.setItem('dn.rpFold', pl.classList.contains('folded') ? '1' : ''); } catch {} break; }
       case 'radioSkip': if (g.radio?.on) { g.radio.skip(); this.radioBanner(); } break;
       case 'radioNext': if (g.radio) { if (!g.radio.on) g.radio.power(true); else g.radio.next(); this.radioBanner(); } break;
       case 'radioPrev': if (g.radio?.on) { g.radio.prev(); this.radioBanner(); } break;
       case 'hudGarage': this.quickGarage(); break;
       case 'weather': { // v2.2: one tap cycles the weather — auto → clear → cloudy → rain → storm → fog
         const M = ['auto', 'clear', 'cloudy', 'rain', 'storm', 'fog'], i = (M.indexOf(g.settings.weather || 'auto') + 1) % M.length; g.settings.weather = M[i]; g.saveSettings();
-        const ic = { auto: '🌤', clear: '☀️', cloudy: '☁️', rain: '🌧', storm: '⛈', fog: '🌫' }; $('#wxbtn').textContent = ic[M[i]];
+        const ic = { auto: '🌤', clear: '☀️', cloudy: '☁️', rain: '🌧', storm: '⛈', fog: '🌫' }; this.labelHUD();
         this.toast(t('game.weather.' + M[i]), 'info', 2); break; }
       case 'auto': g.autopilot?.toggle(); if (g.autopilot?.on) this.toast(t('game.auto.on'), 'info', 4); break;
       case 'mapClose': this.toggleMap(false); break;
@@ -363,7 +373,7 @@ export class UI {
       clearTimeout(this._saveT); this._saveT = setTimeout(() => g.saveSettings(), i.type === 'range' ? 300 : 0);
       if (k === 'damage' && !v && g.model) g.fx?.repair(g.model);
       if (k === 'resScale') { g.renderer.setPixelRatio(g.basePR()); g.composer.setPixelRatio?.(g.renderer.getPixelRatio()); g.composer.setSize(innerWidth, innerHeight); }
-      if (k === 'weather') { const ic = { auto: '🌤', clear: '☀️', cloudy: '☁️', rain: '🌧', storm: '⛈', fog: '🌫' }; const b = $('#wxbtn'); if (b) b.textContent = ic[v] || '🌤'; }
+      if (k === 'weather') this.labelHUD();
       if (k === 'tilt') { g.input.tilt = v; if (v && typeof DeviceOrientationEvent?.requestPermission === 'function') DeviceOrientationEvent.requestPermission().catch(() => {}); }
       if (k === 'dj' && g.radio) g.radio.djVoice = v;
       if (k === 'voice') g.audio.voiceOn = v;
@@ -728,8 +738,8 @@ export class UI {
     // footer: car · place
     c.fillStyle = 'rgba(6,10,20,.78)'; c.fillRect(0, H - FOOT, W, FOOT);
     const car = v?.car; c.textBaseline = 'middle'; c.textAlign = 'left'; c.fillStyle = '#ffb347'; c.font = '700 12px system-ui';
-    const cn = car ? `${car.maker} ${car.name}` : ''; c.fillText(cn.length > 30 ? cn.slice(0, 29) + '…' : cn, 10, H - FOOT / 2);
-    const loc = (document.querySelector('#hud .loc')?.firstChild?.textContent || '').split('・')[0];
+    const narrow = W < 260, cn = car ? (narrow ? car.name : `${car.maker} ${car.name}`) : '', maxC = narrow ? 18 : 30; c.fillText(cn.length > maxC ? cn.slice(0, maxC - 1) + '…' : cn, 10, H - FOOT / 2);
+    const loc = narrow ? '' : (document.querySelector('#hud .loc')?.firstChild?.textContent || '').split('・')[0];
     c.textAlign = 'right'; c.fillStyle = 'rgba(255,255,255,.85)'; c.font = '600 11px system-ui'; c.fillText(loc.slice(0, 18), W - 10, H - FOOT / 2);
     c.restore();
     c.save(); c.setTransform(k, 0, 0, k, 0, 0); c.strokeStyle = 'rgba(255,255,255,.22)'; c.lineWidth = 1.5; rrect(0.75, 0.75, W - 1.5, H - 1.5, rr); c.stroke(); c.restore();
@@ -804,7 +814,16 @@ export class UI {
     for (const l of MAP.landmarks || []) lab('◆ ' + l.name, l.x, l.z, 12, '#ffd38a');
     lab('大黒PA', (PA_RECT.x0 + PA_RECT.x1) / 2, (PA_RECT.z0 + PA_RECT.z1) / 2, 15, '#ffb347');
     // player
-    const p = this.mapPos(); if (p) { const [a, b] = P(p.x, p.z); const yaw = this.g.mode === 'walk' ? this.g.player.yaw : this.g.vehicle.yaw; const pr = (performance.now() / 900) % 1; c.beginPath(); c.arc(a, b, (14 + pr * 26) * dpr, 0, 7); c.strokeStyle = `rgba(255,179,71,${1 - pr})`; c.lineWidth = 3 * dpr; c.stroke(); c.beginPath(); c.arc(a, b, 13 * dpr, 0, 7); c.fillStyle = 'rgba(255,179,71,.25)'; c.fill(); c.save(); c.translate(a, b); c.rotate(-yaw + Math.PI); c.fillStyle = '#ffb347'; c.strokeStyle = '#000'; c.lineWidth = 2.5 * dpr; c.beginPath(); c.moveTo(0, -16 * dpr); c.lineTo(12 * dpr, 13 * dpr); c.lineTo(0, 6 * dpr); c.lineTo(-12 * dpr, 13 * dpr); c.closePath(); c.fill(); c.stroke(); c.restore(); c.font = `800 ${13 * dpr}px system-ui,sans-serif`; c.textAlign = 'center'; c.fillStyle = '#fff'; c.strokeStyle = 'rgba(0,0,0,.8)'; c.lineWidth = 4 * dpr; c.strokeText((({ ko: '현재 위치', ja: '現在地' })[getLang()] || 'You'), a, b - 24 * dpr); c.fillText((({ ko: '현재 위치', ja: '現在地' })[getLang()] || 'You'), a, b - 24 * dpr); }
+    const p = this.mapPos(); if (p) { const [a, b] = P(p.x, p.z); const yaw = this.g.mode === 'walk' ? this.g.player.yaw : this.g.vehicle.yaw; const pr = (performance.now() / 900) % 1; c.beginPath(); c.arc(a, b, (14 + pr * 26) * dpr, 0, 7); c.strokeStyle = `rgba(255,179,71,${1 - pr})`; c.lineWidth = 3 * dpr; c.stroke(); c.beginPath(); c.arc(a, b, 13 * dpr, 0, 7); c.fillStyle = 'rgba(255,179,71,.25)'; c.fill(); c.save(); c.translate(a, b); c.rotate(-yaw + Math.PI); c.fillStyle = '#ffb347'; c.strokeStyle = '#000'; c.lineWidth = 2.5 * dpr; c.beginPath(); c.moveTo(0, -16 * dpr); c.lineTo(12 * dpr, 13 * dpr); c.lineTo(0, 6 * dpr); c.lineTo(-12 * dpr, 13 * dpr); c.closePath(); c.fill(); c.stroke(); c.restore(); c.font = `800 ${13 * dpr}px system-ui,sans-serif`; c.textAlign = 'center'; c.fillStyle = '#fff'; c.strokeStyle = 'rgba(0,0,0,.8)'; c.lineWidth = 4 * dpr; { // v2.5.2: "you are here" card — the place in the play language, with the Japanese name under it
+        const here = ({ ko: '현재 위치', ja: '現在地', zh: '当前位置', 'zh-TW': '目前位置', es: 'Estás aquí', fr: 'Vous êtes ici', de: 'Sie sind hier' })[getLang()] || 'You are here';
+        const locEl = document.querySelector('#hud .loc'); const ja = (locEl?.childNodes?.[0]?.textContent || '').trim(), loc = (locEl?.querySelector('small, .sub, div')?.textContent || '').trim();
+        const l1 = here + (loc && getLang() !== 'ja' ? ' · ' + loc : ja ? ' · ' + ja : ''), l2 = getLang() !== 'ja' ? ja : '';
+        c.font = `800 ${13 * dpr}px system-ui,sans-serif`; const w1 = c.measureText(l1).width; c.font = `600 ${11 * dpr}px system-ui,sans-serif`; const w2 = l2 ? c.measureText(l2).width : 0;
+        const W2 = Math.max(w1, w2) + 20 * dpr, H2 = (l2 ? 40 : 24) * dpr, x0 = a - W2 / 2, y0 = b - 30 * dpr - H2;
+        c.fillStyle = 'rgba(8,14,26,.88)'; c.strokeStyle = '#ffb347'; c.lineWidth = 1.5 * dpr; c.beginPath(); c.roundRect ? c.roundRect(x0, y0, W2, H2, 8 * dpr) : c.rect(x0, y0, W2, H2); c.fill(); c.stroke();
+        c.textAlign = 'center'; c.textBaseline = 'middle'; c.fillStyle = '#fff'; c.font = `800 ${13 * dpr}px system-ui,sans-serif`; c.fillText(l1, a, y0 + 12 * dpr);
+        if (l2) { c.fillStyle = '#ffcf8a'; c.font = `600 ${11 * dpr}px system-ui,sans-serif`; c.fillText(l2, a, y0 + 29 * dpr); }
+        c.textBaseline = 'alphabetic'; } }
     // scale bar + north
     const nice = [10, 20, 50, 100, 200, 500, 1000, 2000, 5000, 10000]; const len = nice.find(n => n * k > 80 * dpr) || 10000;
     c.fillStyle = '#fff'; c.fillRect(20 * dpr, H - 30 * dpr, len * k, 3 * dpr); c.textAlign = 'left'; c.font = `600 ${12 * dpr}px system-ui`; c.fillText(len >= 1000 ? len / 1000 + ' km' : len + ' m', 20 * dpr, H - 42 * dpr);

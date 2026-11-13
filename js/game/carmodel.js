@@ -173,7 +173,7 @@ function gridGeometry(rows, cols, posFn, { closedCols = false, faceKeep = null, 
   }
   const keys = Object.keys(groups).map(Number).sort((a, b) => a - b);
   let start = 0; const gl = [];
-  for (const k of keys) { idx.push(...groups[k]); gl.push([start, groups[k].length, k]); start += groups[k].length; }
+  for (const k of keys) { const G = groups[k]; for (let q = 0; q < G.length; q++) idx.push(G[q]); gl.push([start, groups[k].length, k]); start += groups[k].length; }
   const g = new THREE.BufferGeometry();
   g.setAttribute('position', new THREE.Float32BufferAttribute(pos, 3));
   if (colorFn) g.setAttribute('color', new THREE.Float32BufferAttribute(col, 3));
@@ -942,8 +942,12 @@ export class CarModel {
     // v2.4.1: plate styles — 'glow' (字光式: the characters light up after dark), 'tilt' (お辞儀: bowed forward)
     import('./plates.js').then(({ plateTexture, plateGlowTexture }) => { for (const pm of this.parts.plates) {
       const glow = p.style === 'glow'; pm.material.map = plateTexture(p); pm.material.emissiveMap = glow ? plateGlowTexture(p) : plateTexture(p); pm.material.emissive.setHex(glow ? 0xc8ffd0 : 0xffffff); pm.material.needsUpdate = true; pm.userData.glow = glow;
-      if (pm.userData.rx0 === undefined) pm.userData.rx0 = pm.rotation.x;
-      pm.rotation.x = pm.userData.rx0 + (p.style === 'tilt' ? 0.42 * (pm.position.z >= 0 ? 1 : -1) : 0);
+      if (pm.userData.rx0 === undefined) { pm.userData.rx0 = pm.rotation.x; pm.userData.p0 = pm.position.clone(); }
+      // お辞儀: bowed from the bottom edge, the top leaning out (plate faces the road) — pivoting at the centre buried
+      // half of it in the bumper, and the rear one leaned the wrong way
+      const tilt = p.style === 'tilt' ? 0.45 : 0, out = Math.sign(pm.userData.p0.z) || 1, hh = 0.0825;
+      pm.rotation.x = pm.userData.rx0 + tilt;
+      pm.position.copy(pm.userData.p0); pm.position.z += out * (hh * Math.sin(tilt) + (tilt ? 0.012 : 0)); pm.position.y += hh * (1 - Math.cos(tilt)) * 0 - (tilt ? 0.004 : 0);
     } });
     this.parts.plateData = p;
   }

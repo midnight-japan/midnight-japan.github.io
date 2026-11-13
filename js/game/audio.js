@@ -583,10 +583,12 @@ class EngineSound {
     {
       const hx = hashStr(String(this.car.id || '') + 'ex'), code = (this.car.engine && this.car.engine.code) || '', sportyX = ['jdm', 'euro', 'us'].includes(this.car.cat);
       const V = { RB26DETT: [230, 7, 5], '2JZ-GTE': [140, 6, 2], '1JZ-GTE': [160, 5, 2], '13B-REW': [320, 8, 7], '4A-GE': [260, 6, 4], 'B16B': [300, 6, 6], 'F20C': [310, 6, 6], 'K20C': [260, 5, 4], EJ207: [110, 9, 3], 'VR38DETT': [170, 5, 3], 'VQ35HR': [200, 6, 4], SR20DET: [210, 6, 4], '4G63': [190, 6, 4], '1LR-GUE': [380, 6, 7], 'C30A': [240, 5, 4] }[code];
-      const pkF = V ? V[0] : 90 + (hx % 260), pkG = V ? V[1] : (sportyX ? 4 + (hx >> 5) % 4 : 2), rasp = V ? V[2] : (sportyX ? 2 + (hx >> 9) % 4 : -2);
+      const pk0 = V ? V[0] : 140 + (hx % 140), pg0 = V ? V[1] : (sportyX ? 4 + (hx >> 5) % 3 : 2), ra0 = V ? V[2] : (sportyX ? 2 + (hx >> 9) % 3 : -1);
+      // v2.5.2: every car leans towards one warm, rich exhaust voice — the character stays, the extremes are gone
+      const pkF = 190 + (pk0 - 190) * 0.55, pkG = 3 + (pg0 - 3) * 0.55, rasp = Math.min(3.2, 1 + (ra0 - 1) * 0.5);
       N.exPk = F('peaking', pkF, 2.2, pkG); N.exLo = F('lowshelf', 110, 0.7, clamp((num(this.car.engine?.disp, 1800) - 1500) / 600, -2, 5)); N.exHi = F('highshelf', 2600, 0.7, rasp); this._hi0 = rasp;
       N.exSum.connect(N.exPk); N.exPk.connect(N.exLo); N.exLo.connect(N.exHi);
-      if (sportyX && full) { const ws = ctx.createWaveShaper(), n = 512, c = new Float32Array(n), k = 1.5 + (hx >> 12) % 3; for (let i = 0; i < n; i++) { const x = i / (n - 1) * 2 - 1; c[i] = Math.tanh(k * x) / Math.tanh(k); } ws.curve = c; ws.oversample = '2x'; const wet = G(0.35), dry = G(0.75); N.exHi.connect(dry); N.exHi.connect(ws); ws.connect(wet); dry.connect(N.ext); wet.connect(N.ext); }
+      if (sportyX && full) { const ws = ctx.createWaveShaper(), n = 512, c = new Float32Array(n), k = 1.4 + ((hx >> 12) % 3) * 0.2; for (let i = 0; i < n; i++) { const x = i / (n - 1) * 2 - 1; c[i] = Math.tanh(k * x) / Math.tanh(k); } ws.curve = c; ws.oversample = '2x'; const wet = G(0.2), dry = G(0.85); N.exHi.connect(dry); N.exHi.connect(ws); ws.connect(wet); dry.connect(N.ext); wet.connect(N.ext); }
       else N.exHi.connect(N.ext);
     }
     N.inExt = G(0.45); N.inSum.connect(N.inExt); N.inExt.connect(N.ext);

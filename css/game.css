@@ -297,3 +297,60 @@ body.photo .online-pill,body.photo .chat{display:none}
 .radiopill button{border:0;background:rgba(255,255,255,.1);color:#fff;border-radius:999px;width:28px;height:26px;cursor:pointer;font-size:12px}
 .radiopill button:hover{background:rgba(255,179,71,.35)}
 @media (max-width:760px),(pointer:coarse){.radiopill{bottom:auto;top:calc(max(10px,env(safe-area-inset-top)) + 172px);max-width:60vw}}
+/* v2.5.2: phones / touch — nothing on top of anything: quick buttons in a row under the location block, the menu first;
+   the map top-right; toasts up top; the now-playing pill under the buttons */
+@media (pointer:coarse),(max-width:760px){
+  #minimap{width:158px;height:118px}
+  .hud-menu{left:max(12px,env(safe-area-inset-left));right:auto;top:calc(max(10px,env(safe-area-inset-top)) + 150px);width:40px;height:40px}
+  .garbtn,.mapbtn,.wxbtn,.autobtn{right:auto;top:calc(max(10px,env(safe-area-inset-top)) + 152px)}
+  .garbtn{left:calc(max(12px,env(safe-area-inset-left)) + 48px)}
+  .mapbtn{left:calc(max(12px,env(safe-area-inset-left)) + 96px)}
+  .wxbtn{left:calc(max(12px,env(safe-area-inset-left)) + 144px)}
+  .autobtn:not(.garbtn):not(.mapbtn):not(.wxbtn){left:calc(max(12px,env(safe-area-inset-left)) + 192px)}
+  .radiopill{left:max(12px,env(safe-area-inset-left));right:auto;top:calc(max(10px,env(safe-area-inset-top)) + 198px);bottom:auto;max-width:min(300px,62vw)}
+  .toasts{left:50%;right:auto;transform:translateX(-50%);top:calc(max(10px,env(safe-area-inset-top)) + 236px);bottom:auto;max-width:86vw}
+  #hud .tl .loc{max-width:calc(100vw - 190px);overflow:hidden;text-overflow:ellipsis}
+  .keyhint{display:none!important}
+}
+@media (pointer:coarse) and (max-height:480px){
+  .hud-menu,.garbtn,.mapbtn,.wxbtn,.autobtn{top:calc(max(8px,env(safe-area-inset-top)) + 96px)}
+  .radiopill{top:calc(max(8px,env(safe-area-inset-top)) + 140px)}
+  .toasts{top:calc(max(8px,env(safe-area-inset-top)) + 60px)}
+}
+@media (pointer:coarse),(max-width:760px){.online-pill{left:auto!important;right:calc(max(10px,env(safe-area-inset-right)) + 166px)!important;transform:none!important;top:max(10px,env(safe-area-inset-top))!important}#hud .tl .loc{max-width:calc(100vw - 260px)}}
+/* v2.5.2: labelled quick buttons */
+.autobtn .ic{font-size:14px;line-height:1}.autobtn .lb{font:700 11px system-ui;margin-left:5px;letter-spacing:0}
+.autobtn{display:inline-flex;align-items:center;white-space:nowrap}
+.mapbtn{right:calc(max(14px,env(safe-area-inset-right)) + 184px)}
+.garbtn{right:calc(max(14px,env(safe-area-inset-right)) + 266px)}
+.wxbtn{right:calc(max(14px,env(safe-area-inset-right)) + 94px)}
+.hud-menu{right:calc(max(14px,env(safe-area-inset-right)) + 360px)}
+@media (pointer:coarse),(max-width:760px){
+  .autobtn .lb{font-size:10px;margin-left:3px}
+  .hud-menu{left:max(12px,env(safe-area-inset-left));right:auto}
+  .garbtn{left:calc(max(12px,env(safe-area-inset-left)) + 48px)!important;right:auto!important}
+  .mapbtn{left:calc(max(12px,env(safe-area-inset-left)) + 128px)!important;right:auto!important}
+  .wxbtn{left:calc(max(12px,env(safe-area-inset-left)) + 200px)!important;right:auto!important}
+  .autobtn:not(.garbtn):not(.mapbtn):not(.wxbtn){left:calc(max(12px,env(safe-area-inset-left)) + 274px)!important;right:auto!important}
+  #minimap{width:min(46vw,210px);height:min(34vw,156px)}
+}
+@media (pointer:coarse),(max-width:760px){
+  #hud .tl .goaltrack,#hud .tl .money{display:none}
+  #hud .tl .loc{white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:calc(100vw - 236px)}
+  .hud-menu,.garbtn,.mapbtn,.wxbtn,.autobtn{top:calc(max(10px,env(safe-area-inset-top)) + 104px)!important}
+  .hud-menu{width:34px;height:34px}
+  .radiopill{top:calc(max(10px,env(safe-area-inset-top)) + 146px)!important}
+  .toasts{top:calc(max(10px,env(safe-area-inset-top)) + 190px)!important}
+}
+.radiopill .rp-fold{background:transparent!important;width:24px!important}.radiopill.folded .rp-t,.radiopill.folded button:not(.rp-fold){display:none}.radiopill.folded{padding:4px}
+@media (pointer:coarse),(max-width:760px){
+  #minimap{width:min(40vw,200px)!important;height:min(30vw,150px)!important}
+  .hud-menu,.garbtn,.mapbtn,.wxbtn,.autobtn{top:calc(max(10px,env(safe-area-inset-top)) + min(30vw,150px) + 18px)!important}
+  .radiopill{top:calc(max(10px,env(safe-area-inset-top)) + min(30vw,150px) + 60px)!important}
+  .toasts{top:calc(max(10px,env(safe-area-inset-top)) + min(30vw,150px) + 100px)!important}
+  .t-side{top:calc(max(10px,env(safe-area-inset-top)) + min(30vw,150px) + 60px)!important}
+}
+@media (pointer:coarse) and (max-height:480px){
+  .hud-menu,.garbtn,.mapbtn,.wxbtn,.autobtn{top:calc(max(8px,env(safe-area-inset-top)) + 8px)!important}
+  .garbtn{left:auto!important;right:calc(max(10px,env(safe-area-inset-right)) + min(40vw,200px) + 250px)!important}
+}

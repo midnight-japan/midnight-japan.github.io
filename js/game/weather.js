@@ -68,7 +68,7 @@ export class Weather {
     if (!this.wetMats || (this._ct = (this._ct || 0) - dt) <= 0) { this._ct = 10; this.collect(); }
     if (Math.abs((this._lw ?? -1) - this.wet) > 0.01) {
       this._lw = this.wet;
-      for (const { m, r, c, e } of this.wetMats) { m.roughness = r * (1 - 0.72 * this.wet); m.color.copy(c).multiplyScalar(1 - 0.32 * this.wet); m.envMapIntensity = e * (1 + 1.6 * this.wet); }
+      for (const { m, r, c, e } of this.wetMats) { m.roughness = r * (1 - 0.42 * this.wet); m.color.copy(c).multiplyScalar(1 - 0.2 * this.wet); m.envMapIntensity = e * (1 + 0.6 * this.wet); /* v2.5.2: damp, not a mirror */ }
     }
     this.g.world.wetGrip = 1 - 0.2 * this.wet;
     return { rain: this.rain, wet: this.wet, overcast: oc };

@@ -58,7 +58,7 @@ export class Nav {
   plan(p) {
     const v = this.g.vehicle, T = this.target;
     const onExpress = this.g.mode === 'drive' && v?.road && v.road.kind !== 'local' && v.onRoad;
-    this.route = onExpress ? this.planExpress(p, v) : this.planCity(p);
+    this.route = onExpress ? (this.planExpress(p, v) || this.planCity(p)) : this.planCity(p);
     if (this.route) this.route.push([T.x, T.z]);
   }
 
@@ -96,10 +96,14 @@ export class Nav {
     const h0 = v.surface?.hit; const r0 = v.road; if (!r0 || !h0) return null;
     const t0 = r0.dirAt(h0.s); const dirNow = (t0.x * Math.sin(v.yaw) + t0.z * Math.cos(v.yaw)) >= 0 ? 1 : -1;
     const start = id(r0, clampI(r0, idxAt(r0, h0.s))) + '|' + dirNow;
-    // goal: road samples closest to the target
-    let best = [], bd = 1e18;
-    for (const r of net.roads) for (let i = 0; i < r.samples.length; i += STEP) { const q = r.samples[i].p; const d = (q.x - T.x) ** 2 + (q.z - T.z) ** 2; if (d < bd - 1) { bd = d; best = [[r, i]]; } }
-    const goals = new Set(); for (const [r, i] of best) { goals.add(id(r, i) + '|1'); goals.add(id(r, i) + '|-1'); }
+    // goal (v2.5.2): every road sample within ~400 m of the closest one is a candidate, each costing the straight walk
+    // left to the target — a virtual sink picks the best reachable one (before: the single closest sample, often on
+    // the opposite carriageway or an unconnected road → "no route")
+    const cand = [];
+    for (const r of net.roads) for (let i = 0; i < r.samples.length; i += STEP) { const q = r.samples[i].p; cand.push([(q.x - T.x) ** 2 + (q.z - T.z) ** 2, r, i]); }
+    cand.sort((a, b) => a[0] - b[0]); const d0 = Math.sqrt(cand[0]?.[0] ?? 0), lim = (d0 + 400) ** 2;
+    const goalCost = new Map(); for (const [d2, r, i] of cand) { if (d2 > lim || goalCost.size > 1600) break; const c = Math.sqrt(d2) * 1.6; goalCost.set(id(r, i) + '|1', c); goalCost.set(id(r, i) + '|-1', c); }
+    const goals = new Set(['GOAL']);
     const nb = k => {
       const parts = k.split('|'); const dir = +parts.pop(); const kk = parts.join('|'); const [r, i] = parse(kk); const out = [];
       const S = r.samples, j = dir > 0 ? (Math.floor(i / STEP) + 1) * STEP : (Math.ceil(i / STEP) - 1) * STEP;
@@ -117,9 +121,12 @@ export class Nav {
       }
       return out;
     };
-    const Pd = k => { const parts = k.split('|'); parts.pop(); return P(parts.join('|')); };
-    const h = k => { const [x, z] = Pd(k); return Math.hypot(x - T.x, z - T.z); };
-    return astar(start, goals, nb, Pd, h, 80000);
+    const nbG = k => { if (k === 'GOAL') return []; const o = nb(k); const gc = goalCost.get(k); if (gc !== undefined) o.push(['GOAL', gc]); return o; };
+    const Pd = k => { if (k === 'GOAL') return [T.x, T.z]; const parts = k.split('|'); parts.pop(); return P(parts.join('|')); };
+    const h = k => { if (k === 'GOAL') return 0; const [x, z] = Pd(k); return Math.hypot(x - T.x, z - T.z) * 0.9; };
+    const path = astar(start, goals, nbG, Pd, h, 160000);
+    if (path) path.pop(); // the sink (the target is appended by plan())
+    return path;
   }
 
   // next-turn hint from the route: angle between the current heading and the route a bit ahead

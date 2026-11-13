@@ -109,7 +109,7 @@ export function flatClone(e) {
       const top = (() => { for (let q = o; q && q !== sc; q = q.parent) if (/^wheel_(fl|fr|rl|rr)$/.test(q.name)) return q; return null; })();
       if (top) { if (!keep.includes(top)) keep.push(top); return; }
       const ms = Array.isArray(o.material) ? o.material : [o.material];
-      if (Array.isArray(o.material) || o.isSkinnedMesh || o.isInstancedMesh || o.geometry.morphAttributes?.position || PLATE_RE.test(o.name) || PLATE_RE.test(ms[0]?.name || '')) { keep.push(o); return; }
+      if (Array.isArray(o.material) || o.isSkinnedMesh || o.isInstancedMesh || o.geometry.morphAttributes?.position || PLATE_RE.test(o.name) || PLATE_RE.test(ms[0]?.name || '') || plateShaped(o, inv, e.info.bbox[2], e.info.bbox[5])) { keep.push(o); return; }
       const gm = o.geometry, at = Object.keys(gm.attributes).sort().map(n => { const a = gm.attributes[n]; return n + a.itemSize; }).join(',');
       const k = o.material.uuid + '|' + at + '|' + (gm.index ? 'x' : '');
       if (!groups.has(k)) groups.set(k, { mat: o.material, list: [] });
@@ -172,6 +172,17 @@ function glowTex() {
 }
 const GLOW_MATS = {};
 function glowMat(hex) { return GLOW_MATS[hex] ||= new THREE.SpriteMaterial({ map: glowTex(), color: hex, blending: THREE.AdditiveBlending, depthWrite: false, transparent: true, fog: true }); }
+// v2.5.2: a model's own (foreign) plate whose name says nothing — a thin plate-sized panel on the centre line at either
+// end of the car (several models showed it under the Japanese plate)
+const _pb = new THREE.Box3(), _pc = new THREE.Vector3(), _ps = new THREE.Vector3();
+function plateShaped(o, inv, z0, z1) {
+  const g = o.geometry; if (!g?.attributes?.position || g.attributes.position.count > 3000) return false;
+  if (!g.boundingBox) g.computeBoundingBox();
+  _pb.copy(g.boundingBox).applyMatrix4(o.matrixWorld); if (inv) _pb.applyMatrix4(inv);
+  _pb.getCenter(_pc); _pb.getSize(_ps);
+  const L = Math.max(Math.abs(z0), Math.abs(z1));
+  return Math.abs(_pc.x) < 0.25 && _ps.x > 0.26 && _ps.x < 0.66 && _ps.y > 0.06 && _ps.y < 0.24 && _ps.z < 0.14 && Math.abs(_pc.z) > L * 0.75;
+}
 const isWheel = o => { for (let p = o; p; p = p.parent) if (/^wheel_(fl|fr|rl|rr)$/.test(p.name)) return true; return false; };
 const REAR_ENGINE = car => car.drive === 'MR' || car.drive === 'RR';
 
@@ -278,7 +289,7 @@ export function buildGlbCar(car, e, opts = {}) {
     const inv = bodyG.matrixWorld.clone().invert(), box = new THREE.Box3(), spots = { f: null, r: null };
     vis.traverse(o => {
       if (!o.isMesh) return; const ms = Array.isArray(o.material) ? o.material : [o.material];
-      if (!(/plate|licen|kennz|nummer|matric/i.test(o.name) || ms.some(m => /plate|licen|kennz|nummer|matric/i.test(m.name || ''))) || /top|rim/i.test(o.name)) return;
+      if (!(/plate|licen|kennz|nummer|matric/i.test(o.name) || ms.some(m => /plate|licen|kennz|nummer|matric/i.test(m.name || '')) || plateShaped(o, inv, bz0 + zoff, bz1 + zoff)) || /top|rim/i.test(o.name)) return;
       if (!o.geometry.boundingBox) o.geometry.computeBoundingBox();
       box.copy(o.geometry.boundingBox).applyMatrix4(o.matrixWorld).applyMatrix4(inv);
       o.visible = false; o.userData.plateHidden = true;
@@ -407,9 +418,9 @@ export function buildGlbCar(car, e, opts = {}) {
     for (const m of head) { m.emissive.setHex(0xfff4e0); m.emissiveIntensity = headOn ? (L.high ? 5 : 3.5) : 0; }
     for (const m of tail) { m.emissive.setHex(0xff1a10); m.emissiveIntensity = brake ? 4 : pos ? 1.4 : 0; }
     const lOn = (L.hazard || L.left) && blink, rOn = (L.hazard || L.right) && blink;
-    for (const s2 of glows.ind) { const on = s2.userData.side === 'L' ? lOn : rOn; s2.visible = on; if (on) s2.scale.setScalar(0.42); }
-    for (const s2 of glows.head) { s2.visible = headOn; if (headOn) s2.scale.setScalar(L.high ? 1.1 : 0.75); }
-    for (const s2 of glows.tail) { const on = brake || pos; s2.visible = on; if (on) { s2.scale.setScalar(brake ? 0.62 : 0.36); } }
+    for (const s2 of glows.ind) { const on = s2.userData.side === 'L' ? lOn : rOn; s2.visible = on; if (on) s2.scale.setScalar(0.3); }
+    for (const s2 of glows.head) { s2.visible = headOn; if (headOn) s2.scale.setScalar(L.high ? 0.68 : 0.46); }
+    for (const s2 of glows.tail) { const on = brake || pos; s2.visible = on; if (on) { s2.scale.setScalar(brake ? 0.42 : 0.26); } }
     cut?.update();
   };
   const dispose0 = model.dispose.bind(model);

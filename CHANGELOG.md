@@ -1,9 +1,10 @@
 # 📜 MIDNIGHT JAPAN 업데이트 기록 · Changelog
 
-현재 버전 · Current: **v2.5.1** · [▶ 웹에서 플레이](https://midnight-japan.github.io/) · [🌐 업데이트 페이지](https://midnight-japan.github.io/changelog.html)
+현재 버전 · Current: **v2.5.2** · [▶ 웹에서 플레이](https://midnight-japan.github.io/) · [🌐 업데이트 페이지](https://midnight-japan.github.io/changelog.html)
 
 | 버전 | 날짜 | 이름 | 요약 |
 |---|---|---|---|
+| [v2.5.2](#v252--every-phone-2026-11-14) | 2026-11-14 | Every Phone | 아이폰 사파리에서 게임이 시작되지 않던 치명적 버그 수정, 휴대폰 HUD 겹침 정리와 버튼 이름 표시, 중앙분리대 통과 금지, 내비 경로 탐색 개선, 번호판(꺾인·字光式) 묻힘 수정, 엔진음 통일감, 젖은 노면·라이트 빛 과함 완화. |
 | [v2.5.1](#v251--fast-start-2026-11-14) | 2026-11-14 | Fast Start | 로딩 대폭 단축(PC 48초 → 13초, 시작 전 데이터 96MB → 25MB), 휴대폰 전용 가벼운 텍스처, 디테일한 후지산, 수도고 전역에 큰 방면 안내판·정보판·속도 표지, 다이코쿠 PA 분수 광장·이륜차 주차장·흡연소(OSM 위치). |
 | [v2.5.0](#v250--night-cruise-2026-11-14) | 2026-11-14 | Night Cruise | 왼쪽 아래 큰 지도(실제 지도·내 위치·차종), 더 똑똑한 자동변속, 실제 램프 위치에서 나오는 깜빡이·브레이크·전조등, 바다에 빠지지 않게, ETC 안내 음성, 엔진 개성 강화, 그 자리에서 차고·튜닝, 라디오 다음 곡, 字光式·お辞儀 번호판. |
 | [v2.4.0](#v240--smooth-stance-2026-11-13) | 2026-11-13 | Smooth Stance | 렉·끊김 대폭 감소(주행 중 셰이더 재컴파일 제거), 차 파손은 옵션(기본 끔), 더 간단한 설정 화면, 스탠스 프리셋 9종과 차종별 기본 세팅, 실제 3D 도쿄 타워. |
@@ -41,6 +42,30 @@
 | [v0.2.0](#v020--bayshore-2026-11-05) | 2026-11-05 | Bayshore | 수도고속 완간선을 따라 하네다까지, 도쿄만 아쿠아라인 해저터널을 지나 우미호타루 PA까지. 실제 3D 차량 모델과 열리는 보닛도 들어왔어요. |
 | [v0.1.1](#v011--one-click-2026-11-04) | 2026-11-04 | One Click | 링크 하나로 바로 플레이. 크롬에서 공식 사이트 주소만 열면 설치 없이 실행돼요. |
 | [v0.1.0](#v010--first-meet-2026-11-04) | 2026-11-04 | First Meet | 첫 공개 버전. 다이코쿠 JCT·PA와 다이코쿠 부두 일대를 3D로 구현했습니다. |
+
+---
+
+## v2.5.2 — Every Phone (2026-11-14)
+
+> 아이폰 사파리에서 게임이 시작되지 않던 치명적 버그 수정, 휴대폰 HUD 겹침 정리와 버튼 이름 표시, 중앙분리대 통과 금지, 내비 경로 탐색 개선, 번호판(꺾인·字光式) 묻힘 수정, 엔진음 통일감, 젖은 노면·라이트 빛 과함 완화.
+> Fixed a critical bug that stopped the game starting in iPhone Safari, a phone HUD with nothing overlapping and labelled buttons, no driving through the central reservation, better navigation routing, plates (bowed / illuminated) no longer buried, a more coherent engine sound, and calmer wet roads and lamp glows.
+
+**✨ 추가 · New**
+
+- 라디오 줄 접기(📻 버튼), 접은 상태 기억<br><sub>The radio bar folds away (📻) and remembers it</sub>
+
+**🔧 변경 · Changed**
+
+- 휴대폰 HUD: 위치 이름 한 줄, 큰 미니맵 오른쪽 위, 그 아래 버튼 줄(☰·차고·지도·날씨·자동 — 아이콘과 이름), 라디오 줄과 알림이 버튼·조작부와 겹치지 않게; PC도 버튼에 이름 표시<br><sub>Phone HUD: a one-line place name, a bigger minimap top-right with a labelled button row under it (☰, garage, map, weather, auto), radio and toasts clear of the buttons and touch controls; buttons are labelled on PC too</sub>
+- 엔진음: 차마다 너무 달랐던 공명·거친 소리 폭을 줄여 따뜻하고 풍성한 배기음 쪽으로(엔진별 개성은 유지)<br><sub>Engine sound: the per-car spread of resonance and rasp is narrowed towards one warm, rich exhaust voice (each engine keeps its character)</sub>
+- 빛·반사 완화: 비에 젖은 노면이 거울처럼 번들거리던 것을 촉촉한 정도로, 램프 빛 번짐 크기 축소<br><sub>Calmer light: wet roads are damp rather than mirror-like, and lamp glows are smaller</sub>
+
+**🐞 수정 · Fixed**
+
+- 아이폰 사파리(및 iOS의 모든 브라우저)에서 주행이 시작되지 않던 문제: 큰 배열을 한 번에 넘기는 코드가 사파리의 인자 개수 제한을 넘어 오류 — 수정 후 사파리 엔진(WebKit)·안드로이드 크롬·삼성 인터넷 환경에서 주행 시작 확인<br><sub>iPhone Safari (and every iOS browser) could not start a drive: code passing a huge array in one call exceeded Safari's argument limit — fixed, and checked on the Safari engine (WebKit), Android Chrome and Samsung Internet profiles</sub>
+- 중앙분리대: 같은 도로의 반대 차로로 뚫고 넘어가지 못함(차체가 분리대에 닿는 위치에서 벽처럼 멈춤)<br><sub>Central reservation: no more driving through to the opposite carriageway — it stops you like a wall where the body meets it</sub>
+- 내비: 목적지 가장 가까운 한 지점만 노리다 "경로 없음"이 되던 문제 → 주변 400m 안의 도로 후보 중 남은 거리까지 계산해 최적 선택, 고속도로 경로가 없으면 시내 도로로; 전체 지도의 현재 위치 카드에 지금 있는 곳(플레이 언어 + 일본어)<br><sub>Navigation: aiming at the single closest road point often gave "no route" — it now weighs every road within 400 m including the distance left, and falls back to city streets; the full map's "you are here" card names the place (your language + Japanese)</sub>
+- 번호판: お辞儀(꺾인) 번호판이 범퍼에 반쯤 묻히고 뒤쪽은 반대로 꺾이던 문제 → 아래 끝을 축으로 위가 밖으로 숙여지게, 이름 없는 원래 외국 번호판도 모양으로 찾아 숨김<br><sub>Plates: the bowed plate sank half into the bumper and leaned the wrong way at the rear — it now hinges at its bottom edge with the top out; unnamed foreign plates on the models are found by their shape and hidden</sub>
 
 ---
 

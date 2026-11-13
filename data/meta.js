@@ -1,8 +1,22 @@
 // Shared game metadata: version, changelog, regions. Update VERSION + CHANGELOG on every release.
-export const GAME = { title: 'MIDNIGHT JAPAN', titleJa: 'ミッドナイト・ジャパン', version: '2.5.1', build: '2026.11.14' };
+export const GAME = { title: 'MIDNIGHT JAPAN', titleJa: 'ミッドナイト・ジャパン', version: '2.5.2', build: '2026.11.14' };
 
 // Newest first. type: new | change | fix | known
 export const CHANGELOG = [
+  {
+    version: '2.5.2', date: '2026-11-14', codename: 'Every Phone',
+    summary: { ko: '아이폰 사파리에서 게임이 시작되지 않던 치명적 버그 수정, 휴대폰 HUD 겹침 정리와 버튼 이름 표시, 중앙분리대 통과 금지, 내비 경로 탐색 개선, 번호판(꺾인·字光式) 묻힘 수정, 엔진음 통일감, 젖은 노면·라이트 빛 과함 완화.', ja: 'iPhoneのSafariでゲームが始まらなかった致命的なバグを修正、スマホHUDの重なりを整理しボタンに名前、中央分離帯をすり抜けない、ナビのルート探索を改善、ナンバー（お辞儀・字光式）の埋もれを修正、エンジン音に統一感、濡れた路面とライトの光りすぎを抑制。', en: 'Fixed a critical bug that stopped the game starting in iPhone Safari, a phone HUD with nothing overlapping and labelled buttons, no driving through the central reservation, better navigation routing, plates (bowed / illuminated) no longer buried, a more coherent engine sound, and calmer wet roads and lamp glows.' },
+    items: [
+      { type: 'fix', ko: '아이폰 사파리(및 iOS의 모든 브라우저)에서 주행이 시작되지 않던 문제: 큰 배열을 한 번에 넘기는 코드가 사파리의 인자 개수 제한을 넘어 오류 — 수정 후 사파리 엔진(WebKit)·안드로이드 크롬·삼성 인터넷 환경에서 주행 시작 확인', ja: 'iPhoneのSafari（とiOSのすべてのブラウザ）で走り出せなかった問題：大きな配列を一度に渡すコードがSafariの引数の上限を超えてエラー——修正後、Safariエンジン（WebKit）・Android Chrome・Samsung Internetの環境で走行開始を確認', en: 'iPhone Safari (and every iOS browser) could not start a drive: code passing a huge array in one call exceeded Safari\'s argument limit — fixed, and checked on the Safari engine (WebKit), Android Chrome and Samsung Internet profiles' },
+      { type: 'change', ko: '휴대폰 HUD: 위치 이름 한 줄, 큰 미니맵 오른쪽 위, 그 아래 버튼 줄(☰·차고·지도·날씨·자동 — 아이콘과 이름), 라디오 줄과 알림이 버튼·조작부와 겹치지 않게; PC도 버튼에 이름 표시', ja: 'スマホのHUD：地名は1行、大きなミニマップを右上、その下にボタンの列（☰・ガレージ・地図・天気・自動——アイコンと名前）、ラジオと通知がボタンや操作部と重ならないように；PCもボタンに名前', en: 'Phone HUD: a one-line place name, a bigger minimap top-right with a labelled button row under it (☰, garage, map, weather, auto), radio and toasts clear of the buttons and touch controls; buttons are labelled on PC too' },
+      { type: 'fix', ko: '중앙분리대: 같은 도로의 반대 차로로 뚫고 넘어가지 못함(차체가 분리대에 닿는 위치에서 벽처럼 멈춤)', ja: '中央分離帯：同じ道路の対向車線へすり抜けられない（車体が分離帯に触れる位置で壁のように止まる）', en: 'Central reservation: no more driving through to the opposite carriageway — it stops you like a wall where the body meets it' },
+      { type: 'fix', ko: '내비: 목적지 가장 가까운 한 지점만 노리다 "경로 없음"이 되던 문제 → 주변 400m 안의 도로 후보 중 남은 거리까지 계산해 최적 선택, 고속도로 경로가 없으면 시내 도로로; 전체 지도의 현재 위치 카드에 지금 있는 곳(플레이 언어 + 일본어)', ja: 'ナビ：目的地に一番近い1点だけを狙って「ルートなし」になっていた問題→周辺400m内の道路候補から残りの距離も含めて最適を選択、高速のルートがなければ一般道で；全体地図の現在地カードに今いる場所（プレイ言語＋日本語）', en: 'Navigation: aiming at the single closest road point often gave "no route" — it now weighs every road within 400 m including the distance left, and falls back to city streets; the full map\'s "you are here" card names the place (your language + Japanese)' },
+      { type: 'fix', ko: '번호판: お辞儀(꺾인) 번호판이 범퍼에 반쯤 묻히고 뒤쪽은 반대로 꺾이던 문제 → 아래 끝을 축으로 위가 밖으로 숙여지게, 이름 없는 원래 외국 번호판도 모양으로 찾아 숨김', ja: 'ナンバー：お辞儀ナンバーがバンパーに半分埋まり、リアは逆に曲がっていた問題→下端を軸に上が外へ傾くように、名前のない元の外国ナンバーも形で見つけて非表示', en: 'Plates: the bowed plate sank half into the bumper and leaned the wrong way at the rear — it now hinges at its bottom edge with the top out; unnamed foreign plates on the models are found by their shape and hidden' },
+      { type: 'change', ko: '엔진음: 차마다 너무 달랐던 공명·거친 소리 폭을 줄여 따뜻하고 풍성한 배기음 쪽으로(엔진별 개성은 유지)', ja: 'エンジン音：車ごとに違いすぎた共鳴とざらつきの幅を抑え、温かく厚みのある排気音へ（エンジンごとの個性は維持）', en: 'Engine sound: the per-car spread of resonance and rasp is narrowed towards one warm, rich exhaust voice (each engine keeps its character)' },
+      { type: 'change', ko: '빛·반사 완화: 비에 젖은 노면이 거울처럼 번들거리던 것을 촉촉한 정도로, 램프 빛 번짐 크기 축소', ja: '光と反射を控えめに：雨に濡れた路面が鏡のようにギラついていたのをしっとり程度に、ランプの光のにじみを縮小', en: 'Calmer light: wet roads are damp rather than mirror-like, and lamp glows are smaller' },
+      { type: 'new', ko: '라디오 줄 접기(📻 버튼), 접은 상태 기억', ja: 'ラジオの列を折りたたみ（📻ボタン）、状態を記憶', en: 'The radio bar folds away (📻) and remembers it' },
+    ]
+  },
   {
     version: '2.5.1', date: '2026-11-14', codename: 'Fast Start',
     summary: { ko: '로딩 대폭 단축(PC 48초 → 13초, 시작 전 데이터 96MB → 25MB), 휴대폰 전용 가벼운 텍스처, 디테일한 후지산, 수도고 전역에 큰 방면 안내판·정보판·속도 표지, 다이코쿠 PA 분수 광장·이륜차 주차장·흡연소(OSM 위치).', ja: 'ロードを大幅短縮（PCで48秒→13秒、開始前のデータ96MB→25MB）、スマホ向けの軽いテクスチャ、ディテールのある富士山、首都高全域に大きな方面案内・情報板・速度標識、大黒PAに噴水広場・二輪車駐車場・喫煙所（OSMの位置）。', en: 'Much faster loading (48 s → 13 s on PC, 96 MB → 25 MB before you drive), lighter textures for phones, a detailed Mt Fuji, big direction signs / message boards / speed limits along every expressway, and Daikoku PA\'s fountain plaza, motorcycle bay and smoking corner at their OpenStreetMap positions.' },

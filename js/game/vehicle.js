@@ -586,6 +586,19 @@ export class Vehicle {
         if (n) { this.pos.x = n.x; this.pos.z = n.z; this.vel.x = this.vel.z = 0; (this._okPos ||= { x: 0, z: 0 }); this._okPos.x = n.x; this._okPos.z = n.z; }
       }
     }
+    // v2.5.2: the central reservation (中央分離帯) of a dual carriageway is a wall — no driving through it to the other side
+    {
+      const hit = this.surface?.hit, r = hit?.road;
+      if (r && r.median > 0 && hit.inside !== false && Math.abs(hit.lat) < r.median / 2 + 6) {
+        const side = hit.lat > 0 ? 1 : -1, half = this.car.W / 2000 + 0.35;
+        if (this._medRoad === r && this._medSide && this._medSide * hit.lat < half && Math.abs(this.pos.y - (this._medY ?? this.pos.y)) < 3) {
+          const t = r.dirAt(hit.s), lx = t.z, lz = -t.x, want = this._medSide * half;
+          this.pos.x += lx * (want - hit.lat); this.pos.z += lz * (want - hit.lat);
+          const nx = lx * this._medSide, nz = lz * this._medSide, vn = this.vel.x * nx + this.vel.z * nz;
+          if (vn < 0) { this.wallHit(nx, nz, -vn); if (vn < -3) this.events.push('crash'); }
+        } else if (side * hit.lat >= half || this._medRoad !== r) { this._medSide = side; this._medRoad = r; this._medY = this.pos.y; }
+      } else if (!r || r !== this._medRoad) { this._medRoad = r || null; this._medSide = 0; }
+    }
     // static colliders (3 circles along the car)
     const rad = this.car.W / 2000 * 0.95, halfL = this.car.L / 2000;
     for (const off of [-halfL + rad, 0, halfL - rad]) {
