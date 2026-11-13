@@ -233,6 +233,7 @@ export class UI {
       case 'mapClose': this.toggleMap(false); break;
       case 'mapNav': if (this.mapSel) { g.nav.set(this.mapSel.x, this.mapSel.z); this.toggleMap(false); this.toast(t('game.nav.set'), 'info', 3); } break;
       case 'mapTp': if (this.mapSel) { this.toggleMap(false); g.teleport(this.mapSel.x, this.mapSel.z); } break;
+      case 'mapTp0': case 'mapTp1': { const o = this.mapSel?.opts?.[a === 'mapTp1' ? 1 : 0]; if (o) { this.toggleMap(false); g.teleport(this.mapSel.x, this.mapSel.z, o); } break; }
       case 'navClear': g.nav.clear(); break;
       case 'mapIn': this.mapZoom(1.6); break;
       case 'mapOut': this.mapZoom(1 / 1.6); break;
@@ -485,6 +486,18 @@ export class UI {
     el.hidden = false; el.classList.remove('fade'); clearTimeout(this._khT); this._khT = setTimeout(() => el.classList.add('fade'), 12000); setTimeout(() => { if (el.classList.contains('fade')) el.hidden = true; }, 13500);
   }
   setAuto(on) { document.getElementById('autobtn')?.classList.toggle('on', !!on); }
+  // v2.5.4: the picked point — its name large (play language + Japanese), and one button per direction of travel
+  showMapSel(x, z) {
+    const g = this.g, box = $('#mapsel'); box.hidden = false;
+    const ja = g.world.zoneAt(x, z, 0) || '', rd = reading(ja.split(' · ')[0]) || '';
+    const L3 = (ko, jaT, en) => ({ ko, ja: jaT, en })[getLang()] || en;
+    const DIRS = { ko: ['북', '북동', '동', '남동', '남', '남서', '서', '북서'], ja: ['北', '北東', '東', '南東', '南', '南西', '西', '北西'], en: ['N', 'NE', 'E', 'SE', 'S', 'SW', 'W', 'NW'] };
+    const comp = yaw => { const a = (Math.atan2(Math.sin(yaw), -Math.cos(yaw)) * 180 / Math.PI + 360) % 360; return (DIRS[getLang()] || DIRS.en)[Math.round(a / 45) % 8]; }; // +x east, +z south
+    const opts = g.tpOptions(x, z); this.mapSel.opts = opts;
+    const main = rd && getLang() !== 'ja' ? rd : ja.split(' · ')[0]; box.innerHTML = `<div class="ms-name"><b>${esc(main)}</b>${ja && ja !== main ? `<small>${esc(ja)}</small>` : ''}</div>` +
+      `<button class="btn sm primary" data-a="mapNav">${esc(t('game.map.route'))}</button>` +
+      (opts.length ? opts.map((o, i) => `<button class="btn sm" data-a="mapTp${i}">➜ ${esc(comp(o.yaw))}${esc(L3('쪽으로 출발', '方面へ', ' bound'))}<small>${esc(o.name)}</small></button>`).join('') : `<button class="btn sm" data-a="mapTp">${esc(t('game.map.tp'))}</button>`);
+  }
   toggleMap(force) {
     this.mapOpen = force ?? !this.mapOpen; $('#map').classList.toggle('show', this.mapOpen);
     if (!this.mapOpen) return;
@@ -506,10 +519,11 @@ export class UI {
     cv.addEventListener('pointerup', e => {
       pts.delete(e.pointerId); pinch = 0;
       // a tap (no drag) picks a point: route there or teleport
-      if (down && Math.hypot(e.clientX - down[0], e.clientY - down[1]) < 6) { const r = cv.getBoundingClientRect(), d = cv.width / r.width; const x = this.mv.x + ((e.clientX - r.left) * d - cv.width / 2) / this.mv.k, z = this.mv.z + ((e.clientY - r.top) * d - cv.height / 2) / this.mv.k; this.mapSel = { x, z }; const box = $('#mapsel'); box.hidden = false; box.querySelector('.ms-t').textContent = this.g.world.zoneAt(x, z, 0) || ''; this.drawBigMap(); }
+      if (down && Math.hypot(e.clientX - down[0], e.clientY - down[1]) < 6) { const r = cv.getBoundingClientRect(), d = cv.width / r.width; const x = this.mv.x + ((e.clientX - r.left) * d - cv.width / 2) / this.mv.k, z = this.mv.z + ((e.clientY - r.top) * d - cv.height / 2) / this.mv.k; this.mapSel = { x, z }; this.showMapSel(x, z); this.drawBigMap(); }
       down = null;
     });
     cv.addEventListener('pointercancel', e => { pts.delete(e.pointerId); pinch = 0; });
+    cv.addEventListener('pointermove', e => { if (e.pointerType !== 'mouse' || pts.size) return; const r = cv.getBoundingClientRect(), d = cv.width / r.width; this._mapHover = { x: this.mv.x + ((e.clientX - r.left) * d - cv.width / 2) / this.mv.k, z: this.mv.z + ((e.clientY - r.top) * d - cv.height / 2) / this.mv.k }; clearTimeout(this._hovT); this._hovT = setTimeout(() => this.drawBigMap(), 30); });
     cv.addEventListener('pointermove', e => {
       const prev = pts.get(e.pointerId); if (!prev) return; const r = cv.getBoundingClientRect(), d = cv.width / r.width;
       pts.set(e.pointerId, [e.clientX, e.clientY]);
@@ -811,7 +825,11 @@ export class UI {
       if (k < need) continue;
       lab(pl.kind === 'jct' ? '⬡ ' + pl.name : pl.name, pl.x, pl.z, pl.kind === 'ward' ? 14 : 11, pl.kind === 'water' ? '#8fc8ff' : pl.kind === 'jct' ? '#b6f5cf' : pl.kind === 'ward' ? '#ffffff' : '#c9d2de');
     }
-    for (const l of MAP.landmarks || []) lab('◆ ' + l.name, l.x, l.z, 12, '#ffd38a');
+    // landmarks: bigger than street names; the one by the picked point (or under the cursor) grows and gets a ring
+    const sel = this.mapSel, hov = this._mapHover;
+    for (const l of MAP.landmarks || []) { const near = (sel && Math.hypot(sel.x - l.x, sel.z - l.z) < 600 / Math.max(0.2, k)) || (hov && Math.hypot(hov.x - l.x, hov.z - l.z) < 40 / k);
+      if (near) { const [a, b] = P(l.x, l.z); c.beginPath(); c.arc(a, b, 16 * dpr, 0, 7); c.strokeStyle = '#ffd38a'; c.lineWidth = 2.5 * dpr; c.stroke(); }
+      lab('◆ ' + l.name, l.x, l.z, near ? 21 : 14, near ? '#fff2c8' : '#ffd38a'); }
     lab('大黒PA', (PA_RECT.x0 + PA_RECT.x1) / 2, (PA_RECT.z0 + PA_RECT.z1) / 2, 15, '#ffb347');
     // player
     const p = this.mapPos(); if (p) { const [a, b] = P(p.x, p.z); const yaw = this.g.mode === 'walk' ? this.g.player.yaw : this.g.vehicle.yaw; const pr = (performance.now() / 900) % 1; c.beginPath(); c.arc(a, b, (14 + pr * 26) * dpr, 0, 7); c.strokeStyle = `rgba(255,179,71,${1 - pr})`; c.lineWidth = 3 * dpr; c.stroke(); c.beginPath(); c.arc(a, b, 13 * dpr, 0, 7); c.fillStyle = 'rgba(255,179,71,.25)'; c.fill(); c.save(); c.translate(a, b); c.rotate(-yaw + Math.PI); c.fillStyle = '#ffb347'; c.strokeStyle = '#000'; c.lineWidth = 2.5 * dpr; c.beginPath(); c.moveTo(0, -16 * dpr); c.lineTo(12 * dpr, 13 * dpr); c.lineTo(0, 6 * dpr); c.lineTo(-12 * dpr, 13 * dpr); c.closePath(); c.fill(); c.stroke(); c.restore(); c.font = `800 ${13 * dpr}px system-ui,sans-serif`; c.textAlign = 'center'; c.fillStyle = '#fff'; c.strokeStyle = 'rgba(0,0,0,.8)'; c.lineWidth = 4 * dpr; { // v2.5.2: "you are here" card — the place in the play language, with the Japanese name under it

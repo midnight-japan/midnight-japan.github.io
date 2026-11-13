@@ -592,7 +592,28 @@ class Game {
   }
   // teleport (full map): onto the nearest expressway lane when one is close, otherwise onto the city street nearest
   // the point once its tiles have streamed in (the car waits on the spot with the handbrake on until then)
-  teleport(x, z) {
+  // v2.5.4: the ways you could set off from a map point — the nearest carriageway(s) within 70 m, each direction of
+  // travel once: [{ road, s, lane, yaw, name }]
+  tpOptions(x, z) {
+    const cands = [];
+    for (const r of this.net.roads) { let b = null; for (let i = 0; i < r.samples.length; i += 2) { const q = r.samples[i]; const d = (q.p.x - x) ** 2 + (q.p.z - z) ** 2; if (!b || d < b.d) b = { d, s: q.s }; } if (b && b.d < 70 * 70) cands.push({ r, ...b }); }
+    cands.sort((a, b) => a.d - b.d);
+    const out = [];
+    for (const c of cands) for (const dir of [1, -1]) {
+      const lanes = c.r.lanes.filter(l => l.dir === dir); if (!lanes.length) continue;
+      const L = lanes.sort((a, b) => b.lat * dir - a.lat * dir)[0], t = c.r.dirAt(c.s), yaw = Math.atan2(t.x * dir, t.z * dir);
+      if (out.some(o => Math.cos(o.yaw - yaw) > 0.5)) continue;
+      out.push({ road: c.r, s: c.s, lane: L, yaw, name: c.r.name || '' }); if (out.length >= 2) return out;
+    }
+    return out;
+  }
+  teleport(x, z, opt = null) {
+    if (opt) { // a chosen carriageway + direction
+      if (this.mode === 'walk') this.enterCar(); const v = this.vehicle; if (!v) return;
+      if (this.mySpot) { this.mySpot.taken = false; this.mySpot = null; }
+      const p = opt.road.at(opt.s, opt.lane.lat); v.place(p.clone().setY(p.y + 0.3), opt.yaw); this._safe = null;
+      v.handbrakeOn = true; this.camSnap = true; this.ui.toast(t('game.map.tpDone'), 'info', 2); this.awaitCity(); return;
+    }
     if (!this.world.isLand(x, z) && !this.net.hits(x, z).some(h => h.inside)) {
       let best = null; for (const r of this.net.roads) for (const q of r.samples) { const d = (q.p.x - x) ** 2 + (q.p.z - z) ** 2; if (!best || d < best.d) best = { d, q }; }
       if (!best || best.d > 400 * 400) { this.ui.toast(t('game.map.tpSea'), 'warn', 3); return; }

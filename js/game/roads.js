@@ -194,15 +194,15 @@ function landHangingRamps(defs) {
   });
 }
 function fixFlatRamps(defs) {
-  const dyNear = (self, x, z, y) => { let b = null; for (const o of defs) { if (o === self) continue; for (const q of o.pts) { if (Math.hypot(q[0] - x, q[2] - z) > 12) continue; const dy = q[1] - y; if (b === null || Math.abs(dy) < Math.abs(b)) b = dy; } } return b ?? 0; };
+  const dyNear = (self, x, z, y) => { let b = null; for (const o of defs) { if (o === self || o.kind === 'local') continue; for (const q of o.pts) { if (Math.hypot(q[0] - x, q[2] - z) > 12) continue; const dy = q[1] - y; if (b === null || Math.abs(dy) < Math.abs(b)) b = dy; } } return b ?? 0; };
   const sm = t => t * t * (3 - 2 * t), BL = 260;
   return defs.map(d => {
     if (d.kind !== 'ramp') return d;
     const a = d.pts[0], e = d.pts[d.pts.length - 1];
     const o0 = dyNear(d, a[0], a[2], a[1]), o1 = dyNear(d, e[0], e[2], e[1]);
-    if (Math.abs(o0) < 4 && Math.abs(o1) < 4) return d;
+    if (Math.abs(o0) < 1.2 && Math.abs(o1) < 1.2) return d; // v2.5.4: was 4 m — a 2.6–4 m step (湾岸線→大黒 at Daikoku JCT) went unfixed
     let L = 0; const acc = d.pts.map((p, i) => (L += i ? Math.hypot(p[0] - d.pts[i - 1][0], p[2] - d.pts[i - 1][2]) : 0));
-    return { ...d, pts: d.pts.map((p, i) => [p[0], p[1] + (Math.abs(o0) >= 4 ? o0 * (1 - sm(Math.min(1, acc[i] / BL))) : 0) + (Math.abs(o1) >= 4 ? o1 * (1 - sm(Math.min(1, (L - acc[i]) / BL))) : 0), p[2]]) };
+    return { ...d, pts: d.pts.map((p, i) => [p[0], p[1] + (Math.abs(o0) >= 1.2 ? o0 * (1 - sm(Math.min(1, acc[i] / BL))) : 0) + (Math.abs(o1) >= 1.2 ? o1 * (1 - sm(Math.min(1, (L - acc[i]) / BL))) : 0), p[2]]) };
   });
 }
 
@@ -244,6 +244,52 @@ function joinLocalEnds(defs) {
 // v2.5.3 — Yokohama Bay Bridge, west end: westbound Bayshore traffic ran off the end of the deck at 14 m while K3
 // westbound began 9 m lower, 50 m away under the bridge. K3 westbound now starts ON the bridge in the westbound lanes
 // (same height) and swings onto its own alignment ~230 m later; the stub under the deck is dropped.
+// v2.5.4 — a road that ends exactly where the next one starts but at another height (K1 northbound at Namamugi:
+// 19.6 m → 14 m, a 5.6 m cliff): the arriving road's last 250 m are eased to the next road's height
+function joinSteppedEnds(defs) {
+  const sm = t => t * t * (3 - 2 * t);
+  const cum = d => { let L = 0; return d.pts.map((p, i) => (L += i ? Math.hypot(p[0] - d.pts[i - 1][0], p[2] - d.pts[i - 1][2]) : 0)); };
+  for (const d of defs) {
+    if (d.kind !== 'expressway') continue; // expressway → expressway only (ramps have their own height fixes)
+    const E = d.pts[d.pts.length - 1];
+    for (const o of defs) {
+      if (o === d || o.kind !== 'expressway') continue; let S = o.pts[0];
+      if (Math.hypot(S[0] - E[0], S[2] - E[2]) > 4 && o.lanesB > 0) S = o.pts[o.pts.length - 1]; // a two-way road's far end (b_sb → Bayshore at Haneda)
+      if (Math.hypot(S[0] - E[0], S[2] - E[2]) > 14) continue;
+      const dy = S[1] - E[1]; if (Math.abs(dy) < 0.4 || Math.abs(dy) > 12) continue;
+      const acc = cum(d), L = acc[acc.length - 1], B = Math.min(250, L * 0.6);
+      d.pts = d.pts.map((p, i) => [p[0], p[1] + dy * sm(Math.max(0, 1 - (L - acc[i]) / B)), p[2]]);
+      break;
+    }
+  }
+  return defs;
+}
+// v2.5.4 — ramps whose OSM height left them in the air at their street end: run them down to the ground
+// v2.5.4 — a ramp end sitting a few metres under/over the expressway it leaves or joins (centre line up to 25 m away)
+function snapRampEnds(defs) {
+  const sm = t => t * t * (3 - 2 * t);
+  return defs.map(d => {
+    if (d.kind !== 'ramp' || d.pts.length < 3) return d;
+    let L = 0; const acc = d.pts.map((p, i) => (L += i ? Math.hypot(p[0] - d.pts[i - 1][0], p[2] - d.pts[i - 1][2]) : 0));
+    const off = [0, 0];
+    for (const end of [0, 1]) { const P = end ? d.pts[d.pts.length - 1] : d.pts[0]; let best = null;
+      for (const o of defs) { if (o === d || o.kind !== 'expressway') continue; for (let k = 0; k < o.pts.length - 1; k++) { const a = o.pts[k], b = o.pts[k + 1], dx = b[0] - a[0], dz = b[2] - a[2], L2 = dx * dx + dz * dz || 1e-9, t = Math.max(0, Math.min(1, ((P[0] - a[0]) * dx + (P[2] - a[2]) * dz) / L2)); const h = Math.hypot(a[0] + dx * t - P[0], a[2] + dz * t - P[2]); if (h > 25) continue; const dy = a[1] + (b[1] - a[1]) * t - P[1]; if (best === null || Math.abs(dy) < Math.abs(best)) best = dy; } }
+      if (best !== null && Math.abs(best) >= 1.2 && Math.abs(best) <= 8) off[end] = best; }
+    if (!off[0] && !off[1]) return d;
+    const B = Math.min(220, L * 0.45);
+    return { ...d, pts: d.pts.map((p, i) => [p[0], p[1] + off[0] * (1 - sm(Math.min(1, acc[i] / B))) + off[1] * (1 - sm(Math.min(1, (L - acc[i]) / B))), p[2]]) };
+  });
+}
+function landNamed(defs) {
+  const sm = t => t * t * (3 - 2 * t), LAND = { e_tsurumi: 'start', x_shibaura: 'end' };
+  return defs.map(d => {
+    const w = LAND[d.id]; if (!w) return d;
+    let L = 0; const acc = d.pts.map((p, i) => (L += i ? Math.hypot(p[0] - d.pts[i - 1][0], p[2] - d.pts[i - 1][2]) : 0));
+    const B = Math.min(240, L * 0.62);
+    const pts = d.pts.map((p, i) => { const u = w === 'start' ? acc[i] / B : (L - acc[i]) / B; const k = sm(Math.min(1, Math.max(0, u))); return [p[0], 0.05 + (p[1] - 0.05) * k, p[2]]; });
+    return { ...d, pts, landed: true };
+  });
+}
 function joinBayBridgeK3(defs) {
   const B = defs.find(d => d.id === 'bayshore'), K = defs.find(d => d.id === 'k3_wb'); if (!B || !K || K._joined) return defs;
   const p0 = B.pts[0]; let j = 1; while (j < B.pts.length - 1 && Math.hypot(B.pts[j][0] - p0[0], B.pts[j][2] - p0[2]) < 25) j++;
@@ -263,8 +309,16 @@ export class RoadNet {
   constructor(defs = ROAD_DEFS) {
     // drop degenerate polylines from the OSM import (zero-length ways would put signs/lamps on one point of another road)
     const plen = d => d.pts.reduce((a, q, i) => i ? a + Math.hypot(q[0] - d.pts[i - 1][0], q[2] - d.pts[i - 1][2]) : 0, 0);
-    this.roads = landHangingRamps(fixFlatRamps(joinLocalEnds(joinBayBridgeK3(defs.filter(d => d.pts?.length > 1 && plen(d) > 8))))).map((d, i) => new Road(d, i));
+    this.roads = landHangingRamps(landNamed(snapRampEnds(fixFlatRamps(joinLocalEnds(joinSteppedEnds(joinBayBridgeK3(defs.filter(d => d.pts?.length > 1 && plen(d) > 8)))))))).map((d, i) => new Road(d, i));
     this.byId = Object.fromEntries(this.roads.map(r => [r.id, r]));
+    // v2.5.4: after smoothing, a ramp end can sit a few metres off the deck it leaves / joins (湾岸線→大黒 started 2.7 m
+    // under the Bayshore at Daikoku JCT): ease the ramp's end samples onto that deck
+    { const sm = t => t * t * (3 - 2 * t);
+      for (const r of this.roads) { if (r.kind !== 'ramp' || r.samples.length < 4) continue; const S = r.samples, L = S[S.length - 1].s;
+        for (const end of [0, 1]) { const P = (end ? S[S.length - 1] : S[0]).p; let best = null;
+          for (const o of this.roads) { if (o === r || o.kind !== 'expressway') continue; const hw = (o.edgeL - o.edgeR) / 2 + 2; for (let i = 0; i < o.samples.length; i += 2) { const q = o.samples[i].p, h = Math.hypot(q.x - P.x, q.z - P.z); if (h > hw) continue; const dy = q.y - P.y; if (best === null || Math.abs(dy) < Math.abs(best)) best = dy; } }
+          if (best === null || Math.abs(best) < 1.2 || Math.abs(best) > 8) continue;
+          const B = Math.min(220, L * 0.45); for (const q of S) { const u = end ? (L - q.s) / B : q.s / B; if (u < 1) q.p.y += best * (1 - sm(Math.max(0, u))); } } } }
     this.cell = 24; this.grid = new Map();
     for (const r of this.roads) {
       for (let i = 0; i < r.samples.length - 1; i++) {

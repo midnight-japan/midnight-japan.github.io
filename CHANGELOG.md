@@ -1,9 +1,10 @@
 # 📜 MIDNIGHT JAPAN 업데이트 기록 · Changelog
 
-현재 버전 · Current: **v2.5.3** · [▶ 웹에서 플레이](https://midnight-japan.github.io/) · [🌐 업데이트 페이지](https://midnight-japan.github.io/changelog.html)
+현재 버전 · Current: **v2.5.4** · [▶ 웹에서 플레이](https://midnight-japan.github.io/) · [🌐 업데이트 페이지](https://midnight-japan.github.io/changelog.html)
 
 | 버전 | 날짜 | 이름 | 요약 |
 |---|---|---|---|
+| [v2.5.4](#v254--no-dead-ends-2026-11-14) | 2026-11-14 | No Dead Ends | 맵 전체 도로 끝 자동 점검으로 끊긴 곳 모두 연결(나마무기 K1 5.6m 절벽, 다이코쿠 JCT 만안선→다이코쿠 램프, 하네다 만안선 단차, 공중에서 끝나던 츠루미·시바우라 램프), 텔레포트는 도로와 진행 방향을 골라서. |
 | [v2.5.3](#v253--night-fixes-2026-11-14) | 2026-11-14 | Night Fixes | 베이브리지 서쪽 끝 막다른 길 연결, 나란한 고가 사이 구멍 메움과 중앙 방호벽, 터널에서 내려 점프하면 바다 위로 가던 버그, 시빅 번호판, 전체 음량·사이렌 낮춤, 경찰·NPC가 따라붙지 않게, VTEC 소리 강화. |
 | [v2.5.2](#v252--every-phone-2026-11-14) | 2026-11-14 | Every Phone | 아이폰 사파리에서 게임이 시작되지 않던 치명적 버그 수정, 휴대폰 HUD 겹침 정리와 버튼 이름 표시, 중앙분리대 통과 금지, 내비 경로 탐색 개선, 번호판(꺾인·字光式) 묻힘 수정, 엔진음 통일감, 젖은 노면·라이트 빛 과함 완화. |
 | [v2.5.1](#v251--fast-start-2026-11-14) | 2026-11-14 | Fast Start | 로딩 대폭 단축(PC 48초 → 13초, 시작 전 데이터 96MB → 25MB), 휴대폰 전용 가벼운 텍스처, 디테일한 후지산, 수도고 전역에 큰 방면 안내판·정보판·속도 표지, 다이코쿠 PA 분수 광장·이륜차 주차장·흡연소(OSM 위치). |
@@ -43,6 +44,22 @@
 | [v0.2.0](#v020--bayshore-2026-11-05) | 2026-11-05 | Bayshore | 수도고속 완간선을 따라 하네다까지, 도쿄만 아쿠아라인 해저터널을 지나 우미호타루 PA까지. 실제 3D 차량 모델과 열리는 보닛도 들어왔어요. |
 | [v0.1.1](#v011--one-click-2026-11-04) | 2026-11-04 | One Click | 링크 하나로 바로 플레이. 크롬에서 공식 사이트 주소만 열면 설치 없이 실행돼요. |
 | [v0.1.0](#v010--first-meet-2026-11-04) | 2026-11-04 | First Meet | 첫 공개 버전. 다이코쿠 JCT·PA와 다이코쿠 부두 일대를 3D로 구현했습니다. |
+
+---
+
+## v2.5.4 — No Dead Ends (2026-11-14)
+
+> 맵 전체 도로 끝 자동 점검으로 끊긴 곳 모두 연결(나마무기 K1 5.6m 절벽, 다이코쿠 JCT 만안선→다이코쿠 램프, 하네다 만안선 단차, 공중에서 끝나던 츠루미·시바우라 램프), 텔레포트는 도로와 진행 방향을 골라서.
+> Every road end on the map checked automatically and every broken one joined (a 5.6 m cliff on K1 at Namamugi, the Bayshore→Daikoku ramp at Daikoku JCT, a step on the Bayshore at Haneda, the Namamugi and Shibaura ramps that ended in mid-air), and teleport now lets you pick the road and direction.
+
+**🔧 변경 · Changed**
+
+- 텔레포트: 지도에서 누른 곳의 이름을 크게(플레이 언어 + 일본어), 가장 가까운 도로의 진행 방향을 「남동쪽으로 출발 · 도로 이름」처럼 골라서 그 차로에 정확히 출발 — 엉뚱한 곳에 떨어지지 않음; 근처 랜드마크 이름은 크게 강조<br><sub>Teleport: the picked place is named large (your language + Japanese) and you choose the direction on the nearest road ("south-east bound · road name") to start exactly in that lane — no more odd drop points; nearby landmark names are enlarged</sub>
+
+**🐞 수정 · Fixed**
+
+- 끊긴 길 전부 연결(맵 전체 자동 점검): K1 북행이 나마무기에서 19.6m 높이로 끝나고 다음 구간은 14m에서 시작하던 5.6m 절벽, 다이코쿠 JCT 「만안선→다이코쿠」 램프가 만안선 상판보다 2.7m 아래에서 시작하던 문제, 하네다에서 만안선 남행이 5m 아래에서 끝나던 단차<br><sub>Broken roads joined (whole map checked automatically): K1 northbound ended at 19.6 m at Namamugi while the next section began at 14 m (a 5.6 m cliff), the Daikoku JCT Bayshore→Daikoku ramp started 2.7 m under the Bayshore deck, and the Bayshore southbound ended 5 m low at Haneda</sub>
+- 공중에서 끝나던 램프를 지면까지: 생麦(츠루미) 입구·시바우라 출구가 고가 높이 그대로 끝나 막다른 길이었던 것을 실제처럼 지상 도로로 내려오게<br><sub>Ramps that ended in mid-air now reach the ground: the Namamugi entrance and the Shibaura exit stayed at viaduct height and dead-ended</sub>
 
 ---
 

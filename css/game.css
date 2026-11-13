@@ -354,3 +354,9 @@ body.photo .online-pill,body.photo .chat{display:none}
   .hud-menu,.garbtn,.mapbtn,.wxbtn,.autobtn{top:calc(max(8px,env(safe-area-inset-top)) + 8px)!important}
   .garbtn{left:auto!important;right:calc(max(10px,env(safe-area-inset-right)) + min(40vw,200px) + 250px)!important}
 }
+/* v2.5.4: map selection card — big place name, one button per direction */
+#map .mapsel{display:flex;flex-wrap:wrap;align-items:center;gap:8px;max-width:min(560px,88vw)}
+#map .mapsel .ms-name{flex:1 1 100%;display:flex;flex-direction:column;gap:2px}
+#map .mapsel .ms-name b{font:800 20px system-ui;color:#fff;letter-spacing:.01em}
+#map .mapsel .ms-name small{font:600 12px system-ui;color:#ffcf8a}
+#map .mapsel .btn small{display:block;font:600 10px system-ui;opacity:.75;margin-top:2px}

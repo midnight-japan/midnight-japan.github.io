@@ -1,8 +1,17 @@
 // Shared game metadata: version, changelog, regions. Update VERSION + CHANGELOG on every release.
-export const GAME = { title: 'MIDNIGHT JAPAN', titleJa: 'ミッドナイト・ジャパン', version: '2.5.3', build: '2026.11.14' };
+export const GAME = { title: 'MIDNIGHT JAPAN', titleJa: 'ミッドナイト・ジャパン', version: '2.5.4', build: '2026.11.14' };
 
 // Newest first. type: new | change | fix | known
 export const CHANGELOG = [
+  {
+    version: '2.5.4', date: '2026-11-14', codename: 'No Dead Ends',
+    summary: { ko: '맵 전체 도로 끝 자동 점검으로 끊긴 곳 모두 연결(나마무기 K1 5.6m 절벽, 다이코쿠 JCT 만안선→다이코쿠 램프, 하네다 만안선 단차, 공중에서 끝나던 츠루미·시바우라 램프), 텔레포트는 도로와 진행 방향을 골라서.', ja: 'マップ全体の道路の端を自動点検して途切れた所をすべて接続（生麦のK1・5.6mの崖、大黒JCTの湾岸線→大黒ランプ、羽田の湾岸線の段差、空中で終わっていた生麦・芝浦のランプ）、テレポートは道路と進行方向を選んで。', en: 'Every road end on the map checked automatically and every broken one joined (a 5.6 m cliff on K1 at Namamugi, the Bayshore→Daikoku ramp at Daikoku JCT, a step on the Bayshore at Haneda, the Namamugi and Shibaura ramps that ended in mid-air), and teleport now lets you pick the road and direction.' },
+    items: [
+      { type: 'fix', ko: '끊긴 길 전부 연결(맵 전체 자동 점검): K1 북행이 나마무기에서 19.6m 높이로 끝나고 다음 구간은 14m에서 시작하던 5.6m 절벽, 다이코쿠 JCT 「만안선→다이코쿠」 램프가 만안선 상판보다 2.7m 아래에서 시작하던 문제, 하네다에서 만안선 남행이 5m 아래에서 끝나던 단차', ja: '途切れた道をすべて接続（マップ全体を自動点検）：K1上りが生麦で高さ19.6mで終わり次の区間が14mから始まっていた5.6mの崖、大黒JCT「湾岸線→大黒」ランプが湾岸線の床版より2.7m下から始まっていた問題、羽田で湾岸線の下りが5m下で終わっていた段差', en: 'Broken roads joined (whole map checked automatically): K1 northbound ended at 19.6 m at Namamugi while the next section began at 14 m (a 5.6 m cliff), the Daikoku JCT Bayshore→Daikoku ramp started 2.7 m under the Bayshore deck, and the Bayshore southbound ended 5 m low at Haneda' },
+      { type: 'fix', ko: '공중에서 끝나던 램프를 지면까지: 생麦(츠루미) 입구·시바우라 출구가 고가 높이 그대로 끝나 막다른 길이었던 것을 실제처럼 지상 도로로 내려오게', ja: '空中で終わっていたランプを地上まで：生麦入口・芝浦出口が高架の高さのまま終わり行き止まりだったのを実際のように地上へ', en: 'Ramps that ended in mid-air now reach the ground: the Namamugi entrance and the Shibaura exit stayed at viaduct height and dead-ended' },
+      { type: 'change', ko: '텔레포트: 지도에서 누른 곳의 이름을 크게(플레이 언어 + 일본어), 가장 가까운 도로의 진행 방향을 「남동쪽으로 출발 · 도로 이름」처럼 골라서 그 차로에 정확히 출발 — 엉뚱한 곳에 떨어지지 않음; 근처 랜드마크 이름은 크게 강조', ja: 'テレポート：地図で押した場所の名前を大きく（プレイ言語＋日本語）、最寄りの道路の進行方向を「南東方面・道路名」のように選んでその車線から正確に出発——変な所に落ちない；近くのランドマーク名は大きく強調', en: 'Teleport: the picked place is named large (your language + Japanese) and you choose the direction on the nearest road ("south-east bound · road name") to start exactly in that lane — no more odd drop points; nearby landmark names are enlarged' },
+    ]
+  },
   {
     version: '2.5.3', date: '2026-11-14', codename: 'Night Fixes',
     summary: { ko: '베이브리지 서쪽 끝 막다른 길 연결, 나란한 고가 사이 구멍 메움과 중앙 방호벽, 터널에서 내려 점프하면 바다 위로 가던 버그, 시빅 번호판, 전체 음량·사이렌 낮춤, 경찰·NPC가 따라붙지 않게, VTEC 소리 강화.', ja: 'ベイブリッジ西端の行き止まりを接続、並んだ高架の間の穴を塞ぎ中央分離帯、トンネルで降りてジャンプすると海の上に出たバグ、シビックのナンバー、全体の音量とサイレンを下げた、警察・NPCが付きまとわない、VTECの音を強化。', en: 'The Bay Bridge west-end dead end is connected, the slot between twin viaducts is closed with a centre barrier, jumping out of the car in a tunnel no longer lands you on the sea, the Civic\'s plate, quieter sound and siren, police and NPCs no longer tail you, and a stronger VTEC.' },
