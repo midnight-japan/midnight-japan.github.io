@@ -1,5 +1,6 @@
 // 大黒ふ頭 入口料金所: ETC専用 / ETC・一般 lanes with barrier arms (開閉バー).
 import * as THREE from 'three';
+import { PA } from './roads.js';
 import { t } from '../i18n.js';
 
 export const FARES = { etc: { std: 520, kei: 430 }, cash: { std: 1950, kei: 1600 } };
@@ -29,8 +30,28 @@ export class TollPlaza {
       this.lanes.push({ ...L, pivot, open: 0, target: 0, col, closeT: 0, state: 'idle', paid: false, left });
     }
   }
+  // v2.4.1: leaving the expressway (off-ramp → street) with ETC: the on-board unit's chime and announcement of the
+  // distance-based fare (首都高: ¥300 + ~¥29.5/km, capped at ¥1,950), charged here unless paid at an entrance gate
+  exitFare(dt) {
+    const g = this.g, v = g.vehicle; if (!v || g.mode !== 'drive' || !g.settings.etc) { this.xKm = 0; return; }
+    const k = v.road?.kind; const fast = k === 'expressway' || k === 'ramp';
+    if (fast) { this.xKm = (this.xKm || 0) + Math.abs(v.vx) * dt / 1000; this.offT = 0; return; }
+    if (!this.xKm) return;
+    const inPA = PA.inLot(v.pos.x, v.pos.z, 30) || Math.hypot(v.pos.x - 17800, v.pos.z + 200) < 450; // rest areas are inside the expressway
+    if (!inPA) { this.offT = (this.offT || 0) + dt; } else { this.offT = 0; return; }
+    if (this.offT < 1.2) return;
+    const km = this.xKm; this.xKm = 0; if (km < 1) return;
+    const kei = v.car.plate === 'kei' || v.car.plate === 'keiCommercial';
+    let fare = Math.min(1950, Math.round((300 + km * 29.52) / 10) * 10); if (kei) fare = Math.round(fare * 0.82 / 10) * 10;
+    if (this.paidAt && performance.now() - this.paidAt < 1800000) { this.paidAt = 0; g.audio?.sfx('etc_beep'); g.audio?.speak('ご利用、ありがとうございました。', 'ja-JP', { role: 'etc', seed: 2, force: true }); return; }
+    g.money -= fare; g.stats.tolls += fare;
+    g.audio?.sfx('etc_beep');
+    setTimeout(() => g.audio?.speak(`料金は、${fare}円です。`, 'ja-JP', { role: 'etc', seed: 2, force: true }), 450);
+    g.ui.toast(t('game.toll.etc', { fare: fare.toLocaleString('ja-JP') }), 'toll');
+  }
   update(dt) {
     const g = this.g, v = g.vehicle;
+    this.exitFare(dt);
     for (const L of this.lanes) {
       L.open += Math.max(-dt * 1.6, Math.min(dt * 2.2, L.target - L.open));
       L.pivot.rotation.x = -L.open * Math.PI / 2 * 0.98;
@@ -51,13 +72,13 @@ export class TollPlaza {
         if (g.settings.etc) {
           const fare = FARES.etc[kei ? 'kei' : 'std'];
           L.target = 1; L.closeT = 3; L.state = 'passed';
-          g.money -= fare; g.stats.tolls += fare;
-          g.audio?.speak(`料金は、${fare}円です。`, 'ja-JP', { role: 'female', seed: 2 });
+          g.money -= fare; g.stats.tolls += fare; this.paidAt = performance.now();
+          g.audio?.speak(`料金は、${fare}円です。`, 'ja-JP', { role: 'etc', seed: 2, force: true });
           g.ui.toast(t('game.toll.etc', { fare: fare.toLocaleString('ja-JP') }), 'toll');
           if (v.kmh > 25) g.ui.toast(t('game.toll.slow'), 'warn');
         } else if (L.type === 'etc') {
           L.state = 'blocked';
-          g.audio?.speak('ETCカードが確認できません。', 'ja-JP', { role: 'female', seed: 2 });
+          g.audio?.speak('ETCカードが、確認できません。', 'ja-JP', { role: 'etc', seed: 2, force: true });
           g.ui.toast(t('game.toll.nocard'), 'warn', 5);
         } else { L.state = 'cash'; }
       }

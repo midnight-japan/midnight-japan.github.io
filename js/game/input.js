@@ -6,7 +6,7 @@ export const KEYMAP = {
   // one-shot actions
   shiftUp: ['KeyE'], shiftDown: ['KeyQ'], interact: ['KeyF'], ignition: ['KeyI'], lights: ['KeyL'], horn: ['KeyH'],
   camera: ['KeyC'], radio: ['KeyR'], radioNext: ['KeyT'], signalL: ['KeyZ'], signalR: ['KeyX'], hazard: ['KeyB'], fog: ['KeyO'],
-  carMenu: ['Tab'], strobe: ['KeyK'], siren: ['KeyP'], map: ['KeyM'], pause: ['Escape'], photo: ['KeyV'], look: ['KeyG'], autopilot: ['KeyJ'],
+  carMenu: ['Tab'], strobe: ['KeyK'], siren: ['KeyP'], map: ['KeyM'], pause: ['Escape'], photo: ['KeyV'], look: ['KeyG'], autopilot: ['KeyJ'], garage: ['KeyU'], radioSkip: ['KeyY'],
   regen: ['KeyN'], run: ['ShiftLeft'], jump: ['Space'],
   gear1: ['Digit1'], gear2: ['Digit2'], gear3: ['Digit3'], gear4: ['Digit4'], gear5: ['Digit5'], gear6: ['Digit6'], gear7: ['Digit7'], gearR: ['Digit0'], gearN: ['Backquote', 'Digit9'],
 };

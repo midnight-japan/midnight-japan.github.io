@@ -939,7 +939,12 @@ export class CarModel {
   }
   setRimColor(hex) { for (const w of this.parts.wheels) w.rimMat.color.set(hex); }
   setPlate(p) {
-    import('./plates.js').then(({ plateTexture }) => { for (const pm of this.parts.plates) { pm.material.map = plateTexture(p); pm.material.emissiveMap = plateTexture(p); pm.material.needsUpdate = true; } });
+    // v2.4.1: plate styles — 'glow' (字光式: the characters light up after dark), 'tilt' (お辞儀: bowed forward)
+    import('./plates.js').then(({ plateTexture, plateGlowTexture }) => { for (const pm of this.parts.plates) {
+      const glow = p.style === 'glow'; pm.material.map = plateTexture(p); pm.material.emissiveMap = glow ? plateGlowTexture(p) : plateTexture(p); pm.material.emissive.setHex(glow ? 0xc8ffd0 : 0xffffff); pm.material.needsUpdate = true; pm.userData.glow = glow;
+      if (pm.userData.rx0 === undefined) pm.userData.rx0 = pm.rotation.x;
+      pm.rotation.x = pm.userData.rx0 + (p.style === 'tilt' ? 0.42 * (pm.position.z >= 0 ? 1 : -1) : 0);
+    } });
     this.parts.plateData = p;
   }
   setStance({ camberF, camberR, ride, track, toeF, toeR, rake }) {
@@ -1019,7 +1024,7 @@ export class CarModel {
     const pos = !!(L.head || L.pos);
     const drl = L.drl === true || (L.drl === 'auto' && this.t - this.movedT < 8 && (this.car.year || 0) >= 2008);
     const popK = p.popups.length ? this.popup : 1;
-    I[LAMP.HEAD] = L.head ? (L.high && p.popups.length ? 5 : 3.2) * popK : 0;
+    I[LAMP.HEAD] = L.head ? (L.high && p.popups.length ? 6 : 4.5) * popK : 0;
     I[LAMP.HIGH] = L.head && L.high ? 5 : 0;
     I[LAMP.POS] = pos ? 1.6 : 0;
     I[LAMP.DRL] = drl || pos ? (L.head ? 1.2 : 3.2) : 0;
@@ -1032,8 +1037,8 @@ export class CarModel {
     I[LAMP.FOG] = L.fog ? 6 : 0;
     I[LAMP.PLATE] = pos ? 2 : 0;
     if (p.real) {
-      p.real.spot.intensity = L.head ? (L.high ? 160 : 70) * popK : 0;
-      p.real.spot.angle = L.high ? 0.42 : 0.55; p.real.spot.distance = L.high ? 110 : 60;
+      p.real.spot.intensity = L.head ? (L.high ? 260 : 130) * popK : 0; // v2.4.1: brighter beams
+      p.real.spot.angle = L.high ? 0.42 : 0.58; p.real.spot.distance = L.high ? 160 : 85;
       p.real.spot.target.position.y = L.high ? 0.4 : -0.8;
       const g = p.real.glow;
       if (L.reverse) { g.color.setHex(0xfff4ea); g.intensity = 3; } else if (L.brake || L.fog) { g.color.setHex(0xff2010); g.intensity = L.brake ? 2.5 : 1.2; } else { g.color.setHex(0xff2010); g.intensity = pos ? 0.5 : 0; }
@@ -1054,7 +1059,7 @@ export class CarModel {
       p.beacon.mats.forEach((mm, i) => { mm.emissiveIntensity = on ? (Math.sin(this.t * 9 + i * 0.9) > 0.1 ? 6 : 0.4) : 0; });
     }
     if (p.lights.taxi) p.lights.taxi.material.emissiveIntensity = L.head ? 2 : 0.3;
-    for (const pl of p.plates) pl.material.emissiveIntensity = pos ? 0.25 : 0;
+    for (const pl of p.plates) pl.material.emissiveIntensity = pl.userData.glow ? (pos ? 2.2 : 0.15) : pos ? 0.25 : 0;
   }
   // live cockpit (cluster, MFD, aux gauges — see interiors.js). st: { rpm, kmh, gear, kw, info, warn, boost, fuel, night, ctl, hb, ax, ay, odo }
   drawGauges(st = {}) {

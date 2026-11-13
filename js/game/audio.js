@@ -430,13 +430,10 @@ const SFX = {
     tn(a, d, t + 0.86, { f: 120, f2: 60, gain: 0.35, decay: 0.05 });
     return nz(a, d, t + 0.86, { f: 1800, q: 2.5, gain: 0.25, decay: 0.012 });
   },
-  coin(a, d, t) {
-    let tt = t, g = 0.12;
-    for (let i = 0; i < 3; i++) {
-      for (const [r, gg] of [[1, 1], [2.76, 0.6], [5.4, 0.35], [8.93, 0.2]]) tn(a, d, tt, { f: 2100 * r, gain: g * gg, decay: 0.05 + 0.02 * (2 - i) });
-      tt += 0.09 - i * 0.025; g *= 0.6;
-    }
-    return nz(a, d, tt + 0.08, { f: 1500, q: 3, gain: 0.18, decay: 0.02 });
+  coin(a, d, t) { // v2.4.1: a soft rising three-note chime (E5 · B5 · E6, harmonic FM bells) instead of the metallic clatter
+    bell(a, d, t, 659.3, 0.07, 0.22, 2, 0.6);
+    bell(a, d, t + 0.085, 987.8, 0.065, 0.24, 2, 0.5);
+    return bell(a, d, t + 0.17, 1318.5, 0.075, 0.4, 2, 0.45);
   },
   ui_click(a, d, t) {
     const e = smp(a, d, t, 'ui_click', { gain: 0.55 });
@@ -546,6 +543,7 @@ class EngineSound {
     const catF = { traffic: 0.65, kei: 0.7, police: 0.85, ev: 0.8 }[cat] || 1;
     this.vol = this.prof.vol * catF * (0.72 + 0.28 * clamp(disp / 2500, 0.3, 2.2)) * (this.diesel ? 1.15 : 1);
     const sporty = cat === 'jdm' || cat === 'euro' || cat === 'us';
+    this.naSport = sporty && !this.turbo && !this.isEV;
     this.crackle = sporty ? (this.turbo || ['R2', 'V8', 'F6', 'V10', 'F4'].includes(this.type) ? 1 : 0.45) : 0;
     // v2.3: five blow-off characters — stock recirculating 'pssh', atmospheric 'bov', surge 'flutter', short 'chirp', big 'whoosh'
     this.bovStyle = ['pssh', 'bov', 'flutter', 'chirp', 'whoosh'][hashStr(String(this.car.id || '') + 'bov') % 5];
@@ -586,7 +584,7 @@ class EngineSound {
       const hx = hashStr(String(this.car.id || '') + 'ex'), code = (this.car.engine && this.car.engine.code) || '', sportyX = ['jdm', 'euro', 'us'].includes(this.car.cat);
       const V = { RB26DETT: [230, 7, 5], '2JZ-GTE': [140, 6, 2], '1JZ-GTE': [160, 5, 2], '13B-REW': [320, 8, 7], '4A-GE': [260, 6, 4], 'B16B': [300, 6, 6], 'F20C': [310, 6, 6], 'K20C': [260, 5, 4], EJ207: [110, 9, 3], 'VR38DETT': [170, 5, 3], 'VQ35HR': [200, 6, 4], SR20DET: [210, 6, 4], '4G63': [190, 6, 4], '1LR-GUE': [380, 6, 7], 'C30A': [240, 5, 4] }[code];
       const pkF = V ? V[0] : 90 + (hx % 260), pkG = V ? V[1] : (sportyX ? 4 + (hx >> 5) % 4 : 2), rasp = V ? V[2] : (sportyX ? 2 + (hx >> 9) % 4 : -2);
-      N.exPk = F('peaking', pkF, 2.2, pkG); N.exLo = F('lowshelf', 110, 0.7, clamp((num(this.car.engine?.disp, 1800) - 1500) / 600, -2, 5)); N.exHi = F('highshelf', 2600, 0.7, rasp);
+      N.exPk = F('peaking', pkF, 2.2, pkG); N.exLo = F('lowshelf', 110, 0.7, clamp((num(this.car.engine?.disp, 1800) - 1500) / 600, -2, 5)); N.exHi = F('highshelf', 2600, 0.7, rasp); this._hi0 = rasp;
       N.exSum.connect(N.exPk); N.exPk.connect(N.exLo); N.exLo.connect(N.exHi);
       if (sportyX && full) { const ws = ctx.createWaveShaper(), n = 512, c = new Float32Array(n), k = 1.5 + (hx >> 12) % 3; for (let i = 0; i < n; i++) { const x = i / (n - 1) * 2 - 1; c[i] = Math.tanh(k * x) / Math.tanh(k); } ws.curve = c; ws.oversample = '2x'; const wet = G(0.35), dry = G(0.75); N.exHi.connect(dry); N.exHi.connect(ws); ws.connect(wet); dry.connect(N.ext); wet.connect(N.ext); }
       else N.exHi.connect(N.ext);
@@ -844,7 +842,7 @@ class EngineSound {
       const rpmEff = cranking ? Math.max(rpm, 200) : rpm;
       const fC = Math.max(0.5, rpmEff / 120 * dop * (1 + this._jit));
       sp(N.exOsc.frequency, fC, t, 0.012);
-      const vt = this.vtec ? clamp((rpm - this.vtec) / 220 + 0.5, 0, 1) * (0.35 + 0.65 * power) : 0;
+      const vt = this.vtec ? clamp((rpm - this.vtec) / 110 + 0.5, 0, 1) * (0.35 + 0.65 * power) : 0; // v2.4.1: a sharper cam changeover
       const exAmp = (cranking ? 0.25 : 0.15 + 0.5 * power + 0.18 * rpmN - 0.05 * ov) * this.vol * alive * 0.42;
       let cut = (420 + 1500 * rpmN + 6500 * Math.pow(power, 1.3) + 2500 * vt) * this.prof.bright * (1 - 0.35 * ov);
       if (cranking) cut = 350;
@@ -852,10 +850,11 @@ class EngineSound {
       sv(N.exLP.frequency, clamp(cut, 150, 16000), 0.02);
       if (N.inOsc) {
         sp(N.inOsc.frequency, fC, t, 0.012);
-        const inAmp = (0.03 + 0.3 * power * (0.3 + rpmN) + 0.12 * vt + 0.04 * ov * rpmN) * this.vol * alive * 0.4;
+        const inAmp = (0.03 + 0.3 * power * (0.3 + rpmN) * (this.naSport ? 1.55 : 1) + 0.26 * vt + 0.04 * ov * rpmN) * this.vol * alive * 0.4; // NA sports engines: louder induction roar
         sp(N.inGain.gain, inAmp * (1 - 0.45 * smpW), t, 0.03);
         sv(N.inBP.frequency, 500 + 1400 * rpmN + 600 * vt, 0.02);
-        sv(N.vtecPk.gain, 10 * vt, 0.03);
+        sv(N.vtecPk.gain, 14 * vt, 0.02);
+        if (N.exHi && this._hi0 !== undefined) sv(N.exHi.gain, this._hi0 + 7 * vt, 0.03); // the top-end scream above the crossover
         sp(N.amDepth.gain, (0.02 + 0.12 * power * (0.3 + rpmN) + (this.diesel ? 0.08 : 0)) * this.vol * alive * synW, t, 0.03);
         sv(N.combBP.frequency, 1200 + 2000 * rpmN, 0.03);
       }
@@ -1056,8 +1055,10 @@ class EngineSound {
       }
     } catch (e) { this.a._err(e); }
   }
-  shift() {
+  shift(hard = false) {
     try { const d = this._dest('cabin'); if (d) SFX.shift(this.a, d, this.a.ctx.currentTime + 0.003); } catch (e) { this.a._err(e); }
+    // v2.4.1: a flat-out upshift cracks through the exhaust (ignition cut), turbos chirp on the change
+    try { if (hard && !this.isEV) { this._pop(0.5 + Math.random() * 0.25); if (this.turbo) setTimeout(() => this._pop?.(0.25), 60); } } catch (e) { this.a._err(e); }
   }
   stall() {
     try {
@@ -1309,6 +1310,8 @@ class Radio {
     } catch (e) { this.a._err(e); }
   }
   next() { this.setStation(this.station + 1); }
+  // v2.4.1: skip the current song (same station, the next tune)
+  skip() { try { if (!this.on || !this.N || !this.music) return; this._seed[this.station] = ((this._seed[this.station] || 1) * 1103515245 + 12345 + Math.floor(Math.random() * 1e6)) >>> 0; this._leftAt[this.station] = 0; this.music.start(STATIONS[this.station].id, this._seed[this.station], true); this._playing = this.station; } catch (e) { this.a._err(e); } }
   prev() { this.setStation(this.station - 1); }
   nowPlaying() {
     const st = STATIONS[this.station];
@@ -1600,7 +1603,7 @@ export class GameAudio {
   speak(text, lang = 'ja-JP', opts) {
     // the browser's text-to-speech voices sound robotic: off unless the player turns 音声 on in the settings.
     // (the line is always shown as a subtitle by the caller; police get the loud-hailer click instead)
-    if (!this.voiceOn) { if ((opts || {}).role === 'police') this.sfx('megaphone'); return; }
+    if (!this.voiceOn && !(opts || {}).force) { if ((opts || {}).role === 'police') this.sfx('megaphone'); return; } // force: the ETC unit's own announcements
     try {
       const ss = W.speechSynthesis;
       if (!ss || !W.SpeechSynthesisUtterance || !text) return;
@@ -1614,7 +1617,7 @@ export class GameAudio {
       const role = opts.role || 'narrator';
       const v = this._voice(lang, role, opts.seed);
       if (v) u.voice = v;
-      const R = { police: [1.08, 0.82], narrator: [1.02, 0.9], male: [1.0, 0.95], female: [1.02, 1.08], old: [0.9, 0.8] }[role] || [1, 1];
+      const R = { etc: [0.96, 1.12], police: [1.08, 0.82], narrator: [1.02, 0.9], male: [1.0, 0.95], female: [1.02, 1.08], old: [0.9, 0.8] }[role] || [1, 1];
       const sv = opts.seed != null ? (Math.sin(opts.seed * 91.7) * 0.5 + 0.5) : 0.5;
       u.rate = clamp(num(opts.rate, R[0]), 0.5, 2);
       u.pitch = clamp(num(opts.pitch, R[1] * (0.9 + sv * 0.2)), 0, 2);
@@ -1634,7 +1637,7 @@ export class GameAudio {
     const MALE = /Otoya|Hattori|Ichiro|Keita|Daichi|Naoki|Kenji|Takumi|Injoon|Minsu|Daniel|Alex|Fred|Tom|Aaron|Arthur|Rishi|male/i;
     const FEMALE = /Kyoko|O-ren|Haruka|Ayumi|Nanami|Sayaka|Mizuki|Yuna|Sora|Samantha|Karen|Moira|Tessa|Victoria|female/i;
     const male = cands.filter((v) => MALE.test(v.name) && !/female/i.test(v.name)), female = cands.filter((v) => FEMALE.test(v.name));
-    const pool = role === 'police' || role === 'narrator' || role === 'male' || role === 'old' ? (male.length ? male : cands) : role === 'female' ? (female.length ? female : cands) : cands;
+    const pool = role === 'police' || role === 'narrator' || role === 'male' || role === 'old' ? (male.length ? male : cands) : role === 'female' || role === 'etc' ? (female.length ? female : cands) : cands;
     const i = seed != null ? Math.abs(Math.floor(seed * 7919)) % pool.length : 0;
     return pool[i] || cands[0] || null;
   }

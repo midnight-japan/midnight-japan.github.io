@@ -73,7 +73,7 @@ export function requestGlb(id) {
   e.promise = loadManifest().then(m => {
     const info = m[id]; if (!info) throw new Error('no model for ' + id);
     if (!gltf) { gltf = new GLTFLoader(); gltf.setMeshoptDecoder(MeshoptDecoder); }
-    return gltf.loadAsync(new URL(info.file, BASE).href).then(g => { e.scene = g.scene; e.info = info; e.scene.updateMatrixWorld(true); if (info.split) splitLivery(e.scene, info); fixMaterials(e.scene, info); return precompile(e); });
+    return gltf.loadAsync(new URL(info.file, BASE).href).then(g => { e.scene = g.scene; e.info = info; e.scene.updateMatrixWorld(true); if (info.split) splitLivery(e.scene, info); fixMaterials(e.scene, info); e.scene.traverse(o => { if (o.geometry) o.geometry.userData.shared = true; }); return precompile(e); });
   });
   e.promise.catch(err => { if (!/no model/.test(err.message)) console.warn('car model', id, err); });
   return e.promise;
@@ -119,7 +119,7 @@ export function flatClone(e) {
     for (const { mat, list } of groups.values()) {
       const geos = list.map(o => { const g = o.geometry.clone(); for (const n of Object.keys(g.attributes)) g.setAttribute(n, toFloat(g.attributes[n])); g.applyMatrix4(m4.multiplyMatrices(inv, o.matrixWorld)); g.morphAttributes = {}; return g; });
       let g = null; try { g = geos.length === 1 ? geos[0] : mergeGeometries(geos, false); } catch { g = null; }
-      if (g) { merged.push({ g, mat, name: list[0].name }); if (geos.length > 1) geos.forEach(x => x.dispose()); }
+      if (g) { g.userData.shared = true; merged.push({ g, mat, name: list[0].name }); if (geos.length > 1) geos.forEach(x => x.dispose()); }
       else list.forEach(o => keep.push(o));
     }
     e.flat = { merged, keep: keep.map(o => ({ o, m: new THREE.Matrix4().multiplyMatrices(inv, o.matrixWorld) })) };
@@ -129,6 +129,49 @@ export function flatClone(e) {
   for (const { o, m } of e.flat.keep) { const c = o.clone(true); m.decompose(c.position, c.quaternion, c.scale); vis.add(c); }
   return vis;
 }
+// v2.4.1: where the real model's lamps are — per side (x > 0 is the car's left), from the vertices of its head- and
+// tail-lamp materials, in the model's own space. Cached per model.
+export function lampAnchors(e, isHead, isTail) {
+  if (e.lampA !== undefined) return e.lampA;
+  const sc = e.scene; sc.updateMatrixWorld(true); const inv = sc.matrixWorld.clone().invert(), m4 = new THREE.Matrix4(), v = new THREE.Vector3();
+  const box = () => ({ x0: 1e9, x1: -1e9, y0: 1e9, y1: -1e9, z0: 1e9, z1: -1e9, n: 0 });
+  const B = { hL: box(), hR: box(), tL: box(), tR: box(), iFL: box(), iFR: box(), iRL: box(), iRR: box() };
+  const IND_RE = /blinker|orange|indicator|turn.?sig|amber/i;
+  sc.traverse(o => {
+    if (!o.isMesh) return; const ms = Array.isArray(o.material) ? o.material : [o.material];
+    const kinds = ms.map(m => isHead(m.name) ? 'h' : isTail(m.name) ? 't' : IND_RE.test(m.name || '') ? 'i' : null); if (!kinds.some(Boolean)) return;
+    const g = o.geometry, pos = g.attributes.position, idx = g.index; m4.multiplyMatrices(inv, o.matrixWorld);
+    const groups = g.groups.length && Array.isArray(o.material) ? g.groups : [{ start: 0, count: idx ? idx.count : pos.count, materialIndex: 0 }];
+    for (const gr of groups) { const k = kinds[gr.materialIndex ?? 0]; if (!k) continue;
+      const step = Math.max(1, Math.floor(gr.count / 600));
+      for (let i = gr.start; i < gr.start + gr.count; i += step) { const vi = idx ? idx.getX(i) : i; v.fromBufferAttribute(pos, vi).applyMatrix4(m4);
+        const b = B[k === 'i' ? 'i' + (v.z > 0 ? 'F' : 'R') + (v.x > 0 ? 'L' : 'R') : k + (v.x > 0 ? 'L' : 'R')]; b.n++; b.x0 = Math.min(b.x0, v.x); b.x1 = Math.max(b.x1, v.x); b.y0 = Math.min(b.y0, v.y); b.y1 = Math.max(b.y1, v.y); b.z0 = Math.min(b.z0, v.z); b.z1 = Math.max(b.z1, v.z); } }
+  });
+  const [bx0, , bz0, bx1, , bz1] = e.info.bbox;
+  const ok = b => b.n > 6 && b.x1 - b.x0 < 1.2;
+  const out = { head: [], tail: [], ind: [] };
+  for (const side of ['L', 'R']) { const sg = side === 'L' ? 1 : -1;
+    const h = B['h' + side], t = B['t' + side];
+    const hp = ok(h) ? [(h.x0 + h.x1) / 2, (h.y0 + h.y1) / 2, h.z1 + 0.03] : [sg * (Math.max(bx1, -bx0) - 0.35), 0.68, bz1 + 0.02];
+    const tp = ok(t) ? [(t.x0 + t.x1) / 2, (t.y0 + t.y1) / 2, t.z0 - 0.03] : [sg * (Math.max(bx1, -bx0) - 0.3), 0.85, bz0 - 0.02];
+    out.head.push({ side, p: hp }); out.tail.push({ side, p: tp });
+    // indicators at the outer corner of each lamp (front and rear)
+    const hx = ok(h) ? (sg > 0 ? h.x1 : h.x0) - sg * 0.04 : hp[0] + sg * 0.18, tx = ok(t) ? (sg > 0 ? t.x1 : t.x0) - sg * 0.04 : tp[0] + sg * 0.15;
+    // the model's own amber lenses when it has them (front / rear, per side), else the lamp's outer corner
+    const iF = B['iF' + side], iR = B['iR' + side], cen = (b, z) => [(b.x0 + b.x1) / 2, (b.y0 + b.y1) / 2, z];
+    out.ind.push({ side, p: ok(iF) ? cen(iF, iF.z1 + 0.02) : [hx, hp[1] - 0.02, hp[2] - 0.01] }, { side, p: ok(iR) ? cen(iR, iR.z0 - 0.02) : [tx, tp[1] + 0.02, tp[2] + 0.01] });
+  }
+  return (e.lampA = out);
+}
+let _glowTex = null;
+function glowTex() {
+  if (_glowTex) return _glowTex;
+  const c = document.createElement('canvas'); c.width = c.height = 64; const g = c.getContext('2d');
+  const gr = g.createRadialGradient(32, 32, 0, 32, 32, 32); gr.addColorStop(0, 'rgba(255,255,255,1)'); gr.addColorStop(0.25, 'rgba(255,255,255,.55)'); gr.addColorStop(1, 'rgba(255,255,255,0)');
+  g.fillStyle = gr; g.fillRect(0, 0, 64, 64); _glowTex = new THREE.CanvasTexture(c); return _glowTex;
+}
+const GLOW_MATS = {};
+function glowMat(hex) { return GLOW_MATS[hex] ||= new THREE.SpriteMaterial({ map: glowTex(), color: hex, blending: THREE.AdditiveBlending, depthWrite: false, transparent: true, fog: true }); }
 const isWheel = o => { for (let p = o; p; p = p.parent) if (/^wheel_(fl|fr|rl|rr)$/.test(p.name)) return true; return false; };
 const REAR_ENGINE = car => car.drive === 'MR' || car.drive === 'RR';
 
@@ -349,14 +392,24 @@ export function buildGlbCar(car, e, opts = {}) {
     parts.doorMirrors = []; // the real model's own mirrors are on screen
     model._trimU = trimU;
   }
+  // v2.4.1: lamp glows and amber indicators at the real lamps (the procedural lamps are hidden on real models; hazards
+  // used to flash the whole headlight white and the tail red)
+  const LA = lampAnchors(e, isHead, isTail), glows = { head: [], tail: [], ind: [] };
+  const spr = (hex, p, k) => { const s2 = new THREE.Sprite(glowMat(hex)); s2.position.set(p[0], p[1], p[2]); s2.visible = false; s2.renderOrder = 3; vis.add(s2); glows[k].push(s2); return s2; };
+  for (const a of LA.ind) spr(0xffa020, a.p, 'ind').userData.side = a.side;
+  if (!low) { for (const a of LA.head) spr(0xfff2dc, a.p, 'head'); for (const a of LA.tail) spr(0xff2010, a.p, 'tail'); }
   const base = model.onUpdate;
   model.onUpdate = dt => {
     base?.(dt);
     if (model.cockpitView && model._trimU) model._trimU.uBodyInv.value.copy(bodyG.matrixWorld).invert();
     const L = model.lights; const blink = model.blinkOn;
     const headOn = L.head || L.drl === true, brake = L.brake, pos = L.head || L.pos;
-    for (const m of head) { m.emissive.setHex(0xfff4e0); m.emissiveIntensity = headOn ? (L.high ? 3 : 2) : (L.hazard && blink ? 0.6 : 0); }
-    for (const m of tail) { m.emissive.setHex(0xff1a10); m.emissiveIntensity = brake ? 3 : pos ? 0.9 : (L.hazard && blink ? 1.5 : 0); }
+    for (const m of head) { m.emissive.setHex(0xfff4e0); m.emissiveIntensity = headOn ? (L.high ? 5 : 3.5) : 0; }
+    for (const m of tail) { m.emissive.setHex(0xff1a10); m.emissiveIntensity = brake ? 4 : pos ? 1.4 : 0; }
+    const lOn = (L.hazard || L.left) && blink, rOn = (L.hazard || L.right) && blink;
+    for (const s2 of glows.ind) { const on = s2.userData.side === 'L' ? lOn : rOn; s2.visible = on; if (on) s2.scale.setScalar(0.42); }
+    for (const s2 of glows.head) { s2.visible = headOn; if (headOn) s2.scale.setScalar(L.high ? 1.1 : 0.75); }
+    for (const s2 of glows.tail) { const on = brake || pos; s2.visible = on; if (on) { s2.scale.setScalar(brake ? 0.62 : 0.36); } }
     cut?.update();
   };
   const dispose0 = model.dispose.bind(model);

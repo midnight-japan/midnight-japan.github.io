@@ -15,7 +15,7 @@ const srcset = s => `${shotSrc(s, 800)} 800w, ${shotSrc(s, 1600)} 1600w`;
 
 // ── Hero slideshow: [screenshot, location label (Japanese road-sign style, not translated)]
 const SLIDES = [
-  ['40-real-yokohama', '横浜みなとみらい · 3D都市モデル'], ['27-c1night', '首都高速都心環状線 · 銀座'], ['41-real-tokyo', '東京タワー · 夕暮れ'],
+  ['47-hud-k1', '首都高速K1横羽線 · 新子安'], ['45-tokyo-tower', '東京タワー · 3D都市モデル'], ['48-pa-lights', '大黒PA · 深夜'], ['40-real-yokohama', '横浜みなとみらい · 3D都市モデル'], ['27-c1night', '首都高速都心環状線 · 銀座'],
   ['29-hakone_dusk', 'アネスト岩田ターンパイク箱根'], ['31-k1rain', '首都高速K1横羽線 · 雨の夜'], ['33-rainbow', 'レインボーブリッジ · 東京湾'],
   ['42-tokyo-night', '東京 · 都心の夜'], ['26-k1-night', '首都高速K1横羽線'],
 ];
@@ -26,7 +26,7 @@ const ROUTES = [
   { id: 'c1', img: '27-c1night', route: 'C1', km: '14 km', ja: '首都高速都心環状線' },
   { id: 'hakone', img: '29-hakone_dusk', route: 'TP', km: '13.5 km', ja: 'アネスト岩田ターンパイク箱根' },
   { id: 'k1', img: '26-k1-night', route: 'K1', km: '17 km', ja: '横浜ループ（K5・K1・K3・湾岸線）' },
-  { id: 'pa', img: '07-ae86-loops', route: 'B', km: '30 km', ja: '大黒PA · 首都高速湾岸線' },
+  { id: 'pa', img: '48-pa-lights', route: 'B', km: '30 km', ja: '大黒PA · 首都高速湾岸線' },
   { id: 'daiba', img: '33-rainbow', route: '11', km: '40 km', ja: '湾岸線・11号台場線・1号羽田線' },
   { id: 'seisho', img: '34-seisho', route: '1', km: '59 km', ja: '横浜新道・新湘南・西湘バイパス' },
   { id: 'mm', img: '18-minatomirai', route: 'Y', km: '', ja: '横浜・川崎・東京・湘南の街並み' },
@@ -35,7 +35,7 @@ const ROUTES = [
 // ── Feature rows: [key, screenshot, Japanese label, play link, extra-renderer]
 const STANCES = ['stock', 'street', 'tsura', 'shakotan', 'vip', 'oni', 'drift', 'track', 'lift'];
 const FROWS = [
-  ['garage', '21-tuning', 'ガレージ', 'play.html', () => `<ul class="chips-row stance" aria-label="Stance">${STANCES.map(s => `<li>${esc(t('site.home.stance.' + s))}</li>`).join('')}</ul>`],
+  ['garage', '46-stance-garage', 'ガレージ', 'play.html', () => `<ul class="chips-row stance" aria-label="Stance">${STANCES.map(s => `<li>${esc(t('site.home.stance.' + s))}</li>`).join('')}</ul>`],
   ['roads', '44-mm-street', '日本の道', 'play.html?spawn=k1', () => `<ul class="chips-row marks" lang="ja" aria-hidden="true"><li>止まれ</li><li>速度落とせ</li><li>合流注意</li><li class="etc">ETC</li><li class="spd">50</li></ul>`],
   ['sky', '31-k1rain', '昼夜・天気', 'play.html?spawn=hakone', () => `<ul class="chips-row wx" aria-hidden="true">${[
     '<circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M2 12h2M20 12h2M4.9 4.9l1.4 1.4M17.7 17.7l1.4 1.4M4.9 19.1l1.4-1.4M17.7 6.3l1.4-1.4"/>',

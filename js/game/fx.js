@@ -115,7 +115,7 @@ export class Fx {
       if (!o.parent) continue; // the model was swapped / disposed meanwhile
       const gs = o.geometry; if (!gs.boundingSphere) gs.computeBoundingSphere();
       const bs = gs.boundingSphere.clone().applyMatrix4(o.matrixWorld); if (bs.center.distanceTo(P) > bs.radius + R) continue;
-      if (!o.userData.dmgOrig) { o.userData.dmgOrig = gs; const c = gs.clone(); const a = c.attributes.position;
+      if (!o.userData.dmgOrig) { o.userData.dmgOrig = gs; const c = gs.clone(); c.userData.shared = false; const a = c.attributes.position;
         if (!(a.array instanceof Float32Array) || a.normalized || a.isInterleavedBufferAttribute) { const f = new Float32Array(a.count * 3); for (let i = 0; i < a.count; i++) { f[i * 3] = a.getX(i); f[i * 3 + 1] = a.getY(i); f[i * 3 + 2] = a.getZ(i); } c.setAttribute('position', new THREE.BufferAttribute(f, 3)); }
         o.geometry = c; yield; }
       const pos = o.geometry.attributes.position; inv.copy(o.matrixWorld).invert();

@@ -297,13 +297,31 @@ export class Vehicle {
       this.shiftT -= dt; throttle = 0;
       if (this.shiftT <= 0) { this.gear = this.shiftTarget; this.shiftTarget = null; if (car.engine.turbo && c.throttle < 0.2 && e.boost > 0.5) this.events.push('blowoff'); }
     }
-    // auto box logic
+    // auto box logic (v2.4.1): shift where it makes sense —
+    //  · light throttle: up as soon as the next gear still pulls (economy, low rpm cruising)
+    //  · full throttle: hold to near the redline (peak power), kickdown several gears when floored
+    //  · braking: step down to keep engine braking and be in the right gear for the exit
+    //  · no upshift mid-corner or while the tyres are spinning, no hunting (time in gear + hysteresis)
     if ((this.mode === 'auto' && !this.ev) && this.atSel === 'D' && this.shiftTarget === null && this.gear > 0) {
-      const rpm = e.rpm, red = car.engine.redline;
-      const up = lerp(red * 0.36, red * 0.93, Math.pow(c.throttle, 1.3));
-      const down = lerp(red * 0.18, red * 0.36, c.throttle);
-      if (rpm > up && Math.abs(this.slip) < 1.5 && this.gear < this.gears.length && this.timeInGear > 0.6) { this.shiftTarget = this.gear + 1; this.shiftT = this.transType === 'DCT' ? 0.08 : 0.22; this.timeInGear = 0; this.events.push('shift_auto'); }
-      else if (rpm < down && this.gear > 1 && this.timeInGear > 0.4) { const nr2 = this.ratio(this.gear - 1); if (Math.abs(vx) / this.r * nr2 / RPM2W < red * 0.88) { this.shiftTarget = this.gear - 1; this.shiftT = 0.18; this.timeInGear = 0; } }
+      const rpm = e.rpm, red = car.engine.redline, idle = car.engine.idle || 800, thr = c.throttle, n = this.gears.length;
+      const rpmIn = g => Math.abs(vx) / this.r * Math.abs(this.ratio(g)) / RPM2W;
+      const floor = lerp(Math.max(idle * 1.45, red * 0.24), red * 0.5, Math.pow(thr, 1.5)); // never lug below this after an upshift
+      const up = thr > 0.92 ? red * 0.94 : lerp(red * 0.3, red * 0.86, Math.pow(thr, 1.2));
+      const cornering = Math.abs(this.vlat || 0) > 2.2 || Math.abs(this.yawRate || 0) * Math.abs(vx) > 6;
+      const tOut = this.transType === 'DCT' ? 0.07 : this.transType === 'CVT' ? 0.12 : 0.2;
+      if (rpm > up && this.gear < n && Math.abs(this.slip) < 1.5 && this.timeInGear > 0.5 && (!cornering || rpm > red * 0.95) && rpmIn(this.gear + 1) > floor * 0.92) {
+        this.shiftTarget = this.gear + 1; this.shiftT = tOut; this.timeInGear = 0; this.events.push('shift_auto');
+      } else if (this.gear > 1 && this.timeInGear > 0.35) {
+        // kickdown: floored → the lowest gear that stays under 88 % of the redline
+        let tgt = this.gear;
+        if (thr > 0.85 && (this._thrK ?? 0) < 0.6) { for (let g2 = this.gear - 1; g2 >= 1; g2--) { if (rpmIn(g2) < red * 0.86) tgt = g2; else break; } }
+        // lugging / under load
+        else if (rpm < floor * 0.82 && rpmIn(this.gear - 1) < red * 0.85) tgt = this.gear - 1;
+        // braking: keep the engine in its useful band for the corner exit
+        else if (c.brake > 0.25 && rpm < red * 0.42 && rpmIn(this.gear - 1) < red * 0.78) tgt = this.gear - 1;
+        if (tgt !== this.gear) { this.shiftTarget = tgt; this.shiftT = this.transType === 'DCT' ? 0.06 : 0.16; this.timeInGear = 0; if (c.brake > 0.25) this.events.push('blip'); }
+      }
+      this._thrK = thr;
     }
     this.timeInGear = (this.timeInGear || 0) + dt;
 

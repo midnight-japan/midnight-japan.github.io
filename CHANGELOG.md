@@ -1,9 +1,10 @@
 # 📜 MIDNIGHT JAPAN 업데이트 기록 · Changelog
 
-현재 버전 · Current: **v2.4.0** · [▶ 웹에서 플레이](https://midnight-japan.github.io/) · [🌐 업데이트 페이지](https://midnight-japan.github.io/changelog.html)
+현재 버전 · Current: **v2.5.0** · [▶ 웹에서 플레이](https://midnight-japan.github.io/) · [🌐 업데이트 페이지](https://midnight-japan.github.io/changelog.html)
 
 | 버전 | 날짜 | 이름 | 요약 |
 |---|---|---|---|
+| [v2.5.0](#v250--night-cruise-2026-11-14) | 2026-11-14 | Night Cruise | 왼쪽 아래 큰 지도(실제 지도·내 위치·차종), 더 똑똑한 자동변속, 실제 램프 위치에서 나오는 깜빡이·브레이크·전조등, 바다에 빠지지 않게, ETC 안내 음성, 엔진 개성 강화, 그 자리에서 차고·튜닝, 라디오 다음 곡, 字光式·お辞儀 번호판. |
 | [v2.4.0](#v240--smooth-stance-2026-11-13) | 2026-11-13 | Smooth Stance | 렉·끊김 대폭 감소(주행 중 셰이더 재컴파일 제거), 차 파손은 옵션(기본 끔), 더 간단한 설정 화면, 스탠스 프리셋 9종과 차종별 기본 세팅, 실제 3D 도쿄 타워. |
 | [v2.3.0](#v230--clean-cars-2026-11-13) | 2026-11-13 | Clean Cars | 깨져 보이던 차량 모델 전부 수정, 차마다 다른 엔진·블로오프 사운드, 일본 일상 교통, 더 멀리·선명한 실제 3D 건물, 과한 빛 효과 완화, M1 맥북 에어 60fps. |
 | [v2.2.2](#v222--bugfix-2026-11-13) | 2026-11-13 | Bugfix | 버그 수정: 지상으로 내려온 램프(다이시·헤이와지마·시바우라) 끝을 실제 시내 도로와 포장 연결로 이어 막다른 길 제거. |
@@ -39,6 +40,34 @@
 | [v0.2.0](#v020--bayshore-2026-11-05) | 2026-11-05 | Bayshore | 수도고속 완간선을 따라 하네다까지, 도쿄만 아쿠아라인 해저터널을 지나 우미호타루 PA까지. 실제 3D 차량 모델과 열리는 보닛도 들어왔어요. |
 | [v0.1.1](#v011--one-click-2026-11-04) | 2026-11-04 | One Click | 링크 하나로 바로 플레이. 크롬에서 공식 사이트 주소만 열면 설치 없이 실행돼요. |
 | [v0.1.0](#v010--first-meet-2026-11-04) | 2026-11-04 | First Meet | 첫 공개 버전. 다이코쿠 JCT·PA와 다이코쿠 부두 일대를 3D로 구현했습니다. |
+
+---
+
+## v2.5.0 — Night Cruise (2026-11-14)
+
+> 왼쪽 아래 큰 지도(실제 지도·내 위치·차종), 더 똑똑한 자동변속, 실제 램프 위치에서 나오는 깜빡이·브레이크·전조등, 바다에 빠지지 않게, ETC 안내 음성, 엔진 개성 강화, 그 자리에서 차고·튜닝, 라디오 다음 곡, 字光式·お辞儀 번호판.
+> A big map bottom-left (real map, your position and car), a smarter automatic gearbox, indicators / brake lights / headlights at the real lamps, no more falling into the sea, ETC voice announcements, more engine character, garage and tuning on the spot, radio skip, and illuminated / bowed plates.
+
+**✨ 추가 · New**
+
+- 왼쪽 아래 큰 지도: 진행 방향이 위로 오는 실제 지도(OSM) 위에 도로·교통·경로와 내 위치, 속도에 따라 자동 확대·축소, 아래에 지금 타는 차와 현재 위치 이름, 축척 표시. 내비 경로는 굵은 테두리선으로 또렷하게<br><sub>A big map bottom-left: heading-up real map (OSM) with roads, traffic, route and your position, auto-zoom with speed, your car and place name in the footer and a scale bar; the navigation route is drawn thick with a dark outline</sub>
+- 그 자리에서 차 바꾸기·튜닝: U 키 또는 🔧 버튼(시속 12km 이하), 새 차는 같은 자리에서 출발<br><sub>Change car or tune on the spot: U or the 🔧 button (below 12 km/h); the new car starts right there</sub>
+- ETC 안내 음성: 차량 탑재기의 「料金は、○○円です。」 안내가 항상 나옴(음성 설정과 무관), 고속도로를 나갈 때 주행 거리 요금(¥300 + 약 ¥29.5/km, 최대 ¥1,950) 정산<br><sub>ETC voice: the on-board unit's "料金は、○○円です" announcement always plays (whatever the voice setting), and leaving the expressway charges the distance fare (¥300 + ~¥29.5/km, capped at ¥1,950)</sub>
+- 번호판 스타일: 字光式(밤에 글자가 빛나는 번호판)·お辞儀(아래로 꺾인 번호판) — 차고의 번호판 메뉴에서<br><sub>Plate styles: 字光式 illuminated characters at night and the お辞儀 bowed plate — in the garage plate menu</sub>
+
+**🔧 변경 · Changed**
+
+- 속도계 보강: 레티나 선명도, 500rpm 눈금, 시프트 램프 7개(레드존 점멸), 터보 차량 부스트 게이지<br><sub>Sharper speedo: Retina resolution, 500 rpm ticks, a 7-LED shift light (flashes at the limiter) and a boost gauge on turbo cars</sub>
+- HUD 편의성: 오른쪽 위에 지도·차고 버튼, 처음 출발할 때 키 안내 줄(12초 후 사라짐), 지금 듣는 곡 표시와 ⏮ ⏭ 버튼(Y 키: 다음 곡), 전체 지도(M)는 가장자리에 게임 화면이 보이도록<br><sub>HUD conveniences: map and garage buttons top-right, a key guide when you set off (fades after 12 s), now-playing with ⏮ ⏭ buttons (Y: next song), and the full map (M) leaves the drive visible around it</sub>
+- 자동변속 개선(모든 차): 가볍게 밟으면 일찍 변속해 낮은 회전으로 순항, 끝까지 밟으면 레드존 직전까지, 킥다운으로 여러 단 한 번에, 브레이크 때 단계적으로 내려 엔진브레이크, 코너 중 업시프트 금지 — NPC 엔진음도 실제 기어비로<br><sub>Smarter automatic (every car): early upshifts and low-rpm cruising on light throttle, revs to the redline when floored, multi-gear kickdown, stepped downshifts under braking, no upshifts mid-corner — NPC engines follow real gear ratios too</sub>
+- 엔진 개성: VTEC 전환을 더 날카롭게(NSX도 VTEC), 자연흡기 스포츠 엔진 흡기음 강화, 풀스로틀 변속 때 배기 「팡」, 터보는 변속 때 짧은 처프<br><sub>Engine character: a sharper VTEC changeover (the NSX gets VTEC too), louder induction on NA sports engines, an exhaust crack on flat-out shifts and a turbo chirp</sub>
+- 돈 받을 때 효과음을 부드러운 세 음 차임으로<br><sub>The money sound is now a soft three-note chime</sub>
+
+**🐞 수정 · Fixed**
+
+- 실제 모델 차량의 램프: 비상등이 전조등·후미등 전체를 흰색·빨간색으로 깜빡이던 문제 → 차마다 실제 램프 위치(주황 렌즈가 있으면 그 자리)의 주황 깜빡이, 전조등·후미등·브레이크등에서 빛이 퍼짐, 전조등 더 밝고 멀리<br><sub>Real-model lamps: hazards used to flash the whole headlight white and the tail red — now amber indicators at each model's own lamps (its amber lenses where it has them), glowing head / tail / brake lights, and brighter, longer headlight beams</sub>
+- 바다에 빠져 PA로 돌아가던 문제: 도로 위 마지막 위치를 기억해서, 다리 틈으로 떨어지거나 물에 닿으면 바로 그 자리로 복귀(같은 방향)<br><sub>Falling into the bay sent you back to the PA — the last spot on the road is remembered and a fall through a gap or a splash puts you straight back there, facing the same way</sub>
+- 렉 감소: 사라지는 NPC 차가 다른 차들이 같이 쓰는 모델 데이터를 지워 매번 다시 올리던 문제<br><sub>Less stutter: a despawning NPC car disposed the model data every copy shares, so it was re-uploaded each time</sub>
 
 ---
 

@@ -101,7 +101,7 @@ export const CARS = [
     colors: ['#9b1b23', '#5a5d61', '#4b5d73', '#141414', '#ece9e0'],
     desc: { ko: '인마일체. 오픈 로드스터.', ja: '人馬一体のオープンカー。', en: 'Jinba-ittai, the open two-seater.' } },
   { id: 'na1', maker: 'Honda', name: 'NSX', chassis: 'NA1', year: 1991, cat: 'jdm', playable: true,
-    engine: { type: 'V6', code: 'C30A', disp: 2977, hp: 280, nm: 294, redline: 8000, idle: 800, turbo: false },
+    engine: { type: 'V6', code: 'C30A', disp: 2977, hp: 280, nm: 294, redline: 8000, idle: 800, turbo: false, vtec: 5800 },
     trans: { type: 'MT', gears: [3.066, 1.956, 1.428, 1.125, 0.914], final: 4.062, rev: 3.0 }, drive: 'MR',
     mass: 1350, L: 4430, W: 1810, H: 1170, wb: 2530, plate: 'private',
     colors: ['#c8102e', '#141414', '#b8bcc0', '#e9b81c', '#1f3f7d', '#ece9e0'],

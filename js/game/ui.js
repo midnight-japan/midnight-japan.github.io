@@ -87,7 +87,7 @@ export class UI {
           <label class="sl"><span data-i18n="game.tune.lock"></span><input type="range" id="t-lock" min="28" max="58" step="1"><b></b></label>
           <p class="note" id="t-sum"></p></div>
         <div class="gsec"><h3 data-i18n="game.garage.plate"></h3><canvas id="g-plate" width="330" height="165"></canvas>
-          <div class="row"><select id="g-pregion"></select><input id="g-pcls" maxlength="3" size="3"><select id="g-pkana"></select><input id="g-pnum" type="number" min="1" max="9999" style="width:80px"><button class="btn sm" data-a="plateRandom">🎲</button></div>
+          <div class="row"><select id="g-pregion"></select><input id="g-pcls" maxlength="3" size="3"><select id="g-pkana"></select><input id="g-pnum" type="number" min="1" max="9999" style="width:80px"><button class="btn sm" data-a="plateRandom">🎲</button></div><div class="row"><select id="g-pstyle"><option value="normal"></option><option value="glow"></option><option value="tilt"></option></select></div>
           <p class="note" id="g-ptype"></p></div>
         <div class="gsec"><h3 data-i18n="game.garage.strobe"></h3><select id="g-strobe"></select></div>
         <div class="gsec"><h3 data-i18n="game.set.transmission"></h3><select id="g-trans"><option value="auto" data-i18n="game.trans.auto"></option><option value="manual" data-i18n="game.trans.manual"></option><option value="manual_clutch" data-i18n="game.trans.manual_clutch"></option></select><p class="note" data-i18n="game.trans.note"></p></div>
@@ -95,9 +95,9 @@ export class UI {
       </div></div>
       <div id="hud" class="hidden">
         <div class="tl"><div class="loc"></div><div class="clock"></div><div class="money"></div><div class="goaltrack" id="goaltrack"></div></div>
-        <canvas id="minimap" width="200" height="200"></canvas><button id="autobtn" class="autobtn" data-a="auto" title="J">AUTO</button><button id="wxbtn" class="autobtn wxbtn" data-a="weather" title="Weather">🌤</button><div id="navhud" class="navhud" hidden><span class="nav-arrow">↑</span><span class="nav-dist"></span><button class="nav-x" data-a="navClear" aria-label="clear">✕</button></div><div id="pursuit" class="pursuithud" hidden></div>
-        <div class="speedo"><canvas id="speedo" width="260" height="260"></canvas><div class="icons"></div></div>
-        <div class="radio-banner"></div>
+        <canvas id="minimap" width="680" height="500"></canvas><button id="autobtn" class="autobtn" data-a="auto" title="J">AUTO</button><button id="wxbtn" class="autobtn wxbtn" data-a="weather" title="Weather">🌤</button><button class="autobtn mapbtn" data-a="hudMap" title="M">🗺</button><button class="autobtn garbtn" data-a="hudGarage" title="U">🔧</button><div id="keyhint" class="keyhint" hidden></div><div id="navhud" class="navhud" hidden><span class="nav-arrow">↑</span><span class="nav-dist"></span><button class="nav-x" data-a="navClear" aria-label="clear">✕</button></div><div id="pursuit" class="pursuithud" hidden></div>
+        <div class="speedo"><canvas id="speedo" width="520" height="520"></canvas><div class="icons"></div></div>
+        <div class="radio-banner"></div><div id="radiopill" class="radiopill" hidden><span class="rp-t"></span><button data-a="radioPrev" title="R">⏮</button><button data-a="radioSkip" title="Y">⏭</button><button data-a="radioNext" title="T">📻</button></div>
         <div class="prompt"><kbd></kbd><span></span></div>
         <div class="toasts"></div>
         <button class="online-pill" data-a="chat" id="online-pill"></button>
@@ -167,7 +167,7 @@ export class UI {
     this.screens('whatsnew');
   }
   showTitle() { let seen = null; try { seen = localStorage.getItem('dn.seenVer'); } catch {} if (seen !== GAME.version && !this._wnShown && !/[?&](auto|go)=/.test(location.search)) { this._wnShown = true; this.showWhatsNew(); return; } this.screens('title'); $('#hud').classList.add('hidden'); $('#title .who').innerHTML = `${esc(t('game.title.hello'))} <b>${esc(displayName())}</b>` + (currentUser() ? '' : ` · <a href="account.html">${esc(t('game.title.login'))}</a>`); this.touchMode(null); const sp = $('#t-spawn'); if (sp) { sp.value = this.g.settings.spawn || 'pa'; sp.onchange = () => { this.g.settings.spawn = sp.value; this.g.saveSettings?.(); }; } const qc = CAR_BY_ID[this.g.garage.car]; $('#quick-car').textContent = qc ? `${qc.maker} ${qc.name}` : ''; this.updateOnline(); }
-  showHUD() { this.screens(null); $('#hud').classList.remove('hidden'); this.touchMode(this.g.mode); this.paused = false; }
+  showHUD() { this.screens(null); $('#hud').classList.remove('hidden'); if (!this._khShown && this.g.mode === 'drive') { this._khShown = true; setTimeout(() => this.keyHint(), 1500); } this.touchMode(this.g.mode); this.paused = false; }
   touchMode(mode) {
     const on = this.g.settings.touch === 'on' || (this.g.settings.touch === 'auto' && this.isTouch);
     $('#touch').classList.toggle('hidden', !on || !mode);
@@ -210,6 +210,11 @@ export class UI {
       case 'teleport': this.togglePause(false); this.toggleMap(true); this.toast(t('game.map.tpHint'), 'info', 5); break;
       case 'closeCar': $('#carmenu').classList.remove('show'); break;
       case 'shopClose': $('#shop').classList.remove('show'); break;
+      case 'hudMap': this.toggleMap(); break;
+      case 'radioSkip': if (g.radio?.on) { g.radio.skip(); this.radioBanner(); } break;
+      case 'radioNext': if (g.radio) { if (!g.radio.on) g.radio.power(true); else g.radio.next(); this.radioBanner(); } break;
+      case 'radioPrev': if (g.radio?.on) { g.radio.prev(); this.radioBanner(); } break;
+      case 'hudGarage': this.quickGarage(); break;
       case 'weather': { // v2.2: one tap cycles the weather — auto → clear → cloudy → rain → storm → fog
         const M = ['auto', 'clear', 'cloudy', 'rain', 'storm', 'fog'], i = (M.indexOf(g.settings.weather || 'auto') + 1) % M.length; g.settings.weather = M[i]; g.saveSettings();
         const ic = { auto: '🌤', clear: '☀️', cloudy: '☁️', rain: '🌧', storm: '⛈', fog: '🌫' }; $('#wxbtn').textContent = ic[M[i]];
@@ -287,6 +292,9 @@ export class UI {
     $('#g-pkana').innerHTML = PLATE_KANA.map(k => `<option>${k}</option>`).join('');
     const upd = () => { const p = { ...g.carSetup(id).plate, region: $('#g-pregion').value, cls: $('#g-pcls').value.replace(/[^0-9A-Z]/gi, '').slice(0, 3) || '300', kana: $('#g-pkana').value, num: Math.max(1, Math.min(9999, +$('#g-pnum').value || 1)) }; g.applyPreview({ plate: p }); this.fillPlate(); };
     for (const s of ['#g-pregion', '#g-pcls', '#g-pkana', '#g-pnum']) $(s).onchange = upd;
+    { const L3 = (ko, ja, en) => ({ ko, ja, en })[getLang()] || en; const ps = $('#g-pstyle'); const N = { normal: L3('일반 번호판', '通常ナンバー', 'Standard plate'), glow: L3('字光式 (야광) 번호판', '字光式ナンバー', 'Illuminated (字光式) plate'), tilt: L3('꺾인 번호판 (お辞儀)', 'お辞儀ナンバー', 'Bowed (お辞儀) plate') };
+      for (const o of ps.options) o.textContent = N[o.value]; ps.value = g.carSetup(id).plate.style || 'normal';
+      ps.onchange = () => g.applyPreview({ plate: { ...g.carSetup(id).plate, style: ps.value } }); }
     this.fillPlate();
     this.relabel();
   }
@@ -449,11 +457,28 @@ export class UI {
     };
     $('#shop').classList.add('show');
   }
+  // v2.4.1: change car / tune right where you are (stops the car first if it is rolling slowly)
+  quickGarage() {
+    const g = this.g, v = g.vehicle; if (g.mode !== 'drive' && g.mode !== 'walk') return;
+    if (v && Math.abs(v.kmh) > 12) { this.toast(t('game.walk.stopfirst'), 'warn', 2); return; }
+    if (g.autopilot?.on) g.autopilot.toggle(false);
+    if (g.mode === 'walk') g.enterCar();
+    if (v) { v.vel.set(0, 0, 0); v.vx = 0; v.vlat = 0; }
+    g.openGarage();
+  }
+  // a one-line key guide when a drive starts (fades after 12 s)
+  keyHint() {
+    const el = document.getElementById('keyhint'); if (!el || matchMedia('(pointer:coarse)').matches) return;
+    const L = { ko: ['W/S 가속·브레이크', 'A/D 조향', 'M 지도', 'U 차고·튜닝', 'J 자동주행', 'C 카메라', 'L 라이트', 'B 비상등', 'Y 다음 곡', 'Esc 메뉴'], ja: ['W/S アクセル・ブレーキ', 'A/D ハンドル', 'M 地図', 'U ガレージ', 'J 自動運転', 'C カメラ', 'L ライト', 'B ハザード', 'Y 次の曲', 'Esc メニュー'], en: ['W/S throttle·brake', 'A/D steer', 'M map', 'U garage', 'J autopilot', 'C camera', 'L lights', 'B hazards', 'Y next song', 'Esc menu'] }[getLang()] || null;
+    const items = L || ['W/S throttle·brake', 'A/D steer', 'M map', 'U garage', 'J autopilot', 'C camera', 'L lights', 'B hazards', 'Esc menu'];
+    el.innerHTML = items.map(x => { const [k, ...r] = x.split(' '); return `<span><kbd>${esc(k)}</kbd>${esc(r.join(' '))}</span>`; }).join('');
+    el.hidden = false; el.classList.remove('fade'); clearTimeout(this._khT); this._khT = setTimeout(() => el.classList.add('fade'), 12000); setTimeout(() => { if (el.classList.contains('fade')) el.hidden = true; }, 13500);
+  }
   setAuto(on) { document.getElementById('autobtn')?.classList.toggle('on', !!on); }
   toggleMap(force) {
     this.mapOpen = force ?? !this.mapOpen; $('#map').classList.toggle('show', this.mapOpen);
     if (!this.mapOpen) return;
-    const cv = $('#bigmap'), dpr = Math.min(2, devicePixelRatio || 1); cv.width = innerWidth * dpr; cv.height = innerHeight * dpr;
+    const cv = $('#bigmap'), dpr = Math.min(2, devicePixelRatio || 1); const rb = cv.getBoundingClientRect(); cv.width = (rb.width || innerWidth) * dpr; cv.height = (rb.height || innerHeight) * dpr;
     if (!this.mv) { this.mv = { x: 0, z: 0, k: 0.35 * dpr }; this.wireMap(cv); }
     // v2.2: open on your own position (≈ 2.5 km across) and keep following you; driving / autopilot carry on underneath
     this.mv.k = Math.min(cv.width, cv.height) / 2500; this.mapFollow = true; this.mapCenterMe();
@@ -559,6 +584,8 @@ export class UI {
   }
   update(dt) {
     const g = this.g;
+    this._rpT = (this._rpT || 0) - dt;
+    if (this._rpT <= 0) { this._rpT = 0.5; const pill = document.getElementById('radiopill'), r = g.radio; if (pill) { const on = !!(r?.on && g.mode === 'drive'); pill.hidden = !on; if (on) { const n = r.nowPlaying(), txt = `📻 ${n.station} · ${n.title || ''}${n.artist ? ' — ' + n.artist : ''}`; if (txt !== this._rpTxt) { this._rpTxt = txt; pill.querySelector('.rp-t').textContent = txt; } } } }
     if (this._promptT !== undefined) { this._promptT -= dt; if (this._promptT <= 0) { $('#hud .prompt').classList.remove('show'); this._promptT = undefined; } }
     if (g.mode !== 'drive' && g.mode !== 'walk') return;
     if (g.mode === 'drive' && g.vehicle) this.drawSpeedo(g.vehicle, dt); // every frame: smooth needle/gear motion
@@ -583,6 +610,7 @@ export class UI {
   }
   drawSpeedo(v, dt = 1 / 20) {
     const c = this.speedo, W = 260, cx = 130, cy = 130;
+    c.setTransform(c.canvas.width / 260, 0, 0, c.canvas.width / 260, 0, 0); // v2.4.1: drawn at 2× (sharp on Retina / phones)
     c.clearRect(0, 0, W, W);
     // display-only smoothing (needle sweep, speed digits, gear-change pop)
     const kR = 1 - Math.exp(-dt * 16), kS = 1 - Math.exp(-dt * 10);
@@ -611,6 +639,17 @@ export class UI {
       c.strokeStyle = f >= 0 ? '#4fd1ff' : '#4cff9a'; c.beginPath(); c.arc(cx, cy, 108, a0 + (a1 - a0) * 0.2, a0 + (a1 - a0) * (0.2 + f * 0.8), f < 0); c.stroke();
       c.fillStyle = 'rgba(255,255,255,.6)'; c.font = '600 13px system-ui'; c.textAlign = 'center'; c.fillText(v.regenActive ? 'REGEN' : 'POWER', cx, cy - 70);
     }
+    if (!v.ev) {
+      // v2.4.1: minor ticks every 500 rpm, shift lights, turbo boost
+      c.strokeStyle = 'rgba(255,255,255,.35)'; c.lineWidth = 2;
+      for (let r = 0; r <= maxR; r += 500) { const a = a0 + (a1 - a0) * r / maxR, r0 = r % 1000 ? 97 : 94; c.beginPath(); c.moveTo(cx + Math.cos(a) * r0, cy + Math.sin(a) * r0); c.lineTo(cx + Math.cos(a) * 100, cy + Math.sin(a) * 100); c.stroke(); }
+      const sl = (rpm - red * 0.72) / (red * 0.24), flash = rpm > red * 0.96 && (performance.now() % 160) < 80;
+      for (let i = 0; i < 7; i++) { const on = sl * 7 > i, x = cx - 42 + i * 14, y = cy - 52; const col = i < 3 ? '#38e07b' : i < 5 ? '#ffd23f' : '#ff3b3b';
+        c.fillStyle = flash ? '#5aa9ff' : on ? col : 'rgba(255,255,255,.1)'; c.beginPath(); c.arc(x, y, 4.2, 0, Math.PI * 2); c.fill(); }
+      if (v.car.engine.turbo) { const bst = Math.max(0, v.engine.boost || 0); c.lineWidth = 5; c.strokeStyle = 'rgba(255,255,255,.1)'; c.beginPath(); c.arc(cx, cy, 70, Math.PI * 0.62, Math.PI * 0.38, true); c.stroke();
+        c.strokeStyle = '#5ad1ff'; c.beginPath(); c.arc(cx, cy, 70, Math.PI * 0.62, Math.PI * 0.62 - bst * Math.PI * 0.24 * 1, true); c.stroke();
+        c.fillStyle = 'rgba(160,225,255,.85)'; c.font = '600 9px system-ui'; c.textAlign = 'right'; c.fillText('BOOST ' + (bst * 1.2).toFixed(1), cx - 24, cy + 92); }
+    }
     const sp = g => this.g.settings.units === 'mph' ? g * 0.621 : g;
     c.fillStyle = '#fff'; c.font = '700 54px "Chakra Petch", system-ui'; c.textAlign = 'center'; c.textBaseline = 'middle';
     c.fillText(Math.round(Math.abs(sp(Math.abs(v.kmh) < 0.5 ? v.kmh : this._kmhS))), cx, cy + 4);
@@ -631,41 +670,74 @@ export class UI {
     if (this.g.model.lights.strobe !== 'off') ic.push('<i class="on">STROBE</i>');
     const html = ic.join(''); if (html !== this._ic) { $('#hud .icons').innerHTML = html; this._ic = html; }
   }
+  // v2.4.1: a big heading-up map in the bottom-left — the real map (OSM raster) underneath the roads, traffic, your
+  // car and route, zooming out with speed; the footer names your car and where you are
+  mapTile(lv, i, j) {
+    const R = this.mapRaster || (this.mapRaster = { idx: null, img: new Map() });
+    if (!R.idx) { if (!R.loading) R.loading = fetch(new URL('../../assets/map/index.json', import.meta.url)).then(r => r.json()).then(j => { R.idx = j; R.has = j.levels.map(L => new Set(L.tiles.map(t => t[0] + '_' + t[1]))); }).catch(() => {}); return null; }
+    const key = i + '_' + j; if (!R.has[lv]?.has(key)) return null;
+    const id = lv + '/' + key; let im = R.img.get(id);
+    if (!im) { im = new Image(); im.decoding = 'async'; im.src = new URL(`../../assets/map/${id}.webp`, import.meta.url).href; R.img.set(id, im); }
+    return im.complete && im.naturalWidth ? im : null;
+  }
   drawMini(pos, yaw) {
-    const c = this.mini, W = 200, S = 0.45; // px per metre
-    c.save(); c.clearRect(0, 0, W, W);
-    c.beginPath(); c.arc(100, 100, 98, 0, Math.PI * 2); c.clip();
-    c.fillStyle = 'rgba(8,14,26,.82)'; c.fillRect(0, 0, W, W);
-    c.translate(100, 100); c.rotate(Math.PI + yaw); c.scale(S, S); c.translate(-pos.x, -pos.z);
-    // PA lot
-    c.fillStyle = 'rgba(120,140,170,.25)'; c.fillRect(PA_RECT.x0, PA_RECT.z0, PA_RECT.x1 - PA_RECT.x0, PA_RECT.z1 - PA_RECT.z0);
-    c.fillStyle = 'rgba(200,210,230,.35)'; c.fillRect(-55, -84, 110, 24);
-    // city streets around you (streamed with the city tiles)
-    const N = this.g.world.city?.net;
-    if (N) { c.strokeStyle = 'rgba(150,160,178,.55)'; c.lineCap = 'round'; const R = 260;
-      for (const ch of N.chains.values()) { if (ch.dead || ch.bb[2] < pos.x - R || ch.bb[0] > pos.x + R || ch.bb[3] < pos.z - R || ch.bb[1] > pos.z + R) continue; c.lineWidth = Math.max(3, ch.w * 0.8); c.beginPath(); ch.pts.forEach((q, i) => i ? c.lineTo(q[0], q[1]) : c.moveTo(q[0], q[1])); c.stroke(); } }
+    const cv = this.mini.canvas, c = this.mini, DW = cv.width, DH = cv.height;
+    const box = cv.getBoundingClientRect(); const W = box.width || 340, H = box.height || 250, k = DW / W;
+    const v = this.g.vehicle, kmh = Math.abs(v?.kmh || 0);
+    this._mmS = this._mmS === undefined ? 0.5 : this._mmS + ((0.62 - Math.min(0.34, kmh / 450)) - this._mmS) * 0.08;
+    const S = this._mmS * (W / 340) * 1.15, cx = W / 2, cy = H * 0.6, FOOT = 26, rr = 14;
+    c.save(); c.setTransform(k, 0, 0, k, 0, 0); c.clearRect(0, 0, W, H);
+    const rrect = (x, y, w, h, r) => { c.beginPath(); c.moveTo(x + r, y); c.arcTo(x + w, y, x + w, y + h, r); c.arcTo(x + w, y + h, x, y + h, r); c.arcTo(x, y + h, x, y, r); c.arcTo(x, y, x + w, y, r); c.closePath(); };
+    rrect(0, 0, W, H, rr); c.clip();
+    c.fillStyle = 'rgba(14,30,52,.9)'; c.fillRect(0, 0, W, H);
+    c.save(); c.translate(cx, cy); c.rotate(Math.PI + yaw); c.scale(S, S); c.translate(-pos.x, -pos.z);
+    // real map underneath (4 m/px detail, 16 m/px further out)
+    const R = this.mapRaster, reach = Math.hypot(W, H) / S;
+    for (const lv of [0, 1]) { this.mapTile(lv, 0, 0); const L = R?.idx?.levels?.[lv]; if (!L) continue; const s2 = L.size;
+      c.globalAlpha = lv ? 0.95 : 0.8;
+      for (let i = Math.floor((pos.x - reach) / s2); i * s2 < pos.x + reach; i++) for (let j = Math.floor((pos.z - reach) / s2); j * s2 < pos.z + reach; j++) { const im = this.mapTile(lv, i, j); if (im) c.drawImage(im, i * s2, j * s2, s2 + 0.5, s2 + 0.5); } }
+    c.globalAlpha = 1;
+    c.fillStyle = 'rgba(120,140,170,.3)'; c.fillRect(PA_RECT.x0, PA_RECT.z0, PA_RECT.x1 - PA_RECT.x0, PA_RECT.z1 - PA_RECT.z0);
+    const N = this.g.world.city?.net, RR = reach;
+    if (N) { c.strokeStyle = 'rgba(205,212,225,.55)'; c.lineCap = 'round';
+      for (const ch of N.chains.values()) { if (ch.dead || ch.bb[2] < pos.x - RR || ch.bb[0] > pos.x + RR || ch.bb[3] < pos.z - RR || ch.bb[1] > pos.z + RR) continue; c.lineWidth = Math.max(3, ch.w * 0.8); c.beginPath(); ch.pts.forEach((q, i) => i ? c.lineTo(q[0], q[1]) : c.moveTo(q[0], q[1])); c.stroke(); } }
     for (const r of this.g.net.roads) {
-      c.strokeStyle = r.kind === 'expressway' ? '#3fbf7f' : r.kind === 'ramp' ? '#8fd6ae' : '#9aa6b8'; c.lineWidth = (r.edgeL - r.edgeR); c.lineCap = 'round';
-      c.globalAlpha = 0.6; c.beginPath(); r.samples.forEach((s, i) => { if (i % 3 && i !== r.samples.length - 1) return; i ? c.lineTo(s.p.x, s.p.z) : c.moveTo(s.p.x, s.p.z); }); c.stroke();
+      const bb = r._bb || (r._bb = r.samples.reduce((b, q) => [Math.min(b[0], q.p.x), Math.min(b[1], q.p.z), Math.max(b[2], q.p.x), Math.max(b[3], q.p.z)], [1e9, 1e9, -1e9, -1e9]));
+      if (bb[2] < pos.x - RR || bb[0] > pos.x + RR || bb[3] < pos.z - RR || bb[1] > pos.z + RR) continue;
+      c.strokeStyle = r.kind === 'expressway' ? '#2fd07f' : r.kind === 'ramp' ? '#93e0b6' : '#c4ccd8'; c.lineWidth = Math.max(4 / S, r.edgeL - r.edgeR); c.lineCap = 'round';
+      c.globalAlpha = 0.85; c.beginPath(); r.samples.forEach((q, i) => { if (i % 3 && i !== r.samples.length - 1) return; i ? c.lineTo(q.p.x, q.p.z) : c.moveTo(q.p.x, q.p.z); }); c.stroke();
     }
     c.globalAlpha = 1;
-    for (const ai of this.g.traffic.cars) { if (ai.pos.distanceToSquared(pos) > 250 * 250) continue; c.fillStyle = ai.police ? (ai.pursuit ? '#ff3030' : '#4a8cff') : 'rgba(255,255,255,.7)'; c.fillRect(ai.pos.x - 2.5, ai.pos.z - 2.5, 5, 5); }
+    for (const ai of this.g.traffic.cars) { if (ai.pos.distanceToSquared(pos) > RR * RR) continue; c.fillStyle = ai.police ? (ai.pursuit ? '#ff3030' : '#4a8cff') : 'rgba(255,255,255,.8)'; const q = 2.6 / S * 1.6; c.fillRect(ai.pos.x - q, ai.pos.z - q, q * 2, q * 2); }
     this.drawNav(c, 1 / S);
     c.restore();
-    // destination / police off the minimap edge: a pointer on the rim
-    const rim = (x, z, col) => { const a = Math.atan2(x - pos.x, z - pos.z) - yaw; const d = Math.hypot(x - pos.x, z - pos.z) * S; if (d < 90) return; const ang = -a - Math.PI / 2; c.fillStyle = col; c.beginPath(); c.arc(100 + Math.cos(ang) * 90, 100 + Math.sin(ang) * 90, 5, 0, Math.PI * 2); c.fill(); };
+    // pointers on the edge for the destination / police
+    const rim = (x, z, col) => { const a = Math.atan2(x - pos.x, z - pos.z) - yaw; const d = Math.hypot(x - pos.x, z - pos.z) * S; if (d < Math.min(W, H) * 0.42) return; const ang = -a - Math.PI / 2; const R2 = Math.min(W, H) * 0.42; c.fillStyle = col; c.beginPath(); c.arc(cx + Math.cos(ang) * R2, cy + Math.sin(ang) * R2 * 0.9, 6, 0, Math.PI * 2); c.fill(); };
     if (this.g.nav?.target) rim(this.g.nav.target.x, this.g.nav.target.z, '#3fb6ff');
     const ls = this.g.police?.lastSeen; if (ls) rim(ls.x, ls.z, '#ff3030');
-    // player arrow
-    c.fillStyle = '#ffb347'; c.beginPath(); c.moveTo(100, 88); c.lineTo(108, 108); c.lineTo(100, 103); c.lineTo(92, 108); c.closePath(); c.fill();
-    c.strokeStyle = 'rgba(255,255,255,.25)'; c.lineWidth = 2; c.beginPath(); c.arc(100, 100, 98, 0, Math.PI * 2); c.stroke();
-    c.fillStyle = '#fff'; c.font = '700 12px system-ui'; c.textAlign = 'center';
-    const nAng = -(Math.PI + yaw) - Math.PI / 2 + Math.PI; c.fillText('N', 100 + Math.cos(-Math.PI / 2 - (Math.PI + yaw)) * 86, 104 + Math.sin(-Math.PI / 2 - (Math.PI + yaw)) * 86);
+    // you: a glowing arrow + a soft "here" ring
+    c.fillStyle = 'rgba(255,179,71,.18)'; c.beginPath(); c.arc(cx, cy, 20, 0, Math.PI * 2); c.fill();
+    c.save(); c.shadowColor = '#ffb347'; c.shadowBlur = 10; c.fillStyle = '#ffb347'; c.strokeStyle = '#1a0e00'; c.lineWidth = 1.5;
+    c.beginPath(); c.moveTo(cx, cy - 13); c.lineTo(cx + 9, cy + 9); c.lineTo(cx, cy + 4); c.lineTo(cx - 9, cy + 9); c.closePath(); c.fill(); c.stroke(); c.restore();
+    // north
+    const na = -Math.PI / 2 - (Math.PI + yaw), nr = Math.min(W, H) * 0.5 - 18; c.fillStyle = 'rgba(8,14,26,.7)'; const nx = Math.max(14, Math.min(W - 14, cx + Math.cos(na) * nr * 1.6)), ny = Math.max(14, Math.min(H - FOOT - 12, cy + Math.sin(na) * nr * 1.6));
+    c.beginPath(); c.arc(nx, ny, 10, 0, Math.PI * 2); c.fill(); c.fillStyle = '#ff6b5a'; c.font = '800 12px system-ui'; c.textAlign = 'center'; c.textBaseline = 'middle'; c.fillText('N', nx, ny + 0.5);
+    // scale bar
+    const m = [50, 100, 200, 500, 1000].find(x => x * S > 50) || 1000, px = m * S; c.strokeStyle = 'rgba(255,255,255,.8)'; c.lineWidth = 2; c.beginPath(); c.moveTo(W - 12 - px, H - FOOT - 10); c.lineTo(W - 12, H - FOOT - 10); c.stroke();
+    c.fillStyle = 'rgba(255,255,255,.85)'; c.font = '600 10px system-ui'; c.textAlign = 'right'; c.fillText(m >= 1000 ? '1 km' : m + ' m', W - 12, H - FOOT - 20);
+    // footer: car · place
+    c.fillStyle = 'rgba(6,10,20,.78)'; c.fillRect(0, H - FOOT, W, FOOT);
+    const car = v?.car; c.textBaseline = 'middle'; c.textAlign = 'left'; c.fillStyle = '#ffb347'; c.font = '700 12px system-ui';
+    const cn = car ? `${car.maker} ${car.name}` : ''; c.fillText(cn.length > 30 ? cn.slice(0, 29) + '…' : cn, 10, H - FOOT / 2);
+    const loc = (document.querySelector('#hud .loc')?.firstChild?.textContent || '').split('・')[0];
+    c.textAlign = 'right'; c.fillStyle = 'rgba(255,255,255,.85)'; c.font = '600 11px system-ui'; c.fillText(loc.slice(0, 18), W - 10, H - FOOT / 2);
+    c.restore();
+    c.save(); c.setTransform(k, 0, 0, k, 0, 0); c.strokeStyle = 'rgba(255,255,255,.22)'; c.lineWidth = 1.5; rrect(0.75, 0.75, W - 1.5, H - 1.5, rr); c.stroke(); c.restore();
   }
   // route polyline + destination (+ police last-seen) in world coordinates on an already transformed canvas
   drawNav(c, px) {
     const nv = this.g.nav;
-    if (nv?.route?.length > 1) { c.strokeStyle = '#3fb6ff'; c.lineWidth = 5 * px; c.lineCap = c.lineJoin = 'round'; c.globalAlpha = 0.9; c.beginPath(); nv.route.forEach((q, i) => i ? c.lineTo(q[0], q[1]) : c.moveTo(q[0], q[1])); c.stroke(); c.globalAlpha = 1; }
+    if (nv?.route?.length > 1) { c.lineCap = c.lineJoin = 'round'; c.globalAlpha = 1; c.strokeStyle = 'rgba(0,20,45,.85)'; c.lineWidth = 11 * px; c.beginPath(); nv.route.forEach((q, i) => i ? c.lineTo(q[0], q[1]) : c.moveTo(q[0], q[1])); c.stroke(); c.strokeStyle = '#3fb6ff'; c.lineWidth = 7 * px; c.lineCap = c.lineJoin = 'round'; c.globalAlpha = 0.9; c.beginPath(); nv.route.forEach((q, i) => i ? c.lineTo(q[0], q[1]) : c.moveTo(q[0], q[1])); c.stroke(); c.globalAlpha = 1; }
     if (nv?.target) { c.fillStyle = '#3fb6ff'; c.beginPath(); c.arc(nv.target.x, nv.target.z, 7 * px, 0, Math.PI * 2); c.fill(); c.strokeStyle = '#fff'; c.lineWidth = 2 * px; c.stroke(); }
     const ls = this.g.police?.lastSeen; if (ls) { c.fillStyle = 'rgba(255,48,48,.25)'; c.beginPath(); c.arc(ls.x, ls.z, ls.r || 120, 0, Math.PI * 2); c.fill(); c.fillStyle = '#ff3030'; c.beginPath(); c.arc(ls.x, ls.z, 6 * px, 0, Math.PI * 2); c.fill(); }
   }
@@ -691,7 +763,7 @@ export class UI {
   drawBigMap() {
     const cv = $('#bigmap'), c = cv.getContext('2d'), W = cv.width, H = cv.height, m = this.mv, k = m.k;
     const P = (x, z) => [(x - m.x) * k + W / 2, (z - m.z) * k + H / 2];
-    const dpr = W / innerWidth;
+    const dpr = W / (cv.getBoundingClientRect().width || innerWidth);
     c.clearRect(0, 0, W, H); c.fillStyle = 'rgba(10,26,51,.78)'; c.fillRect(0, 0, W, H); // sea (translucent: the drive goes on underneath)
     const poly = (pts, fill) => { c.beginPath(); pts.forEach(([x, z], i) => { const [a, b] = P(x, z); i ? c.lineTo(a, b) : c.moveTo(a, b); }); c.closePath(); c.fillStyle = fill; c.fill(); };
     for (const l of MAP.land || []) if (l.pts?.length > 2) poly(l.pts, l.main ? '#1d2633' : '#222c3a');

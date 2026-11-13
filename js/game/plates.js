@@ -72,8 +72,19 @@ export function plateCanvas(p, w = 660, h = 330) {
   return c;
 }
 
+// v2.4.1: 字光式 (illuminated) plates — the characters glow green-white after dark: an emissive map of the glyphs only
+export function plateGlowTexture(p) {
+  const key = 'glow' + JSON.stringify({ ...p, style: 0 });
+  if (cache.has(key)) return cache.get(key);
+  const w = 660, h = 330, c = document.createElement('canvas'); c.width = w; c.height = h; const g = c.getContext('2d');
+  g.fillStyle = '#000'; g.fillRect(0, 0, w, h); g.fillStyle = '#ffffff'; g.textBaseline = 'middle'; g.textAlign = 'center';
+  g.font = `600 70px ${FONT}`; g.fillText(`${p.region}  ${p.cls}`, w / 2, 70, w * 0.62);
+  g.font = `600 78px ${FONT}`; g.fillText(p.kana, 72, 222);
+  g.font = `700 172px ${FONT}`; g.save(); g.translate(w / 2 + 40, 222); g.scale(0.8, 1.15); g.fillText(formatNumber(p.num), 0, 0, w * 0.95); g.restore();
+  const t = new THREE.CanvasTexture(c); t.colorSpace = THREE.SRGBColorSpace; cache.set(key, t); return t;
+}
 export function plateTexture(p) {
-  const key = JSON.stringify(p);
+  const key = JSON.stringify({ ...p, style: 0 });
   if (cache.has(key)) return cache.get(key);
   const t = new THREE.CanvasTexture(plateCanvas(p));
   t.colorSpace = THREE.SRGBColorSpace; t.anisotropy = 4;

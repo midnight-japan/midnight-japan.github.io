@@ -241,6 +241,7 @@ class Game {
     const model = buildCarAuto(car, { color: S.color, finish: S.finish, plate: S.plate });
     model.setStance(S);
     if (S.rim) model.setRimColor(S.rim);
+    if (S.plate?.style && S.plate.style !== 'normal') model.setPlate(S.plate);
     model.lights.strobe = 'off'; model.strobeMode = S.strobe;
     model.root.traverse(o => { if (o.isMesh) o.castShadow = true; });
     return model;
@@ -514,7 +515,7 @@ class Game {
         case 'stall': this.engineSnd?.stall(); this.ui.toast(t('game.car.stall'), 'warn', 2.5); break;
         case 'lurch': this.ui.toast(t('game.car.clutchStart'), 'warn', 2.5); break;
         case 'grind': this.audio.sfx('clutch'); this.ui.toast(t('game.car.grind'), 'warn', 1.5); break;
-        case 'shift': this.engineSnd?.shift(); break;
+        case 'shift': case 'shift_auto': this.engineSnd?.shift((v.ctl?.throttle || 0) > 0.8 && v.engine.rpm > v.car.engine.redline * 0.75); break;
         case 'blowoff': this.engineSnd?.blowOff(); break;
         case 'backfire': this.engineSnd?.backfire(); break;
         case 'crash': if (!this._crashT && v.lastHit && performance.now() - v.lastHit.t < 300) this.fx?.damage(this.model, v.lastHit, v.lastHit.vin); if (!this._crashT) this.accidents.onCrash(v.speed); if (!this._crashT) { this.audio.sfx('crash', { position: v.pos, volume: clamp(v.speed / 20, 0.3, 1) }); this._crashT = 0.5; this.shake = Math.min(1, v.speed / 15); } break;
@@ -522,7 +523,16 @@ class Game {
     }
     v.events.length = 0;
     this._crashT = Math.max(0, (this._crashT || 0) - dt) || 0;
-    if (v.inWater) { this.ui.toast(t('game.car.water'), 'warn', 3); v.inWater = false; this.respawnPA(); }
+    // v2.4.1: never lost to the sea — the last spot where the car sat on a road is kept; falling through a gap (6 m
+    // below that road, off any road) or touching the water puts it straight back there, facing the same way
+    if (v.onRoad && !v.airborne && Math.abs(v.kmh) < 400) { this._safeT = (this._safeT || 0) - dt; if (this._safeT <= 0) { this._safeT = 0.25; (this._safe ||= { p: new THREE.Vector3(), yaw: 0 }).p.copy(v.pos); this._safe.yaw = v.yaw; } }
+    const fell = this._safe && !v.onRoad && v.pos.y < this._safe.p.y - 6 && Math.hypot(v.pos.x - this._safe.p.x, v.pos.z - this._safe.p.z) < 80; // (not after a teleport)
+    if (this._safe && Math.hypot(v.pos.x - this._safe.p.x, v.pos.z - this._safe.p.z) > 200) this._safe = null;
+    if (v.inWater || fell) {
+      v.inWater = false;
+      if (this._safe) { const sp = Math.min(Math.abs(v.vx), 15); v.place(this._safe.p.clone(), this._safe.yaw); v.vel.copy(v.forward).multiplyScalar(sp * 0.5); v.vx = sp * 0.5; this.ui.toast(t('game.car.water'), 'info', 2); }
+      else { this.ui.toast(t('game.car.water'), 'warn', 3); this.respawnPA(); }
+    }
     // out-of-area boundary
     if (v.road && (v.road.lanesB || v.road.partner)) {
       const h = v.surface.hit, r = v.road;
@@ -741,6 +751,8 @@ class Game {
       this.goals.update(dt);
     }
     if (I.act('map')) this.ui.toggleMap();
+    if (I.act('garage')) this.ui.quickGarage();
+    if (I.act('radioSkip') && this.radio?.on) { this.radio.skip(); this.ui.radioBanner(); }
     if (I.act('photo')) this.ui.togglePhoto();
     this.updateCamera(dt);
     this.world.viewPos = this.camera.position;

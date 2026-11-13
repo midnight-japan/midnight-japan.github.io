@@ -120,7 +120,7 @@ export class Traffic {
   remove(ai) {
     if (ai.snd) { try { ai.snd.dispose(); } catch {} ai.snd = null; }
     this.scene.remove(ai.model.root);
-    ai.model.root.traverse(o => { if (o.geometry && o !== ai.beam) o.geometry.dispose(); });
+    ai.model.root.traverse(o => { if (o.geometry && o !== ai.beam && !o.geometry.userData.shared) o.geometry.dispose(); }); // v2.4.1: real-model geometry is shared by every copy — disposing it re-uploaded it for the next car
     this.cars.splice(this.cars.indexOf(ai), 1);
     if (ai.spot) ai.spot.taken = false;
     if (ai.driver) this.g.npc?.removeDriver(ai);
@@ -202,8 +202,11 @@ export class Traffic {
     for (const c of this.cars) {
       if (!c.snd) continue;
       const E = c.car.engine, kmh = (c.v || 0) * 3.6, idle = E.idle || 750, red = E.redline || 6500;
-      const span = c.car.mass > 4000 ? 18 : 32, g = Math.floor(kmh / span), frac = (kmh % span) / span;
-      const rpm = kmh < 2 ? idle : Math.min(red * 0.75, idle * 1.15 + frac * red * 0.32 + Math.min(g, 4) * red * 0.04);
+      // v2.4.1: the car's real gear ratios — the highest gear that keeps the engine above its cruising floor
+      const T = c.car.trans || {}, gs = T.gears?.length ? T.gears : [3.5, 2.1, 1.4, 1.0, 0.8], fin = T.final || 4.1, wr = 0.31;
+      const acc = (c.v || 0) - (c._vPrev ?? c.v ?? 0); c._vPrev = c.v || 0; const want = acc > 0.02 ? 0.36 : 0.26;
+      let rpm = idle;
+      if (kmh >= 2) { const w = (c.v || 0) / wr * 60 / (2 * Math.PI); let r0 = w * gs[0] * fin; for (let i = gs.length - 1; i >= 0; i--) { const r = w * gs[i] * fin; if (r >= red * want || i === 0) { r0 = r; break; } } rpm = Math.max(idle * 1.1, Math.min(red * 0.8, r0)); }
       c.snd.update({ rpm, throttle: c.braking ? 0 : kmh > 2 ? 0.35 : 0, load: c.braking ? -0.3 : 0.25, running: true, cranking: false, boost: 0, speed: c.v || 0, slip: 0, position: c.pos, interior: false, openness: 1 });
     }
   }
