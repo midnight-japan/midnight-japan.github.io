@@ -1,8 +1,15 @@
 // Shared game metadata: version, changelog, regions. Update VERSION + CHANGELOG on every release.
-export const GAME = { title: 'MIDNIGHT JAPAN', titleJa: 'ミッドナイト・ジャパン', version: '2.2.1', build: '2026.11.13' };
+export const GAME = { title: 'MIDNIGHT JAPAN', titleJa: 'ミッドナイト・ジャパン', version: '2.2.2', build: '2026.11.13' };
 
 // Newest first. type: new | change | fix | known
 export const CHANGELOG = [
+  {
+    version: '2.2.2', date: '2026-11-13', codename: 'Bugfix',
+    summary: { ko: '버그 수정: 지상으로 내려온 램프(다이시·헤이와지마·시바우라) 끝을 실제 시내 도로와 포장 연결로 이어 막다른 길 제거.', ja: 'バグ修正：地上に下りたランプ（大師・平和島・芝浦）の終点を実際の街の道路と舗装でつなぎ、行き止まりを解消。', en: 'Bug fixes: the feet of the ramps brought down to the ground (Daishi, Heiwajima, Shibaura) are paved through to the real streets — no more dead ends there.' },
+    items: [
+      { type: "fix", ko: "다이시·헤이와지마·시바우라 램프 끝이 시내 도로에서 8~36m 떨어져 막다른 길이 되던 문제 — 가장 가까운 실제 도로까지 짧은 포장 연결", ja: "大師・平和島・芝浦のランプの終点が街の道路から8〜36m離れて行き止まりになっていた問題——いちばん近い実際の道路まで短い舗装でつなぐ", en: "The Daishi, Heiwajima and Shibaura ramps ended 8–36 m short of the city streets (a dead end) — a short paved link now joins them to the nearest real street" },
+    ]
+  },
   {
     version: '2.2.1', date: '2026-11-13', codename: '60fps',
     summary: { ko: '모든 기기에서 60프레임 목표: 선명한 해상도는 유지하고 무거운 효과부터 자동으로 줄이는 프레임 관리, 셰이더 미리 컴파일로 끊김 감소.', ja: 'すべての端末で60fpsを目標に：くっきりした解像度は保ち、重い効果から自動で減らすフレーム管理、シェーダーの事前コンパイルでカクつきを軽減。', en: '60 fps on every device: sharpness is kept while the heaviest effects are dialled back automatically, and shaders compile behind the loading screen to stop the hitches.' },

@@ -744,6 +744,7 @@ class Game {
     this.world.updateDynamicLights(dt, this.focus, this.env.night);
     this.world.city?.update(dt, this.focus, this.env.night);
     this.plateau?.update(this.focus);
+    if ((this._rlT = (this._rlT || 0) - dt) <= 0) { this._rlT = 2; try { this.world.updateRampLinks(); } catch (e) { console.warn('ramp links', e); } }
     // audio listener & environment
     if (this.audio.ready) {
       const cam = this.camera; const fw = new THREE.Vector3(); cam.getWorldDirection(fw);

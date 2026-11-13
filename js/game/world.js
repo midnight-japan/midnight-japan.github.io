@@ -1231,7 +1231,32 @@ export class World {
   // v2.0 — may a car (walk = false) or a person (walk = true) be at (x, z) at height y? Everywhere on the map: only
   // carriageways and their shoulders, car parks (Daikoku PA, Umihotaru, Hakone, every OSM car park and forecourt),
   // footpaths / sidewalks and building interiors for people. Returns true while the city tile there is still loading.
+  // v2.2.2 — a ramp continued down to the ground (roads.js landHangingRamps) is linked to the nearest real street with a
+  // short paved connector once that street has streamed in (otherwise the fence made its foot a dead end)
+  updateRampLinks() {
+    const c = this.city; if (!c) return; this.rampLinks ||= [];
+    for (const r of this.net.roads) {
+      if (!r.landed) continue;
+      for (const e of [0, 1]) {
+        const key = r.id + e; if (this.rampLinks.some(l => l.key === key)) continue;
+        const S = r.samples, q = S[e ? S.length - 1 : 0], p = q.p; if (p.y > 1) continue;
+        if (c.maskAt(p.x, p.z) === -1 || c.maskAt(p.x, p.z) === -2) continue; // street data not here yet
+        let best = null;
+        for (let rr = 2; rr <= 70 && !best; rr += 2) for (let a = 0; a < Math.PI * 2; a += 0.15) { const x = p.x + Math.cos(a) * rr, z = p.z + Math.sin(a) * rr; if (c.maskAt(x, z) === 2) { best = { x, z }; break; } }
+        if (!best) { this.rampLinks.push({ key, none: true }); continue; }
+        const w = (r.edgeL - r.edgeR) / 2, L = { key, ax: p.x, az: p.z, bx: best.x, bz: best.z, w };
+        this.rampLinks.push(L);
+        const dx = L.bx - L.ax, dz = L.bz - L.az, len = Math.hypot(dx, dz) || 1, nx = -dz / len * w, nz = dx / len * w, ex = dx / len * 2, ez = dz / len * 2, y = 0.04;
+        const g = new THREE.BufferGeometry(); g.setAttribute('position', new THREE.Float32BufferAttribute([L.ax + nx - ex, y, L.az + nz - ez, L.bx + nx + ex, y, L.bz + nz + ez, L.bx - nx + ex, y, L.bz - nz + ez, L.ax + nx - ex, y, L.az + nz - ez, L.bx - nx + ex, y, L.bz - nz + ez, L.ax - nx - ex, y, L.az - nz - ez], 3));
+        g.setAttribute('uv', new THREE.Float32BufferAttribute([0, 0, 0, len / 4, 1, len / 4, 0, 0, 1, len / 4, 1, 0], 2)); g.computeVertexNormals();
+        if (g.attributes.normal.getY(0) < 0) g.scale(1, -1, 1);
+        const m = new THREE.Mesh(g, c.mRoad ? (() => { const mm = c.mRoad.clone(); mm.vertexColors = false; mm.side = THREE.DoubleSide; return mm; })() : new THREE.MeshStandardMaterial({ color: 0x3a3a3c, roughness: 0.9, side: THREE.DoubleSide }));
+        m.receiveShadow = true; m.name = 'ramp-link'; this.group.add(m);
+      }
+    }
+  }
   access(x, z, y, walk = false) {
+    if (this.rampLinks) for (const L of this.rampLinks) { if (L.none || y > 2) continue; const dx = L.bx - L.ax, dz = L.bz - L.az, L2 = dx * dx + dz * dz || 1e-9, t = Math.max(0, Math.min(1, ((x - L.ax) * dx + (z - L.az) * dz) / L2)); if (Math.hypot(x - L.ax - dx * t, z - L.az - dz * t) < L.w + 1.5) return true; }
     for (const h of this.net.hits(x, z)) {
       if (h.beyond || Math.abs(h.y - y) > 2.5) continue;
       const m = h.road.kind === 'local' ? (h.road.sidewalk || 3) + (walk ? 2 : 1.2) : (walk ? 2.6 : 1.4);

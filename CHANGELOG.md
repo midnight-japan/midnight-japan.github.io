@@ -1,9 +1,10 @@
 # 📜 MIDNIGHT JAPAN 업데이트 기록 · Changelog
 
-현재 버전 · Current: **v2.2.1** · [▶ 웹에서 플레이](https://midnight-japan.github.io/) · [🌐 업데이트 페이지](https://midnight-japan.github.io/changelog.html)
+현재 버전 · Current: **v2.2.2** · [▶ 웹에서 플레이](https://midnight-japan.github.io/) · [🌐 업데이트 페이지](https://midnight-japan.github.io/changelog.html)
 
 | 버전 | 날짜 | 이름 | 요약 |
 |---|---|---|---|
+| [v2.2.2](#v222--bugfix-2026-11-13) | 2026-11-13 | Bugfix | 버그 수정: 지상으로 내려온 램프(다이시·헤이와지마·시바우라) 끝을 실제 시내 도로와 포장 연결로 이어 막다른 길 제거. |
 | [v2.2.1](#v221--60fps-2026-11-13) | 2026-11-13 | 60fps | 모든 기기에서 60프레임 목표: 선명한 해상도는 유지하고 무거운 효과부터 자동으로 줄이는 프레임 관리, 셰이더 미리 컴파일로 끊김 감소. |
 | [v2.2.0](#v220--open-road-2026-11-13) | 2026-11-13 | Open Road | 막다른 길·덮인 터널 입구·단차를 맵 전체에서 수정, 경찰은 NPC만 추격, 선명한 실해상도와 더 높은 프레임, 내 위치를 따라가는 반투명 지도, 날씨 버튼. |
 | [v2.1.0](#v210--road-marks-2026-11-13) | 2026-11-13 | Road Marks | 실제 일본 도로처럼: 맵 전체에 노면 표시·표지판 — 급커브의 빨간 미끄럼 방지 포장과 감속 표시, 「速度落とせ」「合流注意」, 골목의 「止まれ」 정지선과 표지판, 속도 숫자, 그린벨트, 자전거 화살표. 다리·터널 부근의 하얀 네모 구조물 제거. |
@@ -36,6 +37,17 @@
 | [v0.2.0](#v020--bayshore-2026-11-05) | 2026-11-05 | Bayshore | 수도고속 완간선을 따라 하네다까지, 도쿄만 아쿠아라인 해저터널을 지나 우미호타루 PA까지. 실제 3D 차량 모델과 열리는 보닛도 들어왔어요. |
 | [v0.1.1](#v011--one-click-2026-11-04) | 2026-11-04 | One Click | 링크 하나로 바로 플레이. 크롬에서 공식 사이트 주소만 열면 설치 없이 실행돼요. |
 | [v0.1.0](#v010--first-meet-2026-11-04) | 2026-11-04 | First Meet | 첫 공개 버전. 다이코쿠 JCT·PA와 다이코쿠 부두 일대를 3D로 구현했습니다. |
+
+---
+
+## v2.2.2 — Bugfix (2026-11-13)
+
+> 버그 수정: 지상으로 내려온 램프(다이시·헤이와지마·시바우라) 끝을 실제 시내 도로와 포장 연결로 이어 막다른 길 제거.
+> Bug fixes: the feet of the ramps brought down to the ground (Daishi, Heiwajima, Shibaura) are paved through to the real streets — no more dead ends there.
+
+**🐞 수정 · Fixed**
+
+- 다이시·헤이와지마·시바우라 램프 끝이 시내 도로에서 8~36m 떨어져 막다른 길이 되던 문제 — 가장 가까운 실제 도로까지 짧은 포장 연결<br><sub>The Daishi, Heiwajima and Shibaura ramps ended 8–36 m short of the city streets (a dead end) — a short paved link now joins them to the nearest real street</sub>
 
 ---
 
