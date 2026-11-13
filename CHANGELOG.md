@@ -52,6 +52,7 @@
 
 **✨ 추가 · New**
 
+- 하이빔 패싱: 상향등을 2.5초 안에 두 번 이상 켰다 껐다 하면(L 키 연타·💡) 앞차가 경적을 울렸을 때처럼 비켜 줌 — 비킬 때는 항상 내 차에서 먼 쪽으로, 내 차로로 끼어들지 않음<br><sub>High-beam flashing: switch the high beams twice within 2.5 s (tap L or 💡) and the car ahead moves over as it does for the horn — always away from you, never into your lane</sub>
 - 라디오 줄 접기(📻 버튼), 접은 상태 기억<br><sub>The radio bar folds away (📻) and remembers it</sub>
 
 **🔧 변경 · Changed**

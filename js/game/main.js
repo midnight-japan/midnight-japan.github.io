@@ -486,6 +486,8 @@ class Game {
     // automatic headlights (dusk / night / tunnels) until the player switches them by hand — most people never found the key
     if (!this._lightsManual && v.engine.running) { const want = (this.env?.night ?? 0) > 0.35 || v.pos.y < -1.5; if (want !== L.head) { L.head = want; if (!want) L.high = false; } }
     if (I.act('horn')) { this.engineSnd?.horn(true); this._hornT = 0.35; this.traffic.honk(v.pos, v.forward); }
+    // v2.5.2: パッシング — flashing the high beams (two changes within 2.5 s) asks the car ahead to move over, like the horn
+    { const hi = !!this.model?.lights?.high, now = performance.now(); if (hi !== this._hiPrev) { this._hiPrev = hi; (this._hiT ||= []).push(now); this._hiT = this._hiT.filter(x => now - x < 2500); if (this._hiT.length >= 2) { this._hiT.length = 0; this.traffic.honk(v.pos, v.forward); } } }
     if (this._hornT > 0) { this._hornT -= dt; if (I.key('horn')) this._hornT = 0.1; if (this._hornT <= 0) this.engineSnd?.horn(false); }
     if (I.act('signalL')) { L.left = !L.left; L.right = false; L.hazard = false; }
     if (I.act('signalR')) { L.right = !L.right; L.left = false; L.hazard = false; }

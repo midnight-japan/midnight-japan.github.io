@@ -14,6 +14,7 @@ export const CHANGELOG = [
       { type: 'fix', ko: '번호판: お辞儀(꺾인) 번호판이 범퍼에 반쯤 묻히고 뒤쪽은 반대로 꺾이던 문제 → 아래 끝을 축으로 위가 밖으로 숙여지게, 이름 없는 원래 외국 번호판도 모양으로 찾아 숨김', ja: 'ナンバー：お辞儀ナンバーがバンパーに半分埋まり、リアは逆に曲がっていた問題→下端を軸に上が外へ傾くように、名前のない元の外国ナンバーも形で見つけて非表示', en: 'Plates: the bowed plate sank half into the bumper and leaned the wrong way at the rear — it now hinges at its bottom edge with the top out; unnamed foreign plates on the models are found by their shape and hidden' },
       { type: 'change', ko: '엔진음: 차마다 너무 달랐던 공명·거친 소리 폭을 줄여 따뜻하고 풍성한 배기음 쪽으로(엔진별 개성은 유지)', ja: 'エンジン音：車ごとに違いすぎた共鳴とざらつきの幅を抑え、温かく厚みのある排気音へ（エンジンごとの個性は維持）', en: 'Engine sound: the per-car spread of resonance and rasp is narrowed towards one warm, rich exhaust voice (each engine keeps its character)' },
       { type: 'change', ko: '빛·반사 완화: 비에 젖은 노면이 거울처럼 번들거리던 것을 촉촉한 정도로, 램프 빛 번짐 크기 축소', ja: '光と反射を控えめに：雨に濡れた路面が鏡のようにギラついていたのをしっとり程度に、ランプの光のにじみを縮小', en: 'Calmer light: wet roads are damp rather than mirror-like, and lamp glows are smaller' },
+      { type: 'new', ko: '하이빔 패싱: 상향등을 2.5초 안에 두 번 이상 켰다 껐다 하면(L 키 연타·💡) 앞차가 경적을 울렸을 때처럼 비켜 줌 — 비킬 때는 항상 내 차에서 먼 쪽으로, 내 차로로 끼어들지 않음', ja: 'パッシング：2.5秒以内にハイビームを2回以上切り替えると（Lキー連打・💡）、クラクションと同じように前の車が譲る——譲る時は必ず自分の車から離れる側へ、自分の車線には入らない', en: 'High-beam flashing: switch the high beams twice within 2.5 s (tap L or 💡) and the car ahead moves over as it does for the horn — always away from you, never into your lane' },
       { type: 'new', ko: '라디오 줄 접기(📻 버튼), 접은 상태 기억', ja: 'ラジオの列を折りたたみ（📻ボタン）、状態を記憶', en: 'The radio bar folds away (📻) and remembers it' },
     ]
   },
