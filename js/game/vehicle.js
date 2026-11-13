@@ -251,6 +251,7 @@ export class Vehicle {
     let lim = Math.min(this.lock, geo + this.apF * 0.12);
     // counter-steering into a slide is always allowed (up to the slide angle + peak slip)
     if (this.steerIn * beta > 0) lim = lerp(lim, Math.min(this.lock, Math.max(lim, Math.abs(beta) + this.apF * 1.2)), sstep(0.04, 0.15, Math.abs(beta)));
+    this.steerLim = lim;
     const dUser = this.steerIn * lim;
     // auto counter-steer: point the fronts towards the direction of travel when the car slides
     // (only once the rear is past its grip peak and swinging out — not in a normal fast corner)

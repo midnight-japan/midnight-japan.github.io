@@ -83,7 +83,8 @@ export class Traffic {
   }
   createAI(id, opts = {}) {
     const car = CAR_BY_ID[id];
-    const color = opts.color || car.colors[Math.floor(Math.random() * car.colors.length)];
+    // real factory palette; white/pearl only now and then (it was reading as unpainted bodywork)
+    const pal = car.colors.filter(c => !/^#e[0-9a-f]e[0-9a-f]e[0-9a-f]$|^#f/i.test(c)); const color = opts.color || (pal.length && Math.random() > 0.15 ? pal[Math.floor(Math.random() * pal.length)] : car.colors[Math.floor(Math.random() * car.colors.length)]);
     // real glTF models for traffic only on medium+ quality (they cost more triangles than the low-LOD procedural cars)
     // only real 3D models drive around (v1.1.1): until a model has loaded the car is built procedurally and swapped later
     const model = buildCarAuto(car, { lod: 'low', color, glb: true, realLights: false });

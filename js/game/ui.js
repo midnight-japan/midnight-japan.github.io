@@ -90,7 +90,7 @@ export class UI {
       </div></div>
       <div id="hud" class="hidden">
         <div class="tl"><div class="loc"></div><div class="clock"></div><div class="money"></div><div class="goaltrack" id="goaltrack"></div></div>
-        <canvas id="minimap" width="200" height="200"></canvas><div id="navhud" class="navhud" hidden><span class="nav-arrow">↑</span><span class="nav-dist"></span><button class="nav-x" data-a="navClear" aria-label="clear">✕</button></div><div id="pursuit" class="pursuithud" hidden></div>
+        <canvas id="minimap" width="200" height="200"></canvas><button id="autobtn" class="autobtn" data-a="auto" title="J">AUTO</button><div id="navhud" class="navhud" hidden><span class="nav-arrow">↑</span><span class="nav-dist"></span><button class="nav-x" data-a="navClear" aria-label="clear">✕</button></div><div id="pursuit" class="pursuithud" hidden></div>
         <div class="speedo"><canvas id="speedo" width="260" height="260"></canvas><div class="icons"></div></div>
         <div class="radio-banner"></div>
         <div class="prompt"><kbd></kbd><span></span></div>
@@ -205,6 +205,7 @@ export class UI {
       case 'teleport': this.togglePause(false); this.toggleMap(true); this.toast(t('game.map.tpHint'), 'info', 5); break;
       case 'closeCar': $('#carmenu').classList.remove('show'); break;
       case 'shopClose': $('#shop').classList.remove('show'); break;
+      case 'auto': g.autopilot?.toggle(); if (g.autopilot?.on) this.toast(t('game.auto.on'), 'info', 4); break;
       case 'mapClose': this.toggleMap(false); break;
       case 'mapNav': if (this.mapSel) { g.nav.set(this.mapSel.x, this.mapSel.z); this.toggleMap(false); this.toast(t('game.nav.set'), 'info', 3); } break;
       case 'mapTp': if (this.mapSel) { this.toggleMap(false); g.teleport(this.mapSel.x, this.mapSel.z); } break;
@@ -406,16 +407,17 @@ export class UI {
     };
     $('#shop').classList.add('show');
   }
+  setAuto(on) { document.getElementById('autobtn')?.classList.toggle('on', !!on); }
   toggleMap(force) {
     this.mapOpen = force ?? !this.mapOpen; $('#map').classList.toggle('show', this.mapOpen);
     if (!this.mapOpen) return;
     const cv = $('#bigmap'), dpr = Math.min(2, devicePixelRatio || 1); cv.width = innerWidth * dpr; cv.height = innerHeight * dpr;
-    if (!this.mv) { this.mv = { x: 0, z: 0, k: 0.35 * dpr }; this.wireMap(cv); this.mapCenterMe(); } else this.drawBigMap();
+    if (!this.mv) { this.mv = { x: 0, z: 0, k: 0.35 * dpr }; this.wireMap(cv); } this.mapFitAll();
   }
   mapPos() { return this.g.mode === 'walk' ? this.g.player?.pos : this.g.vehicle?.pos; }
   mapZoom(f, cx, cy) { const cv = $('#bigmap'), m = this.mv; cx ??= cv.width / 2; cy ??= cv.height / 2; const wx = m.x + (cx - cv.width / 2) / m.k, wz = m.z + (cy - cv.height / 2) / m.k; m.k = Math.max(0.01, Math.min(12, m.k * f)); m.x = wx - (cx - cv.width / 2) / m.k; m.z = wz - (cy - cv.height / 2) / m.k; this.drawBigMap(); }
   mapCenterMe() { const p = this.mapPos(); if (p) { this.mv.x = p.x; this.mv.z = p.z; } this.drawBigMap(); }
-  mapFitAll() { const cv = $('#bigmap'); let a = [1e9, 1e9, -1e9, -1e9]; for (const r of this.g.net.roads) if (r.kind !== 'mountain') for (const q of r.samples) { a[0] = Math.min(a[0], q.p.x); a[1] = Math.min(a[1], q.p.z); a[2] = Math.max(a[2], q.p.x); a[3] = Math.max(a[3], q.p.z); } this.mv.x = (a[0] + a[2]) / 2; this.mv.z = (a[1] + a[3]) / 2; this.mv.k = 0.9 * Math.min(cv.width / (a[2] - a[0]), cv.height / (a[3] - a[1])); this.drawBigMap(); }
+  mapFitAll() { const cv = $('#bigmap'); let a = [1e9, 1e9, -1e9, -1e9]; for (const r of this.g.net.roads) for (const q of r.samples) { a[0] = Math.min(a[0], q.p.x); a[1] = Math.min(a[1], q.p.z); a[2] = Math.max(a[2], q.p.x); a[3] = Math.max(a[3], q.p.z); } this.mv.x = (a[0] + a[2]) / 2; this.mv.z = (a[1] + a[3]) / 2; this.mv.k = 0.9 * Math.min(cv.width / (a[2] - a[0]), cv.height / (a[3] - a[1])); this.drawBigMap(); }
   wireMap(cv) {
     const pts = new Map(); let pinch = 0;
     cv.addEventListener('wheel', e => { e.preventDefault(); const r = cv.getBoundingClientRect(), d = cv.width / r.width; this.mapZoom(Math.exp(-e.deltaY * 0.0015), (e.clientX - r.left) * d, (e.clientY - r.top) * d); }, { passive: false });
@@ -622,6 +624,25 @@ export class UI {
     if (nv?.target) { c.fillStyle = '#3fb6ff'; c.beginPath(); c.arc(nv.target.x, nv.target.z, 7 * px, 0, Math.PI * 2); c.fill(); c.strokeStyle = '#fff'; c.lineWidth = 2 * px; c.stroke(); }
     const ls = this.g.police?.lastSeen; if (ls) { c.fillStyle = 'rgba(255,48,48,.25)'; c.beginPath(); c.arc(ls.x, ls.z, ls.r || 120, 0, Math.PI * 2); c.fill(); c.fillStyle = '#ff3030'; c.beginPath(); c.arc(ls.x, ls.z, 6 * px, 0, Math.PI * 2); c.fill(); }
   }
+  // full real map: baked OpenStreetMap raster (tools/map-overview.mjs → assets/map), 16 m/px overview + 4 m/px detail
+  // tiles loaded on demand; the vector expressways, labels and markers are drawn on top
+  drawMapRaster(c, W, H, m, k, dpr) {
+    const R = this.mapRaster || (this.mapRaster = { idx: null, img: new Map() });
+    if (!R.idx) { if (!R.loading) R.loading = fetch(new URL('../../assets/map/index.json', import.meta.url)).then(r => r.json()).then(j => { R.idx = j; R.has = j.levels.map(L => new Set(L.tiles.map(t => t[0] + '_' + t[1]))); if (this.mapOpen) this.drawBigMap(); }).catch(() => {}); return; }
+    const want = k / dpr > 1 / 6 ? 1 : 0; // screen px per metre → detail level once a 16 m texel would cover > ~2.5 px
+    c.imageSmoothingEnabled = true;
+    for (const lv of want ? [0, 1] : [0]) {
+      const L = R.idx.levels[lv], s = L.size, x0 = m.x - W / 2 / k, x1 = m.x + W / 2 / k, z0 = m.z - H / 2 / k, z1 = m.z + H / 2 / k;
+      for (let i = Math.floor(x0 / s); i * s < x1; i++) for (let j = Math.floor(z0 / s); j * s < z1; j++) {
+        const key = i + '_' + j; if (!R.has[lv].has(key)) continue;
+        const id = lv + '/' + key; let im = R.img.get(id);
+        if (!im) { im = new Image(); im.decoding = 'async'; im.onload = () => { if (this.mapOpen) { cancelAnimationFrame(this._mapRaf); this._mapRaf = requestAnimationFrame(() => this.drawBigMap()); } }; im.src = new URL(`../../assets/map/${id}.webp`, import.meta.url).href; R.img.set(id, im); }
+        if (!im.complete || !im.naturalWidth) continue;
+        const ax = (i * s - m.x) * k + W / 2, az = (j * s - m.z) * k + H / 2;
+        c.drawImage(im, ax, az, s * k + 0.5, s * k + 0.5);
+      }
+    }
+  }
   drawBigMap() {
     const cv = $('#bigmap'), c = cv.getContext('2d'), W = cv.width, H = cv.height, m = this.mv, k = m.k;
     const P = (x, z) => [(x - m.x) * k + W / 2, (z - m.z) * k + H / 2];
@@ -630,6 +651,7 @@ export class UI {
     const poly = (pts, fill) => { c.beginPath(); pts.forEach(([x, z], i) => { const [a, b] = P(x, z); i ? c.lineTo(a, b) : c.moveTo(a, b); }); c.closePath(); c.fillStyle = fill; c.fill(); };
     for (const l of MAP.land || []) if (l.pts?.length > 2) poly(l.pts, l.main ? '#1d2633' : '#222c3a');
     if (k > 0.25) for (const b of MAP.buildings || []) poly(b.pts, '#3a4658');
+    this.drawMapRaster(c, W, H, m, k, dpr);
     { const [x0, z0] = P(PA_RECT.x0, PA_RECT.z0), [x1, z1] = P(PA_RECT.x1, PA_RECT.z1); c.fillStyle = '#44587a'; c.fillRect(Math.min(x0, x1), Math.min(z0, z1), Math.abs(x1 - x0), Math.abs(z1 - z0)); }
     const roads = this.g.net.roads;
     for (const pass of [0, 1]) for (const r of roads) {

@@ -1,0 +1,246 @@
+// Autopilot (自動運転, J / AUTO button): drives the player's own car with the real physics (throttle, brake, steering —
+// no rails). From a parking stall it follows the PA circulation lanes to the exit, then cruises the whole expressway
+// network: keeps to the overtaking lane (the lane the AI traffic leaves free for the player) on multi-lane roads,
+// follows the car ahead with an IDM gap (and any car / walker in its path), slows for curves, changes lanes only into
+// a clear gap, signals, and at every junction prefers the roads it hasn't driven yet so it tours the whole map.
+// Any steering / pedal input from the player hands control straight back.
+import * as THREE from 'three';
+import { t } from '../i18n.js';
+
+const clamp = (x, a, b) => Math.max(a, Math.min(b, x));
+const angle = a => { while (a > Math.PI) a -= Math.PI * 2; while (a < -Math.PI) a += Math.PI * 2; return a; };
+const _p = new THREE.Vector3(), _q = new THREE.Vector3();
+const AVOID = /^(pa_in|k5_pa)$/; // back into the PA — the tour stays on the open road
+
+export class Autopilot {
+  constructor(game) { this.g = game; this.on = false; this.visits = new Map(); }
+  get net() { return this.g.net; }
+
+  toggle(force) {
+    const g = this.g, on = force ?? !this.on;
+    if (on === this.on) return;
+    if (on && g.mode !== 'drive') return;
+    this.on = on;
+    const v = g.vehicle;
+    if (on) {
+      this.prevMode = v.mode; if (!v.ev) v.mode = 'auto';
+      if (!v.engine.running && !v.engine.cranking) v.startEngine();
+      v.handbrakeOn = false; v.setSel('D');
+      this.road = null; this.path = null; this.stuck = 0; this.rev = 0; this.revN = 0; this.laneT = 0; this.plan = null;
+      if (!this.attach()) { // still in the lot: drive out through the PA
+        const ex = g.traffic.lotExit();
+        if (Math.hypot(ex.x - v.pos.x, ex.z - v.pos.z) > 450) { this.on = false; if (this.prevMode && !v.ev) v.mode = this.prevMode; g.ui.toast(t('game.auto.noroad'), 'warn', 4); g.ui.setAuto?.(false); return; }
+        this.path = g.traffic.lotPath(v.pos.clone(), ex);
+        this.path.shift();
+      }
+    } else {
+      if (this.prevMode && !v.ev) v.mode = this.prevMode;
+      const L = g.model?.lights; if (L) { L.left = L.right = false; }
+    }
+    g.ui.setAuto?.(on);
+  }
+
+  // snap onto the expressway lane under the car (same level, travelling our way)
+  attach() {
+    const v = this.g.vehicle; const f = v.forward;
+    const hs = this.net.hits(v.pos.x, v.pos.z).filter(h => h.inside && Math.abs(h.y - v.pos.y) < 2.5 && h.road.kind !== 'local');
+    let best = null;
+    for (const h of hs) for (const ln of h.road.lanes) {
+      const t = h.road.dirAt(h.s), dot = (t.x * f.x + t.z * f.z) * ln.dir; if (dot < 0.5) continue;
+      const d = Math.abs(ln.lat - h.lat); if (!best || d < best.d) best = { d, h, ln };
+    }
+    if (!best || best.d > 6) return false;
+    this.setRoad(best.h.road, best.ln, best.h.s);
+    return true;
+  }
+  setRoad(road, lane, s) {
+    this.road = road; this.dir = lane.dir; this.lane = lane; this.s = s; this.plan = null;
+    this.visits.set(road.id, (this.visits.get(road.id) || 0) + 1);
+  }
+
+  // overtaking lane for this direction (rightmost in Japan); single-lane roads → their only lane
+  fastLane(road, dir) { const ls = road.lanes.filter(l => l.dir === dir); return ls.reduce((a, b) => (b.lat * dir < a.lat * dir ? b : a)); }
+
+  // obstacles in front: AI cars (any mode) and walkers/NPCs inside a corridor along our heading
+  leader(range, half) {
+    const g = this.g, v = g.vehicle, f = v.forward, l = v.left;
+    let gap = 1e9, vl = 0; this.blk = null;
+    const test = (p, sp, len = 2.3, kind = 'car') => {
+      const dx = p.x - v.pos.x, dz = p.z - v.pos.z, dy = Math.abs(p.y - v.pos.y); if (dy > 3) return;
+      const ah = dx * f.x + dz * f.z, la = dx * l.x + dz * l.z;
+      if (ah <= 0 || ah > range) return;
+      // look along the curve: widen nothing, but bend the corridor with the current steering (yaw rate)
+      const bend = (v.yawRate || 0) / Math.max(4, v.vx) * ah * ah / 2;
+      if (Math.abs(la - bend) > half) return;
+      const d = ah - len - 2.3; if (d < gap) { gap = d; vl = sp; this.blk = kind; }
+    };
+    for (const ai of g.traffic?.cars || []) {
+      const sp = ai.mode === 'parked' ? 0 : (ai.v || 0) * Math.max(0, Math.cos(ai.yaw - v.yaw));
+      test(ai.pos, sp, ai.halfL || 2.3, ai.mode);
+    }
+    for (const n of g.npc?.people || []) { const p = n.h?.object?.position || n.pos; if (p) test(p, 0, 0.5, 'npc'); }
+    for (const w of g.walkers?.list || []) { const p = w.h?.object?.position; if (p) test(p, 0, 0.5); }
+    return { gap, vl };
+  }
+
+  // nothing within ~5 m behind us (reversing out of a stall)
+  behindClear() {
+    const v = this.g.vehicle, f = v.forward, l = v.left;
+    const hit = p => { const dx = p.x - v.pos.x, dz = p.z - v.pos.z; const ah = -(dx * f.x + dz * f.z), la = dx * l.x + dz * l.z; return ah > 0 && ah < 7.5 && Math.abs(la) < 1.7 && Math.abs(p.y - v.pos.y) < 3; };
+    for (const ai of this.g.traffic?.cars || []) if (hit(ai.pos)) return false;
+    for (const n of this.g.npc?.people || []) { const p = n.h?.object?.position; if (p && hit(p)) return false; }
+    return true;
+  }
+  // is `lane` free from `behind` m back to `ahead` m forward (AI cars on this road)
+  laneFree(lane, ahead, behind) {
+    for (const ai of this.g.traffic?.cars || []) {
+      if (ai.mode !== 'road' || ai.road !== this.road) continue;
+      if (Math.abs(ai.lat - lane.lat) > 2.4) continue;
+      const d = (ai.s - this.s) * this.dir; if (d < ahead && d > -behind) return false;
+    }
+    return true;
+  }
+
+  update(dt) {
+    const g = this.g, v = g.vehicle, A = g.input.axes;
+    if (!this.on) return null;
+    if (g.mode !== 'drive') { this.toggle(false); return null; }
+    // the player takes over
+    if (Math.abs(A.steer) > 0.25 || A.throttle > 0.3 || A.brake > 0.3) { this.why = 'input'; this.toggle(false); g.ui.toast(t('game.auto.off'), 'info', 2); return null; }
+    v.handbrakeOn = false;
+    // backing out of a stall (nose-in parking, or boxed in by a car / people in front): reverse a few metres with
+    // the wheel turned so the nose swings towards the way out, then carry on forwards
+    if (this.rev > 0) {
+      this.rev -= dt;
+      if (v.engine.running && v.atSel !== 'R' && Math.abs(v.vx) < 0.5) v.setSel('R');
+      const behind = this.behindClear(); if (!behind) this.rev = 0;
+      return { throttle: v.atSel === 'R' && v.vx > -1.8 && behind ? (v.vx > -0.4 ? 0.65 : 0.3) : 0, brake: v.vx < -2.2 || !behind ? 0.5 : 0, steer: this.revSteer };
+    }
+    if (v.engine.running && v.atSel !== 'D' && !v.ev) { if (Math.abs(v.vx) < 0.5) v.setSel('D'); else return { throttle: 0, brake: 0.6, steer: 0 }; }
+    const speed = Math.max(0, v.vx);
+    let target, vDes, half = 1.6;
+    if (this.path) {
+      // ── PA lot: waypoints at walking pace
+      let p = this.path[0];
+      while (p && Math.hypot(p.x - v.pos.x, p.z - v.pos.z) < 4) { this.path.shift(); p = this.path[0]; }
+      if (!p) { this.path = null; const r = this.net.byId.pa_out; if (r) this.setRoad(r, r.lanes[0], 0); else { this.toggle(false); return null; } return this.update(dt); }
+      target = p; vDes = this.path.length === 1 ? 7 : 5.5; half = 1.5;
+      const nxt = this.path[1]; if (nxt) { const a1 = Math.atan2(p.x - v.pos.x, p.z - v.pos.z), a2 = Math.atan2(nxt.x - p.x, nxt.z - p.z); if (Math.abs(angle(a2 - a1)) > 0.8 && Math.hypot(p.x - v.pos.x, p.z - v.pos.z) < 14) vDes = 3.5; }
+    } else {
+      if (!this.road && !this.attach()) { this.toggle(false); return null; }
+      this.follow(dt);
+      if (!this.road) { this.why = 'end:' + this.lastId; this.toggle(false); g.ui.toast(t('game.auto.off'), 'info', 2); return null; }
+      const r = this.road, dir = this.dir;
+      // lane: the overtaking lane, or the side of the junction we are about to take
+      this.laneT -= dt;
+      const want = this.plan ? this.plan.lane : this.fastLane(r, dir);
+      if (want !== this.lane && this.laneT <= 0) {
+        const ls = r.lanes.filter(l => l.dir === dir).sort((a, b) => (a.lat - b.lat) * Math.sign(want.lat - this.lane.lat));
+        const step = ls.find(l => (l.lat - this.lane.lat) * Math.sign(want.lat - this.lane.lat) > 0.5);
+        if (step && this.laneFree(step, 35, 22)) { this.signal = Math.sign((step.lat - this.lane.lat) * dir); this.lane = step; this.laneT = 2.5; this.sigT = 3; }
+      }
+      // target point on the lane centre, lookahead grows with speed
+      const look = clamp(6 + speed * 0.75, 8, 45);
+      target = r.at(this.s + look * dir, this.lane.lat, _p);
+      if ((dir > 0 && this.s + look > r.length) || (dir < 0 && this.s - look < 0)) { const nx = this.nextAtEnd(); if (nx) target = nx.road.at(clamp(nx.s + (dir > 0 ? this.s + look - r.length : look - this.s) * nx.lane.dir, 0, nx.road.length), nx.lane.lat, _p); }
+      // speed: limit + 15 %, slowed for the curvature ahead (3.2 m/s² lateral)
+      vDes = (r.speed / 3.6) * 1.15;
+      const t0 = r.dirAt(this.s); const h0 = Math.atan2(t0.x, t0.z);
+      for (let d = 15; d <= Math.max(60, speed * speed / 4); d += 15) {
+        const s2 = this.s + d * dir; if (s2 < 0 || s2 > r.length) break;
+        const t1 = r.dirAt(s2), k = Math.abs(angle(Math.atan2(t1.x, t1.z) - h0)) / d;
+        const vc = Math.sqrt(3.2 / Math.max(k, 1e-4)); vDes = Math.min(vDes, Math.sqrt(vc * vc + 2 * 3 * Math.max(0, d - 15)));
+      }
+      if (this.sigT > 0) this.sigT -= dt; else this.signal = 0;
+    }
+    // follow the leader (IDM), anything in our corridor
+    const { gap, vl } = this.leader(clamp(20 + speed * 2.5, 18, 140), half);
+    const a = 2.0, b = 3.0, s0 = this.path ? 2.5 : 5, T = 1.4;
+    const sStar = s0 + Math.max(0, speed * T + speed * (speed - vl) / (2 * Math.sqrt(a * b)));
+    let acc = a * (1 - Math.pow(speed / Math.max(1, vDes), 4)) - (gap < 1e8 ? a * Math.pow(sStar / Math.max(0.3, gap), 2) : 0);
+    acc = clamp(acc, -9, a);
+    // pure pursuit → curvature → steer angle (bicycle model with understeer), as a share of the current lock
+    const dx = target.x - v.pos.x, dz = target.z - v.pos.z, f = v.forward, l = v.left;
+    const ah = dx * f.x + dz * f.z, la = dx * l.x + dz * l.z, Ld = Math.max(3, Math.hypot(ah, la));
+    const kappa = 2 * la / (Ld * Ld);
+    const delta = Math.atan(kappa * (v.wb + (v.Kus || 0) * speed * speed));
+    const steer = clamp(delta / Math.max(0.02, v.steerLim || 0.5), -1, 1);
+    // stuck (blocked for long, e.g. a car parked across the lane): nudge on so the tour never freezes forever
+    this.stuck = speed < 0.5 && acc < 0 ? this.stuck + dt : 0;
+    this.wedged = speed < 0.6 && acc > 0.2 ? (this.wedged || 0) + dt : 0; // pushing but not moving: against a kerb / wall
+    if (this.wedged > 2.5 && (this.revN || 0) < 6) { this.rev = 2.2; this.revN = (this.revN || 0) + 1; this.wedged = 0; this.revSteer = la > 0 ? -0.8 : 0.8; }
+    if (this.path && this.stuck > (this.blk === 'npc' ? 4 : 1.5) && (this.revN || 0) < 4) { this.rev = 3.2; this.revN = (this.revN || 0) + 1; this.stuck = 0; this.revSteer = la > 0 ? -0.8 : 0.8; }
+    const L = g.model?.lights; if (L && !this.path) { L.left = this.signal === 1; L.right = this.signal === -1; }
+    return { throttle: acc > 0.05 ? clamp(acc / a, 0, 1) * (speed < 2 ? 0.55 : 1) : 0, brake: acc < -0.3 ? clamp(-acc / 8, 0, 1) : (vDes < 0.5 && speed < 1 ? 0.4 : 0), steer };
+  }
+
+  // track our distance along the road; at its end continue on the linked road, at diverges pick the tour
+  follow(dt) {
+    const v = this.g.vehicle, r = this.road, dir = this.dir;
+    // project the car onto the road near the last s
+    let best = this.s, bd = 1e9;
+    for (let d = -8; d <= 30; d += 1) { const s = clamp(this.s + d * dir, 0, r.length); r.at(s, this.lane.lat, _q); const e = (v.pos.x - _q.x) ** 2 + (v.pos.z - _q.z) ** 2; if (e < bd) { bd = e; best = s; } }
+    const prev = this.s; this.s = best;
+    // junction ahead: decide early (≥ 450 m) so there is time to move across to its side
+    const dvs = (this.net.diverges?.get(r) || []).filter(d => d.dir === dir && d.to !== r && !AVOID.test(d.to.id) && !/^x_/.test(d.to.id));
+    if (!this.plan) for (const d of dvs) {
+      const ahead = (d.s - this.s) * dir; if (ahead < 120 || ahead > 450) continue;
+      if (this.decided?.has(d)) continue; (this.decided ||= new Set()).add(d);
+      const nTo = this.visits.get(d.to.id) || 0, nHere = this.visits.get(r.id) || 0;
+      const take = nTo === 0 ? Math.random() < 0.85 : Math.random() < 0.2 / (1 + nTo - Math.min(nTo, nHere));
+      if (!take) continue;
+      const lat0 = this.latOf(r, d.s, d.to.at(0, 0, _q));
+      this.plan = { d, lane: this.net.laneNear(r, dir, lat0) }; break;
+    }
+    if (this.plan) {
+      const d = this.plan.d, past = (this.s - d.s) * dir;
+      if (past >= 0) {
+        const to = d.to, ln = to.lanes.find(l => l.dir === 1) || to.lanes[0];
+        // our lateral position on the new road decides the lane we join
+        const h = this.net.hits(v.pos.x, v.pos.z).find(h => h.road === to);
+        this.setRoad(to, h ? this.net.laneNear(to, ln.dir, h.lat) : ln, h ? h.s : 0); return;
+      }
+      if (past < -500) this.plan = null;
+    }
+    if ((dir > 0 && this.s >= r.length - 1.5) || (dir < 0 && this.s <= 1.5)) {
+      const nx = this.nextAtEnd();
+      if (nx) this.setRoad(nx.road, nx.lane, nx.s); else if (!this.turnaround()) { this.lastId = r.id + '@' + dir; this.road = null; }
+    }
+  }
+  // end of the modelled network (map edge): turn round onto the opposite carriageway, as if through the toll gate
+  // and back on at the next ramp, and keep touring
+  turnaround() {
+    const g = this.g, v = g.vehicle, r = this.road, dir = this.dir, net = this.net;
+    const E = r.at(dir > 0 ? r.length : 0, this.lane.lat, new THREE.Vector3()), te = r.dirAt(dir > 0 ? r.length : 0);
+    const hx = te.x * dir, hz = te.z * dir;
+    let best = null;
+    for (const o of net.roads) {
+      if (o.kind === 'local' || AVOID.test(o.id) || /^x_/.test(o.id)) continue;
+      for (const q of o.samples) {
+        const d = Math.hypot(q.p.x - E.x, q.p.z - E.z); if (d > 600 || Math.abs(q.p.y - E.y) > 20 || (best && d >= best.d)) continue;
+        for (const ln of o.lanes) { const dot = (q.t.x * hx + q.t.z * hz) * ln.dir; if (dot > -0.7) continue; const room = ln.dir > 0 ? o.length - q.s : q.s; if (room < 300) continue; best = { d, o, ln, s: q.s }; break; }
+      }
+    }
+    if (!best) return false;
+    const { o, ln } = best; const lane = this.fastLane(o, ln.dir); const s = best.s;
+    const p = o.at(s, lane.lat, new THREE.Vector3()); const tt = o.dirAt(s);
+    const sp = Math.max(8, v.vx); const yaw = Math.atan2(tt.x * lane.dir, tt.z * lane.dir);
+    p.y += 0.3; v.place(p, yaw); v.vx = sp; v.vel.set(Math.sin(yaw) * sp, 0, Math.cos(yaw) * sp);
+    g.camSnap = true; g.ui.toast(t('game.auto.uturn'), 'info', 3);
+    this.setRoad(o, lane, s); this.decided = null;
+    return true;
+  }
+  // lateral offset of point p from road r at s (left positive)
+  latOf(r, s, p) { const a = r.at(s, 0, new THREE.Vector3()), b = r.at(s, 1, new THREE.Vector3()); return (p.x - a.x) * (b.x - a.x) + (p.z - a.z) * (b.z - a.z); }
+  nextAtEnd() {
+    const r = this.road, dir = this.dir, net = this.net;
+    const L = dir === 1 ? net.links?.get(r) : null;
+    if (L && L.to !== r) { const lane = net.laneNear(L.to, L.dir, L.lat); return { road: L.to, lane, s: L.s }; }
+    const cont = (net.diverges?.get(r) || []).filter(d => d.dir === dir && (dir === 1 ? d.s >= r.length - 60 : d.s <= 60) && d.to !== r && !AVOID.test(d.to.id) && !/^x_/.test(d.to.id));
+    if (!cont.length) return null;
+    cont.sort((a, b) => (this.visits.get(a.to.id) || 0) - (this.visits.get(b.to.id) || 0));
+    const to = cont[0].to; const lane = to.lanes.find(l => l.dir === 1) || to.lanes[0];
+    const v = this.g.vehicle; const h = net.hits(v.pos.x, v.pos.z).find(h => h.road === to);
+    return { road: to, lane, s: h ? Math.max(0, h.s) : 0 };
+  }
+}

@@ -16,6 +16,7 @@ import { setSignAnisotropy } from './signs.js';
 import { RoadNet, PA_RECT, PA } from './roads.js';
 import { Fx } from './fx.js';
 import { Nav } from './nav.js';
+import { Autopilot } from './autopilot.js';
 import { Dialog } from './dialog.js';
 import { World } from './world.js';
 import { TimeOfDay } from './sky.js';
@@ -162,6 +163,7 @@ class Game {
     this.weather = new Weather(this);
     this.fx = new Fx(this);
     this.nav = new Nav(this);
+    this.autopilot = new Autopilot(this);
     this.dialog = new Dialog(this);
     this.toll = new TollPlaza(this);
     this.online = new Online(this);
@@ -424,7 +426,10 @@ class Game {
     if (A.handbrake > 0.5 && Math.abs(v.vx) < 0.3 && !this._hbToggle) { v.handbrakeOn = !v.handbrakeOn; this._hbToggle = true; this.audio.sfx(v.handbrakeOn ? 'handbrake_on' : 'handbrake_off'); }
     if (A.handbrake < 0.2) this._hbToggle = false;
     if (Math.abs(v.vx) > 0.5 && v.handbrakeOn && throttle > 0.2) v.handbrakeOn = false;
-    v.ctl.throttle = throttle; v.ctl.brake = brake; v.ctl.steer = A.steer; v.ctl.steerDigital = A.steerDigital !== false; v.ctl.handbrake = Math.abs(v.vx) > 0.3 ? A.handbrake : 0; v.ctl.clutch = A.clutch;
+    if (I.act('autopilot')) { this.autopilot.toggle(); if (this.autopilot.on) this.ui.toast(t('game.auto.on'), 'info', 4); }
+    const ap = this.autopilot.update(dt);
+    v.ctl.throttle = throttle; v.ctl.brake = brake; v.ctl.steer = A.steer; v.ctl.steerDigital = A.steerDigital !== false;
+    if (ap) { v.ctl.throttle = ap.throttle; v.ctl.brake = ap.brake; v.ctl.steer = ap.steer; v.ctl.steerDigital = false; } v.ctl.handbrake = Math.abs(v.vx) > 0.3 ? A.handbrake : 0; v.ctl.clutch = A.clutch;
     // auto clutch for "manual" (sequential) mode: blip-free
     // lights & misc
     const L = m.lights;

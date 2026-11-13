@@ -6,11 +6,11 @@ export const KEYMAP = {
   // one-shot actions
   shiftUp: ['KeyE'], shiftDown: ['KeyQ'], interact: ['KeyF'], ignition: ['KeyI'], lights: ['KeyL'], horn: ['KeyH'],
   camera: ['KeyC'], radio: ['KeyR'], radioNext: ['KeyT'], signalL: ['KeyZ'], signalR: ['KeyX'], hazard: ['KeyB'], fog: ['KeyO'],
-  carMenu: ['Tab'], strobe: ['KeyK'], siren: ['KeyP'], map: ['KeyM'], pause: ['Escape'], photo: ['KeyV'], look: ['KeyG'],
+  carMenu: ['Tab'], strobe: ['KeyK'], siren: ['KeyP'], map: ['KeyM'], pause: ['Escape'], photo: ['KeyV'], look: ['KeyG'], autopilot: ['KeyJ'],
   regen: ['KeyN'], run: ['ShiftLeft'], jump: ['Space'],
   gear1: ['Digit1'], gear2: ['Digit2'], gear3: ['Digit3'], gear4: ['Digit4'], gear5: ['Digit5'], gear6: ['Digit6'], gear7: ['Digit7'], gearR: ['Digit0'], gearN: ['Backquote', 'Digit9'],
 };
-const ACTIONS = ['shiftUp', 'shiftDown', 'interact', 'ignition', 'lights', 'horn', 'camera', 'radio', 'radioNext', 'signalL', 'signalR', 'hazard', 'fog', 'carMenu', 'strobe', 'siren', 'map', 'pause', 'photo', 'look', 'regen', 'gear1', 'gear2', 'gear3', 'gear4', 'gear5', 'gear6', 'gear7', 'gearR', 'gearN', 'jump'];
+const ACTIONS = ['shiftUp', 'shiftDown', 'interact', 'ignition', 'lights', 'horn', 'camera', 'radio', 'radioNext', 'signalL', 'signalR', 'hazard', 'fog', 'carMenu', 'strobe', 'siren', 'map', 'pause', 'photo', 'look', 'autopilot', 'regen', 'gear1', 'gear2', 'gear3', 'gear4', 'gear5', 'gear6', 'gear7', 'gearR', 'gearN', 'jump'];
 
 // keyboard steer de-glitch: fast linear ramp (≈70 ms lock-to-lock) so a 1-frame key tap is not a full-lock spike
 export function kbSteer(prev, target, dt) { const rate = 14; return prev + Math.max(-rate * dt, Math.min(rate * dt, target - prev)); }

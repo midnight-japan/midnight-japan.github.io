@@ -243,3 +243,9 @@ body.photo .online-pill,body.photo .chat{display:none}
 .wn-go{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:8px}@media (max-width:560px){.wn-go{grid-template-columns:1fr}}
 .goaltrack{margin-top:6px;font:600 12px var(--display);background:rgba(8,12,22,.55);border:1px solid rgba(255,154,46,.35);border-radius:10px;padding:5px 9px;max-width:300px;pointer-events:none}.goaltrack:empty{display:none}.goaltrack .gt-k{color:#ffb347;margin-right:4px}.goaltrack b{color:#ffb347}
 .toast.goal{font-size:17px;padding:12px 18px;background:linear-gradient(90deg,rgba(255,154,46,.95),rgba(255,94,58,.9));color:#111;border:0;box-shadow:0 8px 30px rgba(255,120,40,.45);font-weight:800}
+
+/* autopilot toggle under the minimap */
+.autobtn{position:absolute;right:max(14px,env(safe-area-inset-right));top:calc(max(14px,env(safe-area-inset-top)) + 176px);pointer-events:auto;padding:5px 12px;border-radius:999px;border:1px solid rgba(255,255,255,.35);background:rgba(8,14,26,.75);color:#cfd8e6;font:800 12px system-ui;letter-spacing:.08em;cursor:pointer}
+.autobtn.on{background:#2fbf74;border-color:#2fbf74;color:#04150c;box-shadow:0 0 14px rgba(47,191,116,.6)}
+.navhud{top:226px}
+@media (max-width:760px){.autobtn{top:calc(max(14px,env(safe-area-inset-top)) + 126px)}}

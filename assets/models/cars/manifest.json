@@ -898,7 +898,12 @@
       2.618,
       3
     ],
-    "notes": "Whole truck is one untextured material (mat_23) - plain white; wheels not separable. No glass material. Normalized on export: units = metres, car length scaled to the real vehicle, front = +Z, up = +Y, ground at y=0, centred on X/Z (wrapper node MJ_root). Wheel nodes wheel_fl/fr/rl/rr have their pivot at the wheel centre (axle = local X). fl = car's left = +X side."
+    "notes": "Whole truck is one untextured material (mat_23) - plain white; wheels not separable. No glass material. Normalized on export: units = metres, car length scaled to the real vehicle, front = +Z, up = +Y, ground at y=0, centred on X/Z (wrapper node MJ_root). Wheel nodes wheel_fl/fr/rl/rr have their pivot at the wheel centre (axle = local X). fl = car's left = +X side.",
+    "split": {
+      "mat": "mat_23",
+      "cab": 2.0,
+      "low": 0.8
+    }
   },
   "bus": {
     "file": "bus.glb",

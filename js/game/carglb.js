@@ -22,6 +22,27 @@ export const GLB_ALIAS = { police: 'crown', police_unmarked: 'crown', taxi: 'cro
 const mid = id => GLB_ALIAS[id] || id;
 export const hasGlb = id => !!manifest?.[mid(id)];
 export const glbEntry = id => { const e = cache.get(mid(id)); return e?.scene ? e : null; };
+// Models delivered as ONE plain untextured material (e.g. the Canter box truck) would render as unpainted white clay:
+// split their triangles by position into a painted cab, the aluminium load box and the dark chassis / tyres below,
+// so the cab takes the real factory colour like every other car. manifest: split { mat, cab (m from the front), low (m) }
+function splitLivery(scene, info) {
+  const S = info.split, zFront = info.bbox?.[5] ?? 0, v = new THREE.Vector3();
+  scene.traverse(o => {
+    if (!o.isMesh || Array.isArray(o.material) || o.material.name !== S.mat) return;
+    const g = o.geometry, pos = g.attributes.position, I = g.index ? g.index.array : null, n = I ? I.length / 3 : pos.count / 3;
+    const B = [[], [], []];
+    for (let t = 0; t < n; t++) {
+      let cy = 0, cz = 0; const ids = [0, 1, 2].map(k => (I ? I[t * 3 + k] : t * 3 + k));
+      for (const i of ids) { v.fromBufferAttribute(pos, i).applyMatrix4(o.matrixWorld); cy += v.y / 3; cz += v.z / 3; }
+      B[cy < S.low ? 2 : cz > zFront - S.cab ? 0 : 1].push(...ids);
+    }
+    g.setIndex([...B[0], ...B[1], ...B[2]]); g.clearGroups();
+    g.addGroup(0, B[0].length, 0); g.addGroup(B[0].length, B[1].length, 1); g.addGroup(B[0].length + B[1].length, B[2].length, 2);
+    const base = o.material, mk = (name, col, metal, rough) => { const m = base.clone(); m.name = name; m.color.set(col); m.map = null; m.metalness = metal; m.roughness = rough; return m; };
+    o.material = [mk('auto_paint', 0xffffff, 0.3, 0.3), mk('auto_box', 0xd9dde1, 0.55, 0.38), mk('auto_dark', 0x232528, 0.2, 0.75)];
+  });
+  info.paint = [...new Set([...(info.paint || []), 'auto_paint'])];
+}
 export function requestGlb(id) {
   id = mid(id);
   let e = cache.get(id); if (e) return e.promise;
@@ -29,7 +50,7 @@ export function requestGlb(id) {
   e.promise = loadManifest().then(m => {
     const info = m[id]; if (!info) throw new Error('no model for ' + id);
     if (!gltf) { gltf = new GLTFLoader(); gltf.setMeshoptDecoder(MeshoptDecoder); }
-    return gltf.loadAsync(new URL(info.file, BASE).href).then(g => { e.scene = g.scene; e.info = info; e.scene.updateMatrixWorld(true); return e; });
+    return gltf.loadAsync(new URL(info.file, BASE).href).then(g => { e.scene = g.scene; e.info = info; e.scene.updateMatrixWorld(true); if (info.split) splitLivery(e.scene, info); return e; });
   });
   e.promise.catch(err => { if (!/no model/.test(err.message)) console.warn('car model', id, err); });
   return e.promise;
@@ -77,6 +98,7 @@ function analyseBay(e, rear) {
   e.bay[key] = res; return res;
 }
 
+const isWhite = hex => { const c = new THREE.Color(hex); return c.r > 0.8 && c.g > 0.8 && c.b > 0.8; };
 const FINISH = { metallic: { metalness: 0.6, roughness: 0.3, clearcoat: 1 }, pearl: { metalness: 0.35, roughness: 0.22, clearcoat: 1 }, solid: { metalness: 0.05, roughness: 0.32, clearcoat: 1 }, matte: { metalness: 0.15, roughness: 0.75, clearcoat: 0 } };
 const HEAD_RE = /head.?(light|lamp)|front.?(light|lamp)|scheinwerfer|^hl(_|$)/i, TAIL_RE = /(tail|rear|brake|stop).?(light|lamp)|taillight|^tl(_|$)/i;
 
@@ -140,7 +162,7 @@ export function buildGlbCar(car, e, opts = {}) {
   model.paintMats = paintMats;
   model.setPaint = hex => { for (const m of paintMats) m.color.set(hex); };
   model.setFinish = finish => { const f = FINISH[finish] || FINISH.metallic; for (const m of model.allPaint ? model.allPaint() : paintMats) { m.metalness = f.metalness; m.roughness = f.roughness; if ('clearcoat' in m) m.clearcoat = f.clearcoat; m.needsUpdate = true; } };
-  if (paintMats.length) { model.setPaint(opts.color || car.colors[0]); model.setFinish(opts.finish || (car.cat === 'police' ? 'solid' : 'metallic')); }
+  if (paintMats.length) { const col = opts.color || car.colors[0]; model.setPaint(col); model.setFinish(opts.finish || (car.cat === 'police' ? 'solid' : isWhite(col) ? 'pearl' : 'metallic')); }
   // lamps
   for (const m of [...head, ...tail]) { m.emissive = m.emissive || new THREE.Color(); m.emissiveIntensity = 0; }
   const bay = opts.openable === false || low ? null : analyseBay(e, REAR_ENGINE(car));

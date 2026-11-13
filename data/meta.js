@@ -1,8 +1,18 @@
 // Shared game metadata: version, changelog, regions. Update VERSION + CHANGELOG on every release.
-export const GAME = { title: 'MIDNIGHT JAPAN', titleJa: 'ミッドナイト・ジャパン', version: '1.1.1', build: '2026.11.13' };
+export const GAME = { title: 'MIDNIGHT JAPAN', titleJa: 'ミッドナイト・ジャパン', version: '1.2.0', build: '2026.11.13' };
 
 // Newest first. type: new | change | fix | known
 export const CHANGELOG = [
+  {
+    version: '1.2.0', date: '2026-11-13', codename: 'Autopilot',
+    summary: { ko: '자동주행(J / AUTO 버튼): 주차 칸에서 출발해 1차로(추월차로)로 맵 전체를 순회. 지도(M)는 실제 OSM 도로·건물·강·철도까지 전부 보이는 전체 지도로 열리고, 차량은 실제 순정 컬러로 도색.', ja: '自動運転（J／AUTOボタン）：駐車枠から出発し追越車線でマップ全体を巡回。マップ（M）は実際のOSMの道路・建物・川・鉄道まで全部見える全体図で開き、車は本物の純正色に。', en: 'Autopilot (J / AUTO button): leaves your parking bay and tours the whole map in the overtaking lane. The map (M) opens on the whole real map — every OSM street, building, river and railway — and cars wear real factory colours.' },
+    items: [
+      { type: "new", ko: "자동주행(J 키 또는 미니맵 아래 AUTO 버튼): 주차 칸에서 후진으로 빠져나와 PA 출구로, 고속도로에서는 1차로(추월차로) 위주로 주행 — 앞차와 차간거리 유지, 빈 공간에만 깜빡이 켜고 차로 변경, 커브 전 감속, 안 가 본 도로를 우선 골라 맵 전체를 순회하고 맵 끝에서는 회차. 핸들·페달을 조작하면 바로 해제", ja: "自動運転（Jキーまたはミニマップ下のAUTOボタン）：駐車枠からバックで出てPA出口へ、高速では追越車線を中心に走行——車間を保ち、空いた所にだけウインカーを出して車線変更、カーブ手前で減速、まだ走っていない道を優先してマップ全体を巡回し、マップの端では折り返し。ハンドル・ペダル操作ですぐ解除", en: "Autopilot (J, or the AUTO button under the minimap): backs out of your bay to the PA exit, then cruises mostly in the overtaking lane — keeps its distance, signals and changes lanes only into clear gaps, slows for curves, prefers roads it hasn't driven yet so it tours the whole map, and turns round at the map edge. Touch the wheel or a pedal to take over" },
+      { type: "new", ko: "지도(M)를 열면 맵 전체가 한눈에 — 하코네까지 포함. 실제 OpenStreetMap 데이터로 구운 지도에 모든 시내 도로·건물·공원·강·철도·해안선·하코네 지형 음영 표시, 확대하면 고해상도 타일로 건물 하나하나까지", ja: "マップ（M）を開くと箱根まで含む全体が一目で。実際のOpenStreetMapデータから焼いた地図に、すべての街路・建物・公園・川・鉄道・海岸線・箱根の地形陰影、拡大すると高解像度タイルで建物一つ一つまで", en: "The map (M) opens on the whole world, Hakone included, drawn from the real OpenStreetMap data — every street, building, park, river, railway, the coastline and Hakone's relief — with high-resolution tiles down to single buildings when you zoom in" },
+      { type: "change", ko: "모든 차종 색상을 실제 순정 컬러로 교체 (R34 베이사이드 블루·밀레니엄 제이드, FD 빈티지 레드, NSX 포뮬러 레드, Z33 르망 선셋 등), 대표 컬러가 기본값. 흰색은 펄 도장으로 광택이 나고 교통차량에서 흰 차 비율 감소", ja: "全車種の色を本物の純正色に（R34ベイサイドブルー・ミレニアムジェイド、FDヴィンテージレッド、NSXフォーミュラレッド、Z33ル・マン サンセットなど）、代表色が初期値。白はパール塗装で艶が出て、交通の白い車も減少", en: "Every car now comes in its real factory colours (R34 Bayside Blue and Millennium Jade, FD Vintage Red, NSX Formula Red, Z33 Le Mans Sunset …) with the signature colour first; whites are a glossy pearl and rarer in traffic" },
+      { type: "fix", ko: "도색이 안 된 하얀 덩어리로 보이던 캔터 트럭: 캐빈은 차체 색, 적재함은 알루미늄, 하부·타이어는 검정으로", ja: "塗装されていない白い塊に見えたキャンター：キャブは車体色、荷箱はアルミ、下回りとタイヤは黒に", en: "The Canter truck no longer looks like unpainted white clay: painted cab, aluminium box, dark chassis and tyres" },
+    ]
+  },
   {
     version: '1.1.1', date: '2026-11-13', codename: 'Sound & Traffic',
     summary: { ko: '교통차량은 전부 실제 3D 모델, 추월차로(1차로)는 플레이어 전용, 경적에 비켜 주는 차들, 실제 녹음으로 바꾼 사운드와 터보 블로오프 「프슈욱」.', ja: '交通はすべて本物の3Dモデル、追越車線はプレイヤー専用、クラクションで道を譲る車、本物の録音に替えたサウンドとターボのブローオフ「プシュッ」。', en: 'All traffic uses real 3D models, the overtaking lane is yours, cars move over when you honk, recorded sounds replace the synthetic ones, and turbo cars go “pssshh”.' },
