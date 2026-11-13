@@ -77,8 +77,9 @@ const ROADMAP = [
   ['1.0', 'done', ['routes', 'site', 'money']],
   ['1.1', 'done', ['20.connected', '20.sound']],
   ['1.2', 'done', ['20.autopilot', '20.mapall']],
-  ['2.0', 'now', ['20.real3d', '20.fence', '20.cockpit']],
-  ['2.1', 'next', ['07.cars', '03.events', '20.more3d']],
+  ['2.0', 'done', ['20.real3d', '20.fence', '20.cockpit']],
+  ['2.1', 'now', ['21.marks', '21.signs']],
+  ['2.2', 'next', ['07.cars', '03.events', '20.more3d']],
   ['Later', 'later', ['02.perf']],
 ];
 

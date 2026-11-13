@@ -1,8 +1,18 @@
 // Shared game metadata: version, changelog, regions. Update VERSION + CHANGELOG on every release.
-export const GAME = { title: 'MIDNIGHT JAPAN', titleJa: 'ミッドナイト・ジャパン', version: '2.0.0', build: '2026.11.13' };
+export const GAME = { title: 'MIDNIGHT JAPAN', titleJa: 'ミッドナイト・ジャパン', version: '2.1.0', build: '2026.11.13' };
 
 // Newest first. type: new | change | fix | known
 export const CHANGELOG = [
+  {
+    version: '2.1.0', date: '2026-11-13', codename: 'Road Marks',
+    summary: { ko: '실제 일본 도로처럼: 맵 전체에 노면 표시·표지판 — 급커브의 빨간 미끄럼 방지 포장과 감속 표시, 「速度落とせ」「合流注意」, 골목의 「止まれ」 정지선과 표지판, 속도 숫자, 그린벨트, 자전거 화살표. 다리·터널 부근의 하얀 네모 구조물 제거.', ja: '本物の日本の道路のように：マップ全体に路面標示と標識——急カーブの赤い滑り止め舗装と減速表示、「速度落とせ」「合流注意」、路地の「止まれ」と停止線・標識、速度の数字、グリーンベルト、自転車ナビマーク。橋・トンネル付近の白い四角い構造物を撤去。', en: "Roads marked like Japan's: across the whole map — red anti-skid pavement and deceleration bars on sharp bends, 「速度落とせ」 and 「合流注意」 on the asphalt, 止まれ stop lines and signs in the side streets, painted speed limits, green belts and bicycle arrows. The white blocks at bridge ends and tunnel mouths are gone." },
+    items: [
+      { type: "new", ko: "고속도로 급커브 264곳: 실제 수도고처럼 빨간 미끄럼 방지 포장, 커브 앞 가로 감속 표시(점점 촘촘하게), 노면 「速度落とせ」, 노란 마름모 급커브 경고 표지, 커브 바깥쪽 화살깃(矢羽根) 표지", ja: "高速の急カーブ264か所：首都高のような赤い滑り止め舗装、カーブ手前の減速表示（だんだん間隔が詰まる）、路面の「速度落とせ」、黄色いひし形の急カーブ警戒標識、カーブ外側の矢羽根", en: "264 sharp expressway bends: red anti-skid pavement like the Shuto's, transverse deceleration bars closing up before the bend, 「速度落とせ」 on the asphalt, yellow diamond curve warnings and chevron boards on the outside" },
+      { type: "new", ko: "합류부 60곳: 램프에 「合流注意」 표지, 본선에 합류 경고 표지와 노면 「合流注意」 / 긴 직선 구간에 「追突注意」「車間距離確認」 안내판", ja: "合流部60か所：ランプに「合流注意」、本線に合流の警戒標識と路面の「合流注意」／長い直線に「追突注意」「車間距離確認」の看板", en: "60 merges: 「合流注意」 boards on the ramps, merge warnings and 「合流注意」 painted on the main line; 「追突注意」 / 「車間距離確認」 boards along the long straights" },
+      { type: "new", ko: "시내 모든 거리: 작은 길이 큰 길과 만나는 곳마다 정지선 + 노면 「止まれ/とまれ」 + 빨간 역삼각형 「止まれ」 표지, 신호 교차로 앞 ◇ 횡단보도 예고, 간선도로에 노면 속도 숫자(60/50/40/30)와 속도제한 표지, 파란 자전거 화살표, 좁은 골목·통학로에 초록 그린벨트와 「通学路」, 신호 없는 교차로의 빨간 컬러 포장", ja: "街のすべての道：細い道が広い道に出る所に停止線と路面の「止まれ／とまれ」と赤い逆三角の「止まれ」標識、信号交差点手前の◇（横断歩道あり）、幹線道路に路面の速度数字（60/50/40/30）と速度規制標識、青い自転車ナビマーク、狭い道・通学路に緑のグリーンベルトと「通学路」、信号のない交差点の赤いカラー舗装", en: "Every city street: stop lines with 「止まれ／とまれ」 on the asphalt and the red 止まれ triangle where a side street meets a bigger road, ◇ crossing-ahead marks before signals, painted speed limits (60/50/40/30) with speed-limit signs, blue bicycle arrows on arterials, green belts and 「通学路」 on narrow school routes, red pavement on unsignalled crossings" },
+      { type: "fix", ko: "다리 끝·터널 입구 고저차 부분의 하얀 네모 구조물 제거: 땅 위로 2.4m 솟고 양옆으로 튀어나왔던 터널 문 벽을 지면 높이·절개부 폭에 맞추고, 낮은 고가 끝부분에서 땅에 박혀 있던 교각 캡 블록과 긴 문형 보 제거", ja: "橋の端・トンネル入口の高低差部分の白い四角い構造物を撤去：地面から2.4m突き出し両脇にはみ出していた坑口の壁を地面の高さと掘割の幅に合わせ、低い高架の端で地面に埋まっていた橋脚の梁ブロックと長い門型の梁を撤去", en: "The white blocks where bridges and tunnels change height are gone: tunnel headwalls no longer stand 2.4 m proud and stick out past the cutting, and the pier caps that sat on the ground at low bridge ends (and the long portal beams) were removed" },
+    ]
+  },
   {
     version: '2.0.0', date: '2026-11-13', codename: 'Real 3D',
     summary: { ko: '진짜 3D 일본: 일본 정부 3D 도시 모델(PLATEAU)로 도쿄 23구·요코하마·가와사키 등 46개 구·시의 실제 건물을 스트리밍. 맵 전체에서 차는 도로·갓길·주차장, 사람은 인도·주차장·건물 안으로만. 구멍 난 땅 메움, 실제 차량 그대로의 콕핏.', ja: 'リアル3Dジャパン：国の3D都市モデル（PLATEAU）で東京23区・横浜・川崎など46区市の実在の建物をストリーミング。マップ全体でクルマは道路・路肩・駐車場、人は歩道・駐車場・建物の中だけ。地面の穴をふさぎ、実車そのままのコックピットに。', en: "Real 3D Japan: the national 3D city model (PLATEAU) streams the real buildings of 46 wards and cities — all of Tokyo's 23 wards, Yokohama, Kawasaki and more. Map-wide fence: cars keep to roads, shoulders and car parks, people to sidewalks, car parks and buildings. No more holes in the ground, and cockpits built on the real cars." },

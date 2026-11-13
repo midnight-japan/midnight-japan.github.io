@@ -128,6 +128,12 @@ class SegGrid {
   dist(x, z, filter) { let best = null; for (const s of this.near(x, z)) { if (filter && !filter(s)) continue; const dx = s.bx - s.ax, dz = s.bz - s.az; const L2 = dx * dx + dz * dz || 1e-9; const t = Math.max(0, Math.min(1, ((x - s.ax) * dx + (z - s.az) * dz) / L2)); const px = s.ax + dx * t, pz = s.az + dz * t; const d = Math.hypot(x - px, z - pz); if (!best || d < best.d) best = { d, s, t, px, pz }; } return best; }
 }
 
+// ── v2.1 road markings / traffic sign atlas (js/game/city.js makeRoadAtlas): text cells 128×512 in the top half,
+// sign cells 256×256 below. TXT index → cell, SGN index → cell.
+const TXT = { '止まれ': 0, '30': 1, '40': 2, '50': 3, '60': 4, '通学路': 5, 'とまれ': 6, '徐行': 7 };
+const SGN = { stop: 0, s30: 1, s40: 2, s50: 3, s60: 4, cross: 5, nopark: 6, school: 7, slow: 8 };
+const txtUV = i => [i * 128 / 2048, (i + 1) * 128 / 2048, 0.5, 1];               // u0 u1 v0 v1
+const sgnUV = i => { const c = i % 8, r = Math.floor(i / 8); return [c * 256 / 2048, (c + 1) * 256 / 2048, 1 - (512 + (r + 1) * 256) / 1024, 1 - (512 + r * 256) / 1024]; };
 // ── PLATEAU coverage (100 m cells → dataset index) and the datasets streaming fine in this session ──
 let PLAT = null, MAINLAND = null;
 function plateauAt(x, z) {
@@ -173,6 +179,7 @@ function buildTile(T, lod, opts) {
   const wires = new Buf(3);
   const trees = new Buf(5);      // x, z, scale, rot, variant
   const cols = [];               // [x, z, hx, hz, ry, y0, y1]
+  const DEC = new Buf(6);        // v2.1 road text + traffic signs: position, atlas uv, back-plate flag
   const lamps = [];              // [x, y, z]
   const water = [];              // polygons (local metres)
   const sigs = [];               // traffic signals: x, z, phase (s)
@@ -388,6 +395,111 @@ function buildTile(T, lod, opts) {
       pm.box(x, 0.65, z, 1, 0, 0.22, 0.22, 0.65, [0.82, 0.08, 0.06], [PLAIN, 0, 0, 0]); cols.push([x, z, 0.3, 0.3, 0, -1, 1.3]);
     } else if (ty === PT.LAMP) {
       pm.cyl(x, z, 0, 6.5, 0.1, 6, [0.5, 0.52, 0.54], [PLAIN, 0, 0, 0]); gm.box(x, 6.5, z, 1, 0, 0.3, 0.3, 0.1, [1, 0.93, 0.8], [1, 0, 0, 0]); lamps.push([x, 6.3, z]); cols.push([x, z, 0.15, 0.15, 0, -1, 6.5]);
+    }
+  }
+
+  // ── v2.1 road markings & signs on every street (near LOD): 止まれ + stop line + 止まれ sign where a minor street meets a
+  // bigger one, ◇ before signalised crossings, painted speed numbers + speed-limit signs, blue bicycle arrows on
+  // arterials, green belts and 通学路 on narrow school routes, red anti-skid pavement at unsignalled crossings ──
+  if (near) {
+    const dec = DEC;
+    const yDec = 0.078, yCol = 0.07;
+    const decal = (cx, cz, ax, az, w, len, uvr) => { // ax,az = unit vector from the text's top (far) to its bottom (near the driver)
+      const nx = -az, nz = ax, [u0, u1, v0, v1] = uvr, hw = w / 2, hl = len / 2;
+      const P = (a, b) => [cx + ax * a + nx * b, yDec, cz + az * a + nz * b];
+      const A = P(-hl, -hw), B = P(-hl, hw), Cc = P(hl, hw), Dd = P(hl, -hw);
+      dec.push(...A, u1, v1, 0); dec.push(...B, u0, v1, 0); dec.push(...Cc, u0, v0, 0); dec.push(...A, u1, v1, 0); dec.push(...Cc, u0, v0, 0); dec.push(...Dd, u1, v0, 0); // −hw = the driver's right
+    };
+    const signPost = (x, z, fx, fz, cell, size = 0.75, top = 2.5) => { // face normal (fx, fz) toward the traffic it is for
+      C(x, z); pm.cyl(x, z, 0, top, 0.035, 6, [0.72, 0.74, 0.75], [PLAIN, 0, 0, 0]); cols.push([x, z, 0.1, 0.1, 0, -1, top]);
+      const tx = fz, tz = -fx, [u0, u1, v0, v1] = sgnUV(cell), h = size / 2, y = top - h + 0.05;
+      for (const [o, back] of [[0.045, 0], [0.025, 1]]) { // face, and a plain metal back plate just behind it
+        const P = (a, b) => [x + tx * a + fx * o, y + b, z + tz * a + fz * o];
+        const A = P(-h, -h), B = P(h, -h), Cc = P(h, h), Dd = P(-h, h);
+        dec.push(...A, u0, v0, back); dec.push(...B, u1, v0, back); dec.push(...Cc, u1, v1, back); dec.push(...A, u0, v0, back); dec.push(...Cc, u1, v1, back); dec.push(...Dd, u0, v1, back); // −t = the viewer's left
+      }
+    };
+    const bar = (x0, z0, x1, z1, w, col, y = yDec) => { const dx = x1 - x0, dz = z1 - z0, L = Math.hypot(dx, dz) || 1, nx = -dz / L * w / 2, nz = dx / L * w / 2; paint.quad([x0 + nx, y, z0 + nz], [x1 + nx, y, z1 + nz], [x1 - nx, y, z1 - nz], [x0 - nx, y, z0 - nz], col); };
+    const sigAt = (x, z) => { for (let q = 0; q < sigs.length; q += 3) if (Math.hypot(sigs[q] - x, sigs[q + 1] - z) < 8) return true; return false; };
+    const onStreet = (x, z, st) => { const d = segs.dist(x, z); return d && d.s.st === st && d.d < st.w / 2; };
+    const WHITE2 = [0.93, 0.93, 0.9];
+    // junction approaches
+    for (const [jx, jz] of junc) {
+      const ap = [];
+      for (const sgm of segs.near(jx, jz)) {
+        if (sgm.st.flags & 21) continue; // bridges/tunnels/ghost decks: no street paint
+        for (const [ex, ez, ox, oz] of [[sgm.ax, sgm.az, sgm.bx, sgm.bz], [sgm.bx, sgm.bz, sgm.ax, sgm.az]]) {
+          if (Math.hypot(ex - jx, ez - jz) > 1.5) continue;
+          const dx = ox - ex, dz = oz - ez, l = Math.hypot(dx, dz) || 1;
+          if (!ap.some(o => o.dx * dx / l + o.dz * dz / l > 0.9)) ap.push({ dx: dx / l, dz: dz / l, st: sgm.st, len: l });
+        }
+      }
+      if (ap.length < 3) continue;
+      const signal = sigAt(jx, jz), minCls = Math.min(...ap.map(a => a.st.cls)), maxHw = Math.max(...ap.map(a => a.st.w / 2));
+      for (const a of ap) {
+        const st = a.st, hw = st.w / 2, lx = a.dz, lz = -a.dx; // left of a car travelling −d (towards the junction)
+        if (st.cls === S.PED || hw < 1.6) continue;
+        if (signal) { // ◇ before the crossing, 30 m and 50 m out, in the approach lane
+          for (const back of [30, 50]) { const cx = jx + a.dx * (hw + back) + lx * hw / 2, cz = jz + a.dz * (hw + back) + lz * hw / 2; if (!onStreet(cx, cz, st)) continue;
+            const ex = a.dx * 2.4, ez = a.dz * 2.4, wx = lx * 0.75, wz = lz * 0.75;
+            bar(cx - ex, cz - ez, cx + wx, cz + wz, 0.15, WHITE2); bar(cx + wx, cz + wz, cx + ex, cz + ez, 0.15, WHITE2); bar(cx + ex, cz + ez, cx - wx, cz - wz, 0.15, WHITE2); bar(cx - wx, cz - wz, cx - ex, cz - ez, 0.15, WHITE2); }
+          continue;
+        }
+        const minor = st.cls > minCls || (st.cls >= S.MINOR && ap.length >= 4 && st.w <= Math.min(...ap.map(o => o.st.w)) + 0.01 && hash2(Math.round(jx), Math.round(jz)) < 0.5);
+        if (!minor || a.len < 8) continue;
+        const D = maxHw + 1.8, lane0 = 0.15, lane1 = st.flags & 2 ? hw - 0.15 : Math.max(lane0 + 1, hw - 0.15);
+        const s0x = jx + a.dx * D, s0z = jz + a.dz * D;
+        bar(s0x + lx * lane0, s0z + lz * lane0, s0x + lx * lane1, s0z + lz * lane1, 0.45, WHITE2); // stop line
+        const tl = 4.8, tw = Math.min(2.4, Math.max(1.2, (lane1 - lane0) - 0.4)), tc = (lane0 + lane1) / 2;
+        const tx = jx + a.dx * (D + 1.4 + tl / 2) + lx * tc, tz = jz + a.dz * (D + 1.4 + tl / 2) + lz * tc;
+        if (onStreet(tx, tz, st)) decal(tx, tz, a.dx, a.dz, tw, tl, txtUV(TXT[st.cls >= S.MINOR && hash2(Math.round(tx), 7) < 0.25 ? 'とまれ' : '止まれ']));
+        const px = jx + a.dx * (D + 0.6) + lx * (hw + 0.7), pz = jz + a.dz * (D + 0.6) + lz * (hw + 0.7);
+        if (!segs.dist(px, pz) || segs.dist(px, pz).d > 0.6) signPost(px, pz, a.dx, a.dz, SGN.stop, 0.8, 2.4);
+        // unsignalled crossing of two minor streets: red anti-skid square across the junction (交差点カラー舗装)
+        if (minCls >= S.TERTIARY && ap.length >= 4 && a === ap.find(o => o.st === st) && hash2(Math.round(jx * 3), Math.round(jz)) < 0.35) {
+          const R0 = maxHw + 0.3; paint.quad([jx - R0, yCol, jz - R0], [jx + R0, yCol, jz - R0], [jx + R0, yCol, jz + R0], [jx - R0, yCol, jz + R0], [0.5, 0.2, 0.16]);
+        }
+      }
+    }
+    // along streets
+    const schools = []; for (const a of T.l || []) if (a[0] === L.SCHOOL) { let x = 0, z = 0, n = 0; for (let k = 1; k < a.length; k += 2) { x += a[k] * D; z += a[k + 1] * D; n++; } schools.push([x / n, z / n]); }
+    for (const st of streets) {
+      if (st.flags & 21 || st.cls === S.PED || st.cls === S.SERVICE) continue;
+      const pts = st.pts, hw = st.w / 2; let acc = 0; const segL = []; for (let k = 0; k < pts.length - 1; k++) { const l = Math.hypot(pts[k + 1][0] - pts[k][0], pts[k + 1][1] - pts[k][1]); segL.push(l); acc += l; }
+      if (acc < 40) continue;
+      const at = s => { let k = 0, a0 = 0; while (k < segL.length - 1 && a0 + segL[k] < s) { a0 += segL[k]; k++; } const t = (s - a0) / (segL[k] || 1), A = pts[k], B = pts[k + 1]; const tx = (B[0] - A[0]) / (segL[k] || 1), tz = (B[1] - A[1]) / (segL[k] || 1); return [A[0] + (B[0] - A[0]) * t, A[1] + (B[1] - A[1]) * t, tx, tz]; };
+      const dirs = st.flags & 2 ? [1] : [1, -1];
+      const speed = st.cls === S.TRUNK ? '60' : st.cls === S.PRIMARY ? '50' : st.cls === S.SECONDARY ? '40' : (st.cls === S.MINOR && st.w >= 4.5) ? '30' : null;
+      const nearSchool = schools.some(([x, z]) => Math.hypot(x - pts[0][0], z - pts[0][1]) < 350);
+      const seed = hash2(Math.round(pts[0][0] * 7), Math.round(pts[0][1] * 3));
+      for (const dir of dirs) {
+        const laneLat = st.flags & 2 ? 0 : hw / 2; // to the left of travel
+        // painted speed number + a speed-limit sign
+        if (speed) for (let s = 45 + seed * 60; s < acc - 30; s += st.cls <= S.SECONDARY ? 320 : 400) {
+          const ss = dir > 0 ? s : acc - s, [x, z, tx, tz] = at(ss), fx = tx * dir, fz = tz * dir, lx = -fz, lz = fx;
+          const cx = x + lx * laneLat, cz = z + lz * laneLat; if (!onStreet(cx, cz, st)) continue;
+          decal(cx, cz, -fx, -fz, Math.min(1.6, st.w / 2 - 0.3), 3.6, txtUV(TXT[speed]));
+          const px = x + lx * (hw + (st.flags & 8 ? 2.2 : 0.6)), pz = z + lz * (hw + (st.flags & 8 ? 2.2 : 0.6));
+          const sd = segs.dist(px, pz); if (!sd || sd.d > sd.s.w / 2 + 0.3) signPost(px, pz, -fx, -fz, SGN['s' + speed] ?? SGN.s40, 0.6, 2.5);
+        }
+        // blue bicycle arrows (自転車ナビマーク) along the left edge of arterials
+        if (st.cls <= S.TERTIARY && st.w >= 9) for (let s = 12; s < acc - 12; s += 22) {
+          const ss = dir > 0 ? s : acc - s, [x, z, tx, tz] = at(ss), fx = tx * dir, fz = tz * dir, lx = -fz, lz = fx, o = hw - 0.75;
+          const cx = x + lx * o, cz = z + lz * o, BLUE = [0.1, 0.34, 0.8];
+          bar(cx - fx * 0.9, cz - fz * 0.9, cx + fx * 0.3, cz + fz * 0.3, 0.22, BLUE, yCol + 0.004);
+          bar(cx + fx * 0.75 + lx * 0.02, cz + fz * 0.75 + lz * 0.02, cx + fx * 0.2 + lx * 0.38, cz + fz * 0.2 + lz * 0.38, 0.18, BLUE, yCol + 0.004);
+          bar(cx + fx * 0.75 - lx * 0.02, cz + fz * 0.75 - lz * 0.02, cx + fx * 0.2 - lx * 0.38, cz + fz * 0.2 - lz * 0.38, 0.18, BLUE, yCol + 0.004);
+        }
+      }
+      // green belts on narrow streets without a sidewalk (school routes) + 通学路 and a slow-down sign
+      if (st.cls === S.MINOR && !(st.flags & 8) && st.w >= 4 && st.w < 7.5 && (nearSchool || seed < 0.28)) {
+        for (let k = 0; k < pts.length - 1; k++) for (const sd of [1, -1]) {
+          const [ax, az] = pts[k], [bx, bz] = pts[k + 1], l = segL[k] || 1, nx = -(bz - az) / l * sd, nz = (bx - ax) / l * sd, o0 = hw - 0.95, o1 = hw - 0.2;
+          paint.quad([ax + nx * o0, yCol, az + nz * o0], [bx + nx * o0, yCol, bz + nz * o0], [bx + nx * o1, yCol, bz + nz * o1], [ax + nx * o1, yCol, az + nz * o1], [0.24, 0.6, 0.34]);
+        }
+        if (nearSchool) for (const dir of dirs) { const ss = dir > 0 ? acc * 0.35 : acc * 0.65, [x, z, tx, tz] = at(ss); decal(x, z, -tx * dir, -tz * dir, Math.min(2, st.w - 2.4), 5.2, txtUV(TXT['通学路'])); }
+        if (nearSchool) { const [x, z, tx, tz] = at(Math.min(acc - 5, 20)); signPost(x - tz * (hw + 0.5), z + tx * (hw + 0.5), -tx, -tz, SGN.school, 0.8, 2.6); }
+      }
     }
   }
   function vending(x, z, ry, n) {
@@ -777,7 +889,7 @@ function buildTile(T, lod, opts) {
   }
   const mask = mid ? buildMask(T, streets) : null;
   const landR = buildLand(T, streets, OX, OZ, landF);
-  const out = { mask, landR, runways, gates, rails, stations, net, sigs, land: landF.out(), bm: bm.out(), pm: pm.out(), gm: gm.out(), sg: sg.out(), road: road.out(), walk: walk.out(), paint: paint.out(), wires: wires.out(), trees: trees.out(), cols, lamps, water, bridges, ground: {} };
+  const out = { dec: DEC.out(), mask, landR, runways, gates, rails, stations, net, sigs, land: landF.out(), bm: bm.out(), pm: pm.out(), gm: gm.out(), sg: sg.out(), road: road.out(), walk: walk.out(), paint: paint.out(), wires: wires.out(), trees: trees.out(), cols, lamps, water, bridges, ground: {} };
   for (const c in ground) out.ground[c] = ground[c].out();
   return out;
 }
@@ -874,7 +986,7 @@ self.onmessage = async ev => {
     let T = cache.get(url);
     if (!T) { const r = await fetch(url); if (!r.ok) throw new Error(r.status + ' ' + url); T = await r.json(); cache.set(url, T); if (cache.size > 80) cache.delete(cache.keys().next().value); }
     const o = buildTile(T, lod, opts || {});
-    const tr = [o.land.buffer, ...o.bm.map(b => b.buffer), ...o.pm.map(b => b.buffer), ...o.gm.map(b => b.buffer), ...o.sg.map(b => b.buffer), o.road.buffer, o.walk.buffer, o.paint.buffer, o.wires.buffer, o.trees.buffer, ...Object.values(o.ground).map(g => g.buffer)]; if (o.mask) tr.push(o.mask.buffer); tr.push(o.landR.buffer);
+    const tr = [o.land.buffer, ...o.bm.map(b => b.buffer), ...o.pm.map(b => b.buffer), ...o.gm.map(b => b.buffer), ...o.sg.map(b => b.buffer), o.road.buffer, o.walk.buffer, o.paint.buffer, o.wires.buffer, o.trees.buffer, ...Object.values(o.ground).map(g => g.buffer)]; if (o.mask) tr.push(o.mask.buffer); tr.push(o.landR.buffer); tr.push(o.dec.buffer);
     self.postMessage({ id, ok: true, o }, tr);
   } catch (e) { self.postMessage({ id, ok: false, err: String(e && e.stack || e) }); }
 };

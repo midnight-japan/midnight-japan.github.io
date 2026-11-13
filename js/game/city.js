@@ -6,6 +6,7 @@
 import * as THREE from 'three';
 import { surface, weather } from './textures.js';
 import { MAP } from './roads.js';
+import { signCanvas } from './signs.js';
 
 const TILE = 1000;
 const DIST = { low: [380, 950, 2200], medium: [520, 1300, 3200], high: [650, 1600, 4200], ultra: [850, 2000, 5200] };
@@ -51,6 +52,22 @@ function makeAtlas() {
     chars.forEach((ch, i) => g.fillText(ch, x + 32, y + 14 + step * (i + 0.5)));
   });
   const t = new THREE.CanvasTexture(c); t.colorSpace = THREE.SRGBColorSpace; t.anisotropy = 8; t.generateMipmaps = true;
+  return t;
+}
+// ── v2.1 road text + traffic sign atlas (cells: keep in sync with TXT / SGN in city-worker.js) ──
+function makeRoadAtlas() {
+  const c = document.createElement('canvas'); c.width = 2048; c.height = 1024; const g = c.getContext('2d');
+  const TXT = ['止まれ', '30', '40', '50', '60', '通学路', 'とまれ', '徐行'];
+  TXT.forEach((str, i) => { // elongated characters, first character nearest the driver (bottom of the cell)
+    const ch = /^\d+$/.test(str) ? [str] : [...str], n = ch.length, x0 = i * 128, cell = 512 / n;
+    g.fillStyle = '#fff'; g.textAlign = 'center'; g.textBaseline = 'middle';
+    ch.forEach((t, k) => { g.save(); g.translate(x0 + 64, 512 - cell * (k + 0.5)); g.scale(1, cell / 128 * (n === 1 ? 0.8 : 0.92)); g.font = `900 ${n === 1 ? 92 : 112}px "Noto Sans JP","Hiragino Sans","Yu Gothic",sans-serif`; g.fillText(t, 0, 0); g.restore(); });
+  });
+  const SG = [['stop'], ['speed_limit', { value: 30 }], ['speed_limit', { value: 40 }], ['speed_limit', { value: 50 }], ['speed_limit', { value: 60 }], ['pedestrian_crossing'], ['no_parking'], ['caution_board', { lines: ['通学路'] }], ['slow']];
+  SG.forEach(([kind, opts], i) => {
+    try { const sc = signCanvas(kind, opts || {}); const cx = (i % 8) * 256, cy = 512 + Math.floor(i / 8) * 256; const k = Math.min(240 / sc.width, 240 / sc.height); const w = sc.width * k, h = sc.height * k; g.drawImage(sc, cx + (256 - w) / 2, cy + (256 - h) / 2, w, h); } catch (e) { console.warn('road atlas', kind, e); }
+  });
+  const t = new THREE.CanvasTexture(c); t.colorSpace = THREE.SRGBColorSpace; t.anisotropy = 8;
   return t;
 }
 const atlasRect = (idx, style) => {
@@ -310,6 +327,11 @@ export class City {
     this.mProp = new THREE.MeshStandardMaterial({ vertexColors: true, roughness: 0.6, metalness: 0.25 });
     this.mGlow = glowMaterial(U);
     this.atlas = makeAtlas();
+    { const rt = makeRoadAtlas(); this.mDecal = new THREE.MeshStandardMaterial({ map: rt, emissive: 0xffffff, emissiveMap: rt, emissiveIntensity: 0.06, roughness: 0.7, alphaTest: 0.45, side: THREE.DoubleSide, polygonOffset: true, polygonOffsetFactor: -6, polygonOffsetUnits: -6 });
+      this.mDecal.onBeforeCompile = sh => {
+        sh.vertexShader = sh.vertexShader.replace('#include <common>', '#include <common>\nattribute float aShade; varying float vShade;').replace('#include <begin_vertex>', '#include <begin_vertex>\nvShade = aShade;');
+        sh.fragmentShader = sh.fragmentShader.replace('#include <common>', '#include <common>\nvarying float vShade;').replace('#include <map_fragment>', '#include <map_fragment>\nif (vShade > 0.5) diffuseColor.rgb = vec3(0.42, 0.44, 0.46);').replace('#include <emissivemap_fragment>', '#include <emissivemap_fragment>\ntotalEmissiveRadiance *= 1.0 - vShade;');
+      }; }
     this.mSign = new THREE.MeshStandardMaterial({ map: this.atlas, emissiveMap: this.atlas, emissive: 0xffffff, emissiveIntensity: 0.25, roughness: 0.5 });
     const road = surface('asphalt_worn', { tile: 6 });
     this.mRoad = road.clone(); this.mRoad.vertexColors = true; this.mRoad.polygonOffset = true; this.mRoad.polygonOffsetFactor = -1; this.mRoad.polygonOffsetUnits = -1;
@@ -339,7 +361,7 @@ export class City {
   update(dt, focus, night) {
     if (!this.ready) return;
     this.uniforms.uTime.value += dt; this.uniforms.uNight.value = night;
-    this.mSign.emissiveIntensity = 0.25 + night * 1.6;
+    this.mSign.emissiveIntensity = 0.25 + night * 1.6; if (this.mDecal) this.mDecal.emissiveIntensity = 0.04 + night * 0.22;
     this._t = (this._t || 0) - dt; if (this._t > 0) return; this._t = 0.25;
     const [R0, R1, R2] = this.R; const fx = focus.x, fz = focus.z;
     const want = new Map();
@@ -389,6 +411,7 @@ export class City {
     for (const sgb of o.sg) if (sgb.length) { const g = rich(sgb); const uv = g.attributes.uv, inf = g.attributes.aInfo; for (let v = 0; v < uv.count; v++) { const [x, y, w, h] = atlasRect(Math.round(inf.getX(v)), Math.round(inf.getY(v))); uv.setXY(v, x + uv.getX(v) * w, y + uv.getY(v) * h); } add(g, this.mSign, false, false); }
     add(flat(o.land), this.mLand, false, true);
     add(flat(o.road), this.mRoad, false, true);
+    if (o.dec && o.dec.length) { const ib = new THREE.InterleavedBuffer(o.dec, 6); const g = new THREE.BufferGeometry(); g.setAttribute('position', new THREE.InterleavedBufferAttribute(ib, 3, 0)); g.setAttribute('uv', new THREE.InterleavedBufferAttribute(ib, 2, 3)); g.setAttribute('aShade', new THREE.InterleavedBufferAttribute(ib, 1, 5)); g.computeVertexNormals(); add(g, this.mDecal, false, true); }
     add(flat(o.walk), this.mWalk, false, true);
     add(flat(o.paint), this.mPaint, false, true);
     for (const c in o.ground) add(flat(o.ground[c]), this.mGround[c] || this.mGround[1], false, true);

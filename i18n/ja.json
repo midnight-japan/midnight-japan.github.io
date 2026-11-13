@@ -742,6 +742,8 @@
  "site.road.20.more3d": "沿岸のPLATEAU都市を追加",
  "site.road.20.real3d": "46区市のリアル3D都市（PLATEAU）",
  "site.road.20.sound": "本物の録音サウンド・ブローオフ・実車モデルの交通",
+ "site.road.21.marks": "本物の路面標示：赤いカーブ・止まれ・速度数字・グリーンベルト",
+ "site.road.21.signs": "すべての道に警戒・止まれ・速度規制標識",
  "site.road.done": "リリース済み",
  "site.road.kicker": "ロードマップ",
  "site.road.later": "その先",

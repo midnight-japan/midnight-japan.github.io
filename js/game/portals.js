@@ -32,7 +32,7 @@ function board(lines, w, h, bg, fg, sub) {
 export function buildPortals(world) {
   const net = world.net, isLand = (x, z) => world.isLand(x, z);
   const g = new THREE.Group(); g.name = 'tunnel-portals';
-  const conc = surface('concrete', { tile: 3 }).clone(); conc.color = new THREE.Color(0xd2cdc2);
+  const conc = surface('concrete', { tile: 3 }).clone(); conc.color = new THREE.Color(0x9d9a92);
   const dark = new THREE.MeshStandardMaterial({ color: 0x2b2f35, roughness: 0.6, metalness: 0.3 });
   const lightsOn = board(['トンネル内', 'ライト点灯'], 2.2, 1.6, '#1d4fa3', '#ffffff', 'HEADLIGHTS ON');
   const radio = board(['ラジオ再放送', '1620 kHz'], 2.2, 1.3, '#1d4fa3', '#ffffff', 'TUNNEL RADIO');
@@ -43,9 +43,10 @@ export function buildPortals(world) {
     const t = q.t, out = new THREE.Vector3(-t.x * enter, 0, -t.z * enter); // outward = facing the cars that drive in
     const cx = q.p.x + (q.left.x * (r.edgeL + r.edgeR) / 2), cz = q.p.z + (q.left.z * (r.edgeL + r.edgeR) / 2);
     const yaw = Math.atan2(out.x, out.z);
-    const gy = world.ground(cx, cz), top = P.top, faceTop = Math.max(gy + 2.4, top + 2.2);
-    // portal face: a thick concrete lintel above the opening, the full width of the cutting (+ a dark parapet cap)
-    const W = P.w + 3.2, H = faceTop - (top - 0.4);
+    const gy = world.ground(cx, cz), top = P.top, faceTop = Math.max(gy + 0.9, top + 1.2);
+    // portal face: a concrete lintel over the opening, flush with the cutting walls, its parapet just above the ground
+    // (it used to stand 2.4 m proud and 1.6 m wider than the cutting on each side — a pale block beside the road)
+    const W = P.w + 0.8, H = faceTop - (top - 0.4);
     const face = new THREE.Mesh(new THREE.BoxGeometry(W, H, 1.4), conc); face.position.set(cx, top - 0.4 + H / 2, cz); face.rotation.y = yaw; face.castShadow = face.receiveShadow = true; g.add(face);
     const cap = new THREE.Mesh(new THREE.BoxGeometry(W + 0.4, 0.25, 1.8), dark); cap.position.set(cx, faceTop + 0.12, cz); cap.rotation.y = yaw; g.add(cap);
     // name plate on the side cars drive in from (one-way roads: only at the entrance)

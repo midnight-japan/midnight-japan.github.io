@@ -1008,6 +1008,56 @@ export class World {
       const v = String(road.speed || 80);
       for (let s = 400; s < road.length - 400; s += 1200) for (const dir of [1, -1]) for (const L of road.lanes.filter(l => l.dir === dir)) { lay(textMat(v), road, s + (dir < 0 ? 600 : 0), L.lat, dir, 1.4, 4.2); }
     }
+    // ── v2.1 curves (急カーブ): red anti-skid pavement over the bend, 減速 transverse bars and 「速度落とせ」 before it,
+    // a yellow curve warning sign and 矢羽根 chevron boards on the outside — as on the Shuto's tight bends ──
+    const redPave = new THREE.MeshStandardMaterial({ color: 0x6a2a22, roughness: 0.95, polygonOffset: true, polygonOffsetFactor: -3, polygonOffsetUnits: -3 });
+    let nCurves = 0, nMerges = 0;
+    for (const road of net.roads) {
+      if (road.kind === 'local') continue;
+      const S = road.samples, lim = road.kind === 'expressway' ? 230 : road.kind === 'mountain' ? 45 : 85, runs = [];
+      for (let i = 3; i < S.length - 3; i++) {
+        const a = S[i - 3], b = S[i + 3], ds = b.s - a.s; if (ds < 1) continue;
+        const cr = a.left.x * b.left.z - a.left.z * b.left.x, dot = a.left.x * b.left.x + a.left.z * b.left.z;
+        const ang = Math.atan2(cr, dot), R = ds / Math.max(1e-6, Math.abs(ang));
+        if (R < lim) { const L = runs[runs.length - 1]; if (L && S[i].s - L.s1 < 40 && Math.sign(ang) === L.sg) { L.s1 = S[i].s; L.k = Math.max(L.k, 1 / R); } else runs.push({ s0: S[i].s, s1: S[i].s, sg: Math.sign(ang), k: 1 / R }); }
+      }
+      for (const c of runs) {
+        if (c.s1 - c.s0 < 25 || road.at(c.s0).y < -0.6) continue; nCurves++; (this.curveSpots ||= []).push([road.id, Math.round(c.s0), Math.round(c.s1), Math.round(1 / c.k)]);
+        for (const dir of road.lanesB ? [1, -1] : [1]) {
+          const lanes = road.lanes.filter(l => l.dir === dir); if (!lanes.length) continue;
+          const lo = Math.min(...lanes.map(l => l.lat)) - 1.75, hi = Math.max(...lanes.map(l => l.lat)) + 1.75;
+          const entry = dir > 0 ? c.s0 : c.s1, len = c.s1 - c.s0 + 40;
+          lay(redPave, road, (c.s0 + c.s1) / 2, (lo + hi) / 2, dir, hi - lo, Math.min(len, road.length - 6));
+          // transverse bars on every lane edge, closer and closer towards the bend
+          const edges = [...new Set([lo + 0.15, hi - 0.15, ...lanes.map(l => l.lat + 1.75)])];
+          for (let d = 190, gap = 13; d > 15; d -= gap, gap = Math.max(5, gap * 0.9)) for (const e of edges) lay(plain, road, entry - dir * d, e, dir, 1.1, 0.45);
+          for (const L of lanes) lay(textMat('速度落とせ'), road, entry - dir * 110, L.lat, dir, 1.5, 12);
+          // turning right or left for traffic in this direction
+          const turn = c.sg * dir > 0 ? 'curve_l' : 'curve_r';
+          post(road, entry - dir * 220, dir, 'warning', { type: turn }, 'left', 1.4);
+          const outer = turn === 'curve_r' ? 'left' : 'right';
+          for (let sp = c.s0 + 8; sp < c.s1 - 4; sp += 22) post(road, sp, dir, 'chevron', { dir: turn === 'curve_r' ? 'right' : 'left' }, outer, 0.55);
+        }
+      }
+    }
+    // ── merges (合流): a ramp that ends on another carriageway → 合流注意 on the ramp, a merge warning on the main road ──
+    for (const r of net.roads) {
+      if (r.kind === 'local' || r.length < 120) continue;
+      const E = r.samples[r.samples.length - 1].p;
+      const h = net.hits(E.x, E.z).find(h => h.road !== r && h.road.kind !== 'local' && !h.beyond && Math.abs(h.y - E.y) < 1.5 && h.lat < h.road.edgeL + 1.5 && h.lat > h.road.edgeR - 1.5);
+      if (!h) continue;
+      const M = h.road, lane = M.lanes.slice().sort((a, b) => Math.abs(a.lat - h.lat) - Math.abs(b.lat - h.lat))[0]; if (!lane) continue;
+      const dir = lane.dir, fromLeft = (h.lat - lane.lat) * dir > 0;
+      post(r, r.length - 160, 1, 'caution_board', { lines: ['合流注意'], red: true }, 'left', 1.2);
+      post(M, h.s - 250 * dir, dir, 'warning', { type: fromLeft ? 'merge_l' : 'merge_r' }, fromLeft ? 'left' : 'right', 1.4);
+      for (const L of M.lanes.filter(l => l.dir === dir)) lay(textMat('合流注意'), M, h.s - 170 * dir, L.lat, dir, 1.5, 9.6);
+      nMerges++;
+    }
+    // long straights: 追突注意 and 車間距離確認 boards every few km (both directions)
+    for (const road of net.roads) {
+      if (road.kind !== 'expressway' || road.length < 3000) continue;
+      for (const dir of road.lanesB ? [1, -1] : [1]) for (let sp = 1500, k = 0; sp < road.length - 1500; sp += 2600, k++) post(road, dir > 0 ? sp : road.length - sp, dir, 'caution_board', { lines: k % 2 ? ['車間距離', '確認'] : ['追突注意'] }, 'left', 1.6);
+    }
     // minor street meeting another street: stop line + 止まれ (the narrower road yields)
     for (const r of net.roads) {
       if (r.kind !== 'local') continue;
@@ -1047,7 +1097,7 @@ export class World {
     const grp = new THREE.Group(); grp.name = 'road_paint';
     for (const [m, list] of geos) { const mesh = new THREE.Mesh(mergeGeometries(list), m); mesh.receiveShadow = true; mesh.renderOrder = 2; grp.add(mesh); }
     this.group.add(grp);
-    this.paintStats = { nText, nSigns, nStops };
+    this.paintStats = { nText, nSigns, nStops, nCurves, nMerges };
   }
 
   // ───────────────────────── skyline: Minato Mirai, Kawasaki factories, Tokyo ─────────────────────────

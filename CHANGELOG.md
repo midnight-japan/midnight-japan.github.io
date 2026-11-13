@@ -1,9 +1,10 @@
 # 📜 MIDNIGHT JAPAN 업데이트 기록 · Changelog
 
-현재 버전 · Current: **v2.0.0** · [▶ 웹에서 플레이](https://midnight-japan.github.io/) · [🌐 업데이트 페이지](https://midnight-japan.github.io/changelog.html)
+현재 버전 · Current: **v2.1.0** · [▶ 웹에서 플레이](https://midnight-japan.github.io/) · [🌐 업데이트 페이지](https://midnight-japan.github.io/changelog.html)
 
 | 버전 | 날짜 | 이름 | 요약 |
 |---|---|---|---|
+| [v2.1.0](#v210--road-marks-2026-11-13) | 2026-11-13 | Road Marks | 실제 일본 도로처럼: 맵 전체에 노면 표시·표지판 — 급커브의 빨간 미끄럼 방지 포장과 감속 표시, 「速度落とせ」「合流注意」, 골목의 「止まれ」 정지선과 표지판, 속도 숫자, 그린벨트, 자전거 화살표. 다리·터널 부근의 하얀 네모 구조물 제거. |
 | [v2.0.0](#v200--real-3d-2026-11-13) | 2026-11-13 | Real 3D | 진짜 3D 일본: 일본 정부 3D 도시 모델(PLATEAU)로 도쿄 23구·요코하마·가와사키 등 46개 구·시의 실제 건물을 스트리밍. 맵 전체에서 차는 도로·갓길·주차장, 사람은 인도·주차장·건물 안으로만. 구멍 난 땅 메움, 실제 차량 그대로의 콕핏. |
 | [v1.2.0](#v120--autopilot-2026-11-13) | 2026-11-13 | Autopilot | 자동주행(J / AUTO 버튼): 주차 칸에서 출발해 1차로(추월차로)로 맵 전체를 순회. 지도(M)는 실제 OSM 도로·건물·강·철도까지 전부 보이는 전체 지도로 열리고, 차량은 실제 순정 컬러로 도색. |
 | [v1.1.1](#v111--sound-&-traffic-2026-11-13) | 2026-11-13 | Sound & Traffic | 교통차량은 전부 실제 3D 모델, 추월차로(1차로)는 플레이어 전용, 경적에 비켜 주는 차들, 실제 녹음으로 바꾼 사운드와 터보 블로오프 「프슈욱」. |
@@ -33,6 +34,23 @@
 | [v0.2.0](#v020--bayshore-2026-11-05) | 2026-11-05 | Bayshore | 수도고속 완간선을 따라 하네다까지, 도쿄만 아쿠아라인 해저터널을 지나 우미호타루 PA까지. 실제 3D 차량 모델과 열리는 보닛도 들어왔어요. |
 | [v0.1.1](#v011--one-click-2026-11-04) | 2026-11-04 | One Click | 링크 하나로 바로 플레이. 크롬에서 공식 사이트 주소만 열면 설치 없이 실행돼요. |
 | [v0.1.0](#v010--first-meet-2026-11-04) | 2026-11-04 | First Meet | 첫 공개 버전. 다이코쿠 JCT·PA와 다이코쿠 부두 일대를 3D로 구현했습니다. |
+
+---
+
+## v2.1.0 — Road Marks (2026-11-13)
+
+> 실제 일본 도로처럼: 맵 전체에 노면 표시·표지판 — 급커브의 빨간 미끄럼 방지 포장과 감속 표시, 「速度落とせ」「合流注意」, 골목의 「止まれ」 정지선과 표지판, 속도 숫자, 그린벨트, 자전거 화살표. 다리·터널 부근의 하얀 네모 구조물 제거.
+> Roads marked like Japan's: across the whole map — red anti-skid pavement and deceleration bars on sharp bends, 「速度落とせ」 and 「合流注意」 on the asphalt, 止まれ stop lines and signs in the side streets, painted speed limits, green belts and bicycle arrows. The white blocks at bridge ends and tunnel mouths are gone.
+
+**✨ 추가 · New**
+
+- 고속도로 급커브 264곳: 실제 수도고처럼 빨간 미끄럼 방지 포장, 커브 앞 가로 감속 표시(점점 촘촘하게), 노면 「速度落とせ」, 노란 마름모 급커브 경고 표지, 커브 바깥쪽 화살깃(矢羽根) 표지<br><sub>264 sharp expressway bends: red anti-skid pavement like the Shuto's, transverse deceleration bars closing up before the bend, 「速度落とせ」 on the asphalt, yellow diamond curve warnings and chevron boards on the outside</sub>
+- 합류부 60곳: 램프에 「合流注意」 표지, 본선에 합류 경고 표지와 노면 「合流注意」 / 긴 직선 구간에 「追突注意」「車間距離確認」 안내판<br><sub>60 merges: 「合流注意」 boards on the ramps, merge warnings and 「合流注意」 painted on the main line; 「追突注意」 / 「車間距離確認」 boards along the long straights</sub>
+- 시내 모든 거리: 작은 길이 큰 길과 만나는 곳마다 정지선 + 노면 「止まれ/とまれ」 + 빨간 역삼각형 「止まれ」 표지, 신호 교차로 앞 ◇ 횡단보도 예고, 간선도로에 노면 속도 숫자(60/50/40/30)와 속도제한 표지, 파란 자전거 화살표, 좁은 골목·통학로에 초록 그린벨트와 「通学路」, 신호 없는 교차로의 빨간 컬러 포장<br><sub>Every city street: stop lines with 「止まれ／とまれ」 on the asphalt and the red 止まれ triangle where a side street meets a bigger road, ◇ crossing-ahead marks before signals, painted speed limits (60/50/40/30) with speed-limit signs, blue bicycle arrows on arterials, green belts and 「通学路」 on narrow school routes, red pavement on unsignalled crossings</sub>
+
+**🐞 수정 · Fixed**
+
+- 다리 끝·터널 입구 고저차 부분의 하얀 네모 구조물 제거: 땅 위로 2.4m 솟고 양옆으로 튀어나왔던 터널 문 벽을 지면 높이·절개부 폭에 맞추고, 낮은 고가 끝부분에서 땅에 박혀 있던 교각 캡 블록과 긴 문형 보 제거<br><sub>The white blocks where bridges and tunnels change height are gone: tunnel headwalls no longer stand 2.4 m proud and stick out past the cutting, and the pier caps that sat on the ground at low bridge ends (and the long portal beams) were removed</sub>
 
 ---
 

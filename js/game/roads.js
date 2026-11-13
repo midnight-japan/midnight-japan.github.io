@@ -558,7 +558,7 @@ export function buildRoadMeshes(net, opts = {}) {
       if (r.elevated) {
         const step = r.kind === 'ramp' ? 28 : 34;
         for (let s = 12; s < r.length; s += step) {
-          const p = r.at(s); if (p.y < 4) continue;
+          const p = r.at(s); if (p.y < 5.5) continue; // low decks near the ends of a bridge: the cap sat on the ground as a pale block
           if (span && r === span.road && s > span.s0 && s < span.s1) continue; // cable-stayed Bay Bridge
           const t = r.dirAt(s), cl = (r.edgeL + r.edgeR) / 2, px = p.x + t.z * cl, pz = p.z - t.x * cl;
           if (noPier(px, pz) || opts.noPier?.(px, pz)) continue;
@@ -639,7 +639,7 @@ export function buildRoadMeshes(net, opts = {}) {
     const tries = [];
     if (sp.w <= 14) tries.push({ offs: [0], cap: sp.w * 0.92, thick: 1 });
     tries.push({ offs: [-sp.w * 0.28, sp.w * 0.28], cap: sp.w * 0.92, thick: 1.2 });
-    for (let half = sp.w * 0.5 + 0.8; half <= sp.w * 0.5 + 26; half += 1.5) tries.push({ offs: [-half, half], cap: half * 2 + 2.4, thick: 1.25, portal: true });
+    if (sp.p.y > 9) for (let half = sp.w * 0.5 + 0.8; half <= sp.w * 0.5 + 12; half += 1.5) tries.push({ offs: [-half, half], cap: half * 2 + 2.4, thick: 1.25, portal: true });
     const ok = tries.find(tr => tr.offs.every(o => legClear(cx + lx * o, cz + lz * o, top)) && (!tr.portal || beamClear(cx, cz, lx, lz, tr.cap / 2, top + 1.4)));
     if (!ok) continue;
     const capTop = ok.portal ? top + 1.4 : top;

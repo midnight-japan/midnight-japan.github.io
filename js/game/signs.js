@@ -515,6 +515,61 @@ function invTriangle(label, en) {
 S.stop = invTriangle('止まれ', 'STOP');
 S.slow = invTriangle('徐行', 'SLOW');
 
+// ── 警戒標識 (yellow diamond warning signs) and curve chevron boards (v2.1) ──
+// kind: curve_r | curve_l | merge_l | merge_r | tunnel | rear_end (追突注意 board) | slip
+S.warning = o => {
+  const D = 800, k = o.type || 'curve_r';
+  return {
+    w: 0.9, h: 0.9, shape: 'diamond', mount: 'pole', top: 2.7,
+    draw(g) {
+      poly(g, [[D / 2, 0], [D, D / 2], [D / 2, D], [0, D / 2]]); g.fillStyle = '#141414'; g.fill();
+      poly(g, [[D / 2, 22], [D - 22, D / 2], [D / 2, D - 22], [22, D / 2]]); g.fillStyle = COL.yellow; g.fill();
+      g.fillStyle = '#141414'; g.strokeStyle = '#141414'; g.lineCap = 'round'; g.lineJoin = 'round';
+      const cx = D / 2, cy = D / 2;
+      if (k === 'curve_r' || k === 'curve_l') {
+        g.save(); if (k === 'curve_l') { g.translate(D, 0); g.scale(-1, 1); }
+        g.lineWidth = 56; g.beginPath(); g.moveTo(cx - 70, cy + 210); g.lineTo(cx - 70, cy + 10); g.quadraticCurveTo(cx - 70, cy - 110, cx + 50, cy - 110); g.stroke();
+        poly(g, [[cx + 40, cy - 190], [cx + 190, cy - 110], [cx + 40, cy - 30]]); g.fill(); g.restore();
+      } else if (k === 'merge_l' || k === 'merge_r') {
+        g.save(); if (k === 'merge_r') { g.translate(D, 0); g.scale(-1, 1); }
+        g.lineWidth = 54; g.beginPath(); g.moveTo(cx + 40, cy + 230); g.lineTo(cx + 40, cy - 120); g.stroke();
+        g.lineWidth = 40; g.beginPath(); g.moveTo(cx - 150, cy + 200); g.quadraticCurveTo(cx - 140, cy + 30, cx + 20, cy - 40); g.stroke();
+        poly(g, [[cx + 40, cy - 230], [cx + 130, cy - 100], [cx - 50, cy - 100]]); g.fill(); g.restore();
+      } else if (k === 'tunnel') {
+        g.beginPath(); g.moveTo(cx - 190, cy + 160); g.lineTo(cx - 190, cy - 20); g.arc(cx, cy - 20, 190, Math.PI, 0); g.lineTo(cx + 190, cy + 160); g.closePath(); g.fill();
+        g.fillStyle = COL.yellow; g.beginPath(); g.moveTo(cx - 120, cy + 160); g.lineTo(cx - 120, cy - 10); g.arc(cx, cy - 10, 120, Math.PI, 0); g.lineTo(cx + 120, cy + 160); g.closePath(); g.fill();
+      } else if (k === 'slip') {
+        g.fillRect(cx - 120, cy - 40, 240, 120); g.beginPath(); g.arc(cx - 70, cy + 95, 38, 0, 7); g.arc(cx + 70, cy + 95, 38, 0, 7); g.fill();
+        g.lineWidth = 22; g.beginPath(); g.moveTo(cx - 150, cy + 200); g.bezierCurveTo(cx - 60, cy + 150, cx + 60, cy + 250, cx + 150, cy + 200); g.stroke();
+      }
+    },
+  };
+};
+// 注意喚起 board (white on blue / red frame): 追突注意, 合流注意, 速度落とせ, 車間距離確認, この先急カーブ
+S.caution_board = o => {
+  const W = 900, H = 520, lines = o.lines || ['追突注意'];
+  return {
+    w: 0.9, h: 0.52, shape: 'rect', r: 0.02, mount: 'pole', top: 2.9,
+    draw(g) {
+      fillRR(g, 0, 0, W, H, 18, '#fff'); fillRR(g, 12, 12, W - 24, H - 24, 12, o.red ? COL.regRed : COL.regBlue);
+      lines.forEach((l, i) => text(g, l, W / 2, H / 2 + (i - (lines.length - 1) / 2) * 170, lines.length > 1 ? 140 : 190, { color: '#fff', weight: 900, maxW: W * 0.86, ls: 6 }));
+    },
+  };
+};
+// 矢羽根 chevron board on the outside of a sharp curve (yellow / black)
+S.chevron = o => {
+  const W = 400, H = 600, left = o.dir === 'left';
+  return {
+    w: 0.4, h: 0.6, shape: 'rect', r: 0.01, mount: 'pole', top: 1.5,
+    draw(g) {
+      g.fillStyle = COL.yellow; g.fillRect(0, 0, W, H);
+      g.save(); if (left) { g.translate(W, 0); g.scale(-1, 1); }
+      g.fillStyle = '#141414'; for (const y0 of [60, 300]) poly(g, [[70, y0], [190, y0], [330, y0 + 120], [190, y0 + 240], [70, y0 + 240], [210, y0 + 120]]), g.fill();
+      g.restore();
+    },
+  };
+};
+
 S.one_way = o => {
   const W = 800, H = 400, dir = o.dir ?? 'right';
   return {
@@ -1259,6 +1314,7 @@ const _dynamic = new Set();
 function signShape(spec) {
   const w = spec.w, h = spec.h, s = new THREE.Shape();
   if (spec.shape === 'circle') { s.absarc(0, 0, w / 2, 0, Math.PI * 2, false); return s; }
+  if (spec.shape === 'diamond') { s.moveTo(0, h / 2); s.lineTo(w / 2, 0); s.lineTo(0, -h / 2); s.lineTo(-w / 2, 0); s.closePath(); return s; }
   if (spec.shape === 'tri_down') {
     const r = 0.03; // rounded corners
     const P = [[-w / 2, h / 2], [w / 2, h / 2], [0, -h / 2]];
