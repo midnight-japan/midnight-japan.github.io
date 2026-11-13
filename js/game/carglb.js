@@ -7,6 +7,7 @@
 import * as THREE from 'three';
 import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js';
 import { MeshoptDecoder } from 'three/addons/libs/meshopt_decoder.module.js';
+import { mergeGeometries } from 'three/addons/utils/BufferGeometryUtils.js';
 import { buildCar, buildEngineBay } from './carmodel.js';
 
 const BASE = new URL('../../assets/models/cars/', import.meta.url);
@@ -60,7 +61,7 @@ function fixMaterials(scene, info) {
       const isG = glass.has(m.name) || /glass|window|windscreen|windshield|cristal|vidrio/i.test(m.name || '') || m.transmission > 0 || (m.transparent && m.opacity < 0.9 && !/light|lamp|lens/i.test(m.name || ''));
       if (isG) {
         m.transparent = true; m.opacity = 0.42; if (m.color) m.color.setHex(0x0e1318); m.roughness = 0.05; m.metalness = 0.3;
-        if ('transmission' in m) m.transmission = 0; m.depthWrite = false; m.side = THREE.DoubleSide; m.map = null; m.needsUpdate = true;
+        if ('transmission' in m) m.transmission = 0; m.depthWrite = false; m.side = THREE.DoubleSide; m.forceSinglePass = true; m.map = null; m.needsUpdate = true; // v2.4: one pass (two passes re-validated the shader twice per glass per frame)
       } else if (!m.transparent) { m.side = THREE.DoubleSide; m.needsUpdate = true; }
     }
   });
@@ -72,13 +73,62 @@ export function requestGlb(id) {
   e.promise = loadManifest().then(m => {
     const info = m[id]; if (!info) throw new Error('no model for ' + id);
     if (!gltf) { gltf = new GLTFLoader(); gltf.setMeshoptDecoder(MeshoptDecoder); }
-    return gltf.loadAsync(new URL(info.file, BASE).href).then(g => { e.scene = g.scene; e.info = info; e.scene.updateMatrixWorld(true); if (info.split) splitLivery(e.scene, info); fixMaterials(e.scene, info); return e; });
+    return gltf.loadAsync(new URL(info.file, BASE).href).then(g => { e.scene = g.scene; e.info = info; e.scene.updateMatrixWorld(true); if (info.split) splitLivery(e.scene, info); fixMaterials(e.scene, info); return precompile(e); });
   });
   e.promise.catch(err => { if (!/no model/.test(err.message)) console.warn('car model', id, err); });
   return e.promise;
 }
 
 const ease = t => t * t * (3 - 2 * t);
+// v2.4: compile a freshly loaded model's shaders (in parallel, off the frame) before it is shown
+let compiler = null;
+export function setGlbCompiler(fn) { compiler = fn; }
+function precompile(e) {
+  if (!compiler) return e;
+  try { const p = compiler(e.scene); if (!p) return e; return Promise.race([p, new Promise(r => setTimeout(r, 4000))]).then(() => e, () => e); } catch { return e; }
+}
+// v2.4: traffic-LOD copy of a model — every static mesh merged per material (geometry cached on the entry and shared by
+// all instances), wheels / plates / multi-material meshes kept as they are. A typical model drops from hundreds of
+// nodes and draw calls to a dozen, which is most of the per-frame CPU cost of a busy road.
+const NOFLAT = typeof location !== 'undefined' && /[?&]noflat=1/.test(location.search);
+const PLATE_RE = /plate|licen|kennz|nummer|matric/i;
+// quantized (normalized int) / interleaved attribute → plain float (applyMatrix4 would clamp a normalized one to ±1)
+function toFloat(a) {
+  if (!a.isInterleavedBufferAttribute && !a.normalized && a.array instanceof Float32Array) return a;
+  const n = a.count, k = a.itemSize, f = new Float32Array(n * k);
+  for (let i = 0; i < n; i++) for (let j = 0; j < k; j++) f[i * k + j] = a.getComponent ? a.getComponent(i, j) : [a.getX, a.getY, a.getZ, a.getW][j].call(a, i);
+  return new THREE.BufferAttribute(f, k);
+}
+export function flatClone(e) {
+  if (!e.flat) {
+    const sc = e.scene; sc.updateMatrixWorld(true); const inv = sc.matrixWorld.clone().invert(), m4 = new THREE.Matrix4();
+    const groups = new Map(), keep = [];
+    sc.traverse(o => {
+      if (!o.isMesh) return;
+      let hidden = false; for (let q = o; q; q = q.parent) if (!q.visible) hidden = true; if (hidden) return;
+      const top = (() => { for (let q = o; q && q !== sc; q = q.parent) if (/^wheel_(fl|fr|rl|rr)$/.test(q.name)) return q; return null; })();
+      if (top) { if (!keep.includes(top)) keep.push(top); return; }
+      const ms = Array.isArray(o.material) ? o.material : [o.material];
+      if (Array.isArray(o.material) || o.isSkinnedMesh || o.isInstancedMesh || o.geometry.morphAttributes?.position || PLATE_RE.test(o.name) || PLATE_RE.test(ms[0]?.name || '')) { keep.push(o); return; }
+      const gm = o.geometry, at = Object.keys(gm.attributes).sort().map(n => { const a = gm.attributes[n]; return n + a.itemSize; }).join(',');
+      const k = o.material.uuid + '|' + at + '|' + (gm.index ? 'x' : '');
+      if (!groups.has(k)) groups.set(k, { mat: o.material, list: [] });
+      groups.get(k).list.push(o);
+    });
+    const merged = [];
+    for (const { mat, list } of groups.values()) {
+      const geos = list.map(o => { const g = o.geometry.clone(); for (const n of Object.keys(g.attributes)) g.setAttribute(n, toFloat(g.attributes[n])); g.applyMatrix4(m4.multiplyMatrices(inv, o.matrixWorld)); g.morphAttributes = {}; return g; });
+      let g = null; try { g = geos.length === 1 ? geos[0] : mergeGeometries(geos, false); } catch { g = null; }
+      if (g) { merged.push({ g, mat, name: list[0].name }); if (geos.length > 1) geos.forEach(x => x.dispose()); }
+      else list.forEach(o => keep.push(o));
+    }
+    e.flat = { merged, keep: keep.map(o => ({ o, m: new THREE.Matrix4().multiplyMatrices(inv, o.matrixWorld) })) };
+  }
+  const vis = new THREE.Group(); vis.position.copy(e.scene.position); vis.quaternion.copy(e.scene.quaternion); vis.scale.copy(e.scene.scale);
+  for (const { g, mat, name } of e.flat.merged) { const me = new THREE.Mesh(g, mat); me.name = name; me.matrixAutoUpdate = false; vis.add(me); }
+  for (const { o, m } of e.flat.keep) { const c = o.clone(true); m.decompose(c.position, c.quaternion, c.scale); vis.add(c); }
+  return vis;
+}
 const isWheel = o => { for (let p = o; p; p = p.parent) if (/^wheel_(fl|fr|rl|rr)$/.test(p.name)) return true; return false; };
 const REAR_ENGINE = car => car.drive === 'MR' || car.drive === 'RR';
 
@@ -140,7 +190,8 @@ export function buildGlbCar(car, e, opts = {}) {
   if (parts.engineBay) parts.engineBay.visible = false;
   const procHood = parts.hood?.pivot || null;
   for (const d of parts.doors) { d.pivot.visible = false; }
-  const vis = e.scene.clone(true); vis.name = 'glb';
+  if (!full) { for (const o of procShell) o.matrixWorldAutoUpdate = false; for (const w of parts.wheels) w.steer.traverse(o => { if (o.isMesh) o.matrixWorldAutoUpdate = false; }); for (const d of parts.doors) d.pivot.matrixWorldAutoUpdate = false; } // v2.4: hidden for good → skip their matrices
+  const vis = full || NOFLAT ? e.scene.clone(true) : flatClone(e); vis.name = 'glb';
   // per-instance paint & lamp materials (the rest is shared between all instances of this model)
   const paintNames = new Set(info.paint || []), paintMats = [], head = [], tail = [];
   // lamp materials: by name, or listed explicitly in the manifest (models with generic material names)
@@ -158,7 +209,7 @@ export function buildGlbCar(car, e, opts = {}) {
       return m;
     });
     o.material = Array.isArray(o.material) ? out : out[0];
-    o.castShadow = !low; o.receiveShadow = !low;
+    o.castShadow = !low; o.receiveShadow = true; // v2.4: same on every LOD (materials are shared; a mismatch re-validates the shader per draw)
   });
   bodyG.add(vis);
   // align the axle midpoint with the procedural model's (the physics reference)
@@ -193,8 +244,10 @@ export function buildGlbCar(car, e, opts = {}) {
       const k = c.z > 0 ? 'f' : 'r'; if (!spots[k] || sz.x * sz.y > spots[k].a) spots[k] = { x: c.x, y: c.y, z: c.z > 0 ? box.max.z + 0.006 : box.min.z - 0.006, a: sz.x * sz.y };
     });
     const rc = new THREE.Raycaster(), surf = (y, front) => { const o = new THREE.Vector3(0, y, front ? bz1 + zoff + 1 : bz0 + zoff - 1).applyMatrix4(bodyG.matrixWorld); rc.set(o, new THREE.Vector3(0, 0, front ? -1 : 1).transformDirection(bodyG.matrixWorld)); rc.far = 1.6; const h = rc.intersectObject(vis, true).find(h => h.object.visible); return h ? h.point.applyMatrix4(inv).z + (front ? 0.012 : -0.012) : (front ? bz1 + zoff + 0.012 : bz0 + zoff - 0.012); };
-    if (pf) { const S = spots.f; if (S) pf.position.set(S.x, S.y, S.z); else pf.position.set(0, 0.42, surf(0.42, true)); }
-    if (pr) { const S = spots.r; if (S) pr.position.set(S.x, S.y, S.z); else pr.position.set(0, 0.55, surf(0.55, false)); }
+    // v2.4: the bumper ray is the same for every copy of a model → cast once per model and LOD (it cost a frame per spawn)
+    const pz = e.plateZ ||= {}, ck = (k, y, fr) => pz[k + (low ? 'l' : 'h')] ??= surf(y, fr);
+    if (pf) { const S = spots.f; if (S) pf.position.set(S.x, S.y, S.z); else pf.position.set(0, 0.42, ck('f', 0.42, true)); }
+    if (pr) { const S = spots.r; if (S) pr.position.set(S.x, S.y, S.z); else pr.position.set(0, 0.55, ck('r', 0.55, false)); }
   }
   const dy = by1 - (P.H || by1);
   bodyG.traverse(o => { if (o.userData.glbKeep) o.position.y += dy; if (o.userData.glbDecal !== undefined) o.position.x = o.userData.glbDecal * (Math.max(bx1, -bx0) + 0.004); });

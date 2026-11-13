@@ -15,6 +15,8 @@ import { initTextures } from './textures.js';
 import { setSignAnisotropy } from './signs.js';
 import { RoadNet, PA_RECT, PA } from './roads.js';
 import { Fx } from './fx.js';
+import { defaultStance, STANCE_PRESETS } from './carmodel.js';
+import { setGlbCompiler } from './carglb.js';
 import { Nav } from './nav.js';
 import { Autopilot } from './autopilot.js';
 import { Dialog } from './dialog.js';
@@ -53,16 +55,18 @@ const isMobile = /Android|iPhone|iPad|iPod|Mobile|SamsungBrowser/i.test(navigato
 export const DEFAULT_SETTINGS = {
   quality: isMobile ? 'low' : 'high', resScale: 1, transmission: 'auto', assist: true, units: 'kmh', etc: true,
   difficulty: 'standard', steerAssist: 'standard', stm: 'sport', tcs: 'sport', abs: true, police: 'normal',
-  master: 0.8, engine: 0.85, sfx: 0.8, ambient: 0.6, radio: 0.7, dj: false, voice: false, spawn: 'pa', weather: 'auto', damage: true, tilt: false, shake: true, fps: true, timeSpeed: 1, bloom: true, online: true, touch: isMobile ? 'on' : 'auto',
+  master: 0.8, engine: 0.85, sfx: 0.8, ambient: 0.6, radio: 0.7, dj: false, voice: false, spawn: 'pa', weather: 'auto', damage: false, tilt: false, shake: true, fps: true, timeSpeed: 1, bloom: true, online: true, touch: isMobile ? 'on' : 'auto',
 };
 
 class Game {
   constructor() {
     this.settings = load(SETTINGS_KEY, DEFAULT_SETTINGS);
     if (!this.settings.fpsOn) { this.settings.fps = true; this.settings.fpsOn = 1; }
+    if (!this.settings.v24) { this.settings.damage = false; this.settings.v24 = 1; } // v2.4: body damage is an option, off by default
     if (!this.settings.v22) { this.settings.resScale = 1; this.settings.v22 = 1; } // v2.2: full resolution by default (phones were at 75 %)
     if (!this.settings.v111) { this.settings.dj = false; this.settings.voice = false; this.settings.v111 = 1; } // v1.1.1: robotic text-to-speech voices off by default // v0.3.3: FPS + version shown by default
     this.garage = load(GARAGE_KEY, { car: 'r34', cars: {} });
+    if (!this.garage.v24) { for (const c of Object.values(this.garage.cars || {})) if (!c.camberF && !c.camberR && !c.ride && !c.track) { delete c.camberF; delete c.camberR; delete c.ride; delete c.track; } this.garage.v24 = 1; } // v2.4: per-car default stances
     this.quality = this.settings.quality;
     this.mode = 'loading'; this.frame = 0; this.money = 500000; // enough for tolls, fuel, konbini and the odd fine — the game is about driving, not budgeting
     this.stats = { tickets: 0, escapes: 0, tolls: 0, warnings: 0, km: 0 };
@@ -78,7 +82,8 @@ class Game {
     const car = CAR_BY_ID[id];
     const s = this.garage.cars[id] || (this.garage.cars[id] = {});
     if (!s.plate) { s.plate = randomPlate(car.plate); this.saveGarage(); }
-    return { tune: s.tune || { preset: 'stock' }, color: s.color || car.colors[0], finish: s.finish || (car.cat === 'police' ? 'solid' : 'metallic'), rim: s.rim || null, camberF: s.camberF ?? 0, camberR: s.camberR ?? 0, ride: s.ride ?? 0, track: s.track ?? 0, strobe: s.strobe || 'off', plate: s.plate || randomPlate(car.plate), tint: s.tint ?? false };
+    const D = defaultStance(car);
+    return { tune: s.tune || { preset: 'stock' }, color: s.color || car.colors[0], finish: s.finish || (car.cat === 'police' ? 'solid' : 'metallic'), rim: s.rim || null, stance: s.stance ?? D.preset, camberF: s.camberF ?? D.camberF, camberR: s.camberR ?? D.camberR, ride: s.ride ?? D.ride, track: s.track ?? D.track, toeF: s.toeF ?? D.toeF, toeR: s.toeR ?? D.toeR, rake: s.rake ?? D.rake, strobe: s.strobe || 'off', plate: s.plate || randomPlate(car.plate), tint: s.tint ?? false };
   }
 
   async init() {
@@ -90,8 +95,10 @@ class Game {
     try { renderer = new THREE.WebGLRenderer({ canvas, antialias: false, powerPreference: 'high-performance', stencil: false }); }
     catch (e) { this.ui.fatal(t('game.err.webgl')); throw e; }
     this.renderer = renderer;
+    renderer.debug.checkShaderErrors = /[?&]debug=1/.test(location.search); // v2.4: no blocking getProgramInfoLog after every compile
     renderer.localClippingEnabled = true; // openable bonnets on the real car models
     loadManifest();
+    setGlbCompiler(o => renderer.compileAsync ? renderer.compileAsync(o, this.camera, this.scene) : null); // v2.4: car shaders compile off the frame
     renderer.setPixelRatio(this.basePR()); // v2.2: the screen's true resolution (Retina / 4K / phones)
     renderer.setSize(innerWidth, innerHeight);
     renderer.toneMapping = THREE.ACESFilmicToneMapping;
@@ -126,15 +133,15 @@ class Game {
       }
     } catch (e) { console.warn('trench covers', e); }
     // v2.0: the real buildings (PLATEAU 3D city models, streamed) — ?noplateau=1 keeps the procedural city
-    if (!/[?&]noplateau=1/.test(location.search)) { try { this.plateau = new Plateau(this.world, this.scene, this.camera, renderer, this.quality); if (!(await this.plateau.init())) this.plateau = null; } catch (e) { console.warn('plateau', e); this.plateau = null; } }
-    this.world.initDynamicLights(this.quality === 'low' ? 0 : this.quality === 'medium' ? 2 : this.quality === 'high' ? 4 : 6); // v2.2: each point light costs every pixel
+    if (!/[?&]noplateau=1/.test(location.search)) { try { this.plateau = new Plateau(this.world, this.scene, this.camera, renderer, this.quality); if (!(await this.plateau.init())) this.plateau = null; else this.world.plateauR = ({ low: 3000, medium: 4500, high: 6000, ultra: 8000 })[this.quality] || 6000; } catch (e) { console.warn('plateau', e); this.plateau = null; } }
+    this.world.initDynamicLights(this.quality === 'low' ? 0 : this.quality === 'medium' ? 2 : this.quality === 'high' ? (this.integratedGPU() ? 2 : 4) : 6); // v2.2: each point light costs every pixel
     this.ui.loading(0.65, t('game.load.sky'));
     this.tod = new TimeOfDay(this.scene, renderer, this.quality);
     // post-processing
     this.composer = new EffectComposer(renderer);
     this.composer.addPass(new RenderPass(this.scene, this.camera));
     this.bloom = new UnrealBloomPass(new THREE.Vector2(innerWidth / 2, innerHeight / 2), 0.4, 0.45, 0.9);
-    this.bloom.enabled = this.settings.bloom && this.quality !== 'low';
+    this.bloom.enabled = this.settings.bloom && this.quality !== 'low' && !isMobile && !this.integratedGPU(); // v2.4: decided once — flipping it later recompiles every shader
     // ambient occlusion: contact shadows under cars, kerbs, barriers (ultra — it costs about a third of the frame)
     if (this.quality === 'ultra') {
       try {
@@ -232,7 +239,7 @@ class Game {
   buildPlayerCar(id) {
     const car = CAR_BY_ID[id]; const S = this.carSetup(id);
     const model = buildCarAuto(car, { color: S.color, finish: S.finish, plate: S.plate });
-    model.setStance({ camberF: S.camberF, camberR: S.camberR, ride: S.ride, track: S.track });
+    model.setStance(S);
     if (S.rim) model.setRimColor(S.rim);
     model.lights.strobe = 'off'; model.strobeMode = S.strobe;
     model.root.traverse(o => { if (o.isMesh) o.castShadow = true; });
@@ -736,6 +743,7 @@ class Game {
     if (I.act('map')) this.ui.toggleMap();
     if (I.act('photo')) this.ui.togglePhoto();
     this.updateCamera(dt);
+    this.world.viewPos = this.camera.position;
     this.env = this.tod.update(paused ? 0 : dt, this.focus);
     if (this.fx && !paused) { try { this.fx.update(dt); } catch (e) { console.warn('fx', e); } }
     if (this.nav && !paused) { try { this.nav.update(dt); this.snapUpdate(dt); } catch (e) { console.warn('nav', e); } }
@@ -761,9 +769,9 @@ class Game {
     I.endFrame();
     if (this.bloom) { const under = this.focus.y < -1.5; this.bloom.strength = (0.08 + 0.14 * (this.env?.night ?? 1)) * (under ? 0.4 : 1); this.bloom.threshold = under ? 1.25 : 1.0; /* v2.3: subtler glow */ } // tunnels: lit walls everywhere → glare
     if (this.grade) this.grade.uniforms.night.value = this.env?.night ?? 1;
-    if (this.gov?.halfShadows) { this.renderer.shadowMap.autoUpdate = false; if (this.frame % 2 === 0) this.renderer.shadowMap.needsUpdate = true; } else this.renderer.shadowMap.autoUpdate = true;
+    { const k = this.gov?.shadowEvery || 1; if (k > 1) { this.renderer.shadowMap.autoUpdate = false; if (this.frame % k === 0) this.renderer.shadowMap.needsUpdate = true; } else this.renderer.shadowMap.autoUpdate = true; }
     // post-processing only when an effect needs it (bloom / AO); otherwise straight to the screen — one full-screen pass less
-    if (this.composer && (this.bloom.enabled || this.gtao?.enabled)) this.composer.render(); else this.renderer.render(this.scene, this.camera);
+    if (this.composer && (this.bloom.enabled || this.gtao)) this.composer.render(); else this.renderer.render(this.scene, this.camera);
   }
   idleVehicle(dt) {
     const v = this.vehicle; if (!v) return;
@@ -793,14 +801,13 @@ class Game {
   applyGov(L) {
     const G = this.gov; G.applied = L; const r = this.renderer, sun = this.tod?.sun;
     if (this.gtao) this.gtao.enabled = L < 1 && this.quality === 'ultra';
-    if (sun?.shadow) { const want = L >= 2 ? 1024 : (this.quality === 'ultra' ? 4096 : 2048); if (sun.shadow.mapSize.x !== want) { sun.shadow.mapSize.set(want, want); sun.shadow.map?.dispose(); sun.shadow.map = null; } }
-    G.halfShadows = L >= 2;
-    if (this.bloom) this.bloom.enabled = L < 3 && this.settings.bloom && this.quality !== 'low';
-    const nl = L >= 4 ? 0 : this.quality === 'low' ? 0 : this.quality === 'medium' ? 2 : this.quality === 'high' ? 4 : 6;
-    if (this.world.dyn && this.world.dyn.length !== nl) { for (const l of this.world.dyn) this.scene.remove(l); this.world.initDynamicLights(nl); }
+    // v2.4: nothing here may change a shader's defines (light count, shadow on/off) — that recompiles every material
+    // in the scene and froze the game for seconds whenever the governor stepped. Lights are dimmed, shadows thinned.
+    if (sun?.shadow) { const want = L >= 6 ? 512 : L >= 2 ? 1024 : (this.quality === 'ultra' ? 4096 : 2048); if (sun.shadow.mapSize.x !== want) { sun.shadow.mapSize.set(want, want); sun.shadow.map?.dispose(); sun.shadow.map = null; } }
+    G.shadowEvery = L >= 6 ? 4 : L >= 2 ? 2 : 1;
+    this.world.dynOff = L >= 4;
     this.world.city && (this.world.city.detail = L >= 5 ? 0.7 : 1);
     if (this.plateau) this.plateau.detail = L >= 5 ? 1.6 : 1;
-    if (sun) { const cast = L < 6 && this.quality !== 'low'; if (sun.castShadow !== cast) sun.castShadow = cast; }
     const pr = this.basePR() * (L >= 8 ? 0.7 : L >= 7 ? 0.85 : 1);
     if (Math.abs(r.getPixelRatio() - pr) > 0.01) { r.setPixelRatio(pr); this.composer.setPixelRatio?.(pr); this.composer.setSize(innerWidth, innerHeight); }
   }
@@ -833,7 +840,7 @@ class Game {
     if (patch.finish) p.setFinish(patch.finish);
     if (patch.rim) p.setRimColor(patch.rim);
     if (patch.plate) p.setPlate(patch.plate);
-    if ('camberF' in patch || 'camberR' in patch || 'ride' in patch || 'track' in patch) p.setStance({ camberF: s.camberF, camberR: s.camberR, ride: s.ride, track: s.track });
+    if (['camberF', 'camberR', 'ride', 'track', 'toeF', 'toeR', 'rake'].some(k => k in patch)) p.setStance(s);
   }
   quickStart() { this.unlockAudio(); this.startDrive(CAR_BY_ID[this.garage.car] ? this.garage.car : 'r34'); }
   closeGarage(drive) {

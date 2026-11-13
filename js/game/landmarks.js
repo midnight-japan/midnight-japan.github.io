@@ -4,6 +4,7 @@
 import * as THREE from 'three';
 
 export function buildLandmarks(W, far) {
+  if (/[?&]ownoff=1/.test(location.search)) return; // debug: compare with PLATEAU's own models
   cosmoClock(W, far);
   marineTower(W, far);
   hikawaMaru(W, far);

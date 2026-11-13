@@ -75,7 +75,7 @@ export class Online {
 
   info() {
     const g = this.g, id = g.carId || g.garage.car, S = g.carSetup(id);
-    return { n: str(displayName(), 20), c: id, col: S.color, fin: S.finish, rim: S.rim, plate: S.plate, cf: S.camberF, cr: S.camberR, ride: S.ride, tr: S.track, o: g.outfit };
+    return { n: str(displayName(), 20), c: id, col: S.color, fin: S.finish, rim: S.rim, plate: S.plate, cf: S.camberF, cr: S.camberR, ride: S.ride, tr: S.track, tf: S.toeF, tR: S.toeR, rk: S.rake, o: g.outfit };
   }
   /** call after the player changes car / paint / outfit */
   announce() { if (this._sendInfo) try { this._sendInfo(this.info()); } catch {} }
@@ -117,7 +117,7 @@ export class Online {
     const i = p.info, car = CAR_BY_ID[i.c];
     try {
       const m = buildCarAuto(car, { color: i.col, finish: i.fin, plate: i.plate, openable: false });
-      m.setStance({ camberF: i.cf, camberR: i.cr, ride: i.ride, track: i.tr });
+      m.setStance({ camberF: i.cf, camberR: i.cr, ride: i.ride, track: i.tr, toeF: i.tf, toeR: i.tR, rake: i.rk });
       if (i.rim) m.setRimColor(i.rim);
       m.root.visible = p.have; m.root.position.copy(p.pos); m.root.rotation.y = p.yaw;
       g.scene.add(m.root); p.model = m;

@@ -139,7 +139,7 @@ function buildUmihotaru(W, S, H) {
   { const g = new THREE.CylinderGeometry(3.5, 5, 18, 16); g.translate(0, 9, 0); place(new THREE.Mesh(g, white), -20, topY + 0.5, 0); W.blink.push(W.warnLight(...(() => { const p = ctr.clone().addScaledVector(t, -20); return [p.x, topY + 20, p.z]; })())); }
   // roof sign 「海ほたる」 (lit at night)
   { const tex = textTexture(['海ほたる UMIHOTARU'], { w: 2048, h: 256, font: '800 160px "Hiragino Sans","Yu Gothic","Noto Sans JP",sans-serif', color: '#0d4f8b' });
-    const m = W.night(new THREE.MeshStandardMaterial({ map: tex, transparent: true, emissive: 0x66c8ff, emissiveMap: tex, emissiveIntensity: 0, side: THREE.DoubleSide }), 0, 1.4);
+    const m = W.night(new THREE.MeshStandardMaterial({ map: tex, transparent: true, forceSinglePass: true, emissive: 0x66c8ff, emissiveMap: tex, emissiveIntensity: 0, side: THREE.DoubleSide }), 0, 1.4);
     for (const sv of [1, -1]) { const pl = new THREE.Mesh(new THREE.PlaneGeometry(70, 8.5), m); const p = ctr.clone().addScaledVector(t, 10).addScaledVector(left, sv * (WID / 2 * 0.86 + 0.6)); pl.position.set(p.x, FL0 + 2.4 * FH, p.z); pl.rotation.y = yaw + (sv > 0 ? -Math.PI / 2 : Math.PI / 2); W.group.add(pl); } }
   // pilotis: two rows of columns outside the carriageways (the road passes underneath the building)
   const colG = new THREE.CylinderGeometry(1.1, 1.1, FL0, 14); colG.translate(0, FL0 / 2, 0);
@@ -245,17 +245,27 @@ function buildRainbow(W, S, H) {
 function buildTokyo(W, far) {
   const add = (m, x, y, z) => { m.position.set(x, y, z); far.add(m); return m; };
   // Tokyo Tower (333 m, orange/white lattice → tapered frustum + observatories), warm "landmark light" at night
-  if (LM.tokyo_tower) { const { x, z } = LM.tokyo_tower;
-    const m = W.night(new THREE.MeshStandardMaterial({ color: 0xe0582b, roughness: 0.6, emissive: 0xff8a2a, emissiveIntensity: 0 }), 0, 1.6);
-    const g = new THREE.CylinderGeometry(3, 48, 333, 4, 6, true); g.rotateY(Math.PI / 4); g.translate(0, 166, 0); add(new THREE.Mesh(g, m), x, 0, z);
-    for (const [y, rr] of [[150, 16], [250, 8]]) add(new THREE.Mesh(new THREE.CylinderGeometry(rr, rr, 8, 8), new THREE.MeshStandardMaterial({ color: 0xf2f2f2, emissive: 0xfff0d0, emissiveIntensity: 0.2 })), x, y, z);
-    W.blink.push(W.warnLight(x, 336, z)); }
+  // v2.4: these stand-ins are only for the far skyline — inside PLATEAU's streaming range the real 3D models take over
+  // (the stand-in hid the real Tokyo Tower inside an orange cone)
+  const stand = (x, z, build) => { const n0 = far.children.length, b0 = W.blink.length; build(); W.farStand = W.farStand || []; W.farStand.push({ x, z, objs: far.children.slice(n0), blinks: W.blink.slice(b0) }); };
+  if (LM.tokyo_tower) { const { x, z } = LM.tokyo_tower; stand(x, z, () => {
+    // four splayed legs up to the main deck, then the tapering lattice — international orange with white bands
+    const m = W.night(new THREE.MeshStandardMaterial({ vertexColors: true, roughness: 0.6, emissive: 0xff8a2a, emissiveIntensity: 0 }), 0, 1.6);
+    const prof = [[0, 46], [40, 30], [125, 13], [150, 11], [223, 6], [250, 4.5], [300, 1.6], [333, 0.4]];
+    const pos = [], col = [], idx = []; const OR = [0.88, 0.3, 0.12], WH = [0.94, 0.94, 0.92];
+    const bandC = y => (y > 90 && Math.floor((y - 90) / 26) % 2 === 1) || y > 300 ? WH : OR;
+    for (let i = 0; i < prof.length; i++) { const [y, r] = prof[i]; for (let k = 0; k <= 4; k++) { const a = k / 4 * Math.PI * 2 + Math.PI / 4; pos.push(Math.cos(a) * r, y, Math.sin(a) * r); col.push(...bandC(y)); } }
+    for (let i = 0; i < prof.length - 1; i++) for (let k = 0; k < 4; k++) { const a = i * 5 + k, b2 = a + 5; idx.push(a, b2, a + 1, a + 1, b2, b2 + 1); }
+    const g = new THREE.BufferGeometry(); g.setAttribute('position', new THREE.Float32BufferAttribute(pos, 3)); g.setAttribute('color', new THREE.Float32BufferAttribute(col, 3)); g.setIndex(idx); g.computeVertexNormals();
+    const tw = new THREE.Mesh(g, m); tw.material.side = THREE.DoubleSide; add(tw, x, 0, z);
+    for (const [y, rr, h] of [[150, 17, 10], [223, 9, 7]]) add(new THREE.Mesh(new THREE.CylinderGeometry(rr, rr, h, 8), W.night(new THREE.MeshStandardMaterial({ color: 0xf2f2f2, emissive: 0xfff0d0, emissiveIntensity: 0 }), 0.15, 0.9)), x, y, z);
+    W.blink.push(W.warnLight(x, 336, z)); }); }
   // Tokyo Skytree (634 m)
-  if (LM.skytree) { const { x, z } = LM.skytree;
+  if (LM.skytree) { const { x, z } = LM.skytree; stand(x, z, () => {
     const m = W.night(new THREE.MeshStandardMaterial({ color: 0xdfe6ee, roughness: 0.4, metalness: 0.5, emissive: 0x7aa6ff, emissiveIntensity: 0 }), 0, 1.3);
     const g = new THREE.CylinderGeometry(7, 34, 634, 12, 1, true); g.translate(0, 317, 0); add(new THREE.Mesh(g, m), x, 0, z);
     for (const [y, rr] of [[350, 22], [450, 15]]) add(new THREE.Mesh(new THREE.CylinderGeometry(rr, rr, 10, 20), W.night(new THREE.MeshStandardMaterial({ color: 0xcfd8e2, emissive: 0xb07aff, emissiveIntensity: 0 }), 0, 1.6)), x, y, z);
-    W.blink.push(W.warnLight(x, 636, z)); }
+    W.blink.push(W.warnLight(x, 636, z)); }); }
   // Rainbow Bridge (suspension, towers 126 m), between Shibaura and Daiba
   if (LM.rainbow && !W.net.byId.b_11) { const { x, z } = LM.rainbow; const ax = new THREE.Vector3(1495, 0, 298).normalize(); const yaw = Math.atan2(ax.x, ax.z);
     const steel = new THREE.MeshStandardMaterial({ color: 0xf2f2f2, roughness: 0.4, metalness: 0.4 });

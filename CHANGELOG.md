@@ -1,9 +1,10 @@
 # 📜 MIDNIGHT JAPAN 업데이트 기록 · Changelog
 
-현재 버전 · Current: **v2.3.0** · [▶ 웹에서 플레이](https://midnight-japan.github.io/) · [🌐 업데이트 페이지](https://midnight-japan.github.io/changelog.html)
+현재 버전 · Current: **v2.4.0** · [▶ 웹에서 플레이](https://midnight-japan.github.io/) · [🌐 업데이트 페이지](https://midnight-japan.github.io/changelog.html)
 
 | 버전 | 날짜 | 이름 | 요약 |
 |---|---|---|---|
+| [v2.4.0](#v240--smooth-stance-2026-11-13) | 2026-11-13 | Smooth Stance | 렉·끊김 대폭 감소(주행 중 셰이더 재컴파일 제거), 차 파손은 옵션(기본 끔), 더 간단한 설정 화면, 스탠스 프리셋 9종과 차종별 기본 세팅, 실제 3D 도쿄 타워. |
 | [v2.3.0](#v230--clean-cars-2026-11-13) | 2026-11-13 | Clean Cars | 깨져 보이던 차량 모델 전부 수정, 차마다 다른 엔진·블로오프 사운드, 일본 일상 교통, 더 멀리·선명한 실제 3D 건물, 과한 빛 효과 완화, M1 맥북 에어 60fps. |
 | [v2.2.2](#v222--bugfix-2026-11-13) | 2026-11-13 | Bugfix | 버그 수정: 지상으로 내려온 램프(다이시·헤이와지마·시바우라) 끝을 실제 시내 도로와 포장 연결로 이어 막다른 길 제거. |
 | [v2.2.1](#v221--60fps-2026-11-13) | 2026-11-13 | 60fps | 모든 기기에서 60프레임 목표: 선명한 해상도는 유지하고 무거운 효과부터 자동으로 줄이는 프레임 관리, 셰이더 미리 컴파일로 끊김 감소. |
@@ -38,6 +39,31 @@
 | [v0.2.0](#v020--bayshore-2026-11-05) | 2026-11-05 | Bayshore | 수도고속 완간선을 따라 하네다까지, 도쿄만 아쿠아라인 해저터널을 지나 우미호타루 PA까지. 실제 3D 차량 모델과 열리는 보닛도 들어왔어요. |
 | [v0.1.1](#v011--one-click-2026-11-04) | 2026-11-04 | One Click | 링크 하나로 바로 플레이. 크롬에서 공식 사이트 주소만 열면 설치 없이 실행돼요. |
 | [v0.1.0](#v010--first-meet-2026-11-04) | 2026-11-04 | First Meet | 첫 공개 버전. 다이코쿠 JCT·PA와 다이코쿠 부두 일대를 3D로 구현했습니다. |
+
+---
+
+## v2.4.0 — Smooth Stance (2026-11-13)
+
+> 렉·끊김 대폭 감소(주행 중 셰이더 재컴파일 제거), 차 파손은 옵션(기본 끔), 더 간단한 설정 화면, 스탠스 프리셋 9종과 차종별 기본 세팅, 실제 3D 도쿄 타워.
+> Far less stutter (no more shader recompiles while driving), body damage is now an option (off by default), a simpler settings screen, nine stance presets with a per-car default setup, and the real 3D Tokyo Tower.
+
+**✨ 추가 · New**
+
+- 차량 파손 효과는 설정의 옵션(기본 끔, 켜면 내 차와 NPC 모두) — 찌그러짐 계산을 여러 프레임에 나눠 충돌 순간 멈추지 않음, 끄면 바로 수리<br><sub>Body damage is a setting (off by default; when on, for your car and NPCs alike) — dents are worked out over several frames so a crash never hitches, and switching it off repairs the car</sub>
+- 스탠스 프리셋 9종: 순정·스트리트·츠라이치·샤코탄·VIP·오니캔버·드리프트·서킷·리프트업, 새 조절 항목 앞/뒤 토와 레이크, 캠버(최대 -22°)·차고(-120 ~ +80 mm)·트레드 범위 확대<br><sub>Nine stance presets — stock, street, flush (tsuraichi), slammed (shakotan), VIP, oni-camber, drift, track and lifted — plus front/rear toe and rake; wider camber (to -22°), ride height (-120 to +80 mm) and track ranges</sub>
+
+**🔧 변경 · Changed**
+
+- 도로 위 NPC 차량을 재질별로 합쳐서 그리기: 차 한 대당 수백 개였던 부품·드로우콜이 수십 개로(멀리 보이는 차 전부)<br><sub>Road traffic is drawn merged per material: hundreds of parts and draw calls per car down to a few dozen (all distant cars)</sub>
+- 설정 화면 간소화: 자주 쓰는 항목(언어·그래픽·난이도·변속기·날씨·볼륨·파손·온라인·FPS)만 위에, 주행 보조·화면·사운드는 접이식 섹션으로, 「기본값으로 되돌리기」 버튼, 슬라이더를 움직일 때 저장 지연으로 끊김 없음<br><sub>Simpler settings: the essentials (language, graphics, difficulty, transmission, weather, volume, damage, online, FPS) up top, driving assists / display / sound in folding sections, a "Reset to defaults" button, and no hitching while dragging sliders</sub>
+- 차종마다 다른 기본 세팅: S15·180SX·JZX100·AE86·FD3S·R32는 드리프트, R34·JZA80은 츠라이치, 시빅 타입R·랜에보·임프레자는 서킷, 크라운은 VIP, 짐니는 리프트업 등 — PA에 모인 차들도 각자 스탠스로<br><sub>Every car leaves the garage with its own typical setup — S15, 180SX, JZX100, AE86, FD3S and R32 on drift stance, R34 and JZA80 flush, Civic Type R / Evo / Impreza track, Crown VIP, Jimny lifted — and the cars at the PA meet run their own stances too</sub>
+- 텍스처가 없는 실제 3D 건물(LOD1)을 일본 거리처럼 흰색·콘크리트·베이지·갈색 타일 등으로 다양하게, 옥상은 조금 어둡게<br><sub>Untextured real 3D buildings (LOD1) now vary like a Japanese street — off-white, concrete, beige and brown tile — with darker flat roofs</sub>
+
+**🐞 수정 · Fixed**
+
+- 렉·끊김 대폭 감소: 프레임 관리가 단계를 바꿀 때마다 모든 셰이더가 다시 컴파일되며 수 초씩 멈추던 문제 제거(조명 개수·그림자·블룸 경로 고정), 셰이더 오류 검사로 인한 동기 대기 제거, 차량 모델 셰이더를 미리 병렬 컴파일, 유리를 한 번에 그리기, 번호판 위치 계산 캐시<br><sub>Far less stutter: every shader in the scene was recompiled (multi-second freezes) whenever the frame governor changed level — light count, shadows and the bloom path are now fixed; no blocking shader error checks; car shaders precompile in parallel; glass draws in one pass; plate placement is cached</sub>
+- 도쿄 타워: 실제 3D 모델(PLATEAU)을 덮고 있던 주황색 원뿔 대체물 제거 — 근처에서는 실제 모델, 먼 곳에서는 주황·흰 띠의 새 원경 모델(스카이트리도 같은 방식)<br><sub>Tokyo Tower: the orange cone stand-in that hid the real 3D model (PLATEAU) is gone — the real model up close, a new orange-and-white banded far model from a distance (Skytree works the same way)</sub>
+- 우미호타루 PA·다이코쿠 부두 등 다이코쿠 PA가 아닌 주차장에서 자동주행이 「도로 없음」으로 켜지지 않던 문제 — 가장 가까운 도로까지 스스로 나가서 합류<br><sub>Autopilot refused to start ("no road") in car parks other than Daikoku PA, such as Umihotaru PA and Daikoku-futō — it now drives out to the nearest road and joins it</sub>
 
 ---
 
@@ -142,7 +168,7 @@
 
 **✨ 추가 · New**
 
-- 실제 3D 도시: 일본 국토교통성 3D 도시 모델(Project PLATEAU)의 실제 건물을 달리는 동안 스트리밍 — 도쿄 23구 전체, 요코하마 전역, 가와사키·가마쿠라·후지사와·기사라즈·하코네 등 46개 구·시. 측량된 실제 형태와 실제 외벽 사진(LOD2 텍스처), 밤에는 창문에 불, 설치·다운로드 없이 브라우저에서<br><sub>Real 3D city: the real buildings of MLIT's 3D city model (Project PLATEAU) stream in as you drive — all 23 Tokyo wards, all of Yokohama, Kawasaki, Kamakura, Fujisawa, Kisarazu, Hakone: 46 wards and cities with their surveyed shapes and real facade photos (LOD2 textures), lit windows at night, in the browser with nothing to install</sub>
+- 실제 3D 도시: 일본 국토교통성 3D 도시 모델(Project PLATEAU)의 실제 건물을 달리는 동안 스트리밍 — 도쿄 23구 전체, 요코하마 전역, 가와사키·가마쿠라·후지사와·기사라즈·하코네 등 46개 구·시. 측량된 실제 형태와 실제 외벽 사진(LOD2 텍스처), 밤에는 창문에 불, 설치 없이 브라우저에서<br><sub>Real 3D city: the real buildings of MLIT's 3D city model (Project PLATEAU) stream in as you drive — all 23 Tokyo wards, all of Yokohama, Kawasaki, Kamakura, Fujisawa, Kisarazu, Hakone: 46 wards and cities with their surveyed shapes and real facade photos (LOD2 textures), lit windows at night, in the browser with nothing to install</sub>
 - 맵 전체 경계: 차는 차도·갓길·주차장(PA·우미호타루·하코네·시내 모든 주차장·주유소·편의점 앞)에서만, 걸을 때는 인도·보행로·주차장·건물 안에서만 — 공터·정원·밭으로는 못 들어가고 벽처럼 미끄러지듯 막힘<br><sub>Map-wide fence: cars stay on carriageways, shoulders and car parks (the PA, Umihotaru, Hakone, every city car park, fuel forecourt and konbini lot); on foot you keep to sidewalks, footpaths, car parks and buildings — no more driving into yards, gardens or fields, you slide along the edge like a wall</sub>
 
 **🔧 변경 · Changed**

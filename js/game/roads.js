@@ -643,7 +643,7 @@ export function buildRoadMeshes(net, opts = {}) {
     }
   });
   const wallSteel = surface('metal_galvanized', { tile: 2, tint: 0xb9bec2, metalness: 0.6, roughness: 0.55 }).clone(); wallSteel.side = THREE.DoubleSide;
-  const wallClear = new THREE.MeshStandardMaterial({ color: 0xbfd8d6, roughness: 0.08, metalness: 0.1, transparent: true, opacity: 0.28, side: THREE.DoubleSide, depthWrite: false });
+  const wallClear = new THREE.MeshStandardMaterial({ color: 0xbfd8d6, roughness: 0.08, metalness: 0.1, transparent: true, forceSinglePass: true, opacity: 0.28, side: THREE.DoubleSide, depthWrite: false });
   const railMat = new THREE.MeshStandardMaterial({ color: 0xe9ebec, roughness: 0.45, metalness: 0.35, side: THREE.DoubleSide });
   const M = { asphalt, asphaltOld, concrete, concreteOld, sidewalk, white, yellow, wallSteel, wallClear, rail: railMat };
   for (const k in geoms) if (geoms[k].length) {

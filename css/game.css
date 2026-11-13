@@ -254,3 +254,13 @@ body.photo .online-pill,body.photo .chat{display:none}
 #map.show ~ #touch,#ui:has(#map.show) #touch{z-index:30}
 #touch{z-index:20}
 .wxbtn{right:calc(max(14px,env(safe-area-inset-right)) + 78px);padding:4px 10px;font-size:14px}
+/* v2.4: settings — essentials first, folded sections below */
+#s-grid .sbasic{margin-bottom:12px}
+.ssec{border-top:1px solid var(--line);padding:6px 0}
+.ssec>summary{cursor:pointer;list-style:none;padding:8px 2px;font-weight:600;color:var(--text);display:flex;justify-content:space-between;align-items:center}
+.ssec>summary::-webkit-details-marker{display:none}
+.ssec>summary::after{content:'＋';color:var(--muted)}
+.ssec[open]>summary::after{content:'－'}
+.ssec>.sgrid{padding:6px 0 10px}
+.stpre{display:flex;flex-wrap:wrap;gap:6px;margin:4px 0 8px}
+#s-grid{display:block}

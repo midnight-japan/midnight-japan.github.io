@@ -1,6 +1,7 @@
 // Driving effects: skid marks (ring buffer of dark quads on the road), tyre smoke (soft billboard puffs) and body
-// damage — the panels around an impact are pushed in, scaled by the impact speed. AI cars always take damage; the
-// player's car only when 'damage' is on in the settings. Repair restores the original geometry.
+// damage — the panels around an impact are pushed in, scaled by the impact speed. v2.4: only when 'damage' is on in
+// the settings (off by default, for every car), and the dent is worked off over several frames so a crash never hitches.
+// Repair restores the original geometry.
 import * as THREE from 'three';
 
 const MAX_Q = 3000, PUFFS = 90;
@@ -42,6 +43,7 @@ export class Fx {
   }
 
   update(dt) {
+    this.dentStep();
     const g = this.g, v = g.vehicle;
     if (v && g.mode === 'drive' && !v.airborne) {
       const lat = Math.abs(v.vlat), spin = Math.abs(v.slip), sp = Math.abs(v.vx);
@@ -88,8 +90,18 @@ export class Fx {
   // hit: {x, y, z} world contact point; vin: closing speed (m/s). Vertices within a radius of the contact point are
   // pushed towards the car's centre (more in the middle of the dent). Geometry is cloned per mesh on first damage.
   damage(model, hit, vin, npc = false) {
-    if (!model?.root || vin < 2.5) return;
-    if (!npc && !this.g.settings?.damage) return;
+    if (!model?.root || vin < 2.5 || !this.g.settings?.damage) return;
+    this.dq = this.dq || [];
+    if (this.dq.length > 6) return; // a pile-up: skip the extra dents rather than stall
+    this.dq.push(this.dentJob(model, hit, vin));
+  }
+  // work through queued dents for at most ~1.5 ms per frame
+  dentStep() {
+    if (!this.dq?.length) return;
+    const t0 = performance.now();
+    while (this.dq.length && performance.now() - t0 < 1.5) { if (this.dq[0].next().done) this.dq.shift(); }
+  }
+  *dentJob(model, hit, vin) {
     const root = model.root; root.updateMatrixWorld(true);
     const centre = new THREE.Vector3(); new THREE.Box3().setFromObject(root).getCenter(centre);
     const P = new THREE.Vector3(hit.x, Math.min(centre.y + 0.2, hit.y ?? centre.y), hit.z);
@@ -97,13 +109,15 @@ export class Fx {
     const dirW = centre.clone().sub(P).setY(0).normalize();
     const wheelSet = new Set(); for (const w of model.parts?.wheels || []) w.steer?.traverse(o => wheelSet.add(o));
     const tmp = new THREE.Vector3(), inv = new THREE.Matrix4();
-    root.traverse(o => {
-      if (!o.isMesh || !o.geometry?.attributes?.position || wheelSet.has(o) || o.isSprite) return;
+    const meshes = []; root.traverse(o => { if (o.isMesh && o.geometry?.attributes?.position && !wheelSet.has(o) && !o.isSprite) meshes.push(o); });
+    yield;
+    for (const o of meshes) {
+      if (!o.parent) continue; // the model was swapped / disposed meanwhile
       const gs = o.geometry; if (!gs.boundingSphere) gs.computeBoundingSphere();
-      const bs = gs.boundingSphere.clone().applyMatrix4(o.matrixWorld); if (bs.center.distanceTo(P) > bs.radius + R) return;
+      const bs = gs.boundingSphere.clone().applyMatrix4(o.matrixWorld); if (bs.center.distanceTo(P) > bs.radius + R) continue;
       if (!o.userData.dmgOrig) { o.userData.dmgOrig = gs; const c = gs.clone(); const a = c.attributes.position;
         if (!(a.array instanceof Float32Array) || a.normalized || a.isInterleavedBufferAttribute) { const f = new Float32Array(a.count * 3); for (let i = 0; i < a.count; i++) { f[i * 3] = a.getX(i); f[i * 3 + 1] = a.getY(i); f[i * 3 + 2] = a.getZ(i); } c.setAttribute('position', new THREE.BufferAttribute(f, 3)); }
-        o.geometry = c; }
+        o.geometry = c; yield; }
       const pos = o.geometry.attributes.position; inv.copy(o.matrixWorld).invert();
       const pL = P.clone().applyMatrix4(inv);
       const dL = P.clone().add(dirW).applyMatrix4(inv).sub(pL); const sc = dL.length() || 1; dL.divideScalar(sc); // world 1 m → local units
@@ -116,12 +130,14 @@ export class Fx {
         pos.setXYZ(i, tmp.x + dL.x * k, tmp.y + dL.y * k * 0.3 - k * 0.12, tmp.z + dL.z * k); moved = true;
       }
       if (moved) { pos.needsUpdate = true; o.geometry.computeBoundingSphere(); }
-    });
+      yield;
+    }
     model.damage = Math.min(1, (model.damage || 0) + vin / 40);
     // heavy hits: the bonnet springs open on the struck car
     if (vin > 9 && model.parts?.hood && Math.random() < 0.5) model.parts.hood.target = 0.25 + Math.random() * 0.3;
   }
   repair(model) {
+    if (this.dq) this.dq = this.dq.filter(() => false);
     model?.root?.traverse(o => { if (o.userData.dmgOrig) { o.geometry.dispose(); o.geometry = o.userData.dmgOrig; delete o.userData.dmgOrig; } });
     if (model) { model.damage = 0; if (model.parts?.hood) model.parts.hood.target = 0; }
   }

@@ -87,7 +87,7 @@ export class TimeOfDay {
           c = mix(c, vec3(0.16, 0.11, 0.09) * (1.0 - 0.4 * thick), night);  // underside lit by the city at night
           float edge = 1.0 - smoothstep(9000.0, 15000.0, length(vL));
           gl_FragColor = vec4(c, a * edge * (0.92 - 0.3 * night)); }`,
-      transparent: true, depthWrite: false, fog: false, side: THREE.DoubleSide
+      transparent: true, forceSinglePass: true, depthWrite: false, fog: false, side: THREE.DoubleSide
     });
     const g = new THREE.PlaneGeometry(32000, 32000, 1, 1); g.rotateX(-Math.PI / 2);
     this.clouds = new THREE.Mesh(g, m); this.clouds.position.y = 1800; this.clouds.renderOrder = -1; this.clouds.frustumCulled = false;

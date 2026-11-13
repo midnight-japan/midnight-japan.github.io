@@ -5,6 +5,7 @@ import { mergeGeometries } from 'three/addons/utils/BufferGeometryUtils.js';
 import { CARS, CAR_BY_ID } from '../../data/cars.js';
 import { buildCarAuto, requestGlb, glbEntry } from './carfactory.js';
 import { PA_RECT, PA, PA_LAYOUT } from './roads.js';
+import { STANCE_PRESETS, defaultStance } from './carmodel.js';
 
 const _pa = new THREE.Vector3(), _pb = new THREE.Vector3();
 const clamp = (x, a, b) => Math.max(a, Math.min(b, x));
@@ -177,7 +178,11 @@ export class Traffic {
     if (!noDriver) this.g.npc?.spawnMeetGroup(ai);
     // some show-offs: hood open, stance
     if (!plain && Math.random() < 0.25 && ai.model.parts.hood) ai.model.parts.hood.target = 1;
-    if (!plain && Math.random() < 0.3) ai.model.setStance({ camberF: -3 - Math.random() * 6, camberR: -4 - Math.random() * 8, ride: -0.03 - Math.random() * 0.03 });
+    if (!plain) { // v2.4: meet cars run their usual stance, a third of them something louder
+      const ks = Object.keys(STANCE_PRESETS), k = Math.random() < 0.35 ? ks[1 + Math.floor(Math.random() * (ks.length - 2))] : defaultStance(CAR_BY_ID[id]).preset;
+      const P = STANCE_PRESETS[k] || STANCE_PRESETS.stock, j = () => 0.8 + Math.random() * 0.4;
+      ai.model.setStance({ camberF: P.camberF * j(), camberR: P.camberR * j(), ride: P.ride * j(), track: P.track * j(), toeF: P.toeF, toeR: P.toeR, rake: P.rake });
+    }
     ai.model.lights.head = false;
     return ai;
   }

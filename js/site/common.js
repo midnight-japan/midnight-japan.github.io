@@ -10,7 +10,7 @@ export const SITE_URL = 'https://midnight-japan.github.io/';
 export const reducedMotion = () => matchMedia('(prefers-reduced-motion: reduce)').matches;
 const MOTION = !reducedMotion() && 'IntersectionObserver' in window;
 if (MOTION) document.documentElement.classList.add('motion');
-const RV_SEL = '.section .sec-head, .card:not(.form), .shot, .faq details, .table-wrap, .sign, .toolbar, .notice';
+const RV_SEL = '.section .sec-head, .card:not(.form), .shot, .faq details, .table-wrap, .toolbar, .notice, .wn-side, .wn-item, .r3-media, .r3-strip figure, .route-card, .region-bar, .frow, .mini, .scar, .final-inner > *';
 let rvIO = null;
 function revealScan(root) {
   if (!rvIO) return;
@@ -87,7 +87,7 @@ export function emblem(id = 'em') {
 const I = {
   globe: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M3 12h18M12 3a14 14 0 0 1 0 18M12 3a14 14 0 0 0 0 18"/></svg>',
   play: '<svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M7 4.5v15l13-7.5z"/></svg>',
-  dl: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M12 3v12m0 0-5-5m5 5 5-5M4 20h16"/></svg>',
+  dl: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><rect x="4" y="4" width="16" height="16" rx="4"/><path d="M12 8.5v7M8.5 12h7"/></svg>',
 };
 export const ICON = I;
 
@@ -120,15 +120,19 @@ function header(page) {
 
 function footer() {
   const y = new Date().getFullYear();
-  return `<div class="wrap">
+  const ext = (href, key, en) => `<a href="${href}" target="_blank" rel="noopener" data-i18n="${key}">${en}</a>`;
+  return `<div class="ft-cta"><div class="wrap ft-cta-in">
+      <p class="ft-cta-t"><span lang="ja">今夜、首都高で。</span><span data-i18n="site.footer.playFree">Play free in your browser</span></p>
+      <a class="btn btn-play" href="play.html">${I.play}<span data-i18n="site.hero.play">Play now</span></a>
+    </div></div>
+  <div class="wrap">
     <div class="ft-grid">
-      <div>
+      <div class="ft-brand">
         <a class="brand" href="index.html" aria-label="MIDNIGHT JAPAN">${emblem('ft')}<span class="brand-t">MIDNIGHT<b>JAPAN</b></span></a>
-        <p style="margin-top:14px;max-width:420px" data-i18n="site.footer.about">A browser car-meet game set at Daikoku PA on the Shuto Expressway, Yokohama.</p>
-        <p class="ft-ver">v${esc(GAME.version)} · build ${esc(GAME.build)}</p>
-        <p class="ft-aka">MIDNIGHT JAPAN · <span lang="ja">ミッドナイト・ジャパン</span> · <span lang="ko">미드나잇 재팬</span> — Daikoku PA game · <span lang="ja">大黒PA ゲーム</span> · <span lang="ko">다이코쿠 PA 게임</span></p>
+        <p class="ft-about" data-i18n="site.footer.about">A free 3D driving game in the browser.</p>
+        <a class="ft-ver" href="changelog.html"><i class="dot live"></i>v${esc(GAME.version)} · build ${esc(GAME.build)}</a>
       </div>
-      <div>
+      <nav aria-label="Game">
         <h4 data-i18n="site.footer.game">Game</h4>
         <ul>
           <li><a href="play.html" data-i18n="site.nav.play">Play</a></li>
@@ -136,19 +140,27 @@ function footer() {
           <li><a href="regions.html" data-i18n="site.nav.regions">Regions</a></li>
           <li><a href="changelog.html" data-i18n="site.nav.updates">Updates</a></li>
         </ul>
-      </div>
-      <div>
+      </nav>
+      <nav aria-label="More">
         <h4 data-i18n="site.footer.more">More</h4>
         <ul>
           <li><a href="account.html" data-i18n="site.nav.account">Account</a></li>
           <li><a href="credits.html" data-i18n="site.footer.credits">Credits</a></li>
           <li><a href="index.html#faq" data-i18n="site.footer.faq">FAQ</a></li>
         </ul>
+      </nav>
+      <div class="ft-data">
+        <h4 data-i18n="site.footer.data">Data</h4>
+        <ul>
+          <li>${ext('https://www.mlit.go.jp/plateau/', 'site.footer.plateau', 'Buildings: 3D City Model (Project PLATEAU), MLIT Japan')}</li>
+          <li>${ext('https://www.openstreetmap.org/copyright', 'site.footer.osm', 'Roads &amp; map data © OpenStreetMap contributors (ODbL)')}</li>
+          <li><a href="credits.html" data-i18n="site.footer.allCredits">All credits &amp; licences</a> →</li>
+        </ul>
       </div>
     </div>
     <div class="disclaimer">
-      <span data-i18n="site.footer.disclaimer">Non-commercial fan project. Vehicle names and trademarks belong to their owners. Not affiliated with Shuto Expressway, NEXCO, or Kanagawa Prefectural Police.</span>
-      <span>© ${y} MIDNIGHT JAPAN</span>
+      <span data-i18n="site.footer.disclaimer">Non-commercial fan project.</span>
+      <span class="ft-aka">© ${y} MIDNIGHT JAPAN · <span lang="ja">ミッドナイト・ジャパン</span> · <span lang="ko">미드나잇 재팬</span></span>
     </div>
   </div>`;
 }

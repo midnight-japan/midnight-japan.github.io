@@ -255,7 +255,7 @@ export class World {
   // ───────────────────────── ground & sea ─────────────────────────
   buildGround(S) {
     const port = surface('asphalt_worn', { tile: 8, tint: 0x9a9ea3 });
-    const land = surface('concrete_old', { tile: 7, tint: 0x8e9296 }); // urban ground: weathered concrete / packed earth
+    const land = surface('concrete_old', { tile: 7, tint: 0xa2a5a6 }); // urban ground: weathered concrete / packed earth
     const wall = surface('concrete_old', { tile: 4 });
     const iron = new THREE.MeshStandardMaterial({ color: 0x2b2b2b, roughness: 0.6, metalness: 0.6 });
     const bol = new THREE.CylinderGeometry(0.25, 0.35, 0.7, 12);
@@ -427,7 +427,7 @@ export class World {
     const plaster = surface('plaster', { tile: 3 });
     const tiles = surface('tiles', { tile: 2 });
     const roofMat = surface('metal', { tile: 3 });
-    const glass = new THREE.MeshPhysicalMaterial({ color: 0x9fb4c0, roughness: 0.05, metalness: 0, transparent: true, opacity: 0.28, envMapIntensity: 1.5, depthWrite: false, side: THREE.DoubleSide });
+    const glass = new THREE.MeshPhysicalMaterial({ color: 0x9fb4c0, roughness: 0.05, metalness: 0, transparent: true, forceSinglePass: true, opacity: 0.28, envMapIntensity: 1.5, depthWrite: false, side: THREE.DoubleSide });
     const z0 = -84, z1 = -60, x0 = -40, x1 = 40, H = 6;
     // back wall, side walls
     B.add(boxGeo(x1 - x0, H, 0.4), plaster, 0, H / 2, z0); B.col(0, z0, (x1 - x0) / 2, 0.4);
@@ -1192,7 +1192,9 @@ export class World {
     }
     // aviation lights blink at night
     const on = (this.t % 1.5) < 0.6;
-    for (const b of this.blink) b.mesh.visible = n > 0.3 && ((this.t + b.phase) % 1.5) < 0.6;
+    // v2.4: far-skyline stand-ins step aside where PLATEAU streams the real landmark
+    if (this.farStand && this.viewPos) for (const f of this.farStand) { const on = !this.plateauR || Math.hypot(this.viewPos.x - f.x, this.viewPos.z - f.z) > this.plateauR; if (f.on !== on) { f.on = on; for (const o of f.objs) o.visible = on; for (const b of f.blinks) b.off = !on; } }
+    for (const b of this.blink) b.mesh.visible = !b.off && n > 0.3 && ((this.t + b.phase) % 1.5) < 0.6;
     updateLandmarks(this, dt, env.hours ?? 21);
     if (this.ferris) {
       this.ferris.rotation.z += dt * 0.01;
@@ -1225,7 +1227,7 @@ export class World {
       const near = [...this.lampHeads.map(p => [p, p.distanceToSquared(focus), 0]), ...(this.city ? this.city.lampsNear(focus).map(p => [p, p.distanceToSquared(focus), 0]) : []), ...(this.tunnelHeads || []).filter(p => Math.abs(p.x - focus.x) < 300 && Math.abs(p.z - focus.z) < 300).map(p => [p, p.distanceToSquared(focus), 1])].sort((a, b) => a[1] - b[1]).slice(0, this.dyn.length);
       this.dyn.forEach((l, i) => { if (near[i]) { l.position.copy(near[i][0]); l.userData.tun = near[i][2]; } });
     }
-    for (const l of this.dyn) l.intensity = l.userData.tun ? 30 : night * 55; // v2.3: softer (walls were washed out white) // tunnel lamps every 9 m: a few strong points blew the walls out
+    for (const l of this.dyn) l.intensity = this.dynOff ? 0 : l.userData.tun ? 30 : night * 55; // v2.3: softer (walls were washed out white) // tunnel lamps every 9 m: a few strong points blew the walls out
   }
 
   // v2.0 — may a car (walk = false) or a person (walk = true) be at (x, z) at height y? Everywhere on the map: only

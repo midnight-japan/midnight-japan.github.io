@@ -12,6 +12,7 @@ import { GLTFExtensionsPlugin } from '../../vendor/3d-tiles-renderer/index.three
 import { PA } from './roads.js';
 import { inHakone } from './hakone.js';
 // hand-built in the game (Daikoku PA, Cosmo Clock 21, Marine Tower, Hikawa Maru, Umihotaru): PLATEAU's copy is left out
+const OWNOFF = /[?&]ownoff=1/.test(location.search);
 const OWN = [[-3890, 686, 70], [-2648, 1979, 18], [-2700, 1585, 70], [17632, -310, 260]];
 
 const A = 6378137, F = 1 / 298.257223563, B = A * (1 - F), E2 = F * (2 - F), EP2 = (A * A - B * B) / (B * B);
@@ -136,7 +137,7 @@ export class Plateau {
         if (!cnt[b]) continue; const cx = sx[b] / cnt[b], cz = sz[b] / cnt[b], gy = ground(cx, cz);
         base[b] = gy - minH[b];
         // left out: the game's own models, and anything a carriageway would run through (its deck between foot and roof)
-        if (bid && (PA.inLot(cx, cz, 14) || OWN.some(([x, z, r]) => Math.hypot(cx - x, cz - z) < r))) { drop[b] = 1; this.stats.dropOwn = (this.stats.dropOwn || 0) + 1; }
+        if (bid && (PA.inLot(cx, cz, 14) || !OWNOFF && OWN.some(([x, z, r]) => Math.hypot(cx - x, cz - z) < r))) { drop[b] = 1; this.stats.dropOwn = (this.stats.dropOwn || 0) + 1; }
         else if (bid) { // a carriageway through it (deck between its foot and roof + 3 m) or an open cutting under it
           const top = gy + maxH[b] - minH[b], city = this.world.city, pts = [[cx, cz], [bx0[b] * 0.8 + bx1[b] * 0.2, bz0[b] * 0.8 + bz1[b] * 0.2], [bx0[b] * 0.2 + bx1[b] * 0.8, bz0[b] * 0.2 + bz1[b] * 0.8], [bx0[b] * 0.8 + bx1[b] * 0.2, bz0[b] * 0.2 + bz1[b] * 0.8], [bx0[b] * 0.2 + bx1[b] * 0.8, bz0[b] * 0.8 + bz1[b] * 0.2]];
           for (const [px, pz] of pts) { if (city?.inTrench(px, pz) || this.world.net.hits(px, pz).some(h => h.inside && h.road.kind !== 'local' && h.y > gy - 12 && h.y < top + 3)) { drop[b] = 1; break; } }
@@ -191,6 +192,16 @@ export class Plateau {
       sh.vertexShader = sh.vertexShader.replace('#include <common>', '#include <common>\nvarying vec3 vWP; varying vec3 vWN;')
         .replace('#include <worldpos_vertex>', '#include <worldpos_vertex>\nvWP = (modelMatrix * vec4(transformed, 1.0)).xyz; vWN = normalize(mat3(modelMatrix) * objectNormal);');
       sh.fragmentShader = sh.fragmentShader.replace('#include <common>', '#include <common>\nuniform float uNight; varying vec3 vWP; varying vec3 vWN;\nfloat h21(vec2 p){ return fract(sin(dot(p, vec2(12.9898, 78.233))) * 43758.5453); }')
+        // v2.4: untextured (LOD1) blocks were all one pale grey — Japanese streets mix off-white, concrete, beige and brown
+        // tile; flat roofs read darker. Picked per ~18 m cell so neighbouring buildings differ.
+        .replace('#include <map_fragment>', `#include <map_fragment>
+        #ifndef USE_MAP
+        {
+          float t = h21(floor(vWP.xz / 18.0) + 0.37);
+          vec3 tint = t < 0.22 ? vec3(0.96, 0.95, 0.91) : t < 0.42 ? vec3(0.80, 0.79, 0.76) : t < 0.58 ? vec3(0.86, 0.78, 0.66) : t < 0.70 ? vec3(0.66, 0.58, 0.50) : t < 0.84 ? vec3(0.74, 0.76, 0.78) : vec3(0.92, 0.88, 0.80);
+          diffuseColor.rgb *= tint * (vWN.y > 0.5 ? 0.72 : 1.0);
+        }
+        #endif`)
         .replace('#include <emissivemap_fragment>', `#include <emissivemap_fragment>
         {
           float wall = step(abs(vWN.y), 0.45);

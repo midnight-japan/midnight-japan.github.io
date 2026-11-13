@@ -7,12 +7,13 @@ import { reading } from './names.js';
 import { t, pick, setLang, getLang } from '../i18n.js';
 import { displayName, currentUser } from '../account.js';
 import { PLATE_REGIONS, PLATE_KANA, PLATE_TYPES, plateCanvas, formatNumber } from './plates.js';
-import { STROBE_MODES } from './carmodel.js';
+import { STROBE_MODES, STANCE_PRESETS } from './carmodel.js';
 import { TUNE_PRESETS, resolveTune } from './vehicle.js';
 import { OUTFIT_OPTIONS } from './humans.js';
 import { PA_RECT, MAP } from './roads.js';
 import { GOALS } from './goals.js';
 import { PLACES } from '../../data/places.js';
+import { DEFAULT_SETTINGS } from './main.js';
 import { ASSIST_SETTING_KEYS, assistsFromSettings, applyDifficulty } from './vehicle.js';
 
 const $ = (s, r = document) => r.querySelector(s);
@@ -64,11 +65,15 @@ export class UI {
         <div class="gsec"><h3 data-i18n="game.garage.paint"></h3><div class="swatches" id="g-colors"></div>
           <div class="row"><input type="color" id="g-color"><select id="g-finish"><option value="metallic">Metallic</option><option value="solid">Solid</option><option value="pearl">Pearl</option><option value="matte">Matte</option></select>
           <label class="mini"><span data-i18n="game.garage.rim"></span><input type="color" id="g-rim" value="#b9bcc0"></label></div></div>
-        <div class="gsec"><h3 data-i18n="game.garage.stance"></h3>
-          <label class="sl"><span data-i18n="game.garage.camberF"></span><input type="range" id="g-cf" min="-12" max="2" step="0.5"><b></b></label>
-          <label class="sl"><span data-i18n="game.garage.camberR"></span><input type="range" id="g-cr" min="-14" max="2" step="0.5"><b></b></label>
-          <label class="sl"><span data-i18n="game.garage.ride"></span><input type="range" id="g-ride" min="-0.08" max="0.06" step="0.005"><b></b></label>
-          <label class="sl"><span data-i18n="game.garage.track"></span><input type="range" id="g-track" min="-0.03" max="0.06" step="0.005"><b></b></label></div>
+        <div class="gsec tune"><h3 data-i18n="game.garage.stance"></h3>
+          <div class="presets" id="g-spre"></div>
+          <label class="sl"><span data-i18n="game.garage.camberF"></span><input type="range" id="g-cf" min="-20" max="3" step="0.5"><b></b></label>
+          <label class="sl"><span data-i18n="game.garage.camberR"></span><input type="range" id="g-cr" min="-22" max="3" step="0.5"><b></b></label>
+          <label class="sl"><span data-i18n="game.garage.ride"></span><input type="range" id="g-ride" min="-0.12" max="0.08" step="0.005"><b></b></label>
+          <label class="sl"><span data-i18n="game.garage.track"></span><input type="range" id="g-track" min="-0.03" max="0.1" step="0.005"><b></b></label>
+          <label class="sl"><span id="g-l-tf"></span><input type="range" id="g-tf" min="-2" max="2" step="0.1"><b></b></label>
+          <label class="sl"><span id="g-l-tr"></span><input type="range" id="g-tr" min="-2" max="2" step="0.1"><b></b></label>
+          <label class="sl"><span id="g-l-rk"></span><input type="range" id="g-rk" min="-0.05" max="0.05" step="0.005"><b></b></label></div>
         <div class="gsec tune"><h3 data-i18n="game.tune.title"></h3>
           <div class="presets" id="g-tpre"></div>
           <label class="sl"><span data-i18n="game.tune.power"></span><input type="range" id="t-power" min="0.9" max="1.8" step="0.01"><b></b></label>
@@ -249,9 +254,17 @@ export class UI {
     $('#g-color').value = S.color; $('#g-color').oninput = ev => g.applyPreview({ color: ev.target.value });
     $('#g-finish').value = S.finish; $('#g-finish').onchange = ev => g.applyPreview({ finish: ev.target.value });
     $('#g-rim').value = S.rim || '#b9bcc0'; $('#g-rim').oninput = ev => g.applyPreview({ rim: ev.target.value });
-    const sl = (sel, key, fmt) => { const i = $(sel); i.value = S[key]; const out = i.nextElementSibling; out.textContent = fmt(+i.value); i.oninput = () => { out.textContent = fmt(+i.value); g.applyPreview({ [key]: +i.value }); }; };
+    // v2.4: stance presets + camber / ride / track / toe / rake (any slider edit → custom)
+    const L3 = (ko, ja, en) => ({ ko, ja, en })[getLang()] || en;
+    const SPN = { stock: L3('순정', 'ノーマル', 'Stock'), street: L3('스트리트', 'ストリート', 'Street'), tsura: L3('츠라이치', 'ツライチ', 'Flush'), shakotan: L3('샤코탄', 'シャコタン', 'Slammed'), vip: 'VIP', oni: L3('오니캔버', '鬼キャン', 'Oni-camber'), drift: L3('드리프트', 'ドリフト', 'Drift'), track: L3('서킷', 'サーキット', 'Track'), lift: L3('리프트업', 'リフトアップ', 'Lifted'), custom: L3('사용자', 'カスタム', 'Custom') };
+    $('#g-l-tf').textContent = L3('앞 토 (+ 토인)', 'フロント トー (+イン)', 'Front toe (+ in)'); $('#g-l-tr').textContent = L3('뒤 토 (+ 토인)', 'リア トー (+イン)', 'Rear toe (+ in)'); $('#g-l-rk').textContent = L3('레이크 (뒤 높이)', 'レーキ（後ろ上がり）', 'Rake (rear up)');
+    const curSt = S.stance || 'custom';
+    $('#g-spre').innerHTML = [...Object.keys(STANCE_PRESETS), 'custom'].map(k => `<button data-sp="${k}" class="${curSt === k ? 'on' : ''}">${esc(SPN[k])}</button>`).join('');
+    $('#g-spre').onclick = ev => { const b = ev.target.closest('[data-sp]'); if (!b || b.dataset.sp === 'custom') return; g.applyPreview({ stance: b.dataset.sp, ...STANCE_PRESETS[b.dataset.sp] }); this.showGarage(); };
+    const sl = (sel, key, fmt) => { const i = $(sel); i.value = S[key]; const out = i.nextElementSibling; out.textContent = fmt(+i.value); i.oninput = () => { out.textContent = fmt(+i.value); g.applyPreview({ [key]: +i.value, stance: 'custom' }); $('#g-spre').querySelectorAll('button').forEach(b => b.classList.toggle('on', b.dataset.sp === 'custom')); }; };
     sl('#g-cf', 'camberF', v => v.toFixed(1) + '°'); sl('#g-cr', 'camberR', v => v.toFixed(1) + '°');
-    sl('#g-ride', 'ride', v => (v * 1000).toFixed(0) + ' mm'); sl('#g-track', 'track', v => '+' + (v * 1000).toFixed(0) + ' mm');
+    sl('#g-ride', 'ride', v => (v > 0 ? '+' : '') + (v * 1000).toFixed(0) + ' mm'); sl('#g-track', 'track', v => (v >= 0 ? '+' : '') + (v * 1000).toFixed(0) + ' mm');
+    sl('#g-tf', 'toeF', v => v.toFixed(1) + '°'); sl('#g-tr', 'toeR', v => v.toFixed(1) + '°'); sl('#g-rk', 'rake', v => (v > 0 ? '+' : '') + (v * 1000).toFixed(0) + ' mm');
     // performance tuning: presets + sliders (any slider edit switches the preset to "custom")
     {
       const T = resolveTune(S.tune);
@@ -295,36 +308,59 @@ export class UI {
     const selF = (key, opts, label, fb) => `<label><span>${esc(tf(label, fb))}</span><select data-s="${key}">${opts.map(([v, l, lf]) => `<option value="${v}" ${String(s[key]) === String(v) ? 'selected' : ''}>${esc(tf(l, lf))}</option>`).join('')}</select></label>`;
     const ON = { en: 'On', ko: '켜기', ja: 'オン' }, OFF = { en: 'Off', ko: '끄기', ja: 'オフ' }, SPORT = { en: 'Sport', ko: '스포츠', ja: 'スポーツ' };
     const assistHtml =
-      selF('difficulty', [['beginner', 'game.diff.beginner', { en: 'Beginner', ko: '초보', ja: 'ビギナー' }], ['standard', 'game.diff.standard', { en: 'Standard', ko: '표준', ja: 'スタンダード' }], ['pro', 'game.diff.pro', { en: 'Pro', ko: '프로', ja: 'プロ' }], ['sim', 'game.diff.sim', { en: 'Simulation', ko: '시뮬레이션', ja: 'シミュレーション' }], ['custom', 'game.diff.custom', { en: 'Custom', ko: '사용자 지정', ja: 'カスタム' }]], 'game.set.difficulty', { en: 'Driving difficulty', ko: '주행 난이도', ja: '運転難易度' }) +
       selF('steerAssist', [['assisted', 'game.assist.assisted', { en: 'Assisted', ko: '보조', ja: 'アシスト' }], ['standard', 'game.assist.standard', { en: 'Standard', ko: '표준', ja: 'スタンダード' }], ['sim', 'game.assist.sim', { en: 'Simulation', ko: '시뮬레이션', ja: 'シミュレーション' }]], 'game.set.steerAssist', { en: 'Steering', ko: '조향', ja: 'ステアリング' }) +
       selF('stm', [['full', 'game.assist.on', ON], ['sport', 'game.assist.sport', SPORT], ['off', 'game.assist.off', OFF]], 'game.set.stm', { en: 'Stability control (STM)', ko: '자세 제어 (STM)', ja: '姿勢制御 (STM)' }) +
       selF('tcs', [['full', 'game.assist.on', ON], ['sport', 'game.assist.sport', SPORT], ['off', 'game.assist.off', OFF]], 'game.set.tcs', { en: 'Traction control (TCS)', ko: '트랙션 컨트롤 (TCS)', ja: 'トラクションコントロール (TCS)' }) +
       selF('abs', [['true', 'game.assist.on', ON], ['false', 'game.assist.off', OFF]], 'game.set.abs', 'ABS') +
       selF('police', [['lenient', 'game.police.lenient', { en: 'Lenient (+60 km/h)', ko: '관대 (+60 km/h)', ja: '寛容 (+60 km/h)' }], ['normal', 'game.police.normal', { en: 'Normal (+40 km/h)', ko: '보통 (+40 km/h)', ja: '標準 (+40 km/h)' }], ['strict', 'game.police.strict', { en: 'Strict (+25 km/h)', ko: '엄격 (+25 km/h)', ja: '厳しい (+25 km/h)' }]], 'game.set.police', { en: 'Police tolerance', ko: '경찰 단속 기준', ja: '取り締まり基準' });
+    // v2.4: the essentials up top, the rest folded into sections (open state kept across rebuilds)
+    const L3 = (ko, ja, en) => ({ ko, ja, en })[getLang()] || en;
+    this._sOpen = this._sOpen || {};
+    const sec = (id, title, html) => `<details class="ssec" data-sec="${id}" ${this._sOpen[id] ? 'open' : ''}><summary>${esc(title)}</summary><div class="sgrid">${html}</div></details>`;
     $('#s-grid').innerHTML =
+      `<div class="sgrid sbasic">` +
       `<label><span>${esc(t('game.set.lang'))}</span><select id="s-lang">${LANGS.map(([c, n]) => `<option value="${c}" ${c === getLang() ? 'selected' : ''}>${n}</option>`).join('')}</select></label>` +
       sel('quality', [['low', t('game.q.low')], ['medium', t('game.q.medium')], ['high', t('game.q.high')], ['ultra', t('game.q.ultra')]], 'game.set.quality', true) +
-      sel('resScale', [[0.5, '50%'], [0.75, '75%'], [1, '100%']], 'game.set.res', true) +
-      assistHtml +
+      selF('difficulty', [['beginner', 'game.diff.beginner', { en: 'Beginner', ko: '초보', ja: 'ビギナー' }], ['standard', 'game.diff.standard', { en: 'Standard', ko: '표준', ja: 'スタンダード' }], ['pro', 'game.diff.pro', { en: 'Pro', ko: '프로', ja: 'プロ' }], ['sim', 'game.diff.sim', { en: 'Simulation', ko: '시뮬레이션', ja: 'シミュレーション' }], ['custom', 'game.diff.custom', { en: 'Custom', ko: '사용자 지정', ja: 'カスタム' }]], 'game.set.difficulty', { en: 'Driving difficulty', ko: '주행 난이도', ja: '運転難易度' }) +
       sel('transmission', [['auto', t('game.trans.auto')], ['manual', t('game.trans.manual')], ['manual_clutch', t('game.trans.manual_clutch')]], 'game.set.transmission') +
-      sel('touch', [['auto', t('game.set.auto')], ['on', 'ON'], ['off', 'OFF']], 'game.set.touch') +
-      sel('timeSpeed', [[1, t('game.set.time1')], [0.25, t('game.set.time025')], [0, t('game.set.time0')]], 'game.set.time') +
       sel('weather', [['auto', t('game.weather.auto')], ['clear', t('game.weather.clear')], ['cloudy', t('game.weather.cloudy')], ['rain', t('game.weather.rain')], ['storm', t('game.weather.storm')], ['fog', t('game.weather.fog')]], 'game.set.weather') +
-      chk('online', 'game.set.online') + chk('assist', 'game.set.assist') + chk('etc', 'game.set.etc') + chk('dj', 'game.set.dj') + chk('voice', 'game.set.voice') + chk('tilt', 'game.set.tilt') + chk('shake', 'game.set.shake') + chk('damage', 'game.set.damage') + chk('bloom', 'game.set.bloom') + chk('fps', 'game.set.fps') +
-      rng('master', 'game.set.master') + rng('engine', 'game.set.engine') + rng('sfx', 'game.set.sfx') + rng('ambient', 'game.set.ambient') + rng('radio', 'game.set.radio');
+      rng('master', 'game.set.master') +
+      `<label class="chk"><input type="checkbox" data-s="damage" ${s.damage ? 'checked' : ''}><span>${esc(L3('차량 파손 효과', '車体の損傷', 'Car damage'))}</span></label>` +
+      chk('online', 'game.set.online') + chk('fps', 'game.set.fps') +
+      `</div>` +
+      sec('drive', L3('주행 보조', '運転アシスト', 'Driving assists'), assistHtml + chk('assist', 'game.set.assist') + chk('etc', 'game.set.etc')) +
+      sec('gfx', L3('화면', '画面', 'Display'),
+        sel('resScale', [[0.5, '50%'], [0.75, '75%'], [1, '100%']], 'game.set.res') +
+        sel('timeSpeed', [[1, t('game.set.time1')], [0.25, t('game.set.time025')], [0, t('game.set.time0')]], 'game.set.time') +
+        sel('touch', [['auto', t('game.set.auto')], ['on', 'ON'], ['off', 'OFF']], 'game.set.touch') +
+        chk('bloom', 'game.set.bloom') + chk('shake', 'game.set.shake') + chk('tilt', 'game.set.tilt')) +
+      sec('snd', L3('사운드', 'サウンド', 'Sound'),
+        rng('engine', 'game.set.engine') + rng('sfx', 'game.set.sfx') + rng('ambient', 'game.set.ambient') + rng('radio', 'game.set.radio') + chk('dj', 'game.set.dj') + chk('voice', 'game.set.voice')) +
+      `<div class="row center"><button class="btn sm ghost" id="s-reset">${esc(L3('기본값으로 되돌리기', '初期設定に戻す', 'Reset to defaults'))}</button></div>`;
+    $('#s-grid').querySelectorAll('details.ssec').forEach(d => d.ontoggle = () => { this._sOpen[d.dataset.sec] = d.open; });
+    $('#s-reset').onclick = () => {
+      const keep = { v22: s.v22, v24: s.v24, v111: s.v111, fpsOn: s.fpsOn };
+      for (const k of Object.keys(s)) delete s[k]; Object.assign(s, DEFAULT_SETTINGS, keep);
+      g.saveSettings(); g.applyVolumes(); g.vehicle?.setAssists(assistsFromSettings(s));
+      if (g.bloom) g.bloom.enabled = s.bloom && g.quality !== 'low';
+      if (g.model) g.fx?.repair(g.model);
+      this.buildSettings(); this.toast(L3('기본 설정으로 되돌렸습니다', '初期設定に戻しました', 'Settings reset'), 'info', 2);
+    };
     $('#s-lang').onchange = e => setLang(e.target.value).then(() => this.buildSettings());
     $('#s-grid').querySelectorAll('[data-s]').forEach(i => i.onchange = i.oninput = () => {
       const k = i.dataset.s; let v = i.type === 'checkbox' ? i.checked : i.type === 'range' ? +i.value : i.value;
       if (['resScale', 'timeSpeed'].includes(k)) v = +v;
       if (k === 'abs') v = v === 'true';
-      s[k] = v; g.saveSettings(); g.applyVolumes();
+      s[k] = v; g.applyVolumes();
+      clearTimeout(this._saveT); this._saveT = setTimeout(() => g.saveSettings(), i.type === 'range' ? 300 : 0);
+      if (k === 'damage' && !v && g.model) g.fx?.repair(g.model);
       if (k === 'resScale') { g.renderer.setPixelRatio(g.basePR()); g.composer.setPixelRatio?.(g.renderer.getPixelRatio()); g.composer.setSize(innerWidth, innerHeight); }
       if (k === 'weather') { const ic = { auto: '🌤', clear: '☀️', cloudy: '☁️', rain: '🌧', storm: '⛈', fog: '🌫' }; const b = $('#wxbtn'); if (b) b.textContent = ic[v] || '🌤'; }
       if (k === 'tilt') { g.input.tilt = v; if (v && typeof DeviceOrientationEvent?.requestPermission === 'function') DeviceOrientationEvent.requestPermission().catch(() => {}); }
       if (k === 'dj' && g.radio) g.radio.djVoice = v;
       if (k === 'voice') g.audio.voiceOn = v;
       if (k === 'online') { if (v && g.vehicle) g.online.start(); else if (!v) g.online.stop(); this.updateOnline(); }
-      if (k === 'bloom') g.bloom.enabled = v && g.quality !== 'low';
+      if (k === 'bloom') g.bloom.enabled = v && g.quality !== 'low'; // user-chosen: one recompile is fine here
       if (k === 'transmission' && g.vehicle && !g.vehicle.ev) { g.vehicle.mode = v; g.vehicle.gear = 0; g.vehicle.atSel = 'P'; }
       if (k === 'difficulty' || ASSIST_SETTING_KEYS.includes(k)) {
         const prevTrans = s.transmission;

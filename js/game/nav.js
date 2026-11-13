@@ -28,7 +28,7 @@ export class Nav {
   constructor(game) {
     this.g = game; this.target = null; this.route = null; this.t = 0; this.off = 0;
     // destination beacon: a tall soft light column + ground ring
-    const mat = new THREE.MeshBasicMaterial({ color: 0x3fb6ff, transparent: true, opacity: 0.32, depthWrite: false, blending: THREE.AdditiveBlending, side: THREE.DoubleSide });
+    const mat = new THREE.MeshBasicMaterial({ color: 0x3fb6ff, transparent: true, forceSinglePass: true, opacity: 0.32, depthWrite: false, blending: THREE.AdditiveBlending, side: THREE.DoubleSide });
     const beam = new THREE.Mesh(new THREE.CylinderGeometry(1.6, 1.6, 120, 20, 1, true), mat); beam.position.y = 60;
     const ring = new THREE.Mesh(new THREE.RingGeometry(3, 4, 40), mat.clone()); ring.rotation.x = -Math.PI / 2; ring.position.y = 0.3;
     this.beacon = new THREE.Group(); this.beacon.add(beam, ring); this.beacon.visible = false; game.scene.add(this.beacon);

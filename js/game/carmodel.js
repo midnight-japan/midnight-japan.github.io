@@ -898,11 +898,36 @@ export function buildEngineBay(car, { width, length, floorY, topY, zc, zFront, z
 // ───────────────────────── runtime wrapper ─────────────────────────
 // lights: { head, high, brake, reverse, left, right, hazard, fog (rear fog), pos (parking/position),
 //           drl ('auto' = on while driving | true | false), strobe, beacon }
+// v2.4: stance presets (ride/track in metres, camber/toe in degrees, rake = rear higher than the front in metres)
+export const STANCE_PRESETS = {
+  stock:   { camberF: 0, camberR: 0, ride: 0, track: 0, toeF: 0, toeR: 0, rake: 0 },
+  street:  { camberF: -1.5, camberR: -1, ride: -0.025, track: 0.008, toeF: 0, toeR: 0.1, rake: 0.005 },
+  tsura:   { camberF: -2.5, camberR: -2, ride: -0.04, track: 0.035, toeF: 0, toeR: 0.1, rake: 0 },     // ツライチ: flush with the arches
+  shakotan:{ camberF: -4, camberR: -6, ride: -0.07, track: 0.03, toeF: 0, toeR: 0.2, rake: 0.008 },     // シャコタン: slammed
+  vip:     { camberF: -6, camberR: -8.5, ride: -0.065, track: 0.045, toeF: 0, toeR: 0, rake: -0.01 },   // VIP: deep dish, sunk
+  oni:     { camberF: -14, camberR: -18, ride: -0.09, track: 0.08, toeF: 0, toeR: 0, rake: 0 },         // 鬼キャン
+  drift:   { camberF: -4.5, camberR: -1, ride: -0.035, track: 0.02, toeF: -0.4, toeR: 0.3, rake: 0.012 },
+  track:   { camberF: -3, camberR: -2, ride: -0.045, track: 0.015, toeF: -0.1, toeR: 0.15, rake: 0.01 },
+  lift:    { camberF: 0.5, camberR: 0, ride: 0.06, track: 0.04, toeF: 0, toeR: 0, rake: -0.005 },       // lifted, off-road
+};
+const STANCE_BY_CAR = {
+  s15: 'drift', rps13: 'drift', jzx100: 'drift', ae86: 'drift', fd3s: 'drift', r32: 'drift',
+  r33: 'street', r34: 'tsura', r35: 'street', z33: 'street', gr86: 'street', jza80: 'tsura', a90: 'street',
+  ek9: 'track', fl5: 'track', ap1: 'track', evo9: 'track', gdb: 'track', nd: 'street', na1: 'street', lfa: 'street',
+  crown: 'vip', copen: 'street', s660: 'track', altow: 'shakotan', jimny: 'lift', nbox: 'stock',
+  e46: 'street', mustang: 'street', p911: 'track', model3: 'stock', leaf: 'stock', sakura: 'stock',
+};
+// the out-of-the-box setup of a car: each one leaves the garage with the stance its owners typically run
+export function defaultStance(car) {
+  const k = car?.cat === 'police' || car?.cat === 'traffic' ? 'stock' : STANCE_BY_CAR[car?.id] || 'stock';
+  return { preset: k, ...STANCE_PRESETS[k] };
+}
+
 export class CarModel {
   constructor(car, root, bodyG, P, S, parts, paint) {
     Object.assign(this, { car, root, bodyG, P, S, parts, paint });
     this.lights = { head: false, high: false, brake: false, reverse: false, left: false, right: false, hazard: false, fog: false, pos: false, drl: 'auto', strobe: 'off', beacon: false };
-    this.camber = { f: 0, r: 0 }; this.ride = 0; this.trackAdj = 0;
+    this.camber = { f: 0, r: 0 }; this.ride = 0; this.trackAdj = 0; this.toe = { f: 0, r: 0 }; this.rake = 0;
     this.t = 0; this.popup = 0; this.movedT = -99; this._spin0 = null; this.hb = 1; this.hbTgt = 1;
   }
   setPaint(hex) { this.paint.color.set(hex); this.parts.paintFlat.color.set(hex); }
@@ -917,17 +942,23 @@ export class CarModel {
     import('./plates.js').then(({ plateTexture }) => { for (const pm of this.parts.plates) { pm.material.map = plateTexture(p); pm.material.emissiveMap = plateTexture(p); pm.material.needsUpdate = true; } });
     this.parts.plateData = p;
   }
-  setStance({ camberF, camberR, ride, track }) {
-    if (camberF !== undefined) this.camber.f = camberF;
-    if (camberR !== undefined) this.camber.r = camberR;
-    if (ride !== undefined) this.ride = ride;
-    if (track !== undefined) this.trackAdj = track;
+  setStance({ camberF, camberR, ride, track, toeF, toeR, rake }) {
+    if (camberF != null) this.camber.f = camberF;
+    if (camberR != null) this.camber.r = camberR;
+    if (ride != null) this.ride = ride;
+    if (track != null) this.trackAdj = track;
+    if (toeF != null) this.toe.f = toeF;
+    if (toeR != null) this.toe.r = toeR;
+    if (rake != null) this.rake = rake;
+    const D = Math.PI / 180, wb = Math.max(2, (this.car?.wb || 2600) / 1000);
     for (const w of this.parts.wheels) {
-      const deg = (w.front ? this.camber.f : this.camber.r) * Math.PI / 180;
+      const deg = (w.front ? this.camber.f : this.camber.r) * D;
       w.camber.rotation.z = (w.left ? 1 : -1) * deg;
+      w.camber.rotation.y = (w.left ? -1 : 1) * (w.front ? this.toe.f : this.toe.r) * D; // + = toe-in
       w.steer.position.x = w.base.x + (w.left ? 1 : -1) * this.trackAdj;
     }
     this.bodyG.position.y = this.ride;
+    this.bodyG.rotation.x = Math.atan2(this.rake, wb); // + = nose down (rear higher)
   }
   // shifter target from a gear label ('1'..'6', 'R', 'N', 'P', 'D', 'D3', 'B', …)
   setGear(label) {

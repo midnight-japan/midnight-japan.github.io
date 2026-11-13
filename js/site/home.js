@@ -1,90 +1,78 @@
-// Homepage: hero art, 3-step start, features, car showcase, roadmap, gallery + lightbox, latest update teaser, requirements, controls, FAQ.
+// Homepage: cinematic hero slideshow, "what's new" (CHANGELOG[0]), real-3D section, routes + regions,
+// feature rows, details grid, car showcase strip, gallery + lightbox, quick start, requirements, controls, FAQ.
 import { GAME, CHANGELOG, LANGS, REGIONS } from '../../data/meta.js';
 import { CARS } from '../../data/cars.js';
 import { t, pick } from '../i18n.js';
 import { initSite, onLang, esc, num, swap, reducedMotion } from './common.js';
 import { carImage } from './carart.js';
 
-// ── Feature list: [key, icon, Japanese flavour label]
+const $ = id => document.getElementById(id);
 const ic = p => `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">${p}</svg>`;
-// (Desktop/mobile/PWA is covered by the "Start in 3 steps" section, so it is not repeated here.)
-const FEATURES = [
-  ['real3d', ic('<path d="M12 2 3 7l9 5 9-5z"/><path d="M3 7v10l9 5V12M21 7v10l-9 5"/>'), '3D都市'],
-  ['fence', ic('<path d="M4 21V7l2-3 2 3v14M16 21V7l2-3 2 3v14M8 10h8M8 16h8"/>'), '道路'],
-  ['cockpit', ic('<circle cx="12" cy="13" r="8"/><path d="M12 13l4-3M4 13h2M18 13h2M12 5v2"/>'), 'コックピット'],
-  ['city', ic('<path d="M3 21V9l5-3v15M8 21V4l7 3v14M15 21v-9l6-2v11M2 21h20"/><path d="M11 9h1M11 12h1M11 15h1M18 13h1M18 16h1"/>'), '実在の街'],
-  ['tune', ic('<circle cx="12" cy="12" r="3"/><path d="M12 2v3M12 19v3M2 12h3M19 12h3M4.9 4.9l2.1 2.1M17 17l2.1 2.1M4.9 19.1 7 17M17 7l2.1-2.1"/>'), 'チューン'],
-  ['pa', ic('<path d="M4 20V5h7a4 4 0 0 1 0 8H4"/><path d="M15 20h5"/>'), '大黒PA'],
-  ['online', ic('<circle cx="6" cy="12" r="2.5"/><circle cx="18" cy="6" r="2.5"/><circle cx="18" cy="18" r="2.5"/><path d="M8.3 10.9 15.7 7.1M8.3 13.1l7.4 3.8"/>'), 'オンライン', 'beta'],
-  ['cycle', ic('<path d="M12 3a9 9 0 1 0 9 9 7 7 0 0 1-9-9z"/>'), '昼夜'],
-  ['manual', ic('<path d="M6 4v16M12 4v16M18 4v8H6"/><circle cx="6" cy="4" r="1.5"/><circle cx="12" cy="4" r="1.5"/><circle cx="18" cy="4" r="1.5"/>'), 'MT'],
-  ['ev', ic('<path d="M13 2 4 14h7l-1 8 9-12h-7z"/>'), 'EV'],
-  ['cars', ic('<path d="M3 13l2-5a2 2 0 0 1 2-1h10a2 2 0 0 1 2 1l2 5v5h-3v-2H6v2H3z"/><circle cx="7" cy="13.5" r="1"/><circle cx="17" cy="13.5" r="1"/>'), '実車'],
-  ['plates', ic('<rect x="3" y="6" width="18" height="12" rx="2"/><path d="M7 10h4M7 14h10"/>'), 'ナンバー'],
-  ['police', ic('<path d="M12 3l7 3v5c0 5-3 8-7 10-4-2-7-5-7-10V6z"/><path d="M9 12l2 2 4-4"/>'), '高速隊'],
-  ['toll', ic('<path d="M4 20V8l4-4h8l4 4v12"/><path d="M4 12h16"/><path d="M12 12v8"/>'), '料金所'],
-  ['radio', ic('<rect x="3" y="8" width="18" height="12" rx="2"/><path d="M7 8l10-5"/><circle cx="8" cy="14" r="2.5"/><path d="M14 12h4M14 16h4"/>'), 'ラジオ'],
-  ['walk', ic('<circle cx="13" cy="4" r="2"/><path d="M10 22l2-7 3 3v6M8 12l3-4 3 1 2 3"/>'), '徒歩'],
-  ['langs', ic('<circle cx="12" cy="12" r="9"/><path d="M3 12h18M12 3a14 14 0 0 1 0 18M12 3a14 14 0 0 0 0 18"/>'), '多言語'],
-];
-
-// ── Screenshots in docs/screenshots/: each entry needs <name>.jpg (1600 px wide) and <name>-800.jpg (800 px wide).
-//    If the .jpg is missing the page falls back to <name>.png. Make the JPEGs on macOS with:
-//    sips -s format jpeg -s formatOptions 78 -Z 1600 X.png --out X.jpg && sips -s format jpeg -s formatOptions 74 -Z 800 X.png --out X-800.jpg
-// Caption: i18n key site.shot.<first 2 chars> if it exists, otherwise the file name ("08-wangan-night" → "Wangan night").
-// 9 entries fill the grid exactly on desktop (first one large). Other shots on disk: 05-onfoot, 06-tollgate.
-const SHOTS = ['42-tokyo-night', '40-real-yokohama', '43-real-cockpit', '44-mm-street', '26-k1-night', '18-minatomirai', '25-k1-tunnel', '24-rain', '22-haneda', '19-city-aerial', '07-ae86-loops', '17-city-night', '23-foodcourt', '16-tsubasa', '21-tuning'];
+const PLAY = '<svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M7 4.5v15l13-7.5z"/></svg>';
 const SHOT_DIR = 'docs/screenshots/';
 const shotSrc = (s, w) => SHOT_DIR + s + (w === 800 ? '-800' : '') + '.jpg';
+const srcset = s => `${shotSrc(s, 800)} 800w, ${shotSrc(s, 1600)} 1600w`;
+
+// ── Hero slideshow: [screenshot, location label (Japanese road-sign style, not translated)]
+const SLIDES = [
+  ['40-real-yokohama', '横浜みなとみらい · 3D都市モデル'], ['27-c1night', '首都高速都心環状線 · 銀座'], ['41-real-tokyo', '東京タワー · 夕暮れ'],
+  ['29-hakone_dusk', 'アネスト岩田ターンパイク箱根'], ['31-k1rain', '首都高速K1横羽線 · 雨の夜'], ['33-rainbow', 'レインボーブリッジ · 東京湾'],
+  ['42-tokyo-night', '東京 · 都心の夜'], ['26-k1-night', '首都高速K1横羽線'],
+];
+const SLIDE_MS = 6500;
+
+// ── Routes: each card starts the game at that place (play.html?spawn=<id>). Items 0 and 6 are wide.
+const ROUTES = [
+  { id: 'c1', img: '27-c1night', route: 'C1', km: '14 km', ja: '首都高速都心環状線' },
+  { id: 'hakone', img: '29-hakone_dusk', route: 'TP', km: '13.5 km', ja: 'アネスト岩田ターンパイク箱根' },
+  { id: 'k1', img: '26-k1-night', route: 'K1', km: '17 km', ja: '横浜ループ（K5・K1・K3・湾岸線）' },
+  { id: 'pa', img: '07-ae86-loops', route: 'B', km: '30 km', ja: '大黒PA · 首都高速湾岸線' },
+  { id: 'daiba', img: '33-rainbow', route: '11', km: '40 km', ja: '湾岸線・11号台場線・1号羽田線' },
+  { id: 'seisho', img: '34-seisho', route: '1', km: '59 km', ja: '横浜新道・新湘南・西湘バイパス' },
+  { id: 'mm', img: '18-minatomirai', route: 'Y', km: '', ja: '横浜・川崎・東京・湘南の街並み' },
+];
+
+// ── Feature rows: [key, screenshot, Japanese label, play link, extra-renderer]
+const STANCES = ['stock', 'street', 'tsura', 'shakotan', 'vip', 'oni', 'drift', 'track', 'lift'];
+const FROWS = [
+  ['garage', '21-tuning', 'ガレージ', 'play.html', () => `<ul class="chips-row stance" aria-label="Stance">${STANCES.map(s => `<li>${esc(t('site.home.stance.' + s))}</li>`).join('')}</ul>`],
+  ['roads', '44-mm-street', '日本の道', 'play.html?spawn=k1', () => `<ul class="chips-row marks" lang="ja" aria-hidden="true"><li>止まれ</li><li>速度落とせ</li><li>合流注意</li><li class="etc">ETC</li><li class="spd">50</li></ul>`],
+  ['sky', '31-k1rain', '昼夜・天気', 'play.html?spawn=hakone', () => `<ul class="chips-row wx" aria-hidden="true">${[
+    '<circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M2 12h2M20 12h2M4.9 4.9l1.4 1.4M17.7 17.7l1.4 1.4M4.9 19.1l1.4-1.4M17.7 6.3l1.4-1.4"/>',
+    '<path d="M7 18a4 4 0 0 1-.5-8 6 6 0 0 1 11.5 1.5A3.5 3.5 0 0 1 17.5 18z"/>',
+    '<path d="M7 15a4 4 0 0 1-.5-8 6 6 0 0 1 11.5 1.5A3.5 3.5 0 0 1 17.5 15z"/><path d="M8 18l-1 3M12 18l-1 3M16 18l-1 3"/>',
+    '<path d="M7 14a4 4 0 0 1-.5-8 6 6 0 0 1 11.5 1.5A3.5 3.5 0 0 1 17.5 14z"/><path d="M12 14l-2 4h3l-2 4"/>',
+    '<path d="M4 9h16M2 13h20M5 17h14"/>',
+    '<path d="M12 3a9 9 0 1 0 9 9 7 7 0 0 1-9-9z"/>'].map(p => `<li>${ic(p)}</li>`).join('')}</ul>`],
+  ['meet', '01-pa-night', '大黒PA', 'play.html?spawn=pa', () => `<ul class="chips-row marks" lang="ja" aria-hidden="true"><li class="pa">P</li><li>大黒PA</li><li>自販機</li><li>ONLINE β</li></ul>`],
+];
+
+// ── Detail grid: [i18n key (site.home.more.* or site.feat.*), icon]
+const MORE = [
+  ['home.more.sound', ic('<path d="M4 9v6h4l5 4V5L8 9z"/><path d="M16.5 8.5a5 5 0 0 1 0 7M19 6a8.5 8.5 0 0 1 0 12"/>')],
+  ['home.more.fps', ic('<path d="M3 14a9 9 0 0 1 18 0"/><path d="M12 14l4.5-4.5"/><circle cx="12" cy="14" r="1.4"/><path d="M5 18h14"/>')],
+  ['home.more.damage', ic('<path d="M3 13l2-5a2 2 0 0 1 2-1h10a2 2 0 0 1 2 1l2 5v5h-3v-2H6v2H3z"/><path d="M14 7l-1.5 3 2 1-2 3"/>')],
+  ['feat.manual', ic('<path d="M6 4v16M12 4v16M18 4v8H6"/><circle cx="6" cy="4" r="1.5"/><circle cx="12" cy="4" r="1.5"/><circle cx="18" cy="4" r="1.5"/>')],
+  ['feat.cockpit', ic('<circle cx="12" cy="12" r="9"/><circle cx="12" cy="12" r="2.5"/><path d="M12 14.5V21M9.6 11.2 3.5 9.5M14.4 11.2l6.1-1.7"/>')],
+  ['feat.plates', ic('<rect x="3" y="6" width="18" height="12" rx="2"/><path d="M7 10h4M7 14h10"/>')],
+  ['home.more.radio', ic('<rect x="3" y="8" width="18" height="12" rx="2"/><path d="M7 8l10-5"/><circle cx="8" cy="14" r="2.5"/><path d="M14 12h4M14 16h4"/>')],
+  ['home.more.settings', ic('<path d="M4 6h10M18 6h2M4 12h4M12 12h8M4 18h12M20 18h0"/><circle cx="16" cy="6" r="2"/><circle cx="10" cy="12" r="2"/><circle cx="18" cy="18" r="2"/>')],
+  ['feat.langs', ic('<circle cx="12" cy="12" r="9"/><path d="M3 12h18M12 3a14 14 0 0 1 0 18M12 3a14 14 0 0 0 0 18"/>')],
+];
+
+// ── Showcase strip (ids from data/cars.js; unknown ids are skipped)
+const FEATURED = ['r34', 'jza80', 'fd3s', 'ae86', 's15', 'na1', 'r35', 'gr86', 'evo9', 'crown', 'jimny', 'lfa'];
+
+// ── Gallery: 9 shots fill the grid exactly on desktop (first one large). Caption: i18n site.shot.<first 2 chars>.
+const SHOTS = ['29-hakone_dusk', '33-rainbow', '42-tokyo-night', '17-city-night', '24-rain', '22-haneda', '16-tsubasa', '28-c1tunnel', '23-foodcourt'];
 const shotCap = s => {
   const k = 'site.shot.' + s.slice(0, 2), v = t(k);
   if (v !== k) return v;
   const w = s.replace(/^\d+[-_]?/, '').replace(/[-_]+/g, ' ').trim();
   return w ? w[0].toUpperCase() + w.slice(1) : s;
 };
-/** <img> fallback chain: -800.jpg/.jpg → .png → placeholder. */
-function pngFallback(img, name, onFail) {
-  img.addEventListener('error', () => {
-    if (!img.dataset.png) { img.dataset.png = '1'; img.removeAttribute('srcset'); img.src = SHOT_DIR + name + '.png'; }
-    else onFail?.();
-  });
-}
 
-// ── World tiles (home): [screenshot, region id in data/meta.js REGIONS or i18n key, route badge, Japanese name]
-const WORLD = [
-  ['19-city-aerial', 'site.world.city', 'K', '横浜・川崎'],
-  ['07-ae86-loops', 'daikoku_pa', 'B', '大黒PA'],
-  ['16-tsubasa', 'tsubasa', 'B', '鶴見つばさ橋'],
-  ['14-aqua-tunnel', 'site.world.aqua', 'CA', '東京湾アクアライン'],
-];
-// Route-sign ticker words (decorative, Japanese/English place names — not translated on purpose)
-const TICKER = ['みなとみらい', 'MINATO MIRAI', '横浜中華街', 'YOKOHAMA CHINATOWN', '川崎', 'KAWASAKI', '大黒PA', 'DAIKOKU PA', '首都高速湾岸線', 'BAYSHORE ROUTE', '鶴見つばさ橋', 'TSURUMI TSUBASA BRIDGE', '川崎浮島JCT', '東京湾アクアライン', 'TOKYO BAY AQUA-LINE', '海ほたるPA', 'UMIHOTARU', '羽田', 'HANEDA', '横浜ベイブリッジ', 'YOKOHAMA BAY BRIDGE'];
-
-// ── Featured cars for the home showcase strip (ids from data/cars.js; unknown ids are skipped).
-const FEATURED = ['r34', 'r32', 'jza80', 'fd3s', 'na1', 'ae86', 'gr86', 'ap1', 'evo9', 'lfa'];
-
-// ── Roadmap: [version, status, item keys]. Keep it modest — plans, not promises.
-// Item keys: site.road.<version without dot>.<key>, except entries written as 'NN.key' which point at another version's key.
-const ROADMAP = [
-  ['0.4', 'done', ['roadside', 'places', 'traffic', 'konbini']],
-  ['0.5', 'done', ['city', 'citytraffic', 'landmarks', 'tuning']],
-  ['0.6', 'done', ['trains', 'people', 'haneda', 'interiors']],
-  ['0.7', 'done', ['weather', 'bigcity', 'faces']],
-  ['0.8', 'done', ['loop', 'walls', 'umbrella']],
-  ['0.9', 'done', ['nav', 'damage', 'talk', 'fuel']],
-  ['0.10', 'done', ['touge']],
-  ['0.11', 'done', ['c1']],
-  ['1.0', 'done', ['routes', 'site', 'money']],
-  ['1.1', 'done', ['20.connected', '20.sound']],
-  ['1.2', 'done', ['20.autopilot', '20.mapall']],
-  ['2.0', 'done', ['20.real3d', '20.fence', '20.cockpit']],
-  ['2.1', 'done', ['21.marks', '21.signs']],
-  ['2.2', 'now', ['22.connect', '22.sharp']],
-  ['2.3', 'next', ['07.cars', '03.events', '20.more3d']],
-  ['Later', 'later', ['02.perf']],
-];
-
-// ── Controls. Keep in sync with the game's input map. Values: keyboard keys (array → <kbd>), gamepad, touch i18n key.
+// ── Controls. Keep in sync with the game's input map.
 const CONTROLS = [
   ['accel', ['W', '↑'], ['RT'], 'pedalR'],
   ['brake', ['S', '↓'], ['LT'], 'pedalL'],
@@ -100,155 +88,209 @@ const CONTROLS = [
   ['interact', ['F'], ['D-Pad ↓'], 'doorBtn'],
   ['menu', ['Esc'], ['Menu'], 'pauseBtn'],
 ];
-
 const REQ = ['browser', 'gpu', 'ram', 'display', 'mobile', 'network'];
 const FAQ = ['free', 'install', 'multi', 'account', 'real', 'perf'];
 
+// ───────────────────────── hero ─────────────────────────
+function renderHero() {
+  const v = 'v' + GAME.version;
+  $('hero-version').textContent = v;
+  $('hero-code').textContent = CHANGELOG[0]?.codename || '';
+  $('hero-new').textContent = t('site.home.hero.new', { v: GAME.version });
+  $('hero-badge').setAttribute('aria-label', t('site.home.hero.new', { v: GAME.version }));
+}
+
+function heroSlides() {
+  const box = $('hero-slides'), loc = $('hero-loc'), dots = $('hero-dots'); if (!box) return;
+  const reduce = reducedMotion();
+  const first = box.querySelector('img');
+  const imgs = SLIDES.map(([f], i) => {
+    if (i === 0) return first;
+    const im = new Image(); im.className = 'hero-shot slide'; im.alt = ''; im.decoding = 'async'; im.loading = 'lazy';
+    im.sizes = '100vw'; im.dataset.srcset = srcset(f); im.width = 1600; im.height = 900;
+    box.appendChild(im); return im;
+  });
+  const load = i => { const im = imgs[i]; if (im.dataset.srcset) { im.srcset = im.dataset.srcset; im.src = shotSrc(SLIDES[i][0], 1600); delete im.dataset.srcset; } };
+  let k = 0, timer = 0;
+  const show = i => {
+    k = (i + imgs.length) % imgs.length; load(k); load((k + 1) % imgs.length);
+    imgs.forEach((im, j) => im.classList.toggle('on', j === k));
+    loc.innerHTML = `<i></i><span lang="ja">${esc(SLIDES[k][1])}</span>`;
+    dots.querySelectorAll('button').forEach((b, j) => b.setAttribute('aria-current', String(j === k)));
+  };
+  const schedule = () => { clearInterval(timer); if (!reduce) timer = setInterval(() => show(k + 1), SLIDE_MS); };
+  const renderDots = () => {
+    dots.innerHTML = SLIDES.map((_, i) => `<button type="button" aria-label="${esc(t('site.home.slide', { n: i + 1 }))}" aria-current="${i === k}"><i></i></button>`).join('');
+    dots.style.setProperty('--slide-ms', SLIDE_MS + 'ms');
+  };
+  renderDots(); window.addEventListener('langchange', () => { renderDots(); show(k); });
+  dots.addEventListener('click', e => { const b = e.target.closest('button'); if (!b) return; show([...dots.children].indexOf(b)); schedule(); });
+  document.addEventListener('visibilitychange', () => { if (document.hidden) clearInterval(timer); else schedule(); });
+  show(0); schedule();
+}
+
+function countUp() {
+  if (reducedMotion()) return;
+  document.querySelectorAll('.stats b').forEach((b, i) => {
+    const end = +b.textContent; if (!Number.isFinite(end) || end <= 0) return;
+    const t0 = performance.now() + 500 + i * 110, dur = 1200;
+    b.textContent = '0';
+    const tick = now => {
+      const k = Math.max(0, Math.min(1, (now - t0) / dur)), e = 1 - Math.pow(1 - k, 3);
+      b.textContent = String(Math.round(end * e));
+      if (k < 1) requestAnimationFrame(tick);
+    };
+    requestAnimationFrame(tick);
+  });
+}
+
+// ───────────────────────── what's new ─────────────────────────
+const WN_MAX = 6;
+function renderWhatsNew() {
+  const el = $('wn'), c = CHANGELOG[0];
+  if (!c) { el.closest('section').hidden = true; return; }
+  const all = (c.items || []).filter(i => i.type !== 'known');
+  const order = { new: 0, change: 1, fix: 2 };
+  const items = [...all].sort((a, b) => (order[a.type] ?? 3) - (order[b.type] ?? 3)).slice(0, WN_MAX);
+  const anchor = 'changelog.html#v' + c.version.replace(/\./g, '-');
+  const [maj, min] = c.version.split('.');
+  el.innerHTML = `
+    <div class="wn-side">
+      <span class="wn-big" aria-hidden="true">${esc(maj)}.${esc(min ?? '0')}</span>
+      <span class="kicker"><span class="route new">NEW</span><span>${esc(t('site.home.new.kicker'))}</span></span>
+      <h2 class="sec-title" id="wn-title">${esc(t('site.home.hero.new', { v: c.version }))}</h2>
+      <div class="wn-meta">${c.codename ? `<span class="wn-code">${esc(c.codename)}</span>` : ''}<time datetime="${esc(c.date)}">${esc(c.date)}</time></div>
+      <p class="wn-sum">${esc(pick(c.summary))}</p>
+      <div class="wn-cta">
+        <a class="btn btn-play" href="play.html">${PLAY}<span>${esc(t('site.home.new.play', { v: c.version }))}</span></a>
+        <a class="btn btn-ghost" href="${esc(anchor)}">${esc(t('site.latest.more'))} →</a>
+      </div>
+    </div>
+    <ol class="wn-list">
+      ${items.map(i => `<li class="wn-item ${esc(i.type)}"><span class="ty ${esc(i.type)}">${esc(t('site.type.' + i.type))}</span><p>${esc(pick(i))}</p></li>`).join('')}
+      ${all.length > items.length ? `<li class="wn-more"><a href="${esc(anchor)}">${esc(t('site.home.new.more', { n: all.length - items.length }))} →</a></li>` : ''}
+    </ol>`;
+}
+
+// ───────────────────────── routes + regions ─────────────────────────
+function renderRoutes() {
+  $('route-grid').innerHTML = ROUTES.map((r, i) => `<a class="route-card${i === 0 || i === ROUTES.length - 1 ? ' wide' : ''}" href="play.html?spawn=${r.id}">
+    <img src="${shotSrc(r.img, 800)}" srcset="${srcset(r.img)}" sizes="(min-width: 960px) ${i === 0 || i === ROUTES.length - 1 ? '66vw' : '33vw'}, 100vw" alt="" loading="lazy" decoding="async" width="800" height="450">
+    <span class="rc-top"><span class="route${r.route === 'TP' ? ' aq' : ''}">${esc(r.route)}</span>${r.km ? `<span class="rc-km">${esc(r.km)}</span>` : ''}</span>
+    <div class="rc-body"><span class="rc-jp" lang="ja">${esc(r.ja)}</span><h3>${esc(t('site.routes.' + r.id))}</h3><span class="rc-d">${esc(t('site.routes.' + r.id + 'D'))}</span>
+    <span class="rc-go">${PLAY}${esc(t('site.routes.go'))}</span></div></a>`).join('');
+  const live = REGIONS.filter(r => r.status === 'live');
+  $('rb-label').innerHTML = `<i class="dot live"></i>${esc(t('site.home.regions.live', { n: live.length }))}`;
+  $('rb-chips').innerHTML = live.map(r => `<a class="rchip" href="regions.html#r-${encodeURIComponent(r.id)}">${esc(pick(r.name))}</a>`).join('');
+}
+
+// ───────────────────────── features ─────────────────────────
 function renderFeatures() {
-  const n = CARS.length;
-  document.getElementById('feature-grid').innerHTML = FEATURES.map(([k, svg, jp, beta]) => `
-    <article class="card feat${beta ? ' is-beta' : ''}"><span class="jp" lang="ja">${jp}</span><div class="ic">${svg}</div>
-      <h3>${esc(t('site.feat.' + k + '.t', { n }))}${beta ? ` <span class="beta">${esc(t('site.beta'))}</span>` : ''}</h3><p>${esc(t('site.feat.' + k + '.d', { n }))}</p></article>`).join('');
+  $('frows').innerHTML = FROWS.map(([k, img, jp, href, extra], i) => `
+    <article class="frow${i % 2 ? ' flip' : ''}">
+      <figure class="frow-media"><img src="${shotSrc(img, 800)}" srcset="${srcset(img)}" sizes="(min-width: 960px) 55vw, 100vw" alt="" loading="lazy" decoding="async" width="800" height="450"><span class="frow-n" aria-hidden="true">0${i + 1}</span></figure>
+      <div class="frow-copy">
+        <span class="frow-jp" lang="ja">${esc(jp)}</span>
+        <h3>${esc(t('site.home.feat.' + k + '.t'))}</h3>
+        <p>${esc(t('site.home.feat.' + k + '.d'))}</p>
+        ${extra()}
+        <a class="frow-go" href="${href}">${esc(t('site.home.feat.' + k + '.cta'))} <span aria-hidden="true">→</span></a>
+      </div>
+    </article>`).join('');
+  $('mini-grid').innerHTML = MORE.map(([k, svg]) => `<article class="mini"><span class="mini-ic">${svg}</span><div><h4>${esc(t('site.' + k + '.t', { n: CARS.length }))}</h4><p>${esc(t('site.' + k + '.d', { n: CARS.length }))}</p></div></article>`).join('');
 }
 
-function renderGallery() {
-  const g = document.getElementById('gallery-grid');
-  g.innerHTML = SHOTS.map((s, i) => `
-    <button type="button" class="shot" data-i="${i}" aria-label="${esc(shotCap(s))}">
-      <img src="${shotSrc(s, 800)}" srcset="${shotSrc(s, 800)} 800w, ${shotSrc(s, 1600)} 1600w" sizes="(min-width: 900px) ${i === 0 ? '66vw' : '33vw'}, 100vw" alt="${esc(shotCap(s))}" loading="lazy" decoding="async" width="800" height="450">
-      <span class="cap">${esc(shotCap(s))}</span>
-    </button>`).join('');
-  g.querySelectorAll('.shot').forEach(b => {
-    const img = b.querySelector('img');
-    const fail = () => { b.classList.add('missing'); b.disabled = true; img.remove(); b.insertAdjacentHTML('afterbegin', `<span class="ph"><span>${esc(t('site.gallery.soon'))}</span></span>`); };
-    pngFallback(img, SHOTS[+b.dataset.i], fail);
-    b.addEventListener('click', () => { if (!b.classList.contains('missing')) openLb(+b.dataset.i); });
-  });
-}
-
-function renderWorld() {
-  const name = id => { const r = REGIONS.find(x => x.id === id); return r ? pick(r.name) : t(id); };
-  const g = document.getElementById('world-grid');
-  g.innerHTML = WORLD.map(([s, id, route, jp], i) => {
-    const href = REGIONS.some(x => x.id === id) ? `regions.html#r-${encodeURIComponent(id)}` : 'regions.html';
-    return `<a class="wtile${i === 0 ? ' big' : ''}" href="${href}">
-      <img src="${shotSrc(s, 800)}" srcset="${shotSrc(s, 800)} 800w, ${shotSrc(s, 1600)} 1600w" sizes="(min-width: 900px) ${i === 0 ? '60vw' : '30vw'}, 100vw" alt="" loading="lazy" decoding="async" width="800" height="450">
-      <span class="wt-body"><span class="route${route === 'CA' ? ' aq' : ''}">${esc(route)}</span><span class="wt-name">${esc(name(id))}</span><span class="wt-jp" lang="ja">${esc(jp)}</span></span>
-    </a>`;
-  }).join('');
-  g.querySelectorAll('.wtile img').forEach((img, i) => pngFallback(img, WORLD[i][0], () => img.remove()));
-}
-
-function renderTicker() {
-  const el = document.getElementById('ticker'); if (!el) return;
-  const run = TICKER.map(w => `<span>${esc(w)}</span>`).join('<i></i>');
-  el.innerHTML = `<div>${run}<i></i></div><div>${run}<i></i></div>`;
-}
-
-let lbIndex = 0;
-const lb = () => document.getElementById('lightbox');
-function avail() { return [...document.querySelectorAll('#gallery-grid .shot:not(.missing)')].map(b => +b.dataset.i); }
-function openLb(i) {
-  lbIndex = i; const s = SHOTS[i];
-  const im = document.getElementById('lb-img'); delete im.dataset.png;
-  im.onerror = () => { if (!im.dataset.png) { im.dataset.png = '1'; im.src = SHOT_DIR + s + '.png'; } };
-  im.src = shotSrc(s, 1600);
-  document.getElementById('lb-img').alt = shotCap(s);
-  document.getElementById('lb-cap').textContent = shotCap(s);
-  swap(document.getElementById('lb-img'));
-  lb().classList.add('open'); lb().querySelector('.lb-close').focus();
-}
-function stepLb(d) { const a = avail(); if (!a.length) return; const p = a.indexOf(lbIndex); openLb(a[(p + d + a.length) % a.length]); }
-function closeLb() { lb().classList.remove('open'); document.querySelector(`#gallery-grid .shot[data-i="${lbIndex}"]`)?.focus(); }
-function wireLb() {
-  const el = lb();
-  el.querySelector('.lb-close').onclick = closeLb;
-  el.querySelector('.lb-prev').onclick = () => stepLb(-1);
-  el.querySelector('.lb-next').onclick = () => stepLb(1);
-  el.addEventListener('click', e => { if (e.target === el) closeLb(); });
-  document.addEventListener('keydown', e => {
-    if (!el.classList.contains('open')) return;
-    if (e.key === 'Escape') closeLb(); else if (e.key === 'ArrowLeft') stepLb(-1); else if (e.key === 'ArrowRight') stepLb(1);
-  });
-}
-
-function renderLatest() {
-  const c = CHANGELOG[0]; const el = document.getElementById('latest-card');
-  if (!c) { el.hidden = true; return; }
-  const items = (c.items || []).filter(i => i.type !== 'known').slice(0, 5);
-  el.innerHTML = `<div><div class="ver">v${esc(c.version)}</div><div class="code">${esc(c.codename || '')}</div><div class="date">${esc(c.date)}</div></div>
-    <div><p class="rel-sum">${esc(pick(c.summary))}</p>
-      <ul>${items.map(i => `<li><span class="ty ${esc(i.type)}">${esc(t('site.type.' + i.type))}</span><span>${esc(pick(i))}</span></li>`).join('')}</ul>
-      <a class="btn btn-green btn-sm" href="changelog.html#v${esc(c.version.replace(/\./g, '-'))}">${esc(t('site.latest.more'))} →</a></div>`;
-}
-
-function renderReq() {
-  document.getElementById('req-table').innerHTML = `<thead><tr><th></th><th>${esc(t('site.req.min'))}</th><th>${esc(t('site.req.rec'))}</th></tr></thead>
-  <tbody>${REQ.map(k => `<tr><th scope="row">${esc(t('site.req.' + k))}</th><td data-l="${esc(t('site.req.min'))}">${esc(t('site.req.' + k + '.min'))}</td><td data-l="${esc(t('site.req.rec'))}">${esc(t('site.req.' + k + '.rec'))}</td></tr>`).join('')}</tbody>`;
-}
-
-let dev = 'all';
-function renderCtl() {
-  const kb = a => a.map(k => `<kbd>${esc(k)}</kbd>`).join(' ');
-  const cols = [['kb', 'site.ctl.keyboard'], ['pad', 'site.ctl.gamepad'], ['touch', 'site.ctl.touch']].filter(([d]) => dev === 'all' || dev === d);
-  const cell = (d, row) => d === 'kb' ? kb(row[1]) : d === 'pad' ? kb(row[2]) : esc(t('site.ctl.t.' + row[3]));
-  document.getElementById('ctl-table').innerHTML = `<thead><tr><th>${esc(t('site.ctl.action'))}</th>${cols.map(([, k]) => `<th>${esc(t(k))}</th>`).join('')}</tr></thead>
-  <tbody>${CONTROLS.map(r => `<tr><th scope="row">${esc(t('site.ctl.a.' + r[0]))}</th>${cols.map(([d, k]) => `<td data-l="${esc(t(k))}">${cell(d, r)}</td>`).join('')}</tr>`).join('')}</tbody>`;
-}
-function wireTabs() {
-  const tabs = document.querySelectorAll('#ctl-tabs .tab');
-  tabs.forEach(b => b.addEventListener('click', () => {
-    dev = b.dataset.dev; tabs.forEach(x => x.setAttribute('aria-selected', String(x === b))); renderCtl(); swap(document.getElementById('ctl-table'));
-  }));
-}
-
-function renderFaq() {
-  document.getElementById('faq-list').innerHTML = FAQ.map(k =>
-    `<details><summary>${esc(t('site.faq.' + k + '.q'))}</summary><div>${esc(t('site.faq.' + k + '.a', { langs: LANGS.length }))}</div></details>`).join('');
-}
-
+// ───────────────────────── showcase strip ─────────────────────────
 function renderShowcase() {
   const list = FEATURED.map(id => CARS.find(c => c.id === id)).filter(c => c && c.playable);
-  document.getElementById('show-lead').textContent = t('site.show.lead', { n: CARS.length });
-  document.getElementById('show-all').textContent = t('site.show.all', { n: CARS.length }) + ' →';
-  document.getElementById('car-strip').innerHTML = list.map(c => `
-    <li class="card scar">
+  $('show-lead').textContent = t('site.show.lead', { n: CARS.length });
+  $('show-all').textContent = t('site.show.all', { n: CARS.length }) + ' →';
+  $('car-strip').innerHTML = list.map(c => `
+    <li class="scar">
       <a class="car-img" href="cars.html#${encodeURIComponent(c.id)}" tabindex="-1" aria-hidden="true">${carImage(c)}<span class="tag drv" title="${esc(t('site.drive.' + c.drive))}">${esc(c.drive)}</span></a>
       <div class="scar-body">
         <div class="car-maker">${esc(c.maker)}</div>
         <a class="car-name" href="cars.html#${encodeURIComponent(c.id)}">${esc(c.name)}</a>
         <div class="car-sub"><b>${esc(c.chassis)}</b> · ${c.year} · ${num(c.engine.hp)} hp</div>
-        <div class="scar-drv">${esc(t('site.drive.' + c.drive))}</div>
-        <a class="btn btn-play sm" href="play.html?car=${encodeURIComponent(c.id)}" aria-label="${esc(t('site.show.drive') + ': ' + c.maker + ' ' + c.name)}"><svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M7 4.5v15l13-7.5z"/></svg>${esc(t('site.show.drive'))}</a>
+        <a class="btn btn-play sm" href="play.html?car=${encodeURIComponent(c.id)}" aria-label="${esc(t('site.show.drive') + ': ' + c.maker + ' ' + c.name)}">${PLAY}${esc(t('site.show.drive'))}</a>
       </div>
     </li>`).join('');
 }
-
 let stripUpd = () => {};
 function wireStrip() {
-  const st = document.getElementById('car-strip'), pv = document.getElementById('strip-prev'), nx = document.getElementById('strip-next');
+  const st = $('car-strip'), pv = $('strip-prev'), nx = $('strip-next');
   const upd = () => { pv.disabled = st.scrollLeft < 4; nx.disabled = st.scrollLeft + st.clientWidth >= st.scrollWidth - 4; };
-  const go = d => st.scrollBy({ left: d * Math.max(280, st.clientWidth * 0.8), behavior: 'smooth' });
+  const go = d => st.scrollBy({ left: d * Math.max(280, st.clientWidth * 0.8), behavior: reducedMotion() ? 'auto' : 'smooth' });
   pv.addEventListener('click', () => go(-1)); nx.addEventListener('click', () => go(1));
   st.addEventListener('scroll', upd, { passive: true }); window.addEventListener('resize', upd);
   if ('ResizeObserver' in window) new ResizeObserver(upd).observe(st);
   stripUpd = upd; requestAnimationFrame(upd);
 }
 
-function renderRoadmap() {
-  document.getElementById('road-grid').innerHTML = ROADMAP.map(([v, st, items]) => `
-    <article class="card road-col ${st}">
-      <div class="road-top"><span class="road-v">${/^\d/.test(v) ? 'v' + esc(v) : '+'}</span><span class="status ${st === 'done' || st === 'now' ? 'live' : st === 'next' ? 'partial' : 'planned'}">${esc(t('site.road.' + st))}</span></div>
-      <ul>${items.map(k => `<li>${esc(t('site.road.' + (k.includes('.') ? k : v.replace('.', '') + '.' + k), { n: CARS.length }))}</li>`).join('')}</ul>
-    </article>`).join('');
+// ───────────────────────── gallery + lightbox ─────────────────────────
+function renderGallery() {
+  const g = $('gallery-grid');
+  g.innerHTML = SHOTS.map((s, i) => `
+    <button type="button" class="shot" data-i="${i}" aria-label="${esc(shotCap(s))}">
+      <img src="${shotSrc(s, 800)}" srcset="${srcset(s)}" sizes="(min-width: 900px) ${i === 0 ? '66vw' : '33vw'}, 100vw" alt="" loading="lazy" decoding="async" width="800" height="450">
+      <span class="cap">${esc(shotCap(s))}</span>
+    </button>`).join('');
+  g.querySelectorAll('.shot').forEach(b => b.addEventListener('click', () => openLb(+b.dataset.i)));
+}
+let lbIndex = 0;
+const lb = () => $('lightbox');
+function openLb(i) {
+  lbIndex = (i + SHOTS.length) % SHOTS.length; const s = SHOTS[lbIndex];
+  const im = $('lb-img');
+  im.src = shotSrc(s, 1600); im.alt = shotCap(s);
+  $('lb-cap').textContent = shotCap(s);
+  swap(im);
+  if (!lb().classList.contains('open')) { lb().classList.add('open'); lb().querySelector('.lb-close').focus(); }
+}
+function closeLb() { lb().classList.remove('open'); document.querySelector(`#gallery-grid .shot[data-i="${lbIndex}"]`)?.focus(); }
+function wireLb() {
+  const el = lb();
+  el.querySelector('.lb-close').onclick = closeLb;
+  el.querySelector('.lb-prev').onclick = () => openLb(lbIndex - 1);
+  el.querySelector('.lb-next').onclick = () => openLb(lbIndex + 1);
+  el.addEventListener('click', e => { if (e.target === el) closeLb(); });
+  document.addEventListener('keydown', e => {
+    if (!el.classList.contains('open')) return;
+    if (e.key === 'Escape') closeLb(); else if (e.key === 'ArrowLeft') openLb(lbIndex - 1); else if (e.key === 'ArrowRight') openLb(lbIndex + 1);
+  });
 }
 
+// ───────────────────────── requirements, controls, FAQ ─────────────────────────
+function renderReq() {
+  $('req-table').innerHTML = `<thead><tr><th></th><th>${esc(t('site.req.min'))}</th><th>${esc(t('site.req.rec'))}</th></tr></thead>
+  <tbody>${REQ.map(k => `<tr><th scope="row">${esc(t('site.req.' + k))}</th><td data-l="${esc(t('site.req.min'))}">${esc(t('site.req.' + k + '.min'))}</td><td data-l="${esc(t('site.req.rec'))}">${esc(t('site.req.' + k + '.rec'))}</td></tr>`).join('')}</tbody>`;
+}
+// Phones default to the touch column (the full table is long when stacked).
+let dev = matchMedia('(max-width: 600px)').matches ? 'touch' : 'all';
+function renderCtl() {
+  const kb = a => a.map(k => `<kbd>${esc(k)}</kbd>`).join(' ');
+  const cols = [['kb', 'site.ctl.keyboard'], ['pad', 'site.ctl.gamepad'], ['touch', 'site.ctl.touch']].filter(([d]) => dev === 'all' || dev === d);
+  const cell = (d, row) => d === 'kb' ? kb(row[1]) : d === 'pad' ? kb(row[2]) : esc(t('site.ctl.t.' + row[3]));
+  $('ctl-table').innerHTML = `<thead><tr><th>${esc(t('site.ctl.action'))}</th>${cols.map(([, k]) => `<th>${esc(t(k))}</th>`).join('')}</tr></thead>
+  <tbody>${CONTROLS.map(r => `<tr><th scope="row">${esc(t('site.ctl.a.' + r[0]))}</th>${cols.map(([d, k]) => `<td data-l="${esc(t(k))}">${cell(d, r)}</td>`).join('')}</tr>`).join('')}</tbody>`;
+}
+function wireTabs() {
+  const tabs = document.querySelectorAll('#ctl-tabs .tab');
+  tabs.forEach(x => x.setAttribute('aria-selected', String(x.dataset.dev === dev)));
+  tabs.forEach(b => b.addEventListener('click', () => {
+    dev = b.dataset.dev; tabs.forEach(x => x.setAttribute('aria-selected', String(x === b))); renderCtl(); swap($('ctl-table'));
+  }));
+}
+function renderFaq() {
+  $('faq-list').innerHTML = FAQ.map(k =>
+    `<details><summary>${esc(t('site.faq.' + k + '.q'))}</summary><div>${esc(t('site.faq.' + k + '.a', { langs: LANGS.length }))}</div></details>`).join('');
+}
 function wireCopy() {
-  const btn = document.getElementById('copy-url'), url = document.getElementById('site-url').textContent.trim();
+  const btn = $('copy-url'), url = $('site-url').textContent.trim();
   btn.addEventListener('click', async () => {
     let ok = false;
     try { await navigator.clipboard.writeText(url); ok = true; } catch {
-      const r = document.createRange(); r.selectNodeContents(document.getElementById('site-url'));
+      const r = document.createRange(); r.selectNodeContents($('site-url'));
       const sel = getSelection(); sel.removeAllRanges(); sel.addRange(r);
       try { ok = document.execCommand('copy'); } catch {}
     }
@@ -259,58 +301,15 @@ function wireCopy() {
   });
 }
 
-document.getElementById('hero-version').textContent = 'v' + GAME.version;
-document.getElementById('hero-code').textContent = CHANGELOG[0]?.codename || '';
-renderTicker();
-document.getElementById('hero-carcount').textContent = CARS.length;
-// Count-up for the hero stats (numbers only; "30:00" style values are left as-is).
-function countUp() {
-  if (reducedMotion()) return;
-  document.querySelectorAll('.hero-meta b:not(.nocount)').forEach((b, i) => {
-    const end = +b.textContent; if (!Number.isFinite(end) || end <= 0) return;
-    const t0 = performance.now() + 700 + i * 120, dur = 1300;
-    b.textContent = '0';
-    const tick = now => {
-      const k = Math.max(0, Math.min(1, (now - t0) / dur)), e = 1 - Math.pow(1 - k, 3);
-      b.textContent = String(Math.round(end * e));
-      if (k < 1) requestAnimationFrame(tick);
-    };
-    requestAnimationFrame(tick);
-  });
-}
+// ───────────────────────── boot ─────────────────────────
+$('st-routes').textContent = ROUTES.length;
+$('st-cars').textContent = CARS.length;
+$('st-langs').textContent = LANGS.length;
 countUp();
 wireLb(); wireTabs(); wireCopy(); wireStrip();
 await initSite('home');
-onLang(() => { document.getElementById('hero-cars').textContent = t('site.show.all', { n: CARS.length }) + ' →'; renderWorld(); renderFeatures(); renderShowcase(); requestAnimationFrame(stripUpd); renderGallery(); renderRoadmap(); renderLatest(); renderReq(); renderCtl(); renderFaq(); });
-
-// ── v1.0 hero: cinematic slideshow (slow push-in + crossfade) with the location of each shot ──
-const SLIDES = [
-  ['40-real-yokohama', '横浜みなとみらい · 3D都市モデル'], ['42-tokyo-night', '東京 · 都心の夜'], ['41-real-tokyo', '東京タワー · 夕暮れ'],
-  ['27-c1night', '首都高速都心環状線 · 銀座'], ['29-hakone_dusk', 'アネスト岩田ターンパイク箱根'], ['31-k1rain', '首都高速K1横羽線 · 横浜駅'],
-  ['28-c1tunnel', '首都高速都心環状線 · 掘割'], ['30-hakone_day', '大観山 · 箱根'], ['32-bayday', '首都高速湾岸線 · 鶴見つばさ橋'], ['26-k1-night', '首都高速K1横羽線'],
-];
-(function heroSlides() {
-  const box = document.getElementById('hero-slides'), loc = document.getElementById('hero-loc'); if (!box) return;
-  const reduce = matchMedia('(prefers-reduced-motion: reduce)').matches;
-  const imgs = SLIDES.map(([f, l], i) => { if (i === 0) { const im = box.querySelector('img'); im.dataset.loc = l; return im; } const im = new Image(); im.className = 'hero-shot slide'; im.alt = ''; im.decoding = 'async'; im.loading = 'lazy'; im.srcset = `docs/screenshots/${f}-800.jpg 800w, docs/screenshots/${f}.jpg 1600w`; im.sizes = '100vw'; im.src = `docs/screenshots/${f}.jpg`; im.dataset.loc = l; box.appendChild(im); return im; });
-  let k = 0; const show = () => { imgs.forEach((im, i) => im.classList.toggle('on', i === k)); loc.innerHTML = `<i></i>${esc(imgs[k].dataset.loc)}`; };
-  show(); if (!reduce) setInterval(() => { k = (k + 1) % imgs.length; show(); }, 6500);
-})();
-
-// ── routes: big cards, each starts the game at that place ──
-const ROUTES = [
-  { id: 'c1', img: '27-c1night', route: 'C1', km: '14', ja: '首都高速都心環状線' },
-  { id: 'hakone', img: '29-hakone_dusk', route: 'TP', km: '13.5', ja: 'アネスト岩田ターンパイク箱根' },
-  { id: 'k1', img: '26-k1-night', route: 'K1', km: '17', ja: '横浜ループ（K5・K1・K3・湾岸線）' },
-  { id: 'pa', img: '07-ae86-loops', route: 'B', km: '30', ja: '大黒PA · 首都高速湾岸線' },
-  { id: 'daiba', img: '33-rainbow', route: '11', km: '40', ja: '湾岸線・11号台場線・1号羽田線' },
-  { id: 'seisho', img: '34-seisho', route: '1', km: '59', ja: '横浜新道・新湘南・西湘バイパス' },
-  { id: 'mm', img: '18-minatomirai', route: 'Y', km: '790k', ja: '横浜・川崎・東京・湘南の街並み' },
-];
-function renderRoutes() {
-  const g = document.getElementById('route-grid'); if (!g) return;
-  g.innerHTML = ROUTES.map((r, i) => `<a class="route-card${i === 0 ? ' big' : ''}" href="play.html?spawn=${r.id}">
-    <img src="docs/screenshots/${r.img}-800.jpg" srcset="docs/screenshots/${r.img}-800.jpg 800w, docs/screenshots/${r.img}.jpg 1600w" sizes="(min-width: 900px) ${i === 0 ? '66vw' : '33vw'}, 100vw" alt="" loading="lazy" decoding="async">
-    <div class="rc-body"><span class="route">${esc(r.route)}</span><h3>${esc(t('site.routes.' + r.id))}</h3><p lang="ja">${esc(r.ja)}</p><p class="rc-d">${esc(t('site.routes.' + r.id + 'D'))}</p><span class="rc-go">${esc(t('site.routes.go'))} →</span></div></a>`).join('');
-}
-renderRoutes(); onLang(renderRoutes);
+heroSlides();
+onLang(() => {
+  renderHero(); renderWhatsNew(); renderRoutes(); renderFeatures();
+  renderShowcase(); requestAnimationFrame(stripUpd); renderGallery(); renderReq(); renderCtl(); renderFaq();
+});

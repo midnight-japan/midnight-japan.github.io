@@ -26,9 +26,10 @@ export class Autopilot {
       this.prevMode = v.mode; if (!v.ev) v.mode = 'auto';
       if (!v.engine.running && !v.engine.cranking) v.startEngine();
       v.handbrakeOn = false; v.setSel('D');
-      this.road = null; this.path = null; this.stuck = 0; this.rev = 0; this.revN = 0; this.laneT = 0; this.plan = null;
+      this.road = null; this.path = null; this.join = null; this.stuck = 0; this.rev = 0; this.revN = 0; this.laneT = 0; this.plan = null;
       if (!this.attach()) { // still in the lot: drive out through the PA
         const ex = g.traffic.lotExit();
+        if (Math.hypot(ex.x - v.pos.x, ex.z - v.pos.z) > 450 && this.joinNearest()) { g.ui.setAuto?.(true); return; } // v2.4: any other lot (Umihotaru, Daikoku-futō …): drive to the nearest road
         if (Math.hypot(ex.x - v.pos.x, ex.z - v.pos.z) > 450) { this.on = false; if (this.prevMode && !v.ev) v.mode = this.prevMode; g.ui.toast(t('game.auto.noroad'), 'warn', 4); g.ui.setAuto?.(false); return; }
         this.path = g.traffic.lotPath(v.pos.clone(), ex);
         this.path.shift();
@@ -38,6 +39,27 @@ export class Autopilot {
       const L = g.model?.lights; if (L) { L.left = L.right = false; }
     }
     g.ui.setAuto?.(on);
+  }
+
+  // v2.4: from a car park away from Daikoku PA — the closest non-local road at our level within 500 m, joined in the
+  // lane that runs the way we approach it, through two waypoints (a lead-in 20 m before the join, then the join)
+  joinNearest() {
+    const v = this.g.vehicle; let best = null;
+    for (const pass of [0, 1]) { // expressways / arterials first, then any street (Daikoku-futō has only local streets)
+      for (const r of this.net.roads) {
+        if ((pass === 0 && r.kind === 'local') || !r.samples?.length || r.length < 60) continue;
+        for (let i = 0; i < r.samples.length; i += 2) { const S = r.samples[i], d = Math.hypot(S.p.x - v.pos.x, S.p.z - v.pos.z);
+          if (d < 500 && Math.abs(S.p.y - v.pos.y) < 4 && (!best || d < best.d)) best = { d, r, S }; }
+      }
+      if (best) break;
+    }
+    if (!best) return false;
+    const { r, S } = best, ins = Math.min(r.length - 1, S.s + 30);
+    let lane = r.lanes[0]; for (const ln of r.lanes) if (ln.dir === 1) { lane = ln; break; }
+    const sJoin = lane.dir === 1 ? ins : Math.max(1, S.s - 30), sLead = lane.dir === 1 ? Math.max(0, sJoin - 22) : Math.min(r.length - 1, sJoin + 22);
+    const a = r.at(sLead, lane.lat), b = r.at(sJoin, lane.lat);
+    this.path = [a.clone(), b.clone()]; this.join = { road: r, lane, s: sJoin };
+    return true;
   }
 
   // snap onto the expressway lane under the car (same level, travelling our way)
@@ -123,6 +145,7 @@ export class Autopilot {
       // ── PA lot: waypoints at walking pace
       let p = this.path[0];
       while (p && Math.hypot(p.x - v.pos.x, p.z - v.pos.z) < 4) { this.path.shift(); p = this.path[0]; }
+      if (!p && this.join) { const J = this.join; this.join = null; this.path = null; this.setRoad(J.road, J.lane, J.s); return this.update(dt); }
       if (!p) { this.path = null; const r = this.net.byId.pa_out; if (r) this.setRoad(r, r.lanes[0], 0); else { this.toggle(false); return null; } return this.update(dt); }
       target = p; vDes = this.path.length === 1 ? 7 : 5.5; half = 1.5;
       const nxt = this.path[1]; if (nxt) { const a1 = Math.atan2(p.x - v.pos.x, p.z - v.pos.z), a2 = Math.atan2(nxt.x - p.x, nxt.z - p.z); if (Math.abs(angle(a2 - a1)) > 0.8 && Math.hypot(p.x - v.pos.x, p.z - v.pos.z) < 14) vDes = 3.5; }
