@@ -5,9 +5,12 @@ import * as THREE from 'three';
 
 export function buildLandmarks(W, far) {
   if (/[?&]ownoff=1/.test(location.search)) return; // debug: compare with PLATEAU's own models
+  const n0 = far.children.length;
   cosmoClock(W, far);
   marineTower(W, far);
   hikawaMaru(W, far);
+  const seen = new Set(); // v2.6: read through the haze across the bay
+  for (const o of far.children.slice(n0)) o.traverse(q => { const m = q.material; if (m && !Array.isArray(m) && !seen.has(m)) { seen.add(m); W.farFog(m, 0.4); } });
 }
 
 // Cosmo Clock 21 — 112.5 m, Ø100 m, 60 gondolas, the clock in the hub (35.4553 N, 139.6371 E)

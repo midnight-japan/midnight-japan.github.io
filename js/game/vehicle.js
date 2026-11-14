@@ -667,18 +667,25 @@ export class Vehicle {
       const locked = i >= 2 && (this.ctl.handbrake > 0.3 || this.handbrakeOn);
       this.spin[i] += (locked ? 0 : (Math.sign(this.vx) * w + extra)) * dt;
     }
-    this.pitch = lerp(this.pitch, clamp(this.ax * 0.006, -0.04, 0.04) - Math.atan(this.grade || 0) * 0, 1 - Math.exp(-dt * 6));
-    this.roll = lerp(this.roll, clamp(-this.ay * 0.008, -0.06, 0.06), 1 - Math.exp(-dt * 6));
+    // v2.6: body pitch / roll on springs + dampers (was a plain lerp): the nose dives and settles with a little
+    // overshoot, the body leans into a corner and rocks back on the exit — weight you can feel
+    if (!this.bodyV) this.bodyV = [0, 0];
+    { const h = Math.min(dt, 1 / 30), pT = clamp(this.ax * 0.006, -0.045, 0.045), rT = clamp(-this.ay * 0.008, -0.065, 0.065), wp = 8.5, wr = 7.5;
+      this.bodyV[0] += (wp * wp * (pT - this.pitch) - 2 * 0.5 * wp * this.bodyV[0]) * h; this.pitch = clamp(this.pitch + this.bodyV[0] * h, -0.07, 0.07);
+      this.bodyV[1] += (wr * wr * (rT - this.roll) - 2 * 0.45 * wr * this.bodyV[1]) * h; this.roll = clamp(this.roll + this.bodyV[1] * h, -0.09, 0.09); }
     // per-wheel suspension (visual): spring-damper following road texture (finer on expressway asphalt, coarser on
     // streets / lots) plus load transfer — front dips under braking, outer side compresses in corners
     if (!this.suspV) { this.suspV = [0, 0, 0, 0]; this.suspD = 0; }
     this.suspD += Math.abs(this.vx) * dt;
     const rough = this.road?.kind === 'local' || !this.onRoad ? 0.007 : 0.0035, sp = Math.min(1, Math.abs(this.vx) / 15);
+    const joints = !!this.road && this.road.kind !== 'local' && this.onRoad && this.pos.y > 4 && Math.abs(this.vx) > 4; this._jph = this._jph || [];
     for (let i = 0; i < 4; i++) {
       const d = this.suspD + (i >= 2 ? 2.6 : 0) + (i % 2) * 0.37;
       const road = rough * sp * (Math.sin(d * 2.1 + i) * 0.6 + Math.sin(d * 5.3 + i * 1.7) * 0.3 + Math.sin(d * 13.7) * 0.1);
       const load = (i < 2 ? 1 : -1) * clamp(-this.ax * 0.0035, -0.03, 0.03) + ((i % 2) ? 1 : -1) * clamp(this.ay * 0.003, -0.03, 0.03);
       const tgt = road + load, k = 180, c = 2 * Math.sqrt(k) * 0.55;
+      // v2.6: Shutokō viaduct expansion joints every ~38 m — the "ta-tonk" front then rear axle
+      if (joints) { const ph = (this.suspD - (i >= 2 ? 2.6 : 0)) % 38; if (ph < (this._jph[i] ?? ph)) { this.suspV[i] -= 0.22 * sp; } this._jph[i] = ph; }
       this.suspV[i] += (k * (tgt - this.susp[i]) - c * this.suspV[i]) * dt;
       this.susp[i] = clamp(this.susp[i] + this.suspV[i] * dt, -0.06, 0.06);
     }

@@ -176,6 +176,15 @@ function buildingMaterial(uniforms) {
             // corrugated / ribbed cladding
             float rib = 0.5 + 0.5 * sin(m.x * 6.283 / 0.25);
             diffuseColor.rgb *= 0.9 + rib * 0.12;
+            // v2.6: Japanese bay-side warehouses — painted plinth, loading-dock roller shutters with numbers' lamps,
+            // a ribbon of clerestory windows and the dark parapet/gutter line under the roof
+            float bayW = 12.0 + 4.0 * step(0.5, seed); float bx = fract(m.x / bayW) * bayW;
+            float plinth = step(m.y, 1.1); diffuseColor.rgb = mix(diffuseColor.rgb, vec3(0.36, 0.38, 0.4), plinth * 0.7);
+            bool dock = chash(vec2(floor(m.x / bayW), seed * 7.0)) > 0.35 && bx > 2.5 && bx < 7.5 && m.y < 5.0 && m.y > 0.05;
+            if (dock) { float slat = 0.8 + 0.2 * step(0.5, fract(m.y / 0.11)); diffuseColor.rgb = vec3(0.55, 0.57, 0.58) * slat * (0.9 + 0.1 * chash(vec2(floor(m.x / bayW), 3.0))); gRough = 0.5; gMetal = 0.5; gMask = 1.0;
+              if (m.y > 4.75) diffuseColor.rgb *= 0.4; }
+            if (bx > 3.5 && bx < 6.5 && m.y > 5.3 && m.y < 5.6) { gEmit = vec3(1.0, 0.9, 0.72) * (0.2 + uNight * 2.2); gMask = 1.0; } // dock lamp
+            if (m.y > 6.8 && m.y < 7.7 && fract(m.x / 3.0) > 0.12) { diffuseColor.rgb = vec3(0.12, 0.14, 0.16); gRough = 0.1; gMetal = 0.3; gEmit = vec3(0.85, 0.95, 1.0) * uNight * 0.6 * step(0.55, chash(vec2(floor(m.x / 9.0), seed))); gMask = 1.0; }
           }
           if (wall && kind > 16.5 && kind < 17.5) { // red brick (Flemish bond) with pale stone bands
             vec2 bk = m / vec2(0.23, 0.075); bk.x += 0.5 * mod(floor(bk.y), 2.0);

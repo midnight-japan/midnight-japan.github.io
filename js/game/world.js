@@ -847,10 +847,34 @@ export class World {
     this.zones.push({ name: '大黒ふ頭', rect: ISLAND });
   }
 
-  warnLight(x, y, z) {
-    const m = new THREE.MeshBasicMaterial({ color: 0xff2020 });
-    const s = new THREE.Mesh(new THREE.SphereGeometry(0.6, 8, 6), m); s.position.set(x, y, z); this.group.add(s);
-    return { mesh: s, phase: rnd() * 2 };
+  // v2.6: aviation lights are points in ONE draw call (were a mesh each), sized in pixels so they read from 30 km,
+  // blinking in the shader with their own phase; barely fogged like the landmarks they sit on
+  warnLight(x, y, z) { const b = { x, y, z, phase: rnd() * 2, off: false }; this._warnDirty = true; return b; }
+  buildWarnPoints() {
+    this._warnDirty = false; if (this.warnPts) { this.group.remove(this.warnPts); this.warnPts.geometry.dispose(); }
+    const B = this.blink, n = B.length; if (!n) return;
+    const pos = new Float32Array(n * 3), ph = new Float32Array(n), on = new Float32Array(n);
+    B.forEach((b, i) => { pos[i * 3] = b.x; pos[i * 3 + 1] = b.y; pos[i * 3 + 2] = b.z; ph[i] = b.phase; on[i] = b.off ? 0 : 1; b._i = i; });
+    const g = new THREE.BufferGeometry(); g.setAttribute('position', new THREE.BufferAttribute(pos, 3)); g.setAttribute('aPh', new THREE.BufferAttribute(ph, 1)); g.setAttribute('aOn', new THREE.BufferAttribute(on, 1));
+    this.warnU = this.warnU || { uT: { value: 0 }, uN: { value: 0 }, uPR: { value: Math.min(2, devicePixelRatio || 1) } };
+    const m = new THREE.ShaderMaterial({ uniforms: this.warnU, transparent: true, depthWrite: false, blending: THREE.AdditiveBlending,
+      vertexShader: 'attribute float aPh; attribute float aOn; uniform float uT; uniform float uN; uniform float uPR; varying float vA; void main(){ vec4 mv = modelViewMatrix * vec4(position,1.0); gl_Position = projectionMatrix * mv; float d = -mv.z; float blink = step(mod(uT + aPh, 1.5), 0.6); vA = aOn * blink * smoothstep(0.25, 0.5, uN) * (0.55 + 0.45 * exp(-d / 30000.0)); gl_PointSize = vA > 0.0 ? uPR * clamp(1600.0 / d, 3.0, 9.0) : 0.0; }',
+      fragmentShader: 'varying float vA; void main(){ vec2 c = gl_PointCoord - 0.5; float r = dot(c, c) * 4.0; float a = vA * (exp(-r * 3.0) + 0.6 * step(r, 0.25)); if (a < 0.01) discard; gl_FragColor = vec4(1.0, 0.12, 0.08, a); }' });
+    this.warnPts = new THREE.Points(g, m); this.warnPts.frustumCulled = false; this.warnPts.renderOrder = 5; this.group.add(this.warnPts);
+  }
+  // v2.6: landmarks cut through the haze like Mt Fuji does — their fog is k× thinner than the rest of the scene
+  farFog(m, k = 0.3) {
+    const prev = m.onBeforeCompile;
+    m.onBeforeCompile = (sh, r) => { prev?.call(m, sh, r); sh.fragmentShader = sh.fragmentShader.replace('#include <fog_fragment>', `#ifdef USE_FOG
+      #ifdef FOG_EXP2
+        float fogFactor = 1.0 - exp( - fogDensity * fogDensity * ${(k * k).toFixed(4)} * vFogDepth * vFogDepth );
+      #else
+        float fogFactor = smoothstep( fogNear, fogFar, vFogDepth ) * ${k.toFixed(3)};
+      #endif
+      gl_FragColor.rgb = mix( gl_FragColor.rgb, fogColor, fogFactor );
+    #endif`); };
+    const key = m.customProgramCacheKey?.bind(m); m.customProgramCacheKey = () => (key ? key() : '') + '|ff' + k;
+    m.needsUpdate = true; return m;
   }
 
   // ───────────────────────── toll plaza (大黒ふ頭入口, OSM barrier=toll_booth) ─────────────────────────
@@ -1240,11 +1264,12 @@ export class World {
         if (m.userData.opacityMode) m.opacity = v; else m.emissiveIntensity = v;
       }
     }
-    // aviation lights blink at night
-    const on = (this.t % 1.5) < 0.6;
-    // v2.4: far-skyline stand-ins step aside where PLATEAU streams the real landmark
-    if (this.farStand && this.viewPos) for (const f of this.farStand) { const on = !this.plateauR || Math.hypot(this.viewPos.x - f.x, this.viewPos.z - f.z) > this.plateauR; if (f.on !== on) { f.on = on; for (const o of f.objs) o.visible = on; for (const b of f.blinks) b.off = !on; } }
-    for (const b of this.blink) b.mesh.visible = !b.off && n > 0.3 && ((this.t + b.phase) % 1.5) < 0.6;
+    // aviation lights blink at night (one Points draw, blink in the shader)
+    if (this._warnDirty) this.buildWarnPoints();
+    if (this.warnU) { this.warnU.uT.value = this.t; this.warnU.uN.value = n; }
+    // v2.4: far-skyline stand-ins step aside where PLATEAU streams the real landmark (v2.6: only up close, so the lit
+    // stand-in carries the skyline out to 30 km while the real model takes over for the last 2.5 km)
+    if (this.farStand && this.viewPos) for (const f of this.farStand) { const on = !this.plateauR || Math.hypot(this.viewPos.x - f.x, this.viewPos.z - f.z) > Math.min(this.plateauR, f.near || 2500); if (f.on !== on) { f.on = on; for (const o of f.objs) o.visible = on; for (const b of f.blinks) b.off = !on; const a = this.warnPts?.geometry.attributes.aOn; if (a) { for (const b of f.blinks) if (b._i !== undefined) a.array[b._i] = on ? 1 : 0; a.needsUpdate = true; } } }
     if (this.fuji) { const k = 1 - 0.82 * n; if (Math.abs(this.fuji.material.color.r - k) > 0.01) this.fuji.material.color.setScalar(k); } // Fuji fades into the night
     updateLandmarks(this, dt, env.hours ?? 21);
     if (this.ferris) {

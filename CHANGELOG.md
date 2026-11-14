@@ -1,9 +1,10 @@
 # 📜 MIDNIGHT JAPAN 업데이트 기록 · Changelog
 
-현재 버전 · Current: **v2.5.4** · [▶ 웹에서 플레이](https://midnight-japan.github.io/) · [🌐 업데이트 페이지](https://midnight-japan.github.io/changelog.html)
+현재 버전 · Current: **v2.6.0** · [▶ 웹에서 플레이](https://midnight-japan.github.io/) · [🌐 업데이트 페이지](https://midnight-japan.github.io/changelog.html)
 
 | 버전 | 날짜 | 이름 | 요약 |
 |---|---|---|---|
+| [v2.6.0](#v260--skyline-2026-11-14) | 2026-11-14 | Skyline | 후지산처럼 도쿄 랜드마크가 멀리서도 선명하게: 도쿄도청·신주쿠 초고층군·롯폰기힐스·미드타운·아자부다이힐스·도라노몬힐스·요코하마 랜드마크타워 추가, 야간 조명과 30km 밖에서도 보이는 항공장애등, 덜 뿌연 공기·밝아진 밤, 창고 외벽 디테일, 무게감 있는 차체 움직임과 수도고 이음매 진동. |
 | [v2.5.4](#v254--no-dead-ends-2026-11-14) | 2026-11-14 | No Dead Ends | 맵 전체 도로 끝 자동 점검으로 끊긴 곳 모두 연결(나마무기 K1 5.6m 절벽, 다이코쿠 JCT 만안선→다이코쿠 램프, 하네다 만안선 단차, 공중에서 끝나던 츠루미·시바우라 램프), 텔레포트는 도로와 진행 방향을 골라서. |
 | [v2.5.3](#v253--night-fixes-2026-11-14) | 2026-11-14 | Night Fixes | 베이브리지 서쪽 끝 막다른 길 연결, 나란한 고가 사이 구멍 메움과 중앙 방호벽, 터널에서 내려 점프하면 바다 위로 가던 버그, 시빅 번호판, 전체 음량·사이렌 낮춤, 경찰·NPC가 따라붙지 않게, VTEC 소리 강화. |
 | [v2.5.2](#v252--every-phone-2026-11-14) | 2026-11-14 | Every Phone | 아이폰 사파리에서 게임이 시작되지 않던 치명적 버그 수정, 휴대폰 HUD 겹침 정리와 버튼 이름 표시, 중앙분리대 통과 금지, 내비 경로 탐색 개선, 번호판(꺾인·字光式) 묻힘 수정, 엔진음 통일감, 젖은 노면·라이트 빛 과함 완화. |
@@ -44,6 +45,25 @@
 | [v0.2.0](#v020--bayshore-2026-11-05) | 2026-11-05 | Bayshore | 수도고속 완간선을 따라 하네다까지, 도쿄만 아쿠아라인 해저터널을 지나 우미호타루 PA까지. 실제 3D 차량 모델과 열리는 보닛도 들어왔어요. |
 | [v0.1.1](#v011--one-click-2026-11-04) | 2026-11-04 | One Click | 링크 하나로 바로 플레이. 크롬에서 공식 사이트 주소만 열면 설치 없이 실행돼요. |
 | [v0.1.0](#v010--first-meet-2026-11-04) | 2026-11-04 | First Meet | 첫 공개 버전. 다이코쿠 JCT·PA와 다이코쿠 부두 일대를 3D로 구현했습니다. |
+
+---
+
+## v2.6.0 — Skyline (2026-11-14)
+
+> 후지산처럼 도쿄 랜드마크가 멀리서도 선명하게: 도쿄도청·신주쿠 초고층군·롯폰기힐스·미드타운·아자부다이힐스·도라노몬힐스·요코하마 랜드마크타워 추가, 야간 조명과 30km 밖에서도 보이는 항공장애등, 덜 뿌연 공기·밝아진 밤, 창고 외벽 디테일, 무게감 있는 차체 움직임과 수도고 이음매 진동.
+> Tokyo landmarks read from far away like Mt Fuji: Tochō, the West Shinjuku towers, Roppongi Hills, Midtown, Azabudai Hills, Toranomon Hills and Yokohama Landmark Tower added, night lighting and aviation lights visible from 30 km, clearer air and brighter nights, detailed warehouses, weighty body motion and Shutokō expansion joints.
+
+**✨ 추가 · New**
+
+- 도쿄 스카이라인 랜드마크 추가: 도쿄도청(쌍둥이 타워), 니시신주쿠 초고층군, 롯폰기힐스 모리타워, 도쿄 미드타운, 아자부다이힐스(325m), 도라노몬힐스, 요코하마 랜드마크타워 — 층별 조명과 왕관 조명<br><sub>Skyline landmarks added: Tochō twin towers, the West Shinjuku cluster, Roppongi Hills Mori Tower, Tokyo Midtown, Azabudai Hills (325 m), Toranomon Hills, Yokohama Landmark Tower — lit floors and crown lights</sub>
+
+**🔧 변경 · Changed**
+
+- 랜드마크 가시성: 도쿄타워·스카이트리·게이트브리지·코스모클락·마린타워가 후지산처럼 안개를 뚫고 보이고, 실제 3D 모델은 마지막 1.5~2.5km에서만 교대<br><sub>Landmark visibility: Tokyo Tower, Skytree, Gate Bridge, Cosmo Clock and Marine Tower cut through the haze like Mt Fuji; the surveyed 3D model only takes over in the last 1.5–2.5 km</sub>
+- 항공장애등을 하나의 드로우콜로 통합(170개 메시 → 1), 거리와 상관없이 픽셀 크기로 깜빡여 30km 밖에서도 보임<br><sub>Aviation lights merged into one draw call (170 meshes → 1), sized in pixels so they blink visibly from 30 km</sub>
+- 공기를 더 맑게, 밤을 덜 탁하게(도시광 반사), 원경 고층빌딩 야간 조명 강화<br><sub>Clearer air, less murky nights (city-glow bounce), brighter far skyline at night</sub>
+- 항만 창고 외벽: 하역장 롤러 셔터, 하역등, 고창 띠, 도장된 하부<br><sub>Bay-side warehouses: loading-dock roller shutters, dock lamps, clerestory windows, painted plinth</sub>
+- 차체 움직임을 스프링·댐퍼로: 제동 시 노즈 다이브 후 살짝 출렁이며 안정, 코너에서 기울었다 되돌아옴 / 수도고 고가 이음매(약 38m마다) 앞바퀴→뒷바퀴 진동<br><sub>Body motion on springs and dampers: the nose dives and settles under braking, the body leans and rocks back in corners / Shutokō viaduct expansion joints (every ~38 m) thump front then rear</sub>
 
 ---
 

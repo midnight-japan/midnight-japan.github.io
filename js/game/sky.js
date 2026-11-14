@@ -134,9 +134,9 @@ export class TimeOfDay {
     this.moon.position.copy(focus).addScaledVector(md, 12000);
     this.moonLight.position.copy(focus).addScaledVector(md, 300); this.moonLight.target = this.sun.target;
     this.moonLight.intensity = 0.25 * this.night;
-    this.hemi.intensity = 0.42 + 0.23 * day;
-    this.hemi.color.setHSL(0.62, 0.35, 0.42 + 0.35 * day);
-    this.hemi.groundColor.setHSL(0.08, 0.15, 0.08 + 0.2 * day);
+    this.hemi.intensity = 0.52 + 0.13 * day; // v2.6: night scenes were murky — city glow lifts the shadows
+    this.hemi.color.setHSL(0.62, 0.3 + 0.05 * day, 0.5 + 0.27 * day);
+    this.hemi.groundColor.setHSL(0.08, 0.2, 0.13 + 0.15 * day); // sodium-lit ground bounce at night
     this.stars.material.opacity = 0.45 * THREE.MathUtils.smoothstep(this.night, 0.6, 1); // Tokyo light pollution: few stars
     this.moon.visible = this.night > 0.3;
     // sky shader is too dark at night → hide it and use a night gradient background
@@ -150,7 +150,7 @@ export class TimeOfDay {
     const fogDay = new THREE.Color(0x9fb6cf), fogNight = new THREE.Color(0x0a1220), fogGold = new THREE.Color(0xd9a37a);
     const fc = fogDay.clone().lerp(fogGold, golden * 0.6).lerp(fogNight, this.night);
     this.scene.fog.color.copy(fc);
-    this.scene.fog.density = 0.00003 + 0.00003 * this.night; // v2.3: see further // long view distance: Tokyo Bay skyline stays visible
+    this.scene.fog.density = 0.000026 + 0.000016 * this.night; // v2.3: see further // long view distance: Tokyo Bay skyline stays visible
     if (!this.sky.visible) this.scene.background = new THREE.Color(0x03060d); else this.scene.background = null;
     this.renderer.toneMappingExposure = 0.62 + 0.12 * day + 0.25 * this.night;
     // environment (reflections): blend between HDRIs by switching (PMREM textures can't be lerped cheaply)
@@ -159,7 +159,7 @@ export class TimeOfDay {
       const tex = this.env[want] || this.env.day || this.env.night || null;
       if (tex) { this.scene.environment = tex; this._envKind = want; this._envDirty = false; }
     }
-    this.scene.environmentIntensity = 0.12 + 0.5 * day;
+    this.scene.environmentIntensity = 0.2 + 0.42 * day;
     return { night: this.night, day, golden, sunDir: d, hours: this.hours };
   }
 }

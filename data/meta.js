@@ -1,8 +1,20 @@
 // Shared game metadata: version, changelog, regions. Update VERSION + CHANGELOG on every release.
-export const GAME = { title: 'MIDNIGHT JAPAN', titleJa: 'ミッドナイト・ジャパン', version: '2.5.4', build: '2026.11.14' };
+export const GAME = { title: 'MIDNIGHT JAPAN', titleJa: 'ミッドナイト・ジャパン', version: '2.6.0', build: '2026.11.14' };
 
 // Newest first. type: new | change | fix | known
 export const CHANGELOG = [
+  {
+    version: '2.6.0', date: '2026-11-14', codename: 'Skyline',
+    summary: { ko: '후지산처럼 도쿄 랜드마크가 멀리서도 선명하게: 도쿄도청·신주쿠 초고층군·롯폰기힐스·미드타운·아자부다이힐스·도라노몬힐스·요코하마 랜드마크타워 추가, 야간 조명과 30km 밖에서도 보이는 항공장애등, 덜 뿌연 공기·밝아진 밤, 창고 외벽 디테일, 무게감 있는 차체 움직임과 수도고 이음매 진동.', ja: '富士山のように東京のランドマークが遠くからでもくっきり：東京都庁・西新宿の超高層群・六本木ヒルズ・ミッドタウン・麻布台ヒルズ・虎ノ門ヒルズ・横浜ランドマークタワーを追加、夜のライトアップと30km先でも見える航空障害灯、霞を薄く・夜を明るく、倉庫の外壁ディテール、重みのある車体の動きと首都高の継ぎ目。', en: 'Tokyo landmarks read from far away like Mt Fuji: Tochō, the West Shinjuku towers, Roppongi Hills, Midtown, Azabudai Hills, Toranomon Hills and Yokohama Landmark Tower added, night lighting and aviation lights visible from 30 km, clearer air and brighter nights, detailed warehouses, weighty body motion and Shutokō expansion joints.' },
+    items: [
+      { type: 'new', ko: '도쿄 스카이라인 랜드마크 추가: 도쿄도청(쌍둥이 타워), 니시신주쿠 초고층군, 롯폰기힐스 모리타워, 도쿄 미드타운, 아자부다이힐스(325m), 도라노몬힐스, 요코하마 랜드마크타워 — 층별 조명과 왕관 조명', ja: '東京スカイラインのランドマークを追加：東京都庁（ツインタワー）、西新宿の超高層群、六本木ヒルズ森タワー、東京ミッドタウン、麻布台ヒルズ（325m）、虎ノ門ヒルズ、横浜ランドマークタワー — フロアの灯りと頂部のライトアップ', en: 'Skyline landmarks added: Tochō twin towers, the West Shinjuku cluster, Roppongi Hills Mori Tower, Tokyo Midtown, Azabudai Hills (325 m), Toranomon Hills, Yokohama Landmark Tower — lit floors and crown lights' },
+      { type: 'change', ko: '랜드마크 가시성: 도쿄타워·스카이트리·게이트브리지·코스모클락·마린타워가 후지산처럼 안개를 뚫고 보이고, 실제 3D 모델은 마지막 1.5~2.5km에서만 교대', ja: 'ランドマークの視認性：東京タワー・スカイツリー・ゲートブリッジ・コスモクロック・マリンタワーが富士山のように霞を抜けて見え、実際の3Dモデルへの切替は最後の1.5〜2.5kmだけ', en: 'Landmark visibility: Tokyo Tower, Skytree, Gate Bridge, Cosmo Clock and Marine Tower cut through the haze like Mt Fuji; the surveyed 3D model only takes over in the last 1.5–2.5 km' },
+      { type: 'change', ko: '항공장애등을 하나의 드로우콜로 통합(170개 메시 → 1), 거리와 상관없이 픽셀 크기로 깜빡여 30km 밖에서도 보임', ja: '航空障害灯を1回の描画に統合（メッシュ170個→1）、距離に関係なくピクセル単位で点滅し30km先でも見える', en: 'Aviation lights merged into one draw call (170 meshes → 1), sized in pixels so they blink visibly from 30 km' },
+      { type: 'change', ko: '공기를 더 맑게, 밤을 덜 탁하게(도시광 반사), 원경 고층빌딩 야간 조명 강화', ja: '空気をより澄ませ、夜を明るく（街明かりの照り返し）、遠景の高層ビルの夜景を強化', en: 'Clearer air, less murky nights (city-glow bounce), brighter far skyline at night' },
+      { type: 'change', ko: '항만 창고 외벽: 하역장 롤러 셔터, 하역등, 고창 띠, 도장된 하부', ja: '港湾倉庫の外壁：荷捌き場のシャッター、荷捌き灯、高窓の帯、塗装された腰壁', en: 'Bay-side warehouses: loading-dock roller shutters, dock lamps, clerestory windows, painted plinth' },
+      { type: 'change', ko: '차체 움직임을 스프링·댐퍼로: 제동 시 노즈 다이브 후 살짝 출렁이며 안정, 코너에서 기울었다 되돌아옴 / 수도고 고가 이음매(약 38m마다) 앞바퀴→뒷바퀴 진동', ja: '車体の動きをスプリング・ダンパーで：ブレーキでノーズダイブして少し揺れて収まり、コーナーで傾いて戻る / 首都高の高架の継ぎ目（約38mごと）で前輪→後輪の振動', en: 'Body motion on springs and dampers: the nose dives and settles under braking, the body leans and rocks back in corners / Shutokō viaduct expansion joints (every ~38 m) thump front then rear' },
+    ],
+  },
   {
     version: '2.5.4', date: '2026-11-14', codename: 'No Dead Ends',
     summary: { ko: '맵 전체 도로 끝 자동 점검으로 끊긴 곳 모두 연결(나마무기 K1 5.6m 절벽, 다이코쿠 JCT 만안선→다이코쿠 램프, 하네다 만안선 단차, 공중에서 끝나던 츠루미·시바우라 램프), 텔레포트는 도로와 진행 방향을 골라서.', ja: 'マップ全体の道路の端を自動点検して途切れた所をすべて接続（生麦のK1・5.6mの崖、大黒JCTの湾岸線→大黒ランプ、羽田の湾岸線の段差、空中で終わっていた生麦・芝浦のランプ）、テレポートは道路と進行方向を選んで。', en: 'Every road end on the map checked automatically and every broken one joined (a 5.6 m cliff on K1 at Namamugi, the Bayshore→Daikoku ramp at Daikoku JCT, a step on the Bayshore at Haneda, the Namamugi and Shibaura ramps that ended in mid-air), and teleport now lets you pick the road and direction.' },

@@ -244,6 +244,7 @@ function buildRainbow(W, S, H) {
 // ───────────────────────── far Tokyo: Tokyo Tower, Skytree, Rainbow Bridge, Gate Bridge, Haneda ─────────────────────────
 function buildTokyo(W, far) {
   const add = (m, x, y, z) => { m.position.set(x, y, z); far.add(m); return m; };
+  const n0 = far.children.length;
   // Tokyo Tower (333 m, orange/white lattice → tapered frustum + observatories), warm "landmark light" at night
   // v2.4: these stand-ins are only for the far skyline — inside PLATEAU's streaming range the real 3D models take over
   // (the stand-in hid the real Tokyo Tower inside an orange cone)
@@ -290,6 +291,26 @@ function buildTokyo(W, far) {
     const e = new THREE.Points(new THREE.BufferGeometry().setFromPoints(pts), new THREE.PointsMaterial({ color: 0xfff1c4, size: 2.6, transparent: true, opacity: 0 })); W.night(e.material, 0, 1).userData.opacityMode = true; far.add(e);
     const b = new THREE.Points(new THREE.BufferGeometry().setFromPoints(blue), new THREE.PointsMaterial({ color: 0x9fd0ff, size: 3, transparent: true, opacity: 0 })); W.night(b.material, 0, 1).userData.opacityMode = true; far.add(b);
     const tw = new THREE.Mesh(new THREE.CylinderGeometry(6, 9, 115, 12), new THREE.MeshStandardMaterial({ color: 0xd8dde3 })); tw.position.set(x, 57, z); far.add(tw); W.blink.push(W.warnLight(x, 117, z)); }
+  // v2.6: the skyline towers you pick out from the Bay at night — Shinjuku (Tochō twin towers + the west-exit
+  // cluster), Roppongi Hills, Tokyo Midtown, Azabudai Hills, Toranomon Hills, Yokohama Landmark Tower. Lit floors,
+  // crown lights and aviation lights; barely fogged so they read from Daikoku like Fuji does. Up close PLATEAU's
+  // surveyed model takes over (stand()).
+  const glassM = (seed, w, h, cool) => W.night(weather(new THREE.MeshStandardMaterial({ color: cool ? 0x7d8a96 : 0x9a9a94, roughness: 0.35, metalness: 0.45, emissive: 0xffffff, emissiveMap: windowTexture(seed, 0.45, Math.max(4, Math.round(w / 3.2)), Math.round(h / 4)), emissiveIntensity: 0, userData: { lm: 1 } }), 0.4), 0.02, 2.8);
+  const crownM = (c, k = 2.2) => W.night(new THREE.MeshStandardMaterial({ color: 0xdedede, emissive: c, emissiveIntensity: 0 }), 0, k);
+  const box = (x, z, y0, w, d, h, mat, rot = 0, taper = 1) => { const g = new THREE.CylinderGeometry(Math.SQRT1_2 * taper, Math.SQRT1_2, 1, 4, 1); g.rotateY(Math.PI / 4); g.scale(w, h, d); g.translate(0, y0 + h / 2, 0); const m = new THREE.Mesh(g, mat); m.rotation.y = rot; add(m, x, 0, z); return m; };
+  const tube = (x, z, y0, r0, r1, h, mat, seg = 16) => { const g = new THREE.CylinderGeometry(r1, r0, h, seg); g.translate(0, y0 + h / 2, 0); return add(new THREE.Mesh(g, mat), x, 0, z); };
+  const SKY = [
+    // Tochō (243 m): the 33-storey block, then two towers rotated 45° at the top
+    ['tocho', 1061, -25222, (x, z) => { const m = glassM(501, 110, 150, false); box(x, z, 0, 110, 45, 150, m); for (const s of [-1, 1]) { box(x + s * 28, z, 150, 34, 34, 93, glassM(502 + s, 34, 93, false)); box(x + s * 28, z, 236, 24, 24, 7, crownM(0xfff2d0, 1.4), Math.PI / 4); W.blink.push(W.warnLight(x + s * 28, 245, z)); } }],
+    ['shinjuku', 1500, -25000, (x, z) => { for (const [dx, dz, h, w, c] of [[-320, 380, 235, 50, 0], [180, 150, 210, 52, 1], [400, -60, 210, 44, 1], [120, -260, 204, 40, 1], [-160, -60, 178, 48, 0], [560, 260, 223, 46, 1], [-60, 520, 200, 44, 0], [700, -300, 180, 42, 1]]) { box(x + dx, z + dz, 0, w, w * 0.9, h, glassM(510 + dx & 255, w, h, c), dx * 0.001, 0.92); W.blink.push(W.warnLight(x + dx, h + 3, z + dz)); } }],
+    ['roppongi_hills', 4461, -22000, (x, z) => { tube(x, z, 0, 40, 33, 238, glassM(520, 220, 238, true), 10); tube(x, z, 222, 33, 30, 16, crownM(0xbfe3ff, 1.8), 10); W.blink.push(W.warnLight(x, 241, z)); }],
+    ['midtown', 4651, -22552, (x, z) => { box(x, z, 0, 50, 50, 248, glassM(530, 50, 248, true), 0.3, 0.86); box(x, z, 248, 34, 34, 4, crownM(0xffffff, 1.6), 0.3); W.blink.push(W.warnLight(x, 252, z)); }],
+    ['azabudai', 5441, -22110, (x, z) => { tube(x, z, 0, 40, 30, 325, glassM(540, 230, 325, true), 24); tube(x, z, 310, 30, 26, 15, crownM(0xfff4e0, 2.0), 24); W.blink.push(W.warnLight(x, 327, z)); }],
+    ['toranomon', 6339, -22707, (x, z) => { box(x, z, 0, 62, 50, 255, glassM(550, 62, 255, true), 0.5, 0.82); box(x, z, 255, 40, 32, 4, crownM(0xffe6c0, 1.6), 0.5); W.blink.push(W.warnLight(x, 259, z)); }],
+    // Yokohama Landmark Tower (296 m): flared base, tapering shaft, the stepped crown
+    ['landmark_tower', -4399, 763, (x, z) => { box(x, z, 0, 72, 72, 60, glassM(560, 72, 60, false), 0.6); box(x, z, 60, 62, 62, 210, glassM(561, 62, 210, false), 0.6, 0.78); box(x, z, 270, 46, 46, 22, crownM(0xfff0d8, 1.8), 0.6, 0.7); W.blink.push(W.warnLight(x, 296, z)); }],
+  ];
+  for (const [id, x0, z0, f] of SKY) { const L = LM[id], x = L ? L.x : x0, z = L ? L.z : z0; stand(x, z, () => f(x, z)); W.farStand[W.farStand.length - 1].near = id === 'shinjuku' ? 2000 : 1500; }
   // central Tokyo / Odaiba / Shinagawa high-rises (lit windows) between Shinagawa and Shiodome
   const dark = new THREE.MeshStandardMaterial({ color: 0x5d6166, roughness: 0.8 });
   let seed = 400;
@@ -299,11 +320,14 @@ function buildTokyo(W, far) {
       if (!W.isLand(x, z)) continue;
       const h = b.h[0] + rand() * (b.h[1] - b.h[0]), w = 25 + rand() * 30, d = 25 + rand() * 30;
       const m = weather(new THREE.MeshStandardMaterial({ color: 0x6b7076, roughness: 0.6, metalness: 0.3, emissive: 0xffffff, emissiveMap: windowTexture(seed++, 0.25 + rand() * 0.3, Math.round(w / 3), Math.round(h / 3.6)), emissiveIntensity: 0 }), 0.6);
-      W.night(m, 0, 1.3);
+      W.night(m, 0, 2.3);
       const g = new THREE.BoxGeometry(w, h, d); g.translate(0, h / 2, 0); add(new THREE.Mesh(g, [m, m, dark, dark, m, m]), x, 0, z);
       if (h > 150) W.blink.push(W.warnLight(x, h + 2, z));
     }
   }
+  // v2.6: everything above cuts through the haze (the generic high-rises a little less than the named landmarks)
+  const seen = new Set();
+  far.children.slice(n0).forEach((o, i, arr) => o.traverse(q => { const mm = q.material; if (!mm || Array.isArray(mm) && !mm.length) return; for (const m of Array.isArray(mm) ? mm : [mm]) if (!seen.has(m)) { seen.add(m); W.farFog(m, m.userData.lm || !m.emissiveMap || m.vertexColors ? 0.28 : 0.45); } }));
 }
 
 // ───────────────────────── Keihin (Kawasaki) & Keiyō (Chiba) industrial zones: tanks, stacks, flares, lights ─────────────────────────
