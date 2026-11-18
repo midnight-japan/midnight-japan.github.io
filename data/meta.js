@@ -1,8 +1,17 @@
 // Shared game metadata: version, changelog, regions. Update VERSION + CHANGELOG on every release.
-export const GAME = { title: 'MIDNIGHT JAPAN', titleJa: 'ミッドナイト・ジャパン', version: '2.13.7', build: '2026.11.18' };
+export const GAME = { title: 'MIDNIGHT JAPAN', titleJa: 'ミッドナイト・ジャパン', version: '2.13.8', build: '2026.11.18' };
 
 // Newest first. type: new | change | fix | known
 export const CHANGELOG = [
+  {
+    version: '2.13.8', date: '2026-11-18', codename: 'Living Streets',
+    summary: { ko: '거리에 사람과 동물: 시간대별 보행자(등하교 학생, 출퇴근 직장인, 장보는 사람), 비둘기 무리와 까마귀, 하코네 산길의 사슴.', ja: '街に人と動物：時間帯ごとの歩行者（登下校の学生、通勤の会社員、買い物客）、ハトの群れとカラス、箱根の山道のシカ。', en: 'People and animals on the streets: pedestrians by the hour (students going to school, commuters, shoppers), pigeon flocks and crows, deer on the Hakone mountain roads.' },
+    items: [
+      { type: 'new', ko: '보행자 유형: 등하교 시간엔 교복 학생(가쿠란·세일러복, 둘씩 걷기, 책가방), 출퇴근 시간엔 정장 직장인(서류가방, 빠른 걸음, 휴대폰), 낮에는 쇼핑백을 든 사람들', ja: '歩行者の種類：登下校の時間は制服の学生（学ラン・セーラー服、二人連れ、通学かばん）、通勤時間はスーツの会社員（ビジネスバッグ、早足、スマホ）、昼は買い物袋を持った人', en: 'Pedestrian types: uniformed students at school times (gakuran / sailor suits, in pairs, school bags), suited office workers at rush hour (briefcases, brisk pace, phones), shoppers with carrier bags by day' },
+      { type: 'new', ko: '비둘기: 낮의 도심 보도에서 무리 지어 모이를 쪼다가 차나 사람이 다가오면 날갯짓 소리와 함께 날아오름 / 까마귀: 도심 상공을 선회하며 가끔 울음', ja: 'ハト：昼の街の歩道で群れてついばみ、車や人が近づくと羽音とともに飛び立つ / カラス：街の上空を旋回し、ときどき鳴く', en: 'Pigeons peck in flocks on city pavements by day and burst up with a clatter of wings when a car or you come close / crows circle over the city and caw now and then' },
+      { type: 'new', ko: '사슴: 하코네 산길 가장자리(가드레일 밖)에서 풀을 뜯다가 고개를 들고, 차가 다가오면 숲으로 뛰어감 — 해 질 녘·밤에 더 자주, 헤드라이트에 눈이 반짝임', ja: 'シカ：箱根の山道の路肩（ガードレールの外）で草を食み、顔を上げ、車が近づくと森へ跳んでいく — 夕方・夜に多く、ヘッドライトで目が光る', en: 'Deer graze at the edge of the Hakone roads (beyond the guardrail), look up and bound into the trees as you approach — more often at dusk and night, eyes shining in the headlights' },
+    ],
+  },
   {
     version: '2.13.7', date: '2026-11-18', codename: 'Irasshaimase',
     summary: { ko: '다이코쿠 PA 편의점에 직원: 계산대 점원(들어오면 돌아보며 인사, 계산할 때 응대)과 진열대를 정리하는 아르바이트생. 진열대 상품이 선반 안에 묻혀 안 보이던 문제 수정.', ja: '大黒PAのコンビニに店員：レジの店員（入店時に振り向いてあいさつ、会計で応対）と棚を整える品出しのアルバイト。棚の商品が棚の中に埋まって見えなかった問題を修正。', en: 'Staff in the Daikoku PA konbini: a clerk at the register (turns and greets you as you come in, serves you at checkout) and a part-timer restocking the aisles. Fixed products buried inside the shelves.' },

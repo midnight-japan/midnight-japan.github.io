@@ -17,6 +17,43 @@ function umbrella() {
   g.rotation.z = -0.12; return g;
 }
 
+
+// v2.13.7: who is out — by the clock, like a real Japanese street: school kids in uniform (gakuran / sailor) on the way
+// to and from school, salarymen and office workers in suits with briefcases at rush hour, shoppers with carrier bags
+// through the day, everyone else casual. Each type carries its bag in the left hand.
+const BAGS = (() => { let G = null; return () => G || (G = {
+  brief: [new THREE.BoxGeometry(0.4, 0.29, 0.09).translate(0, -0.2, 0), new THREE.MeshStandardMaterial({ color: 0x15130f, roughness: 0.45, metalness: 0.1 })],
+  school: [new THREE.BoxGeometry(0.36, 0.26, 0.11).translate(0, -0.19, 0), new THREE.MeshStandardMaterial({ color: 0x1a1d2b, roughness: 0.6 })],
+  shop: [new THREE.BoxGeometry(0.3, 0.34, 0.14).translate(0, -0.23, 0), new THREE.MeshStandardMaterial({ color: 0xf4f4f0, roughness: 0.8, transparent: true, opacity: 0.92 })],
+  paper: [new THREE.BoxGeometry(0.32, 0.36, 0.12).translate(0, -0.24, 0), new THREE.MeshStandardMaterial({ color: 0xb08a5a, roughness: 0.85 })],
+}); })();
+export function crowdType(hour) {
+  const r = Math.random(), school = (hour > 7 && hour < 8.8) || (hour > 15 && hour < 17.5), rush = (hour > 7 && hour < 9.5) || (hour > 17.5 && hour < 20), day = hour > 10 && hour < 19;
+  if (school && r < 0.35) return 'student';
+  if (rush && r < 0.6) return 'office';
+  if (!rush && hour > 9 && hour < 18 && r < 0.18) return 'office';
+  if (day && r < 0.5) return 'shopper';
+  return 'casual';
+}
+export function typedOutfit(type) {
+  const o = randomOutfit();
+  if (type === 'student') {
+    o.scale = 0.92 + Math.random() * 0.05; o.accessory = 'none'; o.shoes = 'loafers'; o.shoeColor = '#2a1e17';
+    if (o.body === 'm') { o.top = 'suit'; o.topColor = '#121418'; o.accentColor = '#121418'; o.bottom = 'chinos'; o.bottomColor = '#121418'; o.hair = 'short'; } // 学ラン
+    else { o.top = 'shirt'; o.topColor = '#f2f2ee'; o.accentColor = '#1e2c4e'; o.bottom = 'skirt'; o.bottomColor = '#1e2c4e'; if (o.hair === 'cap' || o.hair === 'beanie') o.hair = 'ponytail'; } // セーラー服
+    o.hairColor = '#141110';
+  } else if (type === 'office') {
+    o.top = 'suit'; o.topColor = ['#121418', '#1e2c4e', '#3a3d44', '#2a2c31'][Math.floor(Math.random() * 4)]; o.accentColor = '#f2f2ee';
+    o.bottom = o.body === 'f' && Math.random() < 0.6 ? 'skirt' : 'chinos'; o.bottomColor = o.topColor; o.shoes = 'loafers'; o.shoeColor = '#121418';
+    if (o.hair === 'cap' || o.hair === 'beanie') o.hair = o.body === 'm' ? 'short' : 'bun'; if (o.accessory === 'headphones' || o.accessory === 'sunglasses') o.accessory = 'none';
+  }
+  return o;
+}
+function giveBag(h, type) {
+  const k = type === 'office' ? 'brief' : type === 'student' ? 'school' : type === 'shopper' ? (Math.random() < 0.7 ? 'shop' : 'paper') : null;
+  if (!k || !h.handL) return; const [g, m] = BAGS()[k]; const b = new THREE.Mesh(g, m); b.rotation.y = Math.PI / 2; h.handL.add(b);
+}
+
 export class Walkers {
   constructor(game) {
     this.g = game; this.list = []; this.t = 0; this.manageT = 0;
@@ -27,14 +64,15 @@ export class Walkers {
   spawn(f) {
     const N = this.net(); if (!N) return false;
     const sp = N.randomNear(f.x, f.z, 30, 200); if (!sp || sp.c.cls > 4) return false;
-    let h; try { h = createHuman(randomOutfit()); } catch (e) { return false; }
+    const hour = this.g.tod?.hours ?? 12, type = crowdType(hour);
+    let h; try { h = createHuman(typedOutfit(type)); } catch (e) { return false; } giveBag(h, type);
     // v2.9 personalities: car fans stop and film / wave at a passing sports car, phone-checkers stop to read, couples
     // walk side by side at the same pace
-    const w = { h, c: sp.c, i: sp.i, d: sp.d, dir: Math.random() < 0.5 ? 1 : -1, side: Math.random() < 0.5 ? 1 : -1, v: 1.05 + Math.random() * 0.5, yaw: 0, pause: 0, ox: 0, oz: 0, lat: 0,
-      fan: Math.random() < 0.3, phoney: Math.random() < 0.35, act: null, cool: 0 };
+    const w = { h, c: sp.c, i: sp.i, d: sp.d, dir: Math.random() < 0.5 ? 1 : -1, side: Math.random() < 0.5 ? 1 : -1, v: (type === 'office' ? 1.35 : type === 'student' ? 1.2 : 1.05) + Math.random() * 0.4, type, yaw: 0, pause: 0, ox: 0, oz: 0, lat: 0,
+      fan: Math.random() < (type === 'student' ? 0.45 : type === 'office' ? 0.12 : 0.3), phoney: Math.random() < (type === 'office' ? 0.5 : 0.35), act: null, cool: 0 };
     w.umb = umbrella(); w.umb.position.set(0.12, (h.height || 1.7) + 0.08, 0.06); w.umb.visible = false; h.object.add(w.umb);
     this.g.scene.add(h.object); this.list.push(w); this.pose(w, true);
-    if (Math.random() < 0.2 && this.list.length < this.max) { let h2; try { h2 = createHuman(randomOutfit()); } catch { h2 = null; }
+    if (Math.random() < (type === 'student' ? 0.55 : 0.2) && this.list.length < this.max) { let h2; try { h2 = createHuman(type === 'student' || type === 'office' ? typedOutfit(type) : randomOutfit()); if (type === 'student' || type === 'office') giveBag(h2, type); } catch { h2 = null; }
       if (h2) { const m = { ...w, h: h2, lead: w, lat: 0.6, fan: w.fan, phoney: false, umb: null }; m.umb = umbrella(); m.umb.position.copy(w.umb.position); m.umb.visible = false; h2.object.add(m.umb); w.lat = -0.05; this.g.scene.add(h2.object); this.list.push(m); this.pose(m, true); } }
     return true;
   }

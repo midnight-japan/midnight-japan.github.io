@@ -1,9 +1,10 @@
 # 📜 MIDNIGHT JAPAN 업데이트 기록 · Changelog
 
-현재 버전 · Current: **v2.13.7** · [▶ 웹에서 플레이](https://midnight-japan.github.io/) · [🌐 업데이트 페이지](https://midnight-japan.github.io/changelog.html)
+현재 버전 · Current: **v2.13.8** · [▶ 웹에서 플레이](https://midnight-japan.github.io/) · [🌐 업데이트 페이지](https://midnight-japan.github.io/changelog.html)
 
 | 버전 | 날짜 | 이름 | 요약 |
 |---|---|---|---|
+| [v2.13.8](#v2138--living-streets-2026-11-18) | 2026-11-18 | Living Streets | 거리에 사람과 동물: 시간대별 보행자(등하교 학생, 출퇴근 직장인, 장보는 사람), 비둘기 무리와 까마귀, 하코네 산길의 사슴. |
 | [v2.13.7](#v2137--irasshaimase-2026-11-18) | 2026-11-18 | Irasshaimase | 다이코쿠 PA 편의점에 직원: 계산대 점원(들어오면 돌아보며 인사, 계산할 때 응대)과 진열대를 정리하는 아르바이트생. 진열대 상품이 선반 안에 묻혀 안 보이던 문제 수정. |
 | [v2.13.6](#v2136--fill-up-2026-11-18) | 2026-11-18 | Fill Up | 주유소 대폭 추가: 간선도로를 따라 약 1km마다 빈 땅에 주유소(캐노피·펌프·가격 간판·사무실)를 배치 — 모든 주유소에서 풀서비스. |
 | [v2.13.5](#v2135--garage-52-2026-11-18) | 2026-11-18 | Garage 52 | 실제 차량 4대 추가로 총 52대 — 프렐류드 BB6·BB1, 시빅 EG 해치백, 레거시 B4 tS. 바퀴가 차체와 한 덩어리인 모델도 바퀴만 떼어 내 굴러가게 처리. |
@@ -62,6 +63,19 @@
 | [v0.2.0](#v020--bayshore-2026-11-05) | 2026-11-05 | Bayshore | 수도고속 완간선을 따라 하네다까지, 도쿄만 아쿠아라인 해저터널을 지나 우미호타루 PA까지. 실제 3D 차량 모델과 열리는 보닛도 들어왔어요. |
 | [v0.1.1](#v011--one-click-2026-11-04) | 2026-11-04 | One Click | 링크 하나로 바로 플레이. 크롬에서 공식 사이트 주소만 열면 설치 없이 실행돼요. |
 | [v0.1.0](#v010--first-meet-2026-11-04) | 2026-11-04 | First Meet | 첫 공개 버전. 다이코쿠 JCT·PA와 다이코쿠 부두 일대를 3D로 구현했습니다. |
+
+---
+
+## v2.13.8 — Living Streets (2026-11-18)
+
+> 거리에 사람과 동물: 시간대별 보행자(등하교 학생, 출퇴근 직장인, 장보는 사람), 비둘기 무리와 까마귀, 하코네 산길의 사슴.
+> People and animals on the streets: pedestrians by the hour (students going to school, commuters, shoppers), pigeon flocks and crows, deer on the Hakone mountain roads.
+
+**✨ 추가 · New**
+
+- 보행자 유형: 등하교 시간엔 교복 학생(가쿠란·세일러복, 둘씩 걷기, 책가방), 출퇴근 시간엔 정장 직장인(서류가방, 빠른 걸음, 휴대폰), 낮에는 쇼핑백을 든 사람들<br><sub>Pedestrian types: uniformed students at school times (gakuran / sailor suits, in pairs, school bags), suited office workers at rush hour (briefcases, brisk pace, phones), shoppers with carrier bags by day</sub>
+- 비둘기: 낮의 도심 보도에서 무리 지어 모이를 쪼다가 차나 사람이 다가오면 날갯짓 소리와 함께 날아오름 / 까마귀: 도심 상공을 선회하며 가끔 울음<br><sub>Pigeons peck in flocks on city pavements by day and burst up with a clatter of wings when a car or you come close / crows circle over the city and caw now and then</sub>
+- 사슴: 하코네 산길 가장자리(가드레일 밖)에서 풀을 뜯다가 고개를 들고, 차가 다가오면 숲으로 뛰어감 — 해 질 녘·밤에 더 자주, 헤드라이트에 눈이 반짝임<br><sub>Deer graze at the edge of the Hakone roads (beyond the guardrail), look up and bound into the trees as you approach — more often at dusk and night, eyes shining in the headlights</sub>
 
 ---
 

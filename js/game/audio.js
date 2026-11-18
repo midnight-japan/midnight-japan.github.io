@@ -503,6 +503,15 @@ const SFX = {
     }
     return nz(a, d, t + 1.1, { f: 1400, q: 3, gain: 0.05, attack: 0.02, hold: 0.2, decay: 0.05 });
   },
+  // v2.13.7 wildlife: a flock of pigeons taking off (rapid wing claps) and a crow's caw (two harsh nasal calls)
+  wings(a, d, t) {
+    let end = t; for (let k = 0; k < 9; k++) end = nz(a, d, t + k * 0.055 + Math.random() * 0.02, { f: 900 + Math.random() * 500, q: 0.9, gain: 0.16 * (1 - k / 12), attack: 0.004, decay: 0.03 });
+    return end;
+  },
+  crow(a, d, t) {
+    let end = t; for (const k of [0, 0.42]) { tn(a, d, t + k, { type: 'sawtooth', f: 560, f2: 470, gain: 0.07, attack: 0.02, decay: 0.24, glide: 0.25 }); end = nz(a, d, t + k, { f: 1150, q: 3, gain: 0.08, attack: 0.02, decay: 0.22 }); }
+    return end;
+  },
   store_chime(a, d, t) {
     // original 4-note bell arpeggio (A add6 shape), NOT any real chain's jingle
     const mt = (m) => 440 * Math.pow(2, (m - 69) / 12);
