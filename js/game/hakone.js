@@ -3,7 +3,8 @@
 // a viewpoint lay-by half way up and the Daikanyama (大観山) summit car park with its lounge, toilets, vending machines
 // and the railing over Lake Ashi with Mt Fuji beyond.
 import * as THREE from 'three';
-import { speciesGeos, floraMaterial, speciesColor, grassGeometry } from './flora.js';
+import { tougeBays } from './touge.js';
+import { speciesGeos, floraMaterial, speciesColor, grassGeometry, registerTrees } from './flora.js';
 import { HAKONE } from '../../data/map-hakone.js';
 import { surface } from './textures.js';
 
@@ -12,10 +13,21 @@ export const HAKONE_BOX = { x0: G.x0, z0: G.z0, x1: G.x0 + (G.w - 1) * G.step, z
 export const inHakone = (x, z) => x > HAKONE_BOX.x0 && x < HAKONE_BOX.x1 && z > HAKONE_BOX.z0 && z < HAKONE_BOX.z1;
 const ss = (a, b, x) => { const t = Math.max(0, Math.min(1, (x - a) / (b - a))); return t * t * (3 - 2 * t); };
 
+const _signTex = new Map();
+function signTex(name) { // 非常駐車帯 (green) / 駐車帯 (blue P)
+  if (_signTex.has(name)) return _signTex.get(name);
+  const c = document.createElement('canvas'); c.width = 256; c.height = 160; const g = c.getContext('2d'); const em = name === '非常駐車帯';
+  g.fillStyle = em ? '#0f7a3c' : '#1446a0'; g.fillRect(0, 0, 256, 160); g.strokeStyle = '#fff'; g.lineWidth = 6; g.strokeRect(8, 8, 240, 144); g.fillStyle = '#fff'; g.textAlign = 'center'; g.textBaseline = 'middle';
+  if (em) { g.font = '700 46px "Hiragino Sans","Noto Sans JP",sans-serif'; g.fillText('非常駐車帯', 128, 64); g.font = '700 22px system-ui,sans-serif'; g.fillText('EMERGENCY PARKING', 128, 116); }
+  else { g.font = '900 96px system-ui,sans-serif'; g.fillText('P', 70, 84); g.font = '700 40px "Hiragino Sans","Noto Sans JP",sans-serif'; g.fillText('駐車帯', 170, 84); }
+  const t = new THREE.CanvasTexture(c); t.colorSpace = THREE.SRGBColorSpace; _signTex.set(name, t); return t;
+}
 export class Hakone {
   constructor(world) {
     this.w = world; this.ready = false; this.group = new THREE.Group(); this.group.name = 'hakone';
     this.road = world.net.byId.hakone_tp;
+    // v2.9 — touge emergency bays / parking strips (touge.js) become drivable flat lots
+    if (this.road && !HAKONE.lots.some(L => L.bay)) HAKONE.lots.push(...tougeBays(this.road));
     // road-point hash for the skirt / ground lookups
     this.cell = new Map(); this.CS = 40;
     this.road.samples.forEach((q, i) => { const k = Math.floor(q.p.x / 40) + ',' + Math.floor(q.p.z / 40); (this.cell.get(k) || this.cell.set(k, []).get(k)).push(i); });
@@ -81,7 +93,7 @@ export class Hakone {
           const d = hw + r, x = q.p.x + q.left.x * d * side, z = q.p.z + q.left.z * d * side;
           // don't run into the other carriageway of a hairpin: stop where another stretch of road is closer
           const n = this.nearest(x, z); const clash = n && Math.abs(n.i - i) > 30 && n.d < r + 2;
-          const y = clash ? q.p.y - 0.4 : q.p.y - 0.12 + (this.dem(x, z) - q.p.y) * ss(0, 30, r);
+          const Lb = this.lotAt(x, z); const y = Lb ? Lb.y - 0.08 : clash ? q.p.y - 0.4 : q.p.y - 0.12 + (this.dem(x, z) - q.p.y) * ss(0, 30, r); // v2.9: slope runs under bays / lots
           sp.push(x, y, z); const rock = Math.min(1, Math.abs(y - q.p.y) / Math.max(1, r) * 0.9); sc.push(0.42 + rock * 0.2, 0.48 + rock * 0.08, 0.32 + rock * 0.12);
         }
       }
@@ -106,8 +118,14 @@ export class Hakone {
     // v2.8: real species (flora.js) — sugi cedar plantations, momiji maple and zelkova in autumn colour
     { const G = speciesGeos(), mat = floraMaterial(), C = new THREE.Color(), o = new THREE.Object3D(), by = { cedar: [], maple: [], zelkova: [] };
       for (const sp of spots) { const h = (Math.sin(sp[0] * 12.9898 + sp[2] * 78.233) * 43758.5453) % 1; by[sp[3] ? 'cedar' : Math.abs(h) < 0.55 ? 'maple' : 'zelkova'].push([...sp, Math.abs(h)]); }
+      // v2.9: cherry trees lining the lower Turnpike (a tunnel of blossom in spring), maples higher up
+      by.sakura = []; { const hw2 = (this.road.edgeL - this.road.edgeR) / 2; let sd2 = 11; const r3 = () => (sd2 = (sd2 * 16807) % 2147483647) / 2147483647;
+        for (let i = 0; i < S.length; i += 9) { const q = S[i], side = (i / 9) % 2 ? 1 : -1, d = hw2 + 4.5 + r3() * 2.5, x = q.p.x + q.left.x * d * side, z = q.p.z + q.left.z * d * side;
+          if (this.lotAt(x, z)) continue; const y = this.ground(x, z); if (Math.abs(y - q.p.y) > 6) continue;
+          (q.p.y < 650 ? by.sakura : by.maple).push([x, y, z, false, 0.8 + r3() * 0.35, r3() * 6.28, r3()]); } }
       for (const [k, list] of Object.entries(by)) { if (!list.length) continue; const m = new THREE.InstancedMesh(G[k], mat, list.length);
         list.forEach((s, i) => { o.position.set(s[0], s[1] - 0.3, s[2]); o.scale.setScalar(s[4] * (k === 'cedar' ? 1.5 : 1.1)); o.rotation.y = s[5]; o.updateMatrix(); m.setMatrixAt(i, o.matrix); m.setColorAt(i, speciesColor(k, s[6], C)); });
+        registerTrees(m, k, Float32Array.from(list.map(s => s[6])));
         m.castShadow = false; m.receiveShadow = false; m.computeBoundingSphere(); g.add(m); } }
     // v2.8 — roadside grass: susuki (pampas) and bamboo-grass tufts, golden in November, thinning away from the road
     { const Q = this.w?.q || 'high', n0 = Q === 'low' ? 2500 : Q === 'medium' ? 6000 : 14000, mat = floraMaterial(), geoG = grassGeometry(), C = new THREE.Color(), o = new THREE.Object3D(); let sd = 3; const r2 = () => (sd = (sd * 16807) % 2147483647) / 2147483647;
@@ -123,6 +141,17 @@ export class Hakone {
     const add = (geo, mat, L, a, y, b, rot = 0) => { const m = new THREE.Mesh(geo, mat); const s = Math.sin(L.yaw), c = Math.cos(L.yaw); m.position.set(L.x + s * a + c * b, y, L.z + c * a - s * b); m.rotation.y = L.yaw + rot; m.castShadow = m.receiveShadow = true; g.add(m); return m; };
     this.colliders = [];
     for (const L of HAKONE.lots) {
+      if (L.bay) { // emergency bay: asphalt strip with tapered ends, edge line, the green 非常駐車帯 / blue P sign at its start
+        add(new THREE.BoxGeometry(L.w + 0.6, 0.3, L.l), asphalt, L, 0, L.y - 0.155, 0); add(new THREE.BoxGeometry(L.w + 0.5, 3, L.l - 0.2), conc, L, 0, L.y - 1.8, 0); // fill embankment wall under the strip
+        // outer W-beam guardrail along the bay (the road's rail opens beside it)
+        add(new THREE.BoxGeometry(0.08, 0.32, L.l + 10), white, L, 0, L.y + 0.7, L.side * (L.w / 2 + 0.25));
+        for (let a = -L.l / 2 - 4; a <= L.l / 2 + 4; a += 4) add(new THREE.CylinderGeometry(0.05, 0.05, 0.8, 8), dark, L, a, L.y + 0.4, L.side * (L.w / 2 + 0.35));
+        add(new THREE.BoxGeometry(0.15, 0.02, L.l), white, L, 0, L.y + 0.01, -L.side * (L.w / 2 - 0.1));
+        const sg = signTex(L.name); const sm = new THREE.MeshStandardMaterial({ map: sg, roughness: 0.5 });
+        add(new THREE.CylinderGeometry(0.04, 0.04, 2.4, 8), dark, L, -L.l / 2 + 1, L.y + 1.2, L.side * (L.w / 2 + 0.4));
+        add(new THREE.BoxGeometry(0.9, 0.55, 0.03), sm, L, -L.l / 2 + 1, L.y + 2.3, L.side * (L.w / 2 + 0.4));
+        continue;
+      }
       add(new THREE.BoxGeometry(L.w, 0.3, L.l), asphalt, L, 0, L.y - 0.13, 0);
       const rows = L.w > 30 ? [-L.w / 2 + 3, L.w / 2 - 3] : [-L.w / 2 + 3];
       for (const b of rows) for (let a = -L.l / 2 + 4; a < L.l / 2 - 3; a += 2.6) add(new THREE.BoxGeometry(5, 0.02, 0.12), white, L, a, L.y + 0.03, b);

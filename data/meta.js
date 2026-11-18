@@ -1,8 +1,19 @@
 // Shared game metadata: version, changelog, regions. Update VERSION + CHANGELOG on every release.
-export const GAME = { title: 'MIDNIGHT JAPAN', titleJa: 'ミッドナイト・ジャパン', version: '2.8.0', build: '2026.11.18' };
+export const GAME = { title: 'MIDNIGHT JAPAN', titleJa: 'ミッドナイト・ジャパン', version: '2.9.0', build: '2026.11.18' };
 
 // Newest first. type: new | change | fix | known
 export const CHANGELOG = [
+  {
+    version: '2.9.0', date: '2026-11-18', codename: 'Four Seasons',
+    summary: { ko: '사계절 도입(봄 벚꽃 흩날리는 토게, 여름 신록, 가을 단풍, 겨울 앙상한 나무와 눈), 하코네 턴파이크에 비상주차대·주차대, 편의점 앞 아스팔트 주차장과 실제 편의점 브랜드, 콕핏·모바일 버그 수정.', ja: '四季を導入（春は桜吹雪の峠、夏は新緑、秋は紅葉、冬は葉の落ちた木と雪）、箱根ターンパイクに非常駐車帯・駐車帯、コンビニ前のアスファルト駐車場と実在のコンビニ、コクピットとスマホの不具合を修正。', en: 'Four seasons (cherry petals on the touge in spring, summer green, autumn colour, bare trees and snow in winter), emergency bays and parking strips on the Hakone Turnpike, asphalt car parks and real chains at convenience stores, cockpit and phone fixes.' },
+    items: [
+      { type: 'new', ko: '계절 버튼(🗓/🌸/🌿/🍁/❄️): 자동(현재 날짜)·봄·여름·가을·겨울. 나무 색이 계절 따라 바뀌고 겨울엔 낙엽수가 앙상해짐. 봄엔 벚꽃잎, 가을엔 낙엽이 날리고, 겨울엔 비 대신 눈', ja: '季節ボタン（🗓/🌸/🌿/🍁/❄️）：自動（今日の日付）・春・夏・秋・冬。木の色が季節で変わり、冬は落葉樹が裸に。春は桜の花びら、秋は落ち葉が舞い、冬は雨の代わりに雪', en: 'Season button (🗓/🌸/🌿/🍁/❄️): auto (today), spring, summer, autumn, winter. Trees change colour, deciduous trees go bare in winter; cherry petals in spring, falling leaves in autumn, snow instead of rain in winter' },
+      { type: 'new', ko: '하코네 턴파이크: 완만한 직선 구간마다 비상주차대(非常駐車帯)·주차대(駐車帯) 10곳 — 가드레일 개구부, 성토 옹벽, 표지판. 아래 구간 도로변엔 벚나무 가로수, 위쪽엔 단풍', ja: '箱根ターンパイク：緩やかな直線ごとに非常駐車帯・駐車帯を10か所 — ガードレールの切れ目、盛土の擁壁、標識。下の区間は桜並木、上はモミジ', en: 'Hakone Turnpike: 10 emergency bays and parking strips on gentle straights — guardrail openings, embankment walls, signs; cherry trees line the lower road, maples higher up' },
+      { type: 'new', ko: '도시 편의점: 실제 브랜드(LAWSON·FamilyMart·7-ELEVEN, 이름과 색만), 가게 앞 아스팔트 주차장과 P 표지판. 대흑 PA 편의점도 LAWSON', ja: '街のコンビニ：実在ブランド（LAWSON・FamilyMart・7-ELEVEN、名前と色のみ）、店前のアスファルト駐車場とP標識。大黒PAのコンビニもLAWSONに', en: 'City convenience stores: real chains (LAWSON, FamilyMart, 7-ELEVEN — name and colour only), an asphalt car park and P sign out front; the Daikoku PA store is a LAWSON' },
+      { type: 'fix', ko: '콕핏: GR86 앞유리가 검게 막히던 문제, 왼쪽 핸들 원본 모델의 실내가 남던 문제. 실내 품질이 낮은 닛산 리프 퇴출', ja: 'コクピット：GR86のフロントガラスが黒くふさがる問題、左ハンドル元モデルの室内が残る問題を修正。室内品質の低い日産リーフを除外', en: 'Cockpit: GR86 windscreen was blacked out; left-hand-drive source cabins showed through. The low-quality Nissan Leaf model is retired' },
+      { type: 'fix', ko: '모바일: 실제 차량 모델을 받는 동안 임시 차량이 보이던 문제(타이틀 화면에서 미리 받음), 세로 화면에서 페달·핸들 버튼 겹침, 상단 버튼을 하나의 툴바로 정리', ja: 'スマホ：実車モデルの読み込み中に仮の車が見えた問題（タイトル画面で先読み）、縦画面でペダルとハンドルのボタンが重なる問題、上部ボタンを1本のツールバーに整理', en: 'Phones: no stand-in car while the real model loads (preloaded on the title screen), portrait pedals/steering no longer overlap, top buttons in one toolbar' },
+    ],
+  },
   {
     version: '2.8.0', date: '2026-11-18', codename: 'Autumn Leaves',
     summary: { ko: '나무를 전부 새로 만들었습니다: 은행·느티나무·벚나무·녹나무·곰솔·삼나무·단풍나무가 지역과 11월 단풍색에 맞게 서 있고, 하코네엔 황금빛 억새가 핍니다. 은빛 구름 가장자리와 권운, 곡선 가로등, 수도고식 교각, 회색 콘크리트 지면.', ja: '木をすべて作り直しました：イチョウ・ケヤキ・サクラ・クスノキ・クロマツ・スギ・モミジが地域と11月の紅葉色に合わせて並び、箱根には黄金色のススキ。雲の銀の縁取りと巻雲、曲線の街灯、首都高らしい橋脚、灰色のコンクリート地面。', en: 'Every tree is new: ginkgo, zelkova, cherry, camphor, black pine, cedar and maple stand by region in November colours, with golden susuki grass in Hakone. Silver-lined clouds and cirrus, swan-neck street lamps, Shutokō-style pier heads, grey concrete ground.' },

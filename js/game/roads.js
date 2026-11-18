@@ -9,6 +9,7 @@ import { MAP } from '../../data/map-daikoku.js';
 import { HAKONE } from '../../data/map-hakone.js';
 import { C1 } from '../../data/map-c1.js';
 import { SHUTO } from '../../data/map-shuto.js';
+import { tougeBays, bayAt } from './touge.js';
 
 const LANE = 3.5;
 const UV_WRAP = 600; // metres; texture v coordinates restart every 600 m (all tile sizes divide it)
@@ -799,8 +800,10 @@ export function buildRoadMeshes(net, opts = {}) {
       if (mountain) {
         // touge: white W-beam guardrails (ガードレール) on posts both sides, delineators on top — no kerbs / pavements
         const rail = [[0.35, 0.55], [0.3, 0.62], [0.35, 0.7], [0.3, 0.78], [0.35, 0.85], [0.42, 0.85], [0.42, 0.55]];
-        geoms.rail.push(sweep(r, rail, r.edgeL, yo, 1)); geoms.rail.push(sweep(r, rail, r.edgeR, yo, -1));
-        for (const [side, edge] of [[1, r.edgeL], [-1, r.edgeR]]) for (let q = 2; q < r.length; q += 4) { const p = r.at(q, edge + 0.45 * side); const t = r.dirAt(q); railPosts.push(p.x, p.y + yo, p.z, Math.atan2(t.x, t.z)); if (q % 20 < 4) reflectors.push(p.x, p.y + yo + 0.95, p.z, Math.atan2(t.x, t.z), side > 0 ? 0 : 1); }
+        // v2.9: the guardrail opens beside emergency bays / parking strips (touge.js); outside them the bay has its own rail
+        for (const [side, edge] of [[1, r.edgeL], [-1, r.edgeR]]) { let s0 = 0; const gaps = tougeBays(r).filter(b => b.side === side).map(b => [b.s - b.l / 2 - 8, b.s + b.l / 2 + 8]).sort((a, b) => a[0] - b[0]);
+          for (const [g0, g1] of gaps) { if (g0 > s0 + 2) geoms.rail.push(sweep(r, rail, edge, yo, side, s0, g0)); s0 = g1; } geoms.rail.push(sweep(r, rail, edge, yo, side, s0, r.length)); }
+        for (const [side, edge] of [[1, r.edgeL], [-1, r.edgeR]]) for (let q = 2; q < r.length; q += 4) { if (bayAt(r, q, side)) continue; const p = r.at(q, edge + 0.45 * side); const t = r.dirAt(q); railPosts.push(p.x, p.y + yo, p.z, Math.atan2(t.x, t.z)); if (q % 20 < 4) reflectors.push(p.x, p.y + yo + 0.95, p.z, Math.atan2(t.x, t.z), side > 0 ? 0 : 1); }
         return;
       }
       const sw = r.sidewalk || 3;

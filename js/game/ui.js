@@ -97,7 +97,7 @@ export class UI {
       </div></div>
       <div id="hud" class="hidden">
         <div class="tl"><div class="loc"></div><div class="clock"></div><div class="money"></div><div class="goaltrack" id="goaltrack"></div></div>
-        <canvas id="minimap" width="680" height="500"></canvas><button id="autobtn" class="autobtn" data-a="auto" title="J">AUTO</button><button id="wxbtn" class="autobtn wxbtn" data-a="weather" title="Weather">🌤</button><button class="autobtn mapbtn" data-a="hudMap" title="M">🗺</button><button class="autobtn garbtn" data-a="hudGarage" title="U">🔧</button><div id="keyhint" class="keyhint" hidden></div><div id="navhud" class="navhud" hidden><span class="nav-arrow">↑</span><span class="nav-dist"></span><button class="nav-x" data-a="navClear" aria-label="clear">✕</button></div><div id="pursuit" class="pursuithud" hidden></div>
+        <canvas id="minimap" width="680" height="500"></canvas><div class="hudbar"><button class="autobtn garbtn" data-a="hudGarage" title="U">🔧</button><button class="autobtn mapbtn" data-a="hudMap" title="M">🗺</button><button id="wxbtn" class="autobtn wxbtn" data-a="weather" title="Weather">🌤</button><button id="seabtn" class="autobtn seabtn" data-a="season" title="Season">🍁</button><button id="autobtn" class="autobtn" data-a="auto" title="J">AUTO</button></div><div id="keyhint" class="keyhint" hidden></div><div id="navhud" class="navhud" hidden><span class="nav-arrow">↑</span><span class="nav-dist"></span><button class="nav-x" data-a="navClear" aria-label="clear">✕</button></div><div id="pursuit" class="pursuithud" hidden></div>
         <div class="speedo"><canvas id="speedo" width="520" height="520"></canvas><div class="icons"></div></div>
         <div class="radio-banner"></div><div id="radiopill" class="radiopill" hidden><button class="rp-fold" data-a="radioFold" title="−">📻</button><span class="rp-t"></span><button data-a="radioPrev" title="R">⏮</button><button data-a="radioSkip" title="Y">⏭</button><button data-a="radioNext" title="T">📻</button></div>
         <div class="prompt"><kbd></kbd><span></span></div>
@@ -175,6 +175,7 @@ export class UI {
     const set = (sel, ic, txt) => { const b = document.querySelector(sel); if (b) b.innerHTML = `<span class="ic">${ic}</span><span class="lb">${esc(txt)}</span>`; };
     set('#hud .garbtn', '🔧', L3('차고', 'ガレージ', 'Garage')); set('#hud .mapbtn', '🗺', L3('지도', '地図', 'Map'));
     const wx = { auto: '🌤', clear: '☀️', cloudy: '☁️', rain: '🌧', storm: '⛈', fog: '🌫' }[this.g.settings.weather] || '🌤'; set('#wxbtn', wx, L3('날씨', '天気', 'Weather'));
+    { const se = { auto: '🗓', spring: '🌸', summer: '🌿', autumn: '🍁', winter: '❄️' }[this.g.settings.season || 'auto']; set('#seabtn', se, L3('계절', '季節', 'Season')); }
     set('#autobtn', '🚘', L3('자동', '自動', 'Auto'));
     const m = document.querySelector('#hud .hud-menu'); if (m) m.title = L3('메뉴', 'メニュー', 'Menu');
   }
@@ -227,6 +228,10 @@ export class UI {
       case 'radioNext': if (g.radio) { if (!g.radio.on) g.radio.power(true); else g.radio.next(); this.radioBanner(); } break;
       case 'radioPrev': if (g.radio?.on) { g.radio.prev(); this.radioBanner(); } break;
       case 'hudGarage': this.quickGarage(); break;
+      case 'season': { // v2.9: auto (real date) → spring → summer → autumn → winter
+        const M = ['auto', 'spring', 'summer', 'autumn', 'winter'], i = (M.indexOf(g.settings.season || 'auto') + 1) % M.length; g.settings.season = M[i]; g.saveSettings(); this.labelHUD();
+        const L = { ko: { auto: '계절: 자동(현재 날짜)', spring: '봄 · 벚꽃', summer: '여름', autumn: '가을 · 단풍', winter: '겨울 · 눈' }, ja: { auto: '季節：自動（今日の日付）', spring: '春・桜', summer: '夏', autumn: '秋・紅葉', winter: '冬・雪' } }[getLang()] || { auto: 'Season: auto (today)', spring: 'Spring · cherry blossom', summer: 'Summer', autumn: 'Autumn · leaves', winter: 'Winter · snow' };
+        this.toast(L[M[i]], 'info', 2); break; }
       case 'weather': { // v2.2: one tap cycles the weather — auto → clear → cloudy → rain → storm → fog
         const M = ['auto', 'clear', 'cloudy', 'rain', 'storm', 'fog'], i = (M.indexOf(g.settings.weather || 'auto') + 1) % M.length; g.settings.weather = M[i]; g.saveSettings();
         const ic = { auto: '🌤', clear: '☀️', cloudy: '☁️', rain: '🌧', storm: '⛈', fog: '🌫' }; this.labelHUD();

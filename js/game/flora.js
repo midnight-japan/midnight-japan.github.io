@@ -44,9 +44,12 @@ export function floraMaterial() {
   mat.onBeforeCompile = sh => {
     sh.vertexShader = sh.vertexShader.replace('#include <common>', '#include <common>\nattribute float aLeaf;')
       .replace('#include <color_vertex>', `#include <color_vertex>
+      vBare = 0.0;
       #ifdef USE_INSTANCING_COLOR
         vColor.xyz = color.xyz * mix(vec3(1.0), instanceColor.xyz, aLeaf);
-      #endif`);
+        vBare = step(1.5, instanceColor.x) * aLeaf;   // winter: deciduous leaves hidden (colour > 1.5 marks it)
+      #endif`).replace('#include <common>', '#include <common>\nvarying float vBare;');
+    sh.fragmentShader = sh.fragmentShader.replace('#include <common>', '#include <common>\nvarying float vBare;').replace('void main() {', 'void main() {\n  if (vBare > 0.5) discard;');
   };
   mat.customProgramCacheKey = () => 'mj-flora';
   return mat;
@@ -123,7 +126,28 @@ export function speciesAt(variant, wx, wz, h) {
   if (variant === 1) return h < 0.62 ? 'ginkgo' : 'zelkova';
   return h < 0.3 ? 'sakura' : h < 0.58 ? 'camphor' : h < 0.8 ? 'zelkova' : h < 0.9 ? 'ginkgo' : 'maple';
 }
-export function speciesColor(sp, h, out) { const C = SPECIES[sp].col; const k = h * 2.999 | 0, a = C[k]; return out.setRGB(a[0] * (0.88 + h * 0.2), a[1] * (0.9 + (h * 7 % 1) * 0.15), a[2]); }
+// v2.9 seasons: autumn = the table above; spring / summer / winter per species (null = bare in winter)
+const GREEN = [[0.36, 0.52, 0.2], [0.42, 0.58, 0.24], [0.32, 0.48, 0.2]], FRESH = [[0.55, 0.72, 0.3], [0.6, 0.76, 0.34], [0.5, 0.68, 0.28]];
+const SEASON_COL = {
+  spring: { sakura: [[1.0, 0.7, 0.8], [1.0, 0.78, 0.86], [0.98, 0.64, 0.76]], maple: FRESH, ginkgo: FRESH, zelkova: FRESH },
+  summer: { sakura: GREEN, maple: GREEN, ginkgo: GREEN, zelkova: GREEN, far: GREEN },
+  winter: { sakura: null, maple: null, ginkgo: null, zelkova: null, far: [[0.26, 0.32, 0.2], [0.3, 0.3, 0.24], [0.24, 0.3, 0.19]] },
+};
+let SEASON = 'autumn';
+const trees = new Set(); // instanced meshes to recolour when the season changes
+export function getSeason() { return SEASON; }
+export function speciesColor(sp, h, out) {
+  const T = SEASON_COL[SEASON], C = T && sp in T ? T[sp] : SPECIES[sp].col;
+  if (C === null) return out.setRGB(2, 2, 2); // bare (winter)
+  const k = h * 2.999 | 0, a = C[k]; return out.setRGB(a[0] * (0.88 + h * 0.2), a[1] * (0.9 + (h * 7 % 1) * 0.15), a[2]);
+}
+// remember an instanced tree mesh (species + per-instance hash) so a season change can recolour it in place
+export function registerTrees(im, sp, hs) { im.userData.flora = { sp, hs }; trees.add(im); }
+export function setSeason(s) {
+  if (s === SEASON) return; SEASON = s; const C = new THREE.Color();
+  for (const im of trees) { if (!im.parent && im.userData.floraDead) { trees.delete(im); continue; } const { sp, hs } = im.userData.flora; for (let i = 0; i < hs.length; i++) im.setColorAt(i, speciesColor(sp, hs[i], C)); if (im.instanceColor) im.instanceColor.needsUpdate = true; }
+}
+export function forgetTrees(root) { root.traverse(o => { if (o.userData?.flora) trees.delete(o); }); }
 
 // grass tuft (crossed blade cards) for parks / verges
 let grassGeo = null;

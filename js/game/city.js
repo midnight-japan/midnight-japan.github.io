@@ -4,7 +4,7 @@
 // come with them. Facade windows, night lights and traffic-signal cycles are drawn by shaders, so a whole tile is a
 // handful of draw calls. Map data © OpenStreetMap contributors (ODbL 1.0).
 import * as THREE from 'three';
-import { speciesGeos, floraMaterial, speciesAt, speciesColor } from './flora.js';
+import { speciesGeos, floraMaterial, speciesAt, speciesColor, registerTrees, forgetTrees } from './flora.js';
 import { surface, weather } from './textures.js';
 import { MAP } from './roads.js';
 import { signCanvas } from './signs.js';
@@ -31,7 +31,7 @@ const SIGNS = [
   ['ハンバーガー', '#c8102e', '#ffc72c'], ['回転寿司', '#ffffff', '#e60012'], ['24H フィットネス', '#111', '#ff7a00'], ['写真館', '#efe9df', '#333'],
   ['銭湯 鶴乃湯', '#2d2a6e', '#fff'], ['喫茶 港', '#3d2b1f', '#f5e1c0'], ['酒場 浜っ子', '#5a0b0b', '#ffd27a'], ['ガソリン', '#d40000', '#fff'],
 ];
-const BRANDS = [['LAWSUN', '#0b5fb8', '#fff'], ['HAPPY MART', '#169a4b', '#fff'], ['YOUR MART', '#ef6c00', '#fff']];
+const BRANDS = [['LAWSON', '#0b5fb8', '#fff'], ['FamilyMart', '#169a4b', '#fff'], ['7-ELEVEN', '#ef6c00', '#fff']]; // v2.9: real chains (name + house colour only; trademarks belong to their owners)
 function makeAtlas() {
   const c = document.createElement('canvas'); c.width = 2048; c.height = 2048; const g = c.getContext('2d');
   const font = (px, w = 800) => `${w} ${px}px "Hiragino Sans","Hiragino Kaku Gothic ProN","Yu Gothic","Noto Sans JP","Meiryo",sans-serif`;
@@ -450,12 +450,14 @@ export class City {
       const M = new THREE.Matrix4(), Q = new THREE.Quaternion(), Y = new THREE.Vector3(0, 1, 0), P = new THREE.Vector3(), Sc = new THREE.Vector3(), C = new THREE.Color();
       for (const [sp, ids] of bySp) {
         const im = new THREE.InstancedMesh(this.treeGeo[sp], this.mTree, ids.length);
-        ids.forEach((k2, n2) => { const b = k2 * 5; const s = o.trees[b + 2], h = hsh(o.trees[b] + 0.37, o.trees[b + 1]); Q.setFromAxisAngle(Y, o.trees[b + 3]); P.set(o.trees[b], 0, o.trees[b + 1]); Sc.set(s, s * (0.9 + h * 0.25), s); M.compose(P, Q, Sc); im.setMatrixAt(n2, M); im.setColorAt(n2, speciesColor(sp, h, C)); });
+        const hs = new Float32Array(ids.length);
+        ids.forEach((k2, n2) => { const b = k2 * 5; const s = o.trees[b + 2], h = hsh(o.trees[b] + 0.37, o.trees[b + 1]); hs[n2] = h; Q.setFromAxisAngle(Y, o.trees[b + 3]); P.set(o.trees[b], 0, o.trees[b + 1]); Sc.set(s, s * (0.9 + h * 0.25), s); M.compose(P, Q, Sc); im.setMatrixAt(n2, M); im.setColorAt(n2, speciesColor(sp, h, C)); });
+        registerTrees(im, sp, hs);
         im.castShadow = shadows && sp !== 'far'; im.receiveShadow = false; im.computeBoundingSphere(); grp.add(im);
       }
     }
     // swap in
-    if (t.group) { this.group.remove(t.group); disposeGroup(t.group); }
+    if (t.group) { forgetTrees(t.group); this.group.remove(t.group); disposeGroup(t.group); }
     this.unindex(t);
     t.group = grp; t.lod = lod; t.pending = undefined; t.mask = o.mask || null; t.landR = o.landR || null;
     this.group.add(grp);
@@ -480,7 +482,7 @@ export class City {
   }
   unload(k) {
     const t = this.tiles.get(k); if (!t) return;
-    if (t.group) { this.group.remove(t.group); disposeGroup(t.group); }
+    if (t.group) { forgetTrees(t.group); this.group.remove(t.group); disposeGroup(t.group); }
     this.unindex(t); this.tiles.delete(k); this.net?.remove(k); this.rail.remove(k);
     this.queue = this.queue.filter(e => e.k !== k);
   }

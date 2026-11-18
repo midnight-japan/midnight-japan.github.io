@@ -786,6 +786,13 @@ function buildTile(T, lod, opts) {
       for (let k = 0; k < 4; k++) { const ox = rx + nx * k * 0.65, oz = rz + nz * k * 0.65; pm.box(ox, 0.5, oz, nx, nz, 0.03, 0.85, 0.32, [[0.75, 0.75, 0.78], [0.12, 0.3, 0.6], [0.6, 0.1, 0.1], [0.15, 0.15, 0.16]][(seed + k) % 4], [PLAIN, 0, 0, 0]); }
       for (const sd of [-1, 1]) { const lx = E.mx + dx * sd * (E.l / 2 + 1) + nx * 10, lz = E.mz + dz * sd * (E.l / 2 + 1) + nz * 10; if (onCarriage(lx, lz, 0.3)) continue; pm.cyl(lx, lz, 0, 6, 0.08, 6, [0.55, 0.57, 0.58], [PLAIN, 0, 0, 0]); gm.box(lx, 6.05, lz, dx, dz, 0.35, 0.35, 0.08, [1, 0.97, 0.9], [1, 0, 0, 0]); cols.push([lx, lz, 0.12, 0.12, 0, -1, 6]); lamps.push([lx, 5.8, lz]); }
     }
+    // v2.9: the lot itself — an asphalt pad in front of the store (it used to be stall lines on bare ground), a 「P」
+    // sign by the entrance and a 「お客様駐車場」 board
+    { const g = ground[L.PARKING] || (ground[L.PARKING] = new Flat()); g.clip = [OX, OZ]; const W2 = E.l / 2 + 3, nx = E.n[0], nz = E.n[2], dx = E.tx, dz = E.tz;
+      const P = (a, b) => [E.mx + dx * a + nx * b, 0.03, E.mz + dz * a + nz * b];
+      if (!onCarriage(E.mx + nx * 6, E.mz + nz * 6, 0.5)) { g.quad(P(-W2, 0.3), P(W2, 0.3), P(W2, 11), P(-W2, 11), [1, 1, 1]);
+        const sx = E.mx + dx * (W2 - 0.4) + nx * 11.4, sz = E.mz + dz * (W2 - 0.4) + nz * 11.4;
+        if (!onCarriage(sx, sz, 0.3)) { pm.cyl(sx, sz, 0, 2.6, 0.05, 8, [0.8, 0.8, 0.8], [PLAIN, 0, 0, 0]); gm.box(sx, 2.75, sz, nx, nz, 0.36, 0.05, 0.36, [0.1, 0.32, 0.75], [1, 0, 0, 0]); cols.push([sx, sz, 0.1, 0.1, 0, -1, 2.6]); } } }
     // parking stalls in front
     for (let k = -2; k <= 2; k++) { const sx = E.mx + E.n[0] * 5 + E.tx * k * 2.6, sz = E.mz + E.n[2] * 5 + E.tz * k * 2.6; paint.quad([sx - E.n[0] * 2.5 - E.tx * 0.06, 0.06, sz - E.n[2] * 2.5 - E.tz * 0.06], [sx + E.n[0] * 2.5 - E.tx * 0.06, 0.06, sz + E.n[2] * 2.5 - E.tz * 0.06], [sx + E.n[0] * 2.5 + E.tx * 0.06, 0.06, sz + E.n[2] * 2.5 + E.tz * 0.06], [sx - E.n[0] * 2.5 + E.tx * 0.06, 0.06, sz - E.n[2] * 2.5 + E.tz * 0.06], WHITE); }
   }

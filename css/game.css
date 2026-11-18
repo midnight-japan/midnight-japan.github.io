@@ -370,3 +370,23 @@ body.photo .online-pill,body.photo .chat{display:none}
 #map .qt-t b{display:block;font:700 13px "Hiragino Sans","Noto Sans JP",system-ui}#map .qt-t small{color:#9fb0c8;font-size:11px}
 #map .qt-d{font:600 11px system-ui;color:#7ff0b0;display:flex;align-items:center;gap:6px}#map .qt-d i{display:inline-block;font-style:normal;color:#ffb347;font-size:12px}
 @media (max-width:760px){#map .qt{top:auto;bottom:84px;left:8px;right:8px;width:auto;max-height:46vh}#map .qt:not(.open) .qt-list{display:none}#map .qt-h{border-radius:12px}#map .qt.open .qt-h{border-radius:12px 12px 0 0}}
+/* v2.9: HUD quick buttons in one toolbar (replaces the stacked absolute offsets above) */
+#hud .hudbar{position:absolute;top:max(16px,env(safe-area-inset-top));right:max(14px,env(safe-area-inset-right));display:flex;gap:8px;align-items:center;pointer-events:auto;z-index:5}
+#hud .hudbar .autobtn{position:static!important;left:auto!important;right:auto!important;top:auto!important;bottom:auto!important;transform:none;margin:0}
+#hud .hud-menu{right:calc(max(14px,env(safe-area-inset-right)) + 470px)}
+@media (max-width:1100px){#hud .hudbar .autobtn .lb{display:none}#hud .hud-menu{right:calc(max(14px,env(safe-area-inset-right)) + 262px)}}
+@media (pointer:coarse),(max-width:760px){
+  #hud .hudbar{right:auto;left:calc(max(12px,env(safe-area-inset-left)) + 48px);top:calc(max(10px,env(safe-area-inset-top)) + 150px);gap:6px}
+  #hud .hud-menu{left:max(12px,env(safe-area-inset-left))!important;right:auto!important;top:calc(max(10px,env(safe-area-inset-top)) + 150px)!important}
+}
+/* v2.9: phones held upright — steering bottom-left, pedals bottom-right, speedo moved up between them; nothing overlaps */
+@media (orientation:portrait) and (max-width:760px){
+  .t-steer{left:max(10px,env(safe-area-inset-left));bottom:max(14px,env(safe-area-inset-bottom));gap:8px}
+  .t-steer button{width:68px!important;height:68px!important;font-size:24px}
+  .t-pedals{right:max(10px,env(safe-area-inset-right))!important;left:auto!important;bottom:max(14px,env(safe-area-inset-bottom));gap:8px}
+  .t-gas{width:70px!important;height:118px!important}.t-brake{width:70px!important;height:86px!important}.t-hb{width:48px!important;height:48px!important}
+  .speedo{right:auto!important;left:50%!important;transform:translateX(-50%);bottom:calc(max(14px,env(safe-area-inset-bottom)) + 128px)!important;width:150px!important}
+  #speedo{width:150px!important;height:150px!important}
+  .t-side{top:auto!important;bottom:calc(max(14px,env(safe-area-inset-bottom)) + 140px)!important;right:max(10px,env(safe-area-inset-right))!important;left:auto!important;grid-template-columns:48px 48px!important}
+  .t-side button{width:48px!important;height:48px!important}
+}

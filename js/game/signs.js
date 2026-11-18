@@ -1009,7 +1009,7 @@ S.fence_notice = o => {
   } };
 };
 
-// ── convenience store: parody of the real 24h store in Daikoku PA's annex (二番館) — "LAWSUN / ローサン" ──
+// ── convenience store: parody of the real 24h store in Daikoku PA's annex (二番館) — "LAWSON / ローソン" ──
 const BAY = { blue: '#1b63b5', orange: '#f28c1a', teal: '#3aa0e0', navy: '#123f7a', white: '#ffffff' };
 function bayLogo(g, x, y, s) {
   // milk-bottle emblem in a rounded square (parody look, original drawing)
@@ -1033,8 +1033,8 @@ S.store_front = o => {
     g.fillStyle = BAY.white; g.fillRect(0, H - 120, W, 34); g.fillStyle = BAY.teal; g.fillRect(0, H - 70, W, 70);
     bayLogo(g, 200, 130, 640);
     const tx = 1000;
-    const nw = text(g, 'LAWSUN', tx, 430, 520, { color: BAY.white, align: 'left', family: EN, weight: 800, ls: 40, maxW: W - tx - (W > 5000 ? 1500 : 150) });
-    text(g, 'ローサン', tx + 10, 790, 210, { color: BAY.white, align: 'left', weight: 800, family: JP, ls: 30, maxW: nw });
+    const nw = text(g, 'LAWSON', tx, 430, 520, { color: BAY.white, align: 'left', family: EN, weight: 800, ls: 40, maxW: W - tx - (W > 5000 ? 1500 : 150) });
+    text(g, 'ローソン', tx + 10, 790, 210, { color: BAY.white, align: 'left', weight: 800, family: JP, ls: 30, maxW: nw });
     if (W > 5000) {
       fillRR(g, W - 1000, 140, 760, 600, 50, BAY.white);
       text(g, '24', W - 790, 400, 330, { color: BAY.blue, family: EN, weight: 800 });
@@ -1052,7 +1052,7 @@ S.store_poster = o => {
     const foot = (bg = BAY.navy) => {
       g.fillStyle = bg; g.fillRect(0, H - 60, W, 60);
       bayLogo(g, 20, H - 52, 44);
-      text(g, 'LAWSUN', 80, H - 30, 30, { align: 'left', family: EN, weight: 800, ls: 4 });
+      text(g, 'LAWSON', 80, H - 30, 30, { align: 'left', family: EN, weight: 800, ls: 4 });
       text(g, '※価格は税込です', W - 20, H - 30, 22, { align: 'right', weight: 600 });
     };
     const price = (x, y, yen, size, col = COL.regRed) => {

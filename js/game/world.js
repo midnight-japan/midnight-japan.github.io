@@ -5,7 +5,7 @@
 import { placeAt } from '../../data/places.js';
 import { PRODUCTS, productTexture, coverTexture, priceStripTexture } from './goods.js';
 import * as THREE from 'three';
-import { speciesGeos, floraMaterial, speciesColor } from './flora.js';
+import { speciesGeos, floraMaterial, speciesColor, registerTrees } from './flora.js';
 import { mergeGeometries } from 'three/addons/utils/BufferGeometryUtils.js';
 import { surface, chainlinkMaterial, windowTexture, glowTexture, weather } from './textures.js';
 import { buildPortals } from './portals.js';
@@ -396,7 +396,7 @@ export class World {
     { const spots = []; for (let x = -46; x <= 30; x += 12) spots.push([x + rnd() * 2, -62]); for (let z = -76; z <= 20; z += 12) spots.push([85, z + rnd() * 2]);
       const G = speciesGeos(), mat = floraMaterial(), C = new THREE.Color(), V = new THREE.Vector3(), o = new THREE.Object3D();
       for (const sp of ['zelkova', 'camphor']) { const list = spots.filter((_, i) => (i % 3 === 0) === (sp === 'camphor')); const m = new THREE.InstancedMesh(G[sp], mat, list.length);
-        list.forEach(([x, z], i) => { PA.toWorld(x, z, V); o.position.set(V.x, 0, V.z); o.rotation.y = rnd() * 6.28; o.scale.setScalar(0.8 + rnd() * 0.3); o.updateMatrix(); m.setMatrixAt(i, o.matrix); m.setColorAt(i, speciesColor(sp, rnd(), C)); });
+        const hs = new Float32Array(list.length); list.forEach(([x, z], i) => { PA.toWorld(x, z, V); o.position.set(V.x, 0, V.z); o.rotation.y = rnd() * 6.28; o.scale.setScalar(0.8 + rnd() * 0.3); o.updateMatrix(); m.setMatrixAt(i, o.matrix); hs[i] = rnd(); m.setColorAt(i, speciesColor(sp, hs[i], C)); }); registerTrees(m, sp, hs);
         m.castShadow = true; m.computeBoundingSphere(); this.scene.add(m); } }
     // perimeter chain-link fence with gaps for the entrance / exit
     const fence = chainlinkMaterial();

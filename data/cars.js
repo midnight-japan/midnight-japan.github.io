@@ -270,8 +270,8 @@ const ALL_CARS = [
 
 // v2.7: only cars with a real, recognisable manufacturer-accurate 3D model remain. Retired: procedural stand-ins
 // (Roadster, S2000, Copen, S660, N-BOX, Sakura, Prius, Every), stylised/low-poly models (Alto Works, Jimny, LFA) and
-// the untextured HiAce.
-export const RETIRED = new Set(['nd', 'ap1', 'copen', 's660', 'nbox', 'sakura', 'prius', 'every', 'altow', 'jimny', 'lfa', 'hiace']);
+// the untextured HiAce, and the Leaf (an STL conversion: one material, no glass).
+export const RETIRED = new Set(['nd', 'ap1', 'copen', 's660', 'nbox', 'sakura', 'prius', 'every', 'altow', 'jimny', 'lfa', 'hiace', 'leaf']);
 export const CARS = ALL_CARS.filter(c => !RETIRED.has(c.id));
 export const CAR_BY_ID = Object.fromEntries(CARS.map(c => [c.id, c]));
 export const CATEGORIES = ['jdm', 'ev', 'euro', 'us', 'police', 'traffic'];

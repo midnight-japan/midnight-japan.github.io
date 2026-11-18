@@ -19,6 +19,7 @@ import { defaultStance, STANCE_PRESETS } from './carmodel.js';
 import { setGlbCompiler } from './carglb.js';
 import { Nav } from './nav.js';
 import { Autopilot } from './autopilot.js';
+import { SeasonFX } from './seasonfx.js';
 import { Dialog } from './dialog.js';
 import { World } from './world.js';
 import { TimeOfDay } from './sky.js';
@@ -55,7 +56,7 @@ const isMobile = /Android|iPhone|iPad|iPod|Mobile|SamsungBrowser/i.test(navigato
 export const DEFAULT_SETTINGS = {
   quality: isMobile ? 'low' : 'high', resScale: 1, transmission: 'auto', assist: true, units: 'kmh', etc: true,
   difficulty: 'standard', steerAssist: 'standard', stm: 'sport', tcs: 'sport', abs: true, police: 'normal',
-  master: 0.6, engine: 0.7, sfx: 0.6, ambient: 0.45, radio: 0.5, dj: false, voice: false, spawn: 'pa', weather: 'auto', damage: false, tilt: false, shake: true, fps: true, timeSpeed: 1, bloom: true, online: true, touch: isMobile ? 'on' : 'auto',
+  master: 0.6, engine: 0.7, sfx: 0.6, ambient: 0.45, radio: 0.5, dj: false, voice: false, spawn: 'pa', weather: 'auto', season: 'auto', damage: false, tilt: false, shake: true, fps: true, timeSpeed: 1, bloom: true, online: true, touch: isMobile ? 'on' : 'auto',
 };
 
 class Game {
@@ -188,6 +189,7 @@ class Game {
     this.walkers = new Walkers(this);
     this.planes = new Planes(this);
     this.weather = new Weather(this);
+    try { this.seasonFx = new SeasonFX(this); } catch (e) { console.warn('season', e); }
     this.fx = new Fx(this);
     this.nav = new Nav(this);
     this.autopilot = new Autopilot(this);
@@ -204,6 +206,7 @@ class Game {
     this.last = performance.now();
     renderer.setAnimationLoop(() => this.loop());
     window.__game = this;
+    loadManifest().then(() => { const id = this.garage.car; if (hasGlb(id)) requestGlb(id).catch(() => {}); }).catch(() => {}); // v2.9: fetch your car's model while on the title screen
     // deep link ?car=
     const q = new URLSearchParams(location.search);
     if (q.get('car') && CAR_BY_ID[q.get('car')]) this.garage.car = q.get('car');
@@ -299,7 +302,10 @@ class Game {
     this.model = this.buildPlayerCar(id);
     this.scene.add(this.model.root);
     // the real 3D model may still be downloading → swap it in when ready (keeps position, lights, doors)
-    if (!this.model.isGlb) loadManifest().then(() => hasGlb(id) && requestGlb(id).then(() => this.swapPlayerModel(id)).catch(() => {}));
+    // v2.9: never show the procedural stand-in while the real model downloads (on phones that took seconds) — the car
+    // stays hidden until the real one is in; only if the download fails does the stand-in appear
+    if (!this.model.isGlb) { const m0 = this.model; loadManifest().then(() => { if (!hasGlb(id)) return; m0.root.visible = false; const show = () => { if (this.model === m0) m0.root.visible = true; };
+      const to = setTimeout(show, 20000); requestGlb(id).then(() => { clearTimeout(to); this.swapPlayerModel(id); show(); }).catch(() => { clearTimeout(to); show(); }); }); }
     const v = new Vehicle(car, this.model, { mode: this.settings.transmission, assists: assistsFromSettings(this.settings), tune: this.carSetup(id).tune });
     v.camberF = this.model.camber.f; v.camberR = this.model.camber.r;
     if (keepPos && prev) v.place(prev.pos, prev.yaw); else v.place(spot.pos.clone(), spot.yaw);
@@ -791,6 +797,7 @@ class Game {
     if (this.fx && !paused) { try { this.fx.update(dt); } catch (e) { console.warn('fx', e); } }
     if (this.nav && !paused) { try { this.nav.update(dt); this.snapUpdate(dt); } catch (e) { console.warn('nav', e); } }
     if (this.weather) { try { const w = this.weather.update(paused ? 0 : dt, this.camera, this.env); this.env.rain = w.rain; this.env.wet = w.wet; } catch (e) { console.warn('weather', e); this.weather = null; } }
+    if (this.seasonFx) { try { this.seasonFx.update(paused ? 0 : dt, this.camera); } catch (e) { console.warn('season', e); this.seasonFx = null; } }
     this.world.update(dt, this.env);
     this.world.updateDynamicLights(dt, this.focus, this.env.night);
     this.world.city?.update(dt, this.focus, this.env.night);

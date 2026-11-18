@@ -359,7 +359,7 @@ export function buildGlbCar(car, e, opts = {}) {
             .replace('#include <clipping_planes_fragment>', `#include <clipping_planes_fragment>
             if (uCk > 0.5) { // the model's own cabin (seats, dash, wheel …) gives way to the fitted cockpit
               float hw = uCab.x - 0.16 * clamp((vCk.y - uCab.y) / max(0.05, uCab.z - uCab.y), 0.0, 1.0);
-              if (abs(vCk.x) < hw && vCk.y > 0.22 && vCk.y < uCab.z && vCk.z > uCab.w && vCk.y * uWs.x + vCk.z * uWs.y < uWs.z) discard;
+              if (abs(vCk.x) < hw && vCk.y > 0.05 && vCk.y < uCab.z && vCk.z > uCab.w && vCk.y * uWs.x + vCk.z * uWs.y < uWs.z) discard;
             }`)
             .replace('#include <color_fragment>', '#include <color_fragment>\nif (uCk > 0.5 && !gl_FrontFacing) diffuseColor.rgb = vec3(0.045, 0.045, 0.05);');
         };
@@ -412,7 +412,8 @@ export function buildGlbCar(car, e, opts = {}) {
       for (const o of procShell) o.visible = on && inCabin.has(o);
       for (const o of glbInside) o.visible = true;
       for (const d of parts.doors) d.pivot.visible = false;
-      vis.visible = true; trimU.uCk.value = on ? 1 : 0;
+      vis.visible = !(on && info.cockpit === 'proc'); trimU.uCk.value = on ? 1 : 0; // v2.9: models without window openings: the procedural cabin + glass in cockpit view
+      if (on && info.cockpit === 'proc') for (const o of procShell) o.visible = true;
       for (const m of glbMats) { m.side = on ? THREE.DoubleSide : THREE.FrontSide; m.needsUpdate = true; }
       if (procHood) procHood.visible = false;
       if (model.parts.hood?.pivot && model.parts.hood.pivot !== procHood) model.parts.hood.pivot.visible = true;

@@ -490,7 +490,8 @@
    "tail": [
     "back_lights.001"
    ]
-  }
+  },
+  "cockpit": "proc"
  },
  "z33": {
   "file": "z33.glb",

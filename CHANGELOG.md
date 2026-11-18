@@ -1,9 +1,10 @@
 # 📜 MIDNIGHT JAPAN 업데이트 기록 · Changelog
 
-현재 버전 · Current: **v2.8.0** · [▶ 웹에서 플레이](https://midnight-japan.github.io/) · [🌐 업데이트 페이지](https://midnight-japan.github.io/changelog.html)
+현재 버전 · Current: **v2.9.0** · [▶ 웹에서 플레이](https://midnight-japan.github.io/) · [🌐 업데이트 페이지](https://midnight-japan.github.io/changelog.html)
 
 | 버전 | 날짜 | 이름 | 요약 |
 |---|---|---|---|
+| [v2.9.0](#v290--four-seasons-2026-11-18) | 2026-11-18 | Four Seasons | 사계절 도입(봄 벚꽃 흩날리는 토게, 여름 신록, 가을 단풍, 겨울 앙상한 나무와 눈), 하코네 턴파이크에 비상주차대·주차대, 편의점 앞 아스팔트 주차장과 실제 편의점 브랜드, 콕핏·모바일 버그 수정. |
 | [v2.8.0](#v280--autumn-leaves-2026-11-18) | 2026-11-18 | Autumn Leaves | 나무를 전부 새로 만들었습니다: 은행·느티나무·벚나무·녹나무·곰솔·삼나무·단풍나무가 지역과 11월 단풍색에 맞게 서 있고, 하코네엔 황금빛 억새가 핍니다. 은빛 구름 가장자리와 권운, 곡선 가로등, 수도고식 교각, 회색 콘크리트 지면. |
 | [v2.7.1](#v271--wayfinder-2026-11-18) | 2026-11-18 | Wayfinder | 지도에서 일본 전체를 볼 수 있고, 사진·방향·거리가 보이는 빠른 이동 카드로 텔레포트가 쉬워졌습니다. 내비가 PA 주차장에서도 하네다·하코네·C1까지 경로를 찾고, 자율주행이 그 경로를 따라갑니다. |
 | [v2.7.0](#v270--real-cars-2026-11-18) | 2026-11-18 | Real Cars | 애매한 차량 모델 12종을 정리해 실제 모델이 있는 차만 남기고, 차가 노면에 붙어 달리도록 수직 물리와 노면별 접지력을 새로 만들었습니다. |
@@ -49,6 +50,24 @@
 | [v0.2.0](#v020--bayshore-2026-11-05) | 2026-11-05 | Bayshore | 수도고속 완간선을 따라 하네다까지, 도쿄만 아쿠아라인 해저터널을 지나 우미호타루 PA까지. 실제 3D 차량 모델과 열리는 보닛도 들어왔어요. |
 | [v0.1.1](#v011--one-click-2026-11-04) | 2026-11-04 | One Click | 링크 하나로 바로 플레이. 크롬에서 공식 사이트 주소만 열면 설치 없이 실행돼요. |
 | [v0.1.0](#v010--first-meet-2026-11-04) | 2026-11-04 | First Meet | 첫 공개 버전. 다이코쿠 JCT·PA와 다이코쿠 부두 일대를 3D로 구현했습니다. |
+
+---
+
+## v2.9.0 — Four Seasons (2026-11-18)
+
+> 사계절 도입(봄 벚꽃 흩날리는 토게, 여름 신록, 가을 단풍, 겨울 앙상한 나무와 눈), 하코네 턴파이크에 비상주차대·주차대, 편의점 앞 아스팔트 주차장과 실제 편의점 브랜드, 콕핏·모바일 버그 수정.
+> Four seasons (cherry petals on the touge in spring, summer green, autumn colour, bare trees and snow in winter), emergency bays and parking strips on the Hakone Turnpike, asphalt car parks and real chains at convenience stores, cockpit and phone fixes.
+
+**✨ 추가 · New**
+
+- 계절 버튼(🗓/🌸/🌿/🍁/❄️): 자동(현재 날짜)·봄·여름·가을·겨울. 나무 색이 계절 따라 바뀌고 겨울엔 낙엽수가 앙상해짐. 봄엔 벚꽃잎, 가을엔 낙엽이 날리고, 겨울엔 비 대신 눈<br><sub>Season button (🗓/🌸/🌿/🍁/❄️): auto (today), spring, summer, autumn, winter. Trees change colour, deciduous trees go bare in winter; cherry petals in spring, falling leaves in autumn, snow instead of rain in winter</sub>
+- 하코네 턴파이크: 완만한 직선 구간마다 비상주차대(非常駐車帯)·주차대(駐車帯) 10곳 — 가드레일 개구부, 성토 옹벽, 표지판. 아래 구간 도로변엔 벚나무 가로수, 위쪽엔 단풍<br><sub>Hakone Turnpike: 10 emergency bays and parking strips on gentle straights — guardrail openings, embankment walls, signs; cherry trees line the lower road, maples higher up</sub>
+- 도시 편의점: 실제 브랜드(LAWSON·FamilyMart·7-ELEVEN, 이름과 색만), 가게 앞 아스팔트 주차장과 P 표지판. 대흑 PA 편의점도 LAWSON<br><sub>City convenience stores: real chains (LAWSON, FamilyMart, 7-ELEVEN — name and colour only), an asphalt car park and P sign out front; the Daikoku PA store is a LAWSON</sub>
+
+**🐞 수정 · Fixed**
+
+- 콕핏: GR86 앞유리가 검게 막히던 문제, 왼쪽 핸들 원본 모델의 실내가 남던 문제. 실내 품질이 낮은 닛산 리프 퇴출<br><sub>Cockpit: GR86 windscreen was blacked out; left-hand-drive source cabins showed through. The low-quality Nissan Leaf model is retired</sub>
+- 모바일: 실제 차량 모델을 받는 동안 임시 차량이 보이던 문제(타이틀 화면에서 미리 받음), 세로 화면에서 페달·핸들 버튼 겹침, 상단 버튼을 하나의 툴바로 정리<br><sub>Phones: no stand-in car while the real model loads (preloaded on the title screen), portrait pedals/steering no longer overlap, top buttons in one toolbar</sub>
 
 ---
 
