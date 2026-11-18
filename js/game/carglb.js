@@ -7,7 +7,7 @@
 import * as THREE from 'three';
 import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js';
 import { MeshoptDecoder } from 'three/addons/libs/meshopt_decoder.module.js';
-import { mergeGeometries } from 'three/addons/utils/BufferGeometryUtils.js';
+import { mergeGeometries, toCreasedNormals } from 'three/addons/utils/BufferGeometryUtils.js';
 import { buildCar, buildEngineBay } from './carmodel.js';
 
 const BASE = new URL('../../assets/models/cars/', import.meta.url);
@@ -54,6 +54,12 @@ function splitLivery(scene, info) {
 // at some angles — the "broken" models)
 function fixMaterials(scene, info) {
   const glass = new Set(info.glass || []), done = new Set();
+  // v2.11.1: body panels of many source models have rough / split normals → the clear-coat reflection rippled like
+  // crumpled foil (R35). Paint meshes get creased normals: smooth below 35°, panel lines and edges stay sharp.
+  { const paint = new Set(info.paint || []), seen = new Set();
+    scene.traverse(o => { if (!o.isMesh || seen.has(o.geometry)) return; const ms = Array.isArray(o.material) ? o.material : [o.material];
+      if (!ms.some(m => paint.has(m.name)) || Array.isArray(o.material)) return; seen.add(o.geometry);
+      try { const g = toCreasedNormals(o.geometry, 35 * Math.PI / 180); o.geometry = g; } catch (e) { console.warn('normals', e); } }); }
   // v2.7: factory look — manifest `recolor` {material: hex} (R33's lime rims) and `stripMap` [material] (aftermarket
   // livery baked into the JZA80's body texture → plain paint)
   if (info.recolor || info.stripMap) { const strip = new Set(info.stripMap || []);
@@ -231,7 +237,7 @@ function analyseBay(e, rear) {
 }
 
 const isWhite = hex => { const c = new THREE.Color(hex); return c.r > 0.8 && c.g > 0.8 && c.b > 0.8; };
-const FINISH = { metallic: { metalness: 0.6, roughness: 0.3, clearcoat: 1 }, pearl: { metalness: 0.35, roughness: 0.22, clearcoat: 1 }, solid: { metalness: 0.05, roughness: 0.32, clearcoat: 1 }, matte: { metalness: 0.15, roughness: 0.75, clearcoat: 0 } };
+const FINISH = { metallic: { metalness: 0.45, roughness: 0.36, clearcoat: 1 }, pearl: { metalness: 0.35, roughness: 0.22, clearcoat: 1 }, solid: { metalness: 0.05, roughness: 0.32, clearcoat: 1 }, matte: { metalness: 0.15, roughness: 0.75, clearcoat: 0 } };
 const HEAD_RE = /head.?(light|lamp)|front.?(light|lamp)|scheinwerfer|^hl(_|$)/i, TAIL_RE = /(tail|rear|brake|stop).?(light|lamp)|taillight|^tl(_|$)/i;
 
 /** Build a CarModel around a loaded glTF entry. opts: same as buildCar (+ openable=false to skip the bonnet cut). */
@@ -426,7 +432,7 @@ export function buildGlbCar(car, e, opts = {}) {
   const LA = lampAnchors(e, isHead, isTail), glows = { head: [], tail: [], ind: [] };
   const spr = (hex, p, k) => { const s2 = new THREE.Sprite(glowMat(hex)); s2.position.set(p[0], p[1], p[2]); s2.visible = false; s2.renderOrder = 3; vis.add(s2); glows[k].push(s2); return s2; };
   for (const a of LA.ind) spr(0xffa020, a.p, 'ind').userData.side = a.side;
-  if (!low) { for (const a of LA.head) spr(0xfff2dc, a.p, 'head'); for (const a of LA.tail) spr(0xff2010, a.p, 'tail'); }
+  { const H = low ? LA.head.slice(0, 2) : LA.head, T = low ? LA.tail.slice(0, 2) : LA.tail; for (const a of H) spr(0xfff2dc, a.p, 'head'); for (const a of T) spr(0xff2010, a.p, 'tail'); } // v2.11.1: NPC cars light up too (2 + 2 sprites)
   const base = model.onUpdate;
   model.onUpdate = dt => {
     base?.(dt);

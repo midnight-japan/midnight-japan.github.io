@@ -11,7 +11,7 @@ import { surface, chainlinkMaterial, windowTexture, glowTexture, weather } from 
 import { buildPortals } from './portals.js';
 import { Hakone, inHakone } from './hakone.js';
 import { COAST_W } from '../../data/coast-west.js';
-import { buildRoadMeshes, lampSpots, bridgeSpan, trenchPolys, PA_RECT, PA, PA_LAYOUT, MAP } from './roads.js';
+import { buildRoadMeshes, cullRoads, lampSpots, bridgeSpan, trenchPolys, PA_RECT, PA, PA_LAYOUT, MAP } from './roads.js';
 import { buildBay, noPierBay, inUmihotaru } from './bay.js';
 import { signMesh } from './signs.js';
 import { City } from './city.js';
@@ -239,7 +239,7 @@ export class World {
     this.buildGround(S);
     this.tunnelHeads = [];
     const roadMeshes = buildRoadMeshes(this.net, { isLand: (x, z) => this.isLand(x, z), tunnelLamps: this.tunnelHeads, noPier: noPierBay(this.net) });
-    this.group.add(roadMeshes);
+    this.group.add(roadMeshes); this.roadGroup = roadMeshes;
     for (const l of roadMeshes.userData.piers || []) if (l.top > 3) this.addCollider(l.x, l.z, 1.2 * l.thick, 1.2 * l.thick, 0, -6, l.top - 1.4, 'pier');
     for (const w of roadMeshes.userData.gapWalls || []) this.addCollider(w.x, w.z, w.hx, w.hz, w.ry, w.y0, w.y1, 'barrier'); // v2.5.3: centre barrier between twin decks
     this.buildPA(S);
@@ -1250,6 +1250,10 @@ export class World {
   // ───────────────────────── per-frame ─────────────────────────
   update(dt, env) {
     this.hakone?.update(env);
+    // v2.11 culling: road cells beyond the view range, and the whole Hakone region unless you are near it
+    this._cullT = (this._cullT || 0) - dt;
+    if (this.cam && this._cullT <= 0) { this._cullT = 0.4; const R = this.q === 'low' ? 3500 : this.q === 'medium' ? 5500 : 8000; cullRoads(this.roadGroup, this.cam, R);
+      if (this.hakone?.group) this.hakone.group.visible = this.cam.position.x < -40000; }
     this.t += dt;
     const n = env.night; // 0 day .. 1 night
     if (Math.abs((this._lastN ?? -1) - n) > 0.01) {

@@ -1,8 +1,19 @@
 // Shared game metadata: version, changelog, regions. Update VERSION + CHANGELOG on every release.
-export const GAME = { title: 'MIDNIGHT JAPAN', titleJa: 'ミッドナイト・ジャパン', version: '2.11.0', build: '2026.11.18' };
+export const GAME = { title: 'MIDNIGHT JAPAN', titleJa: 'ミッドナイト・ジャパン', version: '2.11.1', build: '2026.11.18' };
 
 // Newest first. type: new | change | fix | known
 export const CHANGELOG = [
+  {
+    version: '2.11.1', date: '2026-11-18', codename: 'Tune-up',
+    summary: { ko: '버그 수정과 최적화: 제동 시 앞이 숙여지고 가속 시 뒤로 앉도록 차체 움직임 방향 수정, 그려지는 삼각형을 최대 70% 줄인 거리 컬링, 추적 카메라가 고가·건물을 통과하지 않게, R35 차체 반사 개선, NPC 차량 야간 조명, 일본 지도 경계 수정, 이탤릭 제거.', ja: '不具合修正と最適化：ブレーキで前が沈み加速で後ろが沈むよう車体の動きの向きを修正、描画する三角形を最大70%減らす距離カリング、追従カメラが高架や建物を突き抜けないように、R35の車体反射を改善、NPC車両の夜間ライト、日本地図の境界を修正、イタリック体を廃止。', en: 'Fixes and optimisation: the nose now dives under braking and squats on throttle (it was reversed), distance culling draws up to 70% fewer triangles, the chase camera no longer passes through decks or buildings, smoother R35 paint reflections, NPC car lights at night, a correct Japan outline on the map, upright text.' },
+    items: [
+      { type: 'fix', ko: '차체 피치·롤 방향 반전 수정(제동=앞 숙임, 가속=뒤 앉음, 코너 바깥쪽으로 기울기), 언덕/공중 서스펜션 방향 수정', ja: '車体のピッチ・ロールの向きを修正（ブレーキ＝前が沈む、加速＝後ろが沈む、コーナーで外側に傾く）、起伏・ジャンプ時のサスペンションの向きも修正', en: 'Body pitch and roll were reversed — braking now dips the nose, throttle squats the rear, the body leans out of a corner; crest/air suspension travel fixed too' },
+      { type: 'change', ko: '최적화: 도로망을 1.5km 격자로 나눠 화면 밖·먼 구간 생략, 하코네는 근처에서만 렌더링, 멀리 있는 NPC 차량 생략 — 장면 삼각형 2,000만~4,600만 → 1,100만~1,700만', ja: '最適化：道路網を1.5kmのマスに分けて画面外・遠方を省略、箱根は近くでのみ描画、遠くのNPC車両を省略 — シーンの三角形 2,000万〜4,600万 → 1,100万〜1,700万', en: 'Optimisation: the road network is split into 1.5 km cells (off-screen and far cells skipped), Hakone only renders nearby, far NPC cars are skipped — scene triangles 20–46 M → 11–17 M' },
+      { type: 'fix', ko: '추적 카메라가 위쪽 고가 상판이나 건물·교각을 통과하지 않고 낮추거나 가까이 붙음', ja: '追従カメラが上の高架や建物・橋脚を突き抜けず、低くなるか近づく', en: 'The chase camera drops under an overhead deck or moves in rather than passing through decks, buildings and piers' },
+      { type: 'fix', ko: 'R35 등 차체 반사가 구겨진 은박지처럼 보이던 문제(차체 노멀 재계산), 메탈릭 도장 반사를 실제 수준으로', ja: 'R35などの車体反射がしわくちゃのアルミ箔のように見えた問題（法線を再計算）、メタリック塗装の反射を実車並みに', en: 'Body reflections that rippled like crumpled foil (R35 and others) — paint normals recomputed; metallic paint toned to real-car levels' },
+      { type: 'fix', ko: 'NPC 차량 야간 전조등·미등 점등, 낙엽·꽃잎은 낙엽이 깔린 토게에서만 튐, 일본 전체 지도에서 일본 외 지역(한반도 연안 섬 등) 제거, 사이트·게임 텍스트 이탤릭 제거', ja: 'NPC車両の夜間ヘッドライト・テールライト点灯、落ち葉・花びらは落ち葉の積もった峠でのみ舞う、日本全図から日本以外の地域を除去、サイト・ゲームのイタリック体を廃止', en: 'NPC cars light up at night; petals/leaves only kick up on the leaf-strewn touge; non-Japanese coasts removed from the Japan map; no more italic text' },
+    ],
+  },
   {
     version: '2.11.0', date: '2026-11-18', codename: 'Festival',
     summary: { ko: '웹사이트와 게임 UI를 완전히 새 디자인으로: 카본 블랙에 마젠타→오렌지 그라데이션, 사선 버튼과 각진 패널, 굵은 이탤릭 타이포. NPC 차량에 운전자가 타고, 새 대표 스크린샷.', ja: 'サイトとゲームUIをまったく新しいデザインに：カーボンブラックにマゼンタ→オレンジのグラデーション、斜めのボタンと角を落としたパネル、太いイタリック。NPCの車に運転手が乗り、新しいスクリーンショット。', en: 'A completely new look for the site and the in-game UI: carbon black with a magenta-to-orange gradient, slanted buttons, cut-corner panels and bold italic type. NPC cars now have drivers, plus new screenshots.' },

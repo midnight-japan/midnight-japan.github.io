@@ -677,6 +677,25 @@ function buildTunnels(net, isLand, lampOut) {
   return g;
 }
 
+// split an (indexed or not) geometry into square cells by triangle centroid, keeping it indexed (vertices remapped)
+function splitByCell(geo, C) {
+  const pos = geo.attributes.position, idx = geo.index ? geo.index.array : null, nT = (idx ? idx.length : pos.count) / 3;
+  const vi = t => idx ? idx[t] : t, cells = new Map();
+  for (let t = 0; t < nT; t++) { const a = vi(t * 3), b = vi(t * 3 + 1), c = vi(t * 3 + 2);
+    const cx = (pos.getX(a) + pos.getX(b) + pos.getX(c)) / 3, cz = (pos.getZ(a) + pos.getZ(b) + pos.getZ(c)) / 3;
+    const key = Math.floor(cx / C) + ',' + Math.floor(cz / C); let l = cells.get(key); if (!l) cells.set(key, l = []); l.push(a, b, c); }
+  const names = Object.keys(geo.attributes), out = new Map();
+  for (const [key, list] of cells) {
+    const remap = new Map(), order = []; const ni = new Uint32Array(list.length);
+    for (let i = 0; i < list.length; i++) { let j = remap.get(list[i]); if (j === undefined) { j = order.length; remap.set(list[i], j); order.push(list[i]); } ni[i] = j; }
+    const g = new THREE.BufferGeometry();
+    for (const n of names) { const A = geo.attributes[n], sz = A.itemSize, arr = new A.array.constructor(order.length * sz); for (let i = 0; i < order.length; i++) for (let c = 0; c < sz; c++) arr[i * sz + c] = A.array[order[i] * sz + c]; g.setAttribute(n, new THREE.BufferAttribute(arr, sz, A.normalized)); }
+    g.setIndex(new THREE.BufferAttribute(order.length > 65535 ? ni : new Uint16Array(ni), 1)); g.computeBoundingSphere(); out.set(key, g);
+  }
+  return out;
+}
+// hide road cells beyond `R` metres from the camera (called a few times a second)
+export function cullRoads(group, cam, R) { const L = group?.userData?.cells; if (!L) return; for (const m of L) { const b = m.geometry.boundingSphere; m.visible = b.center.distanceTo(cam.position) - b.radius < R; } }
 export function buildRoadMeshes(net, opts = {}) {
   const group = new THREE.Group(); group.name = 'roads';
   const asphalt = surface('asphalt', { tile: 5, tint: 0x8a8a8a });
@@ -818,11 +837,18 @@ export function buildRoadMeshes(net, opts = {}) {
   const wallClear = new THREE.MeshStandardMaterial({ color: 0xbfd8d6, roughness: 0.08, metalness: 0.1, transparent: true, forceSinglePass: true, opacity: 0.28, side: THREE.DoubleSide, depthWrite: false });
   const railMat = new THREE.MeshStandardMaterial({ color: 0xe9ebec, roughness: 0.45, metalness: 0.35, side: THREE.DoubleSide });
   const M = { asphalt, asphaltOld, concrete, concreteOld, sidewalk, white, yellow, wallSteel, wallClear, rail: railMat };
+  // v2.11: the network used to be ONE mesh per material (100+ km, millions of triangles drawn every frame wherever you
+  // were). Now each material is split into 1.5 km cells → frustum culling works and far cells are skipped (cullRoads)
+  group.userData.cells = [];
   for (const k in geoms) if (geoms[k].length) {
-    const mesh = new THREE.Mesh(mergeGeometries(geoms[k]), M[k]);
-    mesh.receiveShadow = true; mesh.castShadow = k === 'concrete';
-    mesh.name = 'road_' + k;
-    group.add(mesh);
+    const merged = mergeGeometries(geoms[k]); geoms[k].forEach(g => g.dispose());
+    for (const [key, g] of splitByCell(merged, 1500)) {
+      const mesh = new THREE.Mesh(g, M[k]);
+      mesh.receiveShadow = true; mesh.castShadow = k === 'concrete';
+      mesh.name = 'road_' + k; mesh.userData.cell = key;
+      group.add(mesh); group.userData.cells.push(mesh);
+    }
+    merged.dispose();
   }
   // noise-barrier H-posts + delineators (instanced)
   const inst = (geo, mat, arr, stride, place) => {

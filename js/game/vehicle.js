@@ -692,14 +692,14 @@ export class Vehicle {
     // v2.6: body pitch / roll on springs + dampers (was a plain lerp): the nose dives and settles with a little
     // overshoot, the body leans into a corner and rocks back on the exit — weight you can feel
     if (!this.bodyV) this.bodyV = [0, 0];
-    { const h = Math.min(dt, 1 / 30), pT = clamp(this.ax * 0.006, -0.045, 0.045), rT = clamp(-this.ay * 0.008, -0.065, 0.065), wp = 8.5, wr = 7.5;
+    { const h = Math.min(dt, 1 / 30), pT = clamp(-this.ax * 0.006, -0.045, 0.045), rT = clamp(this.ay * 0.008, -0.065, 0.065), wp = 8.5, wr = 7.5;
       this.bodyV[0] += (wp * wp * (pT - this.pitch) - 2 * 0.5 * wp * this.bodyV[0]) * h; this.pitch = clamp(this.pitch + this.bodyV[0] * h, -0.07, 0.07);
       this.bodyV[1] += (wr * wr * (rT - this.roll) - 2 * 0.45 * wr * this.bodyV[1]) * h; this.roll = clamp(this.roll + this.bodyV[1] * h, -0.09, 0.09); }
     // per-wheel suspension (visual): spring-damper following road texture (finer on expressway asphalt, coarser on
     // streets / lots) plus load transfer — front dips under braking, outer side compresses in corners
     if (!this.suspV) { this.suspV = [0, 0, 0, 0]; this.suspD = 0; }
     this.suspD += Math.abs(this.vx) * dt;
-    const rough = this.roughness ?? 0.0035, sp = Math.min(1, Math.abs(this.vx) / 15), heave = this.airborne > 0 ? 0.045 : -clamp(((this._loadF ?? 1) - 1) * 0.035, -0.035, 0.035);
+    const rough = this.roughness ?? 0.0035, sp = Math.min(1, Math.abs(this.vx) / 15), heave = this.airborne > 0 ? -0.045 : clamp(((this._loadF ?? 1) - 1) * 0.035, -0.035, 0.035); // v2.11.1: dips compress, wheels droop in the air
     const joints = !!this.road && this.road.kind !== 'local' && this.onRoad && this.pos.y > 4 && Math.abs(this.vx) > 4; this._jph = this._jph || [];
     for (let i = 0; i < 4; i++) {
       const d = this.suspD + (i >= 2 ? 2.6 : 0) + (i % 2) * 0.37;

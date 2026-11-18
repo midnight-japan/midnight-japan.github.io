@@ -63,7 +63,7 @@ export class SeasonFX {
     U.uKind.value = kind; U.uAmt.value = amt; this.pts.visible = kind > 0 && amt > 0;
     // kick-up behind the wheels: spring petals / autumn leaves lying on the road, thickest on the Hakone touge
     const v = this.g.vehicle, k = this.kick, kU = this.kU; kU.uKind.value = s === 'spring' ? 1 : 3; kU.uPx.value = U.uPx.value; kU.uNight.value = U.uNight.value;
-    if (v && this.g.mode === 'drive' && (s === 'spring' || s === 'autumn') && v.onRoad && !(v.airborne > 0)) { const sp = Math.abs(v.vx || 0), rate = sp > 6 ? (hakone ? 60 : 14) * Math.min(1, sp / 30) : 0; k.acc += rate * dt;
+    if (v && this.g.mode === 'drive' && (s === 'spring' || s === 'autumn') && v.onRoad && !(v.airborne > 0)) { const sp = Math.abs(v.vx || 0), litter = v.road?.kind === 'mountain', rate = sp > 6 && litter ? 60 * Math.min(1, sp / 30) : 0; // v2.11.1: only where leaves / petals lie (tree-lined touge), not on clean streets k.acc += rate * dt;
       while (k.acc >= 1) { k.acc -= 1; const i = k.next; k.next = (k.next + 1) % k.n; const f = v.forward, side = Math.random() < 0.5 ? 1 : -1, l = v.left;
         k.p[i * 3] = v.pos.x - f.x * 1.6 + l.x * side * 0.8; k.p[i * 3 + 1] = v.pos.y + 0.1; k.p[i * 3 + 2] = v.pos.z - f.z * 1.6 + l.z * side * 0.8;
         k.v[i * 3] = v.vel.x * 0.35 + (Math.random() - 0.5) * 2 + l.x * side * 1.5; k.v[i * 3 + 1] = 1.5 + Math.random() * 2.5 + sp * 0.05; k.v[i * 3 + 2] = v.vel.z * 0.35 + (Math.random() - 0.5) * 2 + l.z * side * 1.5; k.life[i] = 2.5 + Math.random() * 1.5; } }

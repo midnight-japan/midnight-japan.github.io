@@ -1,9 +1,10 @@
 # 📜 MIDNIGHT JAPAN 업데이트 기록 · Changelog
 
-현재 버전 · Current: **v2.11.0** · [▶ 웹에서 플레이](https://midnight-japan.github.io/) · [🌐 업데이트 페이지](https://midnight-japan.github.io/changelog.html)
+현재 버전 · Current: **v2.11.1** · [▶ 웹에서 플레이](https://midnight-japan.github.io/) · [🌐 업데이트 페이지](https://midnight-japan.github.io/changelog.html)
 
 | 버전 | 날짜 | 이름 | 요약 |
 |---|---|---|---|
+| [v2.11.1](#v2111--tune-up-2026-11-18) | 2026-11-18 | Tune-up | 버그 수정과 최적화: 제동 시 앞이 숙여지고 가속 시 뒤로 앉도록 차체 움직임 방향 수정, 그려지는 삼각형을 최대 70% 줄인 거리 컬링, 추적 카메라가 고가·건물을 통과하지 않게, R35 차체 반사 개선, NPC 차량 야간 조명, 일본 지도 경계 수정, 이탤릭 제거. |
 | [v2.11.0](#v2110--festival-2026-11-18) | 2026-11-18 | Festival | 웹사이트와 게임 UI를 완전히 새 디자인으로: 카본 블랙에 마젠타→오렌지 그라데이션, 사선 버튼과 각진 패널, 굵은 이탤릭 타이포. NPC 차량에 운전자가 타고, 새 대표 스크린샷. |
 | [v2.10.0](#v2100--living-city-2026-11-18) | 2026-11-18 | Living City | 살아 있는 거리: 스포츠카가 지나가면 멈춰서 촬영하거나 손 흔드는 사람, 스마트폰 보는 사람, 나란히 걷는 커플. 수도고 야간 도로공사(추월차선 규제)가 일정 시간 생겼다 철수하고, 차가 벚꽃잎·낙엽을 흩날립니다. |
 | [v2.9.0](#v290--four-seasons-2026-11-18) | 2026-11-18 | Four Seasons | 사계절 도입(봄 벚꽃 흩날리는 토게, 여름 신록, 가을 단풍, 겨울 앙상한 나무와 눈), 하코네 턴파이크에 비상주차대·주차대, 편의점 앞 아스팔트 주차장과 실제 편의점 브랜드, 콕핏·모바일 버그 수정. |
@@ -52,6 +53,24 @@
 | [v0.2.0](#v020--bayshore-2026-11-05) | 2026-11-05 | Bayshore | 수도고속 완간선을 따라 하네다까지, 도쿄만 아쿠아라인 해저터널을 지나 우미호타루 PA까지. 실제 3D 차량 모델과 열리는 보닛도 들어왔어요. |
 | [v0.1.1](#v011--one-click-2026-11-04) | 2026-11-04 | One Click | 링크 하나로 바로 플레이. 크롬에서 공식 사이트 주소만 열면 설치 없이 실행돼요. |
 | [v0.1.0](#v010--first-meet-2026-11-04) | 2026-11-04 | First Meet | 첫 공개 버전. 다이코쿠 JCT·PA와 다이코쿠 부두 일대를 3D로 구현했습니다. |
+
+---
+
+## v2.11.1 — Tune-up (2026-11-18)
+
+> 버그 수정과 최적화: 제동 시 앞이 숙여지고 가속 시 뒤로 앉도록 차체 움직임 방향 수정, 그려지는 삼각형을 최대 70% 줄인 거리 컬링, 추적 카메라가 고가·건물을 통과하지 않게, R35 차체 반사 개선, NPC 차량 야간 조명, 일본 지도 경계 수정, 이탤릭 제거.
+> Fixes and optimisation: the nose now dives under braking and squats on throttle (it was reversed), distance culling draws up to 70% fewer triangles, the chase camera no longer passes through decks or buildings, smoother R35 paint reflections, NPC car lights at night, a correct Japan outline on the map, upright text.
+
+**🔧 변경 · Changed**
+
+- 최적화: 도로망을 1.5km 격자로 나눠 화면 밖·먼 구간 생략, 하코네는 근처에서만 렌더링, 멀리 있는 NPC 차량 생략 — 장면 삼각형 2,000만~4,600만 → 1,100만~1,700만<br><sub>Optimisation: the road network is split into 1.5 km cells (off-screen and far cells skipped), Hakone only renders nearby, far NPC cars are skipped — scene triangles 20–46 M → 11–17 M</sub>
+
+**🐞 수정 · Fixed**
+
+- 차체 피치·롤 방향 반전 수정(제동=앞 숙임, 가속=뒤 앉음, 코너 바깥쪽으로 기울기), 언덕/공중 서스펜션 방향 수정<br><sub>Body pitch and roll were reversed — braking now dips the nose, throttle squats the rear, the body leans out of a corner; crest/air suspension travel fixed too</sub>
+- 추적 카메라가 위쪽 고가 상판이나 건물·교각을 통과하지 않고 낮추거나 가까이 붙음<br><sub>The chase camera drops under an overhead deck or moves in rather than passing through decks, buildings and piers</sub>
+- R35 등 차체 반사가 구겨진 은박지처럼 보이던 문제(차체 노멀 재계산), 메탈릭 도장 반사를 실제 수준으로<br><sub>Body reflections that rippled like crumpled foil (R35 and others) — paint normals recomputed; metallic paint toned to real-car levels</sub>
+- NPC 차량 야간 전조등·미등 점등, 낙엽·꽃잎은 낙엽이 깔린 토게에서만 튐, 일본 전체 지도에서 일본 외 지역(한반도 연안 섬 등) 제거, 사이트·게임 텍스트 이탤릭 제거<br><sub>NPC cars light up at night; petals/leaves only kick up on the leaf-strewn touge; non-Japanese coasts removed from the Japan map; no more italic text</sub>
 
 ---
 

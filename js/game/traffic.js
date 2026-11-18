@@ -251,6 +251,7 @@ export class Traffic {
     if (player) ph = this.net.hits(player.pos.x, player.pos.z).filter(h => h.inside && Math.abs(h.y - player.pos.y) < 2);
     for (const ai of this.cars) {
       if (ai.driver) ai.driver.visible = ai.mode !== 'parked' && !ai.accident; // v2.10: seat empty when parked
+      if (ai.model.isGlb && this.g.camera) { const cp = this.g.camera.position, dd = (ai.pos.x - cp.x) ** 2 + (ai.pos.z - cp.z) ** 2, R = this.g.quality === 'low' ? 350 : this.g.quality === 'medium' ? 600 : 900; ai.model.root.visible = dd < R * R; } // v2.11: far cars are a few pixels — not drawn
       ai.t += dt;
       if (ai.mode === 'road') this.driveRoad(ai, dt, byLane, ph, player);
       else if (ai.mode === 'path') this.drivePath(ai, dt, player);

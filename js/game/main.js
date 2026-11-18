@@ -121,6 +121,7 @@ class Game {
     this.ui.loading(0.35, t('game.load.world'));
     await new Promise(r => setTimeout(r, 20));
     this.world = new World(this.scene, this.net, this.quality);
+    this.world.cam = this.camera; // v2.11: distance culling
     await this.world.build();
     // v2.2: invisible depth-only covers over the open cuttings, drawn after the roads and before the sea — the sea
     // plane runs under the whole map and used to fill every cutting before a tunnel mouth with water
@@ -659,6 +660,22 @@ class Game {
   }
 
   // ───────────────────────── camera ─────────────────────────
+  // v2.11.1 — the chase camera never passes through a viaduct deck above the car or into a building / pier: it drops
+  // under the deck, or comes in closer along the line to the car (smoothly, then eases back out)
+  camAvoid(v, P, dt) {
+    const base = v.pos.y + 1.0, inBox = (x, y, z) => { for (const list of this.world.colliderLists ? this.world.colliderLists(x, z) : [this.world.colliders]) for (const C of list) { if (y < C.y0 || y > C.y1) continue; const dx = x - C.x, dz = z - C.z, lx = dx * C.c - dz * C.s, lz = dx * C.s + dz * C.c; if (Math.abs(lx) < C.hx + 0.35 && Math.abs(lz) < C.hz + 0.35) return true; } return false; };
+    let k = 1, capY = Infinity;
+    for (let t = 0.25; t <= 1.001; t += 0.125) {
+      const x = v.pos.x + (P.x - v.pos.x) * t, y = v.pos.y + (P.y - v.pos.y) * t, z = v.pos.z + (P.z - v.pos.z) * t;
+      for (const h of this.net.hits(x, z)) { if (!h.inside || h.beyond) continue; if (h.y > base && h.y < y + 0.6) capY = Math.min(capY, h.y - 0.7); } // a deck above, between the car and the camera
+      if (inBox(x, y, z)) { k = Math.max(0.2, t - 0.125); break; }
+    }
+    let wantK = k, wantCap = capY;
+    if (capY < P.y && capY < base + 0.3) wantK = Math.min(wantK, 0.45); // too low under the deck: come in close instead
+    this._camK = this._camK === undefined ? wantK : wantK < this._camK ? wantK : this._camK + (wantK - this._camK) * (1 - Math.exp(-dt * 2.5));
+    P.set(v.pos.x + (P.x - v.pos.x) * this._camK, v.pos.y + (P.y - v.pos.y) * this._camK, v.pos.z + (P.z - v.pos.z) * this._camK);
+    if (wantCap < P.y) P.y = Math.max(base + 0.1, wantCap);
+  }
   updateCamera(dt) {
     if (window.__CAM) { const c = window.__CAM; this.camera.position.set(c[0], c[1], c[2]); this.camera.lookAt(c[3], c[4], c[5]); this.focus.set(c[3], 0, c[5]); return; } // QA: fixed camera
     // near plane: tight only inside the car; elsewhere 0.45 m keeps distant ground from z-fighting with the sea
@@ -753,6 +770,7 @@ class Game {
       if (this.camSnap || !this.camOff) { this.camOff = off.clone(); this.camSnap = false; }
       this.camOff.lerp(off, 1 - Math.exp(-dt * (far ? 6 : 10)));
       this.camPos = v.pos.clone().add(this.camOff);
+      this.camAvoid(v, this.camPos, dt);
       cam.position.copy(this.camPos);
       const look = v.pos.clone().add(new THREE.Vector3(0, H * 0.75, 0)).addScaledVector(f, 1.5);
       cam.lookAt(look);

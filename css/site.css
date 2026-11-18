@@ -964,14 +964,14 @@ html.motion .rv:not(.in).rel::before { transform: scale(0); }
   --cut: 14px;
 }
 body { background: radial-gradient(1200px 600px at 80% -10%, rgba(255, 61, 110, .10), transparent 60%), radial-gradient(900px 500px at -10% 30%, rgba(47, 214, 255, .06), transparent 60%), var(--bg); }
-h1, h2, h3, .sec-title, .hero-title { font-style: italic; letter-spacing: -.01em; }
+h1, h2, h3, .sec-title, .hero-title { font-style: normal; letter-spacing: -.01em; }
 .sec-title { text-transform: uppercase; font-weight: 700; }
 .kicker { display: inline-block; font: 700 .78rem/1 var(--display); letter-spacing: .22em; text-transform: uppercase; color: #fff; padding: .45em .9em; background: var(--fest); transform: skewX(-12deg); }
 .kicker > * { transform: skewX(12deg); }
 /* parallelogram buttons */
 .btn { border-radius: 0 !important; transform: skewX(-12deg); }
 .btn > * { transform: skewX(12deg); }
-.btn-play { background: var(--fest) !important; border: 0 !important; color: #fff !important; box-shadow: 0 12px 34px -12px rgba(255, 61, 110, .8) !important; font-style: italic; text-transform: uppercase; letter-spacing: .04em; }
+.btn-play { background: var(--fest) !important; border: 0 !important; color: #fff !important; box-shadow: 0 12px 34px -12px rgba(255, 61, 110, .8) !important;  text-transform: uppercase; letter-spacing: .04em; }
 .btn-play:hover { filter: brightness(1.08); box-shadow: 0 16px 44px -10px rgba(255, 106, 61, .9) !important; }
 .btn-ghost { background: rgba(255, 255, 255, .04) !important; border: 1px solid var(--line-3) !important; }
 .btn-ghost:hover { border-color: #ff7a3d !important; background: rgba(255, 106, 61, .08) !important; }
@@ -982,7 +982,7 @@ h1, h2, h3, .sec-title, .hero-title { font-style: italic; letter-spacing: -.01em
 .hero-shade { background: linear-gradient(105deg, rgba(10, 10, 12, .96) 0%, rgba(10, 10, 12, .78) 38%, rgba(10, 10, 12, .1) 70%), linear-gradient(0deg, var(--bg) 0%, transparent 30%) !important; }
 .hero { clip-path: polygon(0 0, 100% 0, 100% calc(100% - 48px), 0 100%); }
 .hero-title .hb-en { font-weight: 800; text-transform: uppercase; font-size: clamp(2.8rem, 8vw, 6.2rem); line-height: .92; letter-spacing: -.02em; }
-.hero-title .hb-en em { background: var(--fest); -webkit-background-clip: text; background-clip: text; color: transparent; font-style: italic; }
+.hero-title .hb-en em { background: var(--fest); -webkit-background-clip: text; background-clip: text; color: transparent;  }
 .hero-badge { border-radius: 0 !important; transform: skewX(-12deg); background: rgba(255, 255, 255, .06) !important; border: 1px solid var(--line-3) !important; }
 .hero-badge i { background: var(--fest) !important; color: #fff !important; }
 .hero-stats { gap: 0 !important; }
@@ -1001,3 +1001,6 @@ a { text-underline-offset: 3px; }
 .site-footer::before { content: ''; position: absolute; left: 0; right: 0; top: 0; height: 2px; background: var(--fest); }
 img { border-radius: 0 !important; }
 @media (prefers-reduced-motion: reduce) { .btn, .kicker, .tab { transform: none; } .btn > *, .kicker > * { transform: none; } }
+
+/* v2.11.1: upright type everywhere (no italics) */
+h1,h2,h3,.sec-title,.hero-title,.hero-title em,.btn,.btn-play,.kicker,.tab,.hero-badge{font-style:normal!important}
