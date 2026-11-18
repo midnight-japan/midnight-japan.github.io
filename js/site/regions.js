@@ -13,11 +13,11 @@ const POS = {
   k1loop: [-2600, -1300, 'k1'], yokohama: [-3480, -60, 'mm'], kawasaki: [2600, -5145, 'kawasaki'], haneda: [9049, -9720, 'haneda'],
   tsubasa: [4600, -3200, 'bay'], c1: [5810, -24414, 'c1'], hakone: [-57257, 30719, 'hakone'], route1: [6400, -14500, 'r1'],
   rainbow: [8115, -19170, 'daiba'], seisho: [-41200, 19400, 'seisho'], tokyo3d: [3600, -27500, 'c1'], kisarazu: [21800, 11500, 'umi'],
-  shonan: [-20400, 17000, 'seisho'], umihotaru: [17681, -276, 'umi'], tatsumi: [10800, -20200, null], shibaura: [8000, -21600, null],
+  shonan: [-20400, 17000, 'seisho'], umihotaru: [17681, -276, 'umi'], tatsumi: [10800, -20200, null], zama: [-26884, -2771, 'zama'], shibaura: [8000, -21600, null],
 };
 const ART = { daikoku_pa: 'pa', daikoku_jct: 'jct', daikoku_futo: 'port', baybridge: 'bridge', k1loop: 'jct', yokohama: 'city', kawasaki: 'factory',
   haneda: 'airport', tsubasa: 'bridge', c1: 'tower', hakone: 'mountain', route1: 'city', rainbow: 'bridge', seisho: 'coast', tokyo3d: 'tower',
-  kisarazu: 'coast', shonan: 'coast', umihotaru: 'sea', tatsumi: 'pa', shibaura: 'pa' };
+  kisarazu: 'coast', shonan: 'coast', umihotaru: 'sea', tatsumi: 'pa', shibaura: 'pa', zama: 'sunflower' };
 
 // ── landmark illustrations (flat, night palette; drawn here — no external images) ──
 const SKY = (a, b) => `<defs><linearGradient id="g${a.slice(1)}${b.slice(1)}" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="${a}"/><stop offset="1" stop-color="${b}"/></linearGradient></defs><rect width="320" height="140" fill="url(#g${a.slice(1)}${b.slice(1)})"/>`;
@@ -49,6 +49,8 @@ const ARTS = {
     <g fill="#16241e">${[18, 44, 250, 284, 300].map(x => `<path d="M${x} 136l9-30 9 30z"/>`).join('')}</g><circle cx="168" cy="118" r="2.2" fill="#ffe08a"/><circle cx="174" cy="118" r="2.2" fill="#ffe08a"/>`,
   coast: () => `${SKY('#2b3c78', '#f19a5a')}<circle cx="230" cy="96" r="22" fill="#ffd27a"/>${SEA(96)}<path d="M0 90q80-14 160-6t160-4" fill="none" stroke="#3d4148" stroke-width="8"/><path d="M0 90q80-14 160-6t160-4" fill="none" stroke="#f2f2ee" stroke-width="1" stroke-dasharray="6 8"/>
     <g fill="#26303a"><path d="M0 80q30-26 70-20t40 20z"/></g><g stroke="#2b3a2e" stroke-width="2"><path d="M40 82V60M60 84V62"/></g><g fill="#2b3a2e"><circle cx="40" cy="58" r="6"/><circle cx="60" cy="60" r="6"/></g>`,
+  sunflower: () => `${SKY('#5aa0e0', '#bfe3ff')}<path d="M0 70l50-26 40 14 50-22 40 30 60-18 80 22v20H0z" fill="#7c9cc0" opacity=".55"/><path d="M40 70l30-22 30 22z" fill="#eef3f8"/>
+    <rect y="70" width="320" height="70" fill="#4f7d2a"/>${Array.from({ length: 46 }, (_, i) => { const x = (i * 37) % 330 - 5, y = 78 + (i * 17) % 56, r = 4 + (y - 70) / 10; return `<path d="M${x} ${y + r}v${14 + r}" stroke="#2f5a1a" stroke-width="2"/><circle cx="${x}" cy="${y}" r="${r}" fill="#f5b90d"/><circle cx="${x}" cy="${y}" r="${r * 0.42}" fill="#5a3410"/>`; }).join('')}`,
   sea: () => `${SKY('#0d1738', '#2a3c6c')}${MOON}${SEA(92)}<path d="M60 92h200l-20-22H90z" fill="#e9eef5"/><rect x="120" y="54" width="70" height="16" fill="#cfd8e4"/><rect x="140" y="40" width="30" height="14" fill="#cfd8e4"/>
     <g fill="#ffcf6a">${Array.from({ length: 12 }, (_, i) => `<rect x="${96 + i * 13}" y="78" width="6" height="4"/>`).join('')}</g><path d="M0 92h60M260 92h60" stroke="#c9d2de" stroke-width="5"/>`,
 };
@@ -56,7 +58,7 @@ const art = id => `<svg class="rart" viewBox="0 0 320 140" aria-hidden="true" pr
 
 // ── maps ──
 const ringPath = (R, P, minD = 0) => { let d = '', lx = 1e9, lz = 1e9; for (let i = 0; i < R.length; i += 2) { const x = R[i], z = R[i + 1]; if (i && Math.hypot(x - lx, z - lz) < minD && i < R.length - 2) continue; lx = x; lz = z; const [a, b] = P(x, z); d += (d ? 'L' : 'M') + a.toFixed(1) + ' ' + b.toFixed(1); } return d + 'Z'; };
-const KANTO = { x0: -78000, x1: 42000, z0: -46000, z1: 42000 };
+const KANTO = { x0: -78000, x1: 42000, z0: -46000, z1: 42000 }; // includes Zama (x ≈ -26.9 km)
 const OSAKA = [-378700, 85200];
 function japanMap() {
   // whole country, but the far south-west islands are folded into the frame as on most Japanese maps

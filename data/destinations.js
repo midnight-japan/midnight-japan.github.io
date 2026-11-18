@@ -15,4 +15,5 @@ export const DESTS = [
   { id: 'rainbow', name: 'レインボーブリッジ', x: 8115, z: -19170 },
   { id: 'c1', name: '首都高 都心環状線', x: 5810, z: -24414 },
   { id: 'hakone', name: '箱根ターンパイク', x: -57257, z: 30719 },
+  { id: 'zama', name: '座間ひまわり畑', x: -26884, z: -2774, spawn: 'zama' },
 ];

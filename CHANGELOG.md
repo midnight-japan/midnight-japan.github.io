@@ -1,9 +1,10 @@
 # 📜 MIDNIGHT JAPAN 업데이트 기록 · Changelog
 
-현재 버전 · Current: **v2.13.10** · [▶ 웹에서 플레이](https://midnight-japan.github.io/) · [🌐 업데이트 페이지](https://midnight-japan.github.io/changelog.html)
+현재 버전 · Current: **v2.13.11** · [▶ 웹에서 플레이](https://midnight-japan.github.io/) · [🌐 업데이트 페이지](https://midnight-japan.github.io/changelog.html)
 
 | 버전 | 날짜 | 이름 | 요약 |
 |---|---|---|---|
+| [v2.13.11](#v21311--himawari-2026-11-18) | 2026-11-18 | Himawari | 새 지역: 자마 해바라기 밭(가나가와현 자마시, 사가미강) — 실제 밭 모양에 약 2m 해바라기가 줄지어 동쪽을 향하고, 계절 따라 새싹·만개·마른 씨앗·맨흙으로. 주변 7km 마을 도로·건물도 실제 지도로. 보행자가 편의점에 들어가고 나옴. |
 | [v2.13.10](#v21310--next-stop-2026-11-18) | 2026-11-18 | Next Stop | 전철에 승객: 창문이 뚫린 차체와 투명 유리, 형광등이 켜진 실내, 파란 롱시트와 손잡이 봉, 앉고 서 있는 승객 — 출퇴근 시간엔 만원, 심야엔 한산. |
 | [v2.13.9](#v2139--all-japan-2026-11-18) | 2026-11-18 | All Japan | 사이트 지역 페이지를 일본 전체 지도로(도도부현·주요 도시·오키나와 인셋, 플레이 가능 지역과 오사카 예정 표시), 지역마다 명소 일러스트와 「여기서 달리기」 버튼. 다이코쿠 PA 입구·출구에 段差あり 표시와 과속방지턱. |
 | [v2.13.8](#v2138--living-streets-2026-11-18) | 2026-11-18 | Living Streets | 거리에 사람과 동물: 시간대별 보행자(등하교 학생, 출퇴근 직장인, 장보는 사람), 비둘기 무리와 까마귀, 하코네 산길의 사슴. |
@@ -65,6 +66,19 @@
 | [v0.2.0](#v020--bayshore-2026-11-05) | 2026-11-05 | Bayshore | 수도고속 완간선을 따라 하네다까지, 도쿄만 아쿠아라인 해저터널을 지나 우미호타루 PA까지. 실제 3D 차량 모델과 열리는 보닛도 들어왔어요. |
 | [v0.1.1](#v011--one-click-2026-11-04) | 2026-11-04 | One Click | 링크 하나로 바로 플레이. 크롬에서 공식 사이트 주소만 열면 설치 없이 실행돼요. |
 | [v0.1.0](#v010--first-meet-2026-11-04) | 2026-11-04 | First Meet | 첫 공개 버전. 다이코쿠 JCT·PA와 다이코쿠 부두 일대를 3D로 구현했습니다. |
+
+---
+
+## v2.13.11 — Himawari (2026-11-18)
+
+> 새 지역: 자마 해바라기 밭(가나가와현 자마시, 사가미강) — 실제 밭 모양에 약 2m 해바라기가 줄지어 동쪽을 향하고, 계절 따라 새싹·만개·마른 씨앗·맨흙으로. 주변 7km 마을 도로·건물도 실제 지도로. 보행자가 편의점에 들어가고 나옴.
+> New area: the Zama sunflower fields (Zama, Kanagawa, on the Sagami River) — ~2 m sunflowers in rows facing east on the real plots, changing with the season (young plants, full bloom, dry seed heads, bare soil), plus 7 km of the surrounding town from the real map. Pedestrians now go in and out of konbini.
+
+**✨ 추가 · New**
+
+- 자마 해바라기 밭: 자카에바시 북쪽 자마 구역과 요쓰야 구역(실제 농지 경계), 가까이는 3D 해바라기(줄기·잎·꽃잎·씨앗), 멀리는 꽃밭 표면, 뒤로 후지산 — 스폰 선택·빠른 이동·사이트 지역 페이지에 추가<br><sub>Zama sunflower fields: the Zama plots north of Zakae Bridge and the Yotsuya plots (real field outlines), 3D sunflowers up close (stem, leaves, petals, seed disc) and a flower-field surface further out, Mt Fuji behind — in the spawn picker, quick travel and the site regions page</sub>
+- 자마 주변 약 7×7km 마을(도로·건물·철도·편의점·주유소)을 실제 지도 데이터로 추가<br><sub>About 7 × 7 km of the town around Zama (streets, buildings, railway, konbini, fuel stations) from real map data</sub>
+- 보행자 일과: 지나가다 편의점에 들어가거나, 편의점에서 봉지를 들고 나와 길을 걸어감<br><sub>Pedestrian routines: people pop into konbini they pass, others come out carrying a bag and walk on</sub>
 
 ---
 

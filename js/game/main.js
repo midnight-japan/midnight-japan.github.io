@@ -24,6 +24,7 @@ import { Roadworks } from './roadworks.js';
 import { FuelStation } from './fuelstation.js';
 import { KonbiniStaff } from './konbini-staff.js';
 import { Wildlife } from './wildlife.js';
+import { Sunflowers } from './sunflowers.js';
 import { Dialog } from './dialog.js';
 import { World } from './world.js';
 import { TimeOfDay } from './sky.js';
@@ -201,7 +202,7 @@ class Game {
     this.weather = new Weather(this);
     try { this.seasonFx = new SeasonFX(this); } catch (e) { console.warn('season', e); }
     this.roadworks = new Roadworks(this);
-    this.fuel = new FuelStation(this); this.konbiniStaff = new KonbiniStaff(this); try { this.wildlife = new Wildlife(this); } catch (e) { console.warn('wildlife', e); }
+    this.fuel = new FuelStation(this); this.konbiniStaff = new KonbiniStaff(this); try { this.wildlife = new Wildlife(this); } catch (e) { console.warn('wildlife', e); } try { this.sunflowers = new Sunflowers(this); } catch (e) { console.warn('sunflowers', e); }
     this.fx = new Fx(this);
     this.nav = new Nav(this);
     this.autopilot = new Autopilot(this);
@@ -280,7 +281,7 @@ class Game {
       // Umihotaru: a stall in the PA lot, backed in (the old spot at the end of the entry ramp faced the seawall)
       if (region === 'umi') { const U = this.world.umiSpots || []; if (U.length) { const sp = U[Math.floor(U.length * 0.3)]; return { pos: sp.pos.clone().setY(0.3), yaw: sp.yaw + Math.PI }; } const r = net.byId.umi_in_e || net.byId.umi_in_w; return at(r, r.length * 0.5, 0); }
       // city streets (real OpenStreetMap roads): keep to the left lane
-      const CITY_SPAWN = { mm: [-3949.7, 1257.2, 1.01, 14], chinatown: [-2987.3, 2310, -1.04, 7.5], tsurumi: [-2109.4, -2792.6, -0.93, 7.5], kawasaki: [2598.8, -5144.9, -0.91, 7.5], haneda: [7756.1, -9056.3, 1.02, 7.5] };
+      const CITY_SPAWN = { mm: [-3949.7, 1257.2, 1.01, 14], chinatown: [-2987.3, 2310, -1.04, 7.5], tsurumi: [-2109.4, -2792.6, -0.93, 7.5], kawasaki: [2598.8, -5144.9, -0.91, 7.5], haneda: [7756.1, -9056.3, 1.02, 7.5], zama: [-26884.1, -2770.6, 1.545, 7.5] };
       if (CITY_SPAWN[region]) { const [x, z, yaw, w] = CITY_SPAWN[region]; const o = w / 4; return { pos: new THREE.Vector3(x + Math.cos(yaw) * o, 0.3, z - Math.sin(yaw) * o), yaw }; }
       if (region === 'futo') { const r = net.byId.futo_5 || net.roads.find(x => x.kind === 'local'); const L = r.lanes.filter(l => l.dir === 1).sort((a, b) => b.lat - a.lat)[0] || r.lanes[0]; return at(r, r.length * 0.5, L.lat); }
     } catch (e) { console.warn('spawn', e); }
@@ -832,6 +833,7 @@ class Game {
     this.world.update(dt, this.env);
     this.world.updateDynamicLights(dt, this.focus, this.env.night);
     try { this.konbiniStaff?.update(dt, this.focus); } catch (e) { console.warn('konbini staff', e); }
+    try { this.sunflowers?.update(dt, this.camera); } catch (e) { if (!this._sfWarn) { this._sfWarn = 1; console.warn('sunflowers', e); } }
     try { this.wildlife?.update(dt, this.focus, this.env.night ?? 0); } catch (e) { if (!this._wlWarn) { this._wlWarn = 1; console.warn('wildlife', e); } }
     this.world.city?.update(dt, this.focus, this.env.night);
     this.plateau?.update(this.focus);

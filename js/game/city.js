@@ -4,6 +4,7 @@
 // come with them. Facade windows, night lights and traffic-signal cycles are drawn by shaders, so a whole tile is a
 // handful of draw calls. Map data © OpenStreetMap contributors (ODbL 1.0).
 import * as THREE from 'three';
+import { SUNFLOWER_FIELDS } from '../../data/sunflowers.js';
 import { speciesGeos, floraMaterial, speciesAt, speciesColor, registerTrees, forgetTrees } from './flora.js';
 import { surface, weather } from './textures.js';
 import { MAP } from './roads.js';
@@ -301,6 +302,10 @@ function mergeSimple(geos) {
   return g;
 }
 
+// v2.13.11: no trees inside the Zama sunflower fields (OSM trees / land-use filler there would stand in the crop)
+const SF_BOX = SUNFLOWER_FIELDS.map(f => { let x0 = 1e9, z0 = 1e9, x1 = -1e9, z1 = -1e9; for (let i = 0; i < f.pts.length; i += 2) { x0 = Math.min(x0, f.pts[i]); x1 = Math.max(x1, f.pts[i]); z0 = Math.min(z0, f.pts[i + 1]); z1 = Math.max(z1, f.pts[i + 1]); } return { P: f.pts, x0: x0 - 2, z0: z0 - 2, x1: x1 + 2, z1: z1 + 2 }; });
+function inSunflowers(x, z) { for (const b of SF_BOX) { if (x < b.x0 || x > b.x1 || z < b.z0 || z > b.z1) continue; const P = b.P; let c = false; for (let i = 0, j = P.length - 2; i < P.length; j = i, i += 2) { if ((P[i + 1] > z) !== (P[j + 1] > z) && x < (P[j] - P[i]) * (z - P[i + 1]) / (P[j + 1] - P[i + 1]) + P[i]) c = !c; } if (c) return true; } return false; }
+
 export class City {
   constructor(world, scene, quality) {
     this.world = world; this.scene = scene; this.q = quality;
@@ -363,6 +368,8 @@ export class City {
     return true;
   }
 
+  // v2.13.11: konbini doors within r of (x, z)
+  shopsNear(x, z, r) { const out = []; for (const t of this.tiles.values()) for (const s of t.shops || []) if (Math.hypot(s.x - x, s.z - z) < r) out.push(s); return out; }
   // v2.13.4: nearest fuel pump island (fuelstation.js) within r metres
   fuelNear(x, z, r = 8) { let best = null; for (const t of this.tiles.values()) for (const f of t.fuels || []) { const d = Math.hypot(f.x - x, f.z - z); if (d < r && (!best || d < best.d)) best = { ...f, d }; } return best; }
   // open-cut road sections (below ground, on land, roof not yet closed): [ax, az, bx, bz, halfWidth] …
@@ -448,7 +455,7 @@ export class City {
     if (o.trees.length) {
       const n = o.trees.length / 5; const bySp = new Map();
       const hsh = (x, z) => { const v = Math.sin(x * 12.9898 + z * 78.233) * 43758.5453; return v - Math.floor(v); };
-      for (let k2 = 0; k2 < n; k2++) { const b = k2 * 5, sp = speciesAt(o.trees[b + 4] | 0, ox + o.trees[b], oz + o.trees[b + 1], hsh(ox + o.trees[b], oz + o.trees[b + 1])); let l = bySp.get(sp); if (!l) bySp.set(sp, l = []); l.push(k2); }
+      for (let k2 = 0; k2 < n; k2++) { if (inSunflowers(ox + o.trees[k2 * 5], oz + o.trees[k2 * 5 + 1])) continue; const b = k2 * 5, sp = speciesAt(o.trees[b + 4] | 0, ox + o.trees[b], oz + o.trees[b + 1], hsh(ox + o.trees[b], oz + o.trees[b + 1])); let l = bySp.get(sp); if (!l) bySp.set(sp, l = []); l.push(k2); }
       const M = new THREE.Matrix4(), Q = new THREE.Quaternion(), Y = new THREE.Vector3(0, 1, 0), P = new THREE.Vector3(), Sc = new THREE.Vector3(), C = new THREE.Color();
       for (const [sp, ids] of bySp) {
         const im = new THREE.InstancedMesh(this.treeGeo[sp], this.mTree, ids.length);
@@ -465,6 +472,7 @@ export class City {
     this.group.add(grp);
     // colliders → grid (world coords)
     t.cols = o.cols.map(([x, z, hx, hz, ry, y0, y1]) => ({ x: x + ox, z: z + oz, hx, hz, c: Math.cos(ry), s: Math.sin(ry), y0, y1, kind: 'city' }));
+    t.shops = []; for (let k = 0; k < (o.shops?.length || 0); k += 4) t.shops.push({ x: o.shops[k] + ox, z: o.shops[k + 1] + oz, nx: o.shops[k + 2], nz: o.shops[k + 3] });
     if (o.fuelWhy) this.fuelWhy = o.fuelWhy; t.synFuel = (o.synFuel || []).map((v, i) => v + (i % 2 ? oz : ox)); t.fuels = []; for (let k = 0; k < (o.fuels?.length || 0); k += 7) t.fuels.push({ x: o.fuels[k] + ox, z: o.fuels[k + 1] + oz, tx: o.fuels[k + 2], tz: o.fuels[k + 3], brand: o.fuels[k + 4], ox: o.fuels[k + 5] + ox, oz: o.fuels[k + 6] + oz });
     for (const c of t.cols) { const r = Math.max(c.hx, c.hz); for (let i = Math.floor((c.x - r) / this.CG); i <= Math.floor((c.x + r) / this.CG); i++) for (let j = Math.floor((c.z - r) / this.CG); j <= Math.floor((c.z + r) / this.CG); j++) { const kk = i * 100003 + j; let a = this.cgrid.get(kk); if (!a) this.cgrid.set(kk, a = []); a.push(c); } }
     t.runways = o.runways.map(([ax, az, bx, bz, w]) => [ax + ox, az + oz, bx + ox, bz + oz, w]);

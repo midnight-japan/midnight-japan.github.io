@@ -2,6 +2,8 @@
 // projected with the same equirectangular origin as data/map-daikoku.js. kind: ward | town | wharf | jct | water | spot
 const O = { lat: 35.4615, lon: 139.68 };
 const RAW = [
+  // 座間市 (v2.13.11: sunflower fields on the Sagami River)
+  ['座間市', 'ward', 35.4885, 139.4076], ['座間ひまわり畑', 'spot', 35.4890, 139.3765], ['四ツ谷ひまわり畑', 'spot', 35.4730, 139.3825], ['座架依橋', 'spot', 35.4865, 139.3745], ['新田宿', 'town', 35.4800, 139.3880], ['相武台', 'town', 35.4985, 139.4085], ['相模川', 'water', 35.4800, 139.3700],
   // 横浜市鶴見区・神奈川区
   ['鶴見区', 'ward', 35.5085, 139.6825], ['大黒ふ頭', 'wharf', 35.4585, 139.6810], ['大黒町', 'town', 35.4790, 139.6830],
   ['大黒JCT', 'jct', 35.4668, 139.6745], ['生麦', 'town', 35.4945, 139.6645], ['生麦JCT', 'jct', 35.4925, 139.6700],

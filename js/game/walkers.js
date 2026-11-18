@@ -76,6 +76,17 @@ export class Walkers {
       if (h2) { const m = { ...w, h: h2, lead: w, lat: 0.6, fan: w.fan, phoney: false, umb: null }; m.umb = umbrella(); m.umb.position.copy(w.umb.position); m.umb.visible = false; h2.object.add(m.umb); w.lat = -0.05; this.g.scene.add(h2.object); this.list.push(m); this.pose(m, true); } }
     return true;
   }
+  // someone walks out of a konbini door with a carrier bag and joins the nearest pavement
+  spawnFromShop(sh) {
+    const N = this.net(); if (!N) return; const sp = N.randomNear(sh.x, sh.z, 0, 30); if (!sp || sp.c.cls > 4) return;
+    const type = Math.random() < 0.3 ? 'office' : Math.random() < 0.5 ? 'student' : 'shopper';
+    let h; try { h = createHuman(typedOutfit(type)); } catch { return; } giveBag(h, 'shopper');
+    const w = { h, c: sp.c, i: sp.i, d: sp.d, dir: Math.random() < 0.5 ? 1 : -1, side: Math.random() < 0.5 ? 1 : -1, v: 1.1 + Math.random() * 0.3, type, yaw: 0, pause: 0, ox: 0, oz: 0, lat: 0, fan: false, phoney: Math.random() < 0.4, act: null, cool: 0, shopCool: 60 };
+    w.umb = umbrella(); w.umb.position.set(0.12, (h.height || 1.7) + 0.08, 0.06); w.umb.visible = false; h.object.add(w.umb);
+    this.g.scene.add(h.object); this.list.push(w); this.pose(w, true);
+    // start at the door: the side-offset eases back onto the pavement line (ox/oz decay in update)
+    const p = h.object.position; w.ox = sh.x + sh.nx * 0.6 - p.x; w.oz = sh.z + sh.nz * 0.6 - p.z; if (Math.hypot(w.ox, w.oz) > 25) { w.ox = w.oz = 0; } else { p.x += w.ox; p.z += w.oz; }
+  }
   remove(w) { for (const m of this.list) if (m.lead === w) m.lead = null; w.umb?.removeFromParent(); this.g.scene.remove(w.h.object); try { w.h.dispose(); } catch {} this.list.splice(this.list.indexOf(w), 1); }
   pose(w, snap) {
     const S = this.seg(w.c, w.i); const off = w.c.w / 2 + (w.c.cls <= 3 ? 1.6 : 0.8) + (w.lat || 0) * w.side;
@@ -94,13 +105,25 @@ export class Walkers {
       for (const w of this.list.slice()) { const p = w.h.object.position; if (!N || w.c.dead || Math.hypot(p.x - f.x, p.z - f.z) > 260) this.remove(w); }
       const want = Math.round(this.max * (1 - 0.55 * night));
       const inCity = this.g.world.isLand(f.x, f.z) && f.y < 8;
-      for (let k = 0; N && inCity && k < 3 && this.list.length < want; k++) this.spawn(f);
+      const C0 = this.g.world.city, shs = C0?.shopsNear ? C0.shopsNear(f.x, f.z, 190).filter(s => Math.hypot(s.x - f.x, s.z - f.z) > 25) : [];
+      for (let k = 0; N && inCity && k < 3 && this.list.length < want; k++) { if (shs.length && Math.random() < 0.3 && night < 0.8) this.spawnFromShop(shs[Math.floor(Math.random() * shs.length)]); else this.spawn(f); }
     }
     if (!N) return;
     const raining = (this.g.env?.rain ?? 0) > 0.15;
     const v = this.g.vehicle, drive = this.g.mode === 'drive' && v;
+    // v2.13.11 routines: some people pop into a konbini they pass (walk to the door, go in) and others come out with a bag
+    const C = this.g.world.city;
+    if (C?.shopsNear && (this._shopT = (this._shopT || 0) - dt) <= 0) { this._shopT = 2.5;
+      for (const w of this.list) if (!w.go && !w.lead && !w.act && Math.random() < 0.25) { const p = w.h.object.position, sh = C.shopsNear(p.x, p.z, 22)[0]; if (sh && !(w.shopCool > 0)) { w.go = { x: sh.x + sh.nx * 0.6, z: sh.z + sh.nz * 0.6, door: sh }; for (const m of this.list) if (m.lead === w) m.lead = null; } }
+    }
+    for (const w of this.list.slice()) {
+      if (w.go) { const p = w.h.object.position, dx = w.go.x - p.x, dz = w.go.z - p.z, d = Math.hypot(dx, dz);
+        if (d < 0.4) { this.g.audio?.sfx?.('store_chime', { gain: 0.25, pos: p }); this.remove(w); continue; }
+        p.x += dx / d * 1.2 * dt; p.z += dz / d * 1.2 * dt; w.yaw = Math.atan2(dx, dz); w.h.object.rotation.y = w.yaw; w.h.object.visible = true; try { w.h.update(dt, { speed: 1.2, action: 'walk' }); } catch {} continue; }
+    }
     for (const w of this.list) {
-      if (w.c.dead) continue;
+      if (w.c.dead || w.go) continue;
+      if (w.shopCool > 0) w.shopCool -= dt;
       let speed = w.v;
       // stop for a moving car about to pass close by
       const p = w.h.object.position;

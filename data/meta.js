@@ -1,8 +1,17 @@
 // Shared game metadata: version, changelog, regions. Update VERSION + CHANGELOG on every release.
-export const GAME = { title: 'MIDNIGHT JAPAN', titleJa: 'ミッドナイト・ジャパン', version: '2.13.10', build: '2026.11.18' };
+export const GAME = { title: 'MIDNIGHT JAPAN', titleJa: 'ミッドナイト・ジャパン', version: '2.13.11', build: '2026.11.18' };
 
 // Newest first. type: new | change | fix | known
 export const CHANGELOG = [
+  {
+    version: '2.13.11', date: '2026-11-18', codename: 'Himawari',
+    summary: { ko: '새 지역: 자마 해바라기 밭(가나가와현 자마시, 사가미강) — 실제 밭 모양에 약 2m 해바라기가 줄지어 동쪽을 향하고, 계절 따라 새싹·만개·마른 씨앗·맨흙으로. 주변 7km 마을 도로·건물도 실제 지도로. 보행자가 편의점에 들어가고 나옴.', ja: '新エリア：座間ひまわり畑（神奈川県座間市・相模川） — 実際の畑の形に約2mのひまわりが列になって東を向き、季節で芽・満開・枯れた種・裸の土に。周り7kmの町の道路・建物も実在の地図で。歩行者がコンビニに出入り。', en: 'New area: the Zama sunflower fields (Zama, Kanagawa, on the Sagami River) — ~2 m sunflowers in rows facing east on the real plots, changing with the season (young plants, full bloom, dry seed heads, bare soil), plus 7 km of the surrounding town from the real map. Pedestrians now go in and out of konbini.' },
+    items: [
+      { type: 'new', ko: '자마 해바라기 밭: 자카에바시 북쪽 자마 구역과 요쓰야 구역(실제 농지 경계), 가까이는 3D 해바라기(줄기·잎·꽃잎·씨앗), 멀리는 꽃밭 표면, 뒤로 후지산 — 스폰 선택·빠른 이동·사이트 지역 페이지에 추가', ja: '座間ひまわり畑：座架依橋北の座間エリアと四ツ谷エリア（実際の農地の境界）、近くは3Dのひまわり（茎・葉・花びら・種）、遠くは花畑の面、奥に富士山 — スポーン選択・クイック移動・サイトの地域ページに追加', en: 'Zama sunflower fields: the Zama plots north of Zakae Bridge and the Yotsuya plots (real field outlines), 3D sunflowers up close (stem, leaves, petals, seed disc) and a flower-field surface further out, Mt Fuji behind — in the spawn picker, quick travel and the site regions page' },
+      { type: 'new', ko: '자마 주변 약 7×7km 마을(도로·건물·철도·편의점·주유소)을 실제 지도 데이터로 추가', ja: '座間周辺 約7×7kmの町（道路・建物・鉄道・コンビニ・ガソリンスタンド）を実在の地図データで追加', en: 'About 7 × 7 km of the town around Zama (streets, buildings, railway, konbini, fuel stations) from real map data' },
+      { type: 'new', ko: '보행자 일과: 지나가다 편의점에 들어가거나, 편의점에서 봉지를 들고 나와 길을 걸어감', ja: '歩行者の日常：通りがかりにコンビニに入ったり、コンビニから袋を持って出てきて歩いていく', en: 'Pedestrian routines: people pop into konbini they pass, others come out carrying a bag and walk on' },
+    ],
+  },
   {
     version: '2.13.10', date: '2026-11-18', codename: 'Next Stop',
     summary: { ko: '전철에 승객: 창문이 뚫린 차체와 투명 유리, 형광등이 켜진 실내, 파란 롱시트와 손잡이 봉, 앉고 서 있는 승객 — 출퇴근 시간엔 만원, 심야엔 한산.', ja: '電車に乗客：窓の開いた車体と透明ガラス、蛍光灯の点いた車内、青いロングシートと吊り手の棒、座る人と立つ人 — 通勤時間は満員、深夜はがらがら。', en: 'Passengers on the trains: a body with real window openings and clear glass, a lit cabin, blue long bench seats and grab rails, seated and standing passengers — packed at rush hour, nearly empty late at night.' },
@@ -828,6 +837,8 @@ export const REGIONS = [
     desc: { ko: '아쿠아라인 동쪽 끝. 바다 위 다리를 건너면 닿는 지바현의 실제 3D 시가지.', ja: 'アクアライン東の終点。海上の橋を渡った先の千葉県のリアル3D市街。', en: 'The eastern end of the Aqua-Line: the sea bridge lands you in a real-3D Chiba town.' } },
   { id: 'shonan', status: 'live', name: { ko: '쇼난 (가마쿠라·후지사와)', ja: '湘南（鎌倉・藤沢）', en: 'Shōnan (Kamakura & Fujisawa)' }, pref: '神奈川県鎌倉市・藤沢市',
     desc: { ko: '하코네 가는 해안길 주변의 실제 3D 건물 — 신쇼난 바이패스와 국도 134호.', ja: '箱根へ向かう海沿いのリアル3Dの街——新湘南バイパスと国道134号。', en: 'Real-3D towns along the coast road to Hakone — the Shin-Shōnan bypass and Route 134.' } },
+  { id: 'zama', status: 'live', name: { ko: '자마 해바라기 밭', ja: '座間ひまわり畑', en: 'Zama sunflower fields' }, pref: '神奈川県座間市 新田宿・四ツ谷（相模川）',
+    desc: { ko: '사가미강 가 약 55만 송이의 해바라기 밭(자카에바시 남북과 요쓰야). 여름엔 동쪽을 바라보는 노란 바다, 멀리 후지산. 주변 마을 도로까지 실제 지도로.', ja: '相模川沿いの約55万本のひまわり畑（座架依橋の南北と四ツ谷）。夏は東を向いた黄色い海、遠くに富士山。周りの町の道路まで実在の地図で。', en: 'About 550,000 sunflowers on the Sagami River (either side of Zakae Bridge and at Yotsuya): a yellow sea facing east in summer, Mt Fuji beyond — and the surrounding town streets from the real map.' } },
   { id: 'tatsumi', status: 'planned', name: { ko: '타츠미 PA', ja: '辰巳第一PA', en: 'Tatsumi PA' }, pref: '東京都江東区', desc: { ko: '예정', ja: '予定', en: 'Planned' } },
   { id: 'shibaura', status: 'planned', name: { ko: '시바우라 PA', ja: '芝浦PA', en: 'Shibaura PA' }, pref: '東京都港区', desc: { ko: '예정', ja: '予定', en: 'Planned' } },
   { id: 'umihotaru', status: 'live', name: { ko: '우미호타루 PA', ja: '海ほたるPA', en: 'Umihotaru PA' }, pref: '東京湾アクアライン', desc: { ko: '도쿄만 한가운데 배 모양 PA. 해저 터널을 빠져나오면 바로 나와요.', ja: '東京湾の真ん中に浮かぶ船の形のPA。海底トンネルを抜けるとすぐ。', en: 'The ship-shaped PA in the middle of Tokyo Bay, right where the undersea tunnel surfaces.' } },

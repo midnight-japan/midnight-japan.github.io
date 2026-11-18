@@ -191,7 +191,7 @@ function buildTile(T, lod, opts) {
   const ground = {};             // land use class → Flat
   const wires = new Buf(3);
   const trees = new Buf(5);
-  const fuels = [], forecourts = [], synFuel = [];               // x, z, tx, tz, brand per pump island      // x, z, scale, rot, variant
+  const fuels = [], forecourts = [], synFuel = [], shops = []; // shops: konbini doors x, z, nx, nz (walkers go in / come out)               // x, z, tx, tz, brand per pump island      // x, z, scale, rot, variant
   const cols = [];               // [x, z, hx, hz, ry, y0, y1]
   const DEC = new Buf(6);        // v2.1 road text + traffic signs: position, atlas uv, back-plate flag
   const lamps = [];              // [x, y, z]
@@ -821,6 +821,7 @@ function buildTile(T, lod, opts) {
   }
   function konbini(E, seed, h) {
     const brand = Math.floor(hash2(seed, 99) * 3);
+    shops.push(+((E.p[0] + E.q[0]) / 2).toFixed(1), +((E.p[1] + E.q[1]) / 2).toFixed(1), E.n[0], E.n[2]);
     const BR = [[[0.05, 0.35, 0.75], [1, 1, 1]], [[0.1, 0.55, 0.3], [0.1, 0.35, 0.75]], [[0.9, 0.35, 0.1], [0.85, 0.1, 0.12]]][brand];
     // glazed front, colour band, logo sign, lit
     bm.quad([E.p[0] + E.n[0] * 0.04, 0.05, E.p[1] + E.n[2] * 0.04], [E.q[0] + E.n[0] * 0.04, 0.05, E.q[1] + E.n[2] * 0.04], [E.q[0] + E.n[0] * 0.04, 3.0, E.q[1] + E.n[2] * 0.04], [E.p[0] + E.n[0] * 0.04, 3.0, E.p[1] + E.n[2] * 0.04], E.n, [0, 0], [E.l, 0], [E.l, 3], [0, 3], [1, 1, 1], [KONBINI_FRONT, 0, 0, 0]);
@@ -1004,7 +1005,7 @@ function buildTile(T, lod, opts) {
   }
   const mask = mid ? buildMask(T, streets, forecourts) : null;
   const landR = buildLand(T, streets, OX, OZ, landF);
-  const out = { dec: DEC.out(), mask, landR, runways, gates, rails, stations, fuels, synFuel, fuelWhy: self.__fuelWhy, net, sigs, land: landF.out(), bm: bm.out(), pm: pm.out(), gm: gm.out(), sg: sg.out(), road: road.out(), walk: walk.out(), paint: paint.out(), wires: wires.out(), trees: trees.out(), cols, lamps, water, bridges, ground: {} };
+  const out = { dec: DEC.out(), mask, landR, runways, gates, rails, stations, fuels, synFuel, shops, fuelWhy: self.__fuelWhy, net, sigs, land: landF.out(), bm: bm.out(), pm: pm.out(), gm: gm.out(), sg: sg.out(), road: road.out(), walk: walk.out(), paint: paint.out(), wires: wires.out(), trees: trees.out(), cols, lamps, water, bridges, ground: {} };
   for (const c in ground) out.ground[c] = ground[c].out();
   return out;
 }
