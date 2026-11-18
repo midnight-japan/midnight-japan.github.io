@@ -22,7 +22,9 @@ export function loadManifest() {
 export const GLB_ALIAS = { police: 'crown', police_unmarked: 'crown', taxi: 'crown' };
 const mid = id => GLB_ALIAS[id] || id;
 export const hasGlb = id => !!manifest?.[mid(id)];
-export const glbEntry = id => { const e = cache.get(mid(id)); return e?.scene ? e : null; };
+// v2.13: NPC traffic uses the manifest `lo` file (≈20k triangles) when there is one — the full models are 100k+
+const ckey = (id, lod) => mid(id) + (lod === 'lo' && manifest?.[mid(id)]?.lo ? '@lo' : '');
+export const glbEntry = (id, lod) => { const e = cache.get(ckey(id, lod)); return e?.scene ? e : null; };
 // Models delivered as ONE plain untextured material (e.g. the Canter box truck) would render as unpainted white clay:
 // split their triangles by position into a painted cab, the aluminium load box and the dark chassis / tyres below,
 // so the cab takes the real factory colour like every other car. manifest: split { mat, cab (m from the front), low (m) }
@@ -62,6 +64,7 @@ function fixMaterials(scene, info) {
       try { const g = toCreasedNormals(o.geometry, 35 * Math.PI / 180); o.geometry = g; } catch (e) { console.warn('normals', e); } }); }
   // v2.7: factory look — manifest `recolor` {material: hex} (R33's lime rims) and `stripMap` [material] (aftermarket
   // livery baked into the JZA80's body texture → plain paint)
+  if (info.opaque) for (const n of info.opaque) scene.traverse(o => { if (!o.isMesh) return; for (const m of Array.isArray(o.material) ? o.material : [o.material]) if (m.name === n) { m.transparent = false; m.opacity = 1; m.alphaTest = 0; m.depthWrite = true; m.needsUpdate = true; } }); // v2.13: atlas-textured bodies exported as BLEND
   if (info.recolor || info.stripMap) { const strip = new Set(info.stripMap || []);
     scene.traverse(o => { if (!o.isMesh) return; for (const m of Array.isArray(o.material) ? o.material : [o.material]) {
       if (info.recolor?.[m.name]) { m.color.set(info.recolor[m.name]); m.map = null; m.needsUpdate = true; }
@@ -78,14 +81,15 @@ function fixMaterials(scene, info) {
     }
   });
 }
-export function requestGlb(id) {
-  id = mid(id);
-  let e = cache.get(id); if (e) return e.promise;
-  e = {}; cache.set(id, e);
+export function requestGlb(id, lod) {
+  if (lod === 'lo' && !manifest) return loadManifest().then(() => requestGlb(id, lod));
+  const key = ckey(id, lod); id = mid(id);
+  let e = cache.get(key); if (e) return e.promise;
+  e = {}; cache.set(key, e);
   e.promise = loadManifest().then(m => {
     const info = m[id]; if (!info) throw new Error('no model for ' + id);
     if (!gltf) { gltf = new GLTFLoader(); gltf.setMeshoptDecoder(MeshoptDecoder); }
-    return gltf.loadAsync(new URL(info.file, BASE).href).then(g => { e.scene = g.scene; e.info = info; e.scene.updateMatrixWorld(true); if (info.split) splitLivery(e.scene, info); fixMaterials(e.scene, info); e.scene.traverse(o => { if (o.geometry) o.geometry.userData.shared = true; }); return precompile(e); });
+    return gltf.loadAsync(new URL(key.endsWith('@lo') ? info.lo : info.file, BASE).href).then(g => { e.scene = g.scene; e.info = info; e.scene.updateMatrixWorld(true); if (info.split) splitLivery(e.scene, info); fixMaterials(e.scene, info); e.scene.traverse(o => { if (o.geometry) o.geometry.userData.shared = true; }); return precompile(e); });
   });
   e.promise.catch(err => { if (!/no model/.test(err.message)) console.warn('car model', id, err); });
   return e.promise;

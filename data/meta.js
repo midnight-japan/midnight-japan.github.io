@@ -1,8 +1,18 @@
 // Shared game metadata: version, changelog, regions. Update VERSION + CHANGELOG on every release.
-export const GAME = { title: 'MIDNIGHT JAPAN', titleJa: 'ミッドナイト・ジャパン', version: '2.12.0', build: '2026.11.18' };
+export const GAME = { title: 'MIDNIGHT JAPAN', titleJa: 'ミッドナイト・ジャパン', version: '2.13.0', build: '2026.11.18' };
 
 // Newest first. type: new | change | fix | known
 export const CHANGELOG = [
+  {
+    version: '2.13.0', date: '2026-11-18', codename: 'Garage 43',
+    summary: { ko: '실제 차량 모델 14종 추가(총 43종) — S13 실비아, S2000, 로드스터 ND, RX-8, RX-7 FC, 인테그라 타입R, LFA, 왜건R, 허슬러, 엑스트레일, 어코드, 하이젯, 액티, 엘프. NPC용 저폴리곤 모델과 격자 컬링으로 저화질 60fps, 일본 지도에 47개 도도부현, 스폰 지역 지도 미리보기.', ja: '実車モデルを14車種追加（計43車種）— S13シルビア、S2000、ロードスターND、RX-8、RX-7 FC、インテグラ タイプR、LFA、ワゴンR、ハスラー、エクストレイル、アコード、ハイゼット、アクティ、エルフ。NPC用の軽量モデルとセル単位のカリングで低画質60fps、日本地図に47都道府県、スポーン地点の地図プレビュー。', en: '14 more real car models (43 in all) — S13 Silvia, S2000, Roadster ND, RX-8, RX-7 FC, Integra Type R, LFA, Wagon R, Hustler, X-Trail, Accord, Hijet, Acty, Elf. Low-poly NPC models and cell culling give 60 fps on Low, 47 prefectures on the Japan map, and a map preview of your spawn.' },
+    items: [
+      { type: 'new', ko: '실제 모델 14종(CC-BY, 순정 위주): 닛산 실비아 S13, 혼다 S2000(AP1), 마쓰다 로드스터(ND), RX-8, RX-7 FC, 혼다 인테그라 타입R(DC2), 렉서스 LFA, 스즈키 왜건R, 허슬러, 닛산 엑스트레일, 혼다 어코드 — 그리고 NPC 교통용 다이하쓰 하이젯, 혼다 액티, 이스즈 엘프. 모두 바퀴가 따로 굴러가고 번호판·라이트가 붙음', ja: '実車モデル14車種（CC-BY、ノーマル中心）：日産シルビアS13、ホンダS2000（AP1）、マツダ ロードスター（ND）、RX-8、RX-7 FC、ホンダ インテグラ タイプR（DC2）、レクサスLFA、スズキ ワゴンR、ハスラー、日産エクストレイル、ホンダ アコード — NPC交通用にダイハツ ハイゼット、ホンダ アクティ、いすゞ エルフ。すべてタイヤが回り、ナンバーとライト付き', en: '14 real models (CC-BY, mostly stock): Nissan Silvia S13, Honda S2000 (AP1), Mazda Roadster (ND), RX-8, RX-7 FC, Honda Integra Type R (DC2), Lexus LFA, Suzuki Wagon R, Hustler, Nissan X-Trail, Honda Accord — plus Daihatsu Hijet, Honda Acty and Isuzu Elf in traffic. All with spinning wheels, plates and lights' },
+      { type: 'change', ko: '모델 품질 기준: 게임에서 추출한 모델(포르자 재질명 등), 레이싱 래핑·밈 스티커, 바퀴 분리 불가, 출처 불확실 모델은 제외', ja: 'モデル品質基準：ゲームから抽出したモデル（Forzaのマテリアル名など）、レース用ラッピング・ミームステッカー、タイヤ分離不可、出所が不確かなモデルは除外', en: 'Model rules: anything extracted from games (Forza material names …), race liveries / meme decals, wheels that can’t be separated or unclear provenance is left out' },
+      { type: 'change', ko: '최적화: NPC 차량은 저폴리곤 버전(평균 3만 삼각형) 사용, 도로 설비·소품·표지판·하코네 나무와 풀을 격자 단위로 컬링 — 저화질 기준 PA 1,700만→320만, 시내 1,100만→320만, 하코네 490만→280만 삼각형으로 60fps', ja: '最適化：NPC車両は軽量版（平均3万三角形）、道路設備・小物・標識・箱根の木と草をセル単位でカリング — 低画質でPA 1,700万→320万、街 1,100万→320万、箱根 490万→280万三角形で60fps', en: 'Optimisation: NPC cars use low-poly versions (~30k triangles), road furniture, props, signs and Hakone trees/grass are culled per cell — on Low: PA 17M→3.2M, city 11M→3.2M, Hakone 4.9M→2.8M triangles, 60 fps' },
+      { type: 'new', ko: '일본 전체 지도에 47개 도도부현 경계·이름, 타이틀의 스폰 지역 선택 시 실제 지도 미리보기와 출발 방향 화살표', ja: '日本全図に47都道府県の境界と名前、タイトルのスポーン地点選択で実際の地図プレビューと出発方向の矢印', en: 'The Japan map shows all 47 prefectures; choosing a spawn on the title screen shows a real map preview with the direction you set off in' },
+    ],
+  },
   {
     version: '2.12.0', date: '2026-11-18', codename: 'Kei Truck',
     summary: { ko: '실제 모델 경트럭 스즈키 캐리 추가(원본 실내 그대로 콕핏), 차·일본 도로를 몰라도 이해할 수 있는 용어 사전, 새 게임 아이콘.', ja: '実車モデルの軽トラ、スズキ・キャリイを追加（純正インテリアのままのコクピット）、クルマや日本の道を知らなくても分かる用語集、新しいアイコン。', en: 'A real-model Suzuki Carry kei truck (with its own cab as the cockpit), a plain-language glossary for anyone new to cars or Japanese roads, and a new game icon.' },

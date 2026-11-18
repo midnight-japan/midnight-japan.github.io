@@ -695,7 +695,8 @@ function splitByCell(geo, C) {
   return out;
 }
 // hide road cells beyond `R` metres from the camera (called a few times a second)
-export function cullRoads(group, cam, R) { const L = group?.userData?.cells; if (!L) return; for (const m of L) { const b = m.geometry.boundingSphere; m.visible = b.center.distanceTo(cam.position) - b.radius < R; } }
+export function cullRoads(group, cam, R) { const L = group?.userData?.cells; if (!L) return; for (const m of L) { const b = m.isInstancedMesh ? m.boundingSphere : m.geometry.boundingSphere; if (!b) continue; m.visible = b.center.distanceTo(cam.position) - b.radius < R; } }
+export { splitByCell };
 export function buildRoadMeshes(net, opts = {}) {
   const group = new THREE.Group(); group.name = 'roads';
   const asphalt = surface('asphalt', { tile: 5, tint: 0x8a8a8a });
@@ -851,11 +852,15 @@ export function buildRoadMeshes(net, opts = {}) {
     merged.dispose();
   }
   // noise-barrier H-posts + delineators (instanced)
+  // v2.13: instanced posts / reflectors / delineators per 1.5 km cell (one InstancedMesh for the whole network drew
+  // ~3.6 M triangles every frame wherever you were)
   const inst = (geo, mat, arr, stride, place) => {
     const n = arr.length / stride; if (!n) return;
-    const im = new THREE.InstancedMesh(geo, mat, n); const o = new THREE.Object3D();
-    for (let i = 0; i < n; i++) { place(o, arr, i * stride); o.updateMatrix(); im.setMatrixAt(i, o.matrix); }
-    im.castShadow = mat !== null; group.add(im); return im;
+    const o = new THREE.Object3D(), byCell = new Map();
+    for (let i = 0; i < n; i++) { place(o, arr, i * stride); o.updateMatrix(); const key = Math.floor(o.position.x / 1500) + ',' + Math.floor(o.position.z / 1500); let l = byCell.get(key); if (!l) byCell.set(key, l = []); l.push(o.matrix.clone()); }
+    let first = null;
+    for (const [key, list] of byCell) { const im = new THREE.InstancedMesh(geo, mat, list.length); list.forEach((M, i) => im.setMatrixAt(i, M)); im.computeBoundingSphere(); im.castShadow = mat !== null; im.userData.cell = key; group.add(im); group.userData.cells.push(im); first ||= im; }
+    return first;
   };
   inst(new THREE.BoxGeometry(0.18, 2.85, 0.14).translate(0, 1.05 + 1.42, 0), new THREE.MeshStandardMaterial({ color: 0x7d8487, metalness: 0.7, roughness: 0.45 }), wallPosts, 4, (o, a, k) => { o.position.set(a[k], a[k + 1], a[k + 2]); o.rotation.set(0, a[k + 3], 0); });
   if (railPosts.length) inst(new THREE.CylinderGeometry(0.06, 0.06, 0.95, 8).translate(0, 0.47, 0), new THREE.MeshStandardMaterial({ color: 0xdfe2e4, metalness: 0.4, roughness: 0.5 }), railPosts, 4, (o, a, k) => { o.position.set(a[k], a[k + 1], a[k + 2]); o.rotation.set(0, a[k + 3], 0); });

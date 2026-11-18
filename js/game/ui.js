@@ -13,7 +13,7 @@ import { OUTFIT_OPTIONS } from './humans.js';
 import { PA_RECT, MAP } from './roads.js';
 import { GOALS } from './goals.js';
 import { PLACES } from '../../data/places.js';
-import { JAPAN_LAND, JAPAN_CITIES } from '../../data/japan.js';
+import { JAPAN_LAND, JAPAN_CITIES, JAPAN_PREFS } from '../../data/japan.js';
 import { DESTS } from '../../data/destinations.js';
 import { GLOSSARY, STANCE_TERM, ROAD_TERM, term } from '../../data/glossary.js';
 import { DEFAULT_SETTINGS } from './main.js';
@@ -52,7 +52,7 @@ export class UI {
         <label class="spawn-sel"><span data-i18n="game.spawn.label"></span> <select id="t-spawn">
           <option value="pa" data-i18n="game.spawn.pa"></option><option value="bay" data-i18n="game.spawn.bay"></option>
           <option value="k1" data-i18n="game.spawn.k1"></option><option value="hakone" data-i18n="game.spawn.hakone"></option><option value="c1" data-i18n="game.spawn.c1"></option><option value="daiba" data-i18n="game.spawn.daiba"></option><option value="r1" data-i18n="game.spawn.r1"></option><option value="seisho" data-i18n="game.spawn.seisho"></option><option value="umi" data-i18n="game.spawn.umi"></option><option value="futo" data-i18n="game.spawn.futo"></option>
-          <option value="mm" data-i18n="game.spawn.mm"></option><option value="chinatown" data-i18n="game.spawn.chinatown"></option><option value="tsurumi" data-i18n="game.spawn.tsurumi"></option><option value="kawasaki" data-i18n="game.spawn.kawasaki"></option><option value="haneda" data-i18n="game.spawn.haneda"></option></select></label>
+          <option value="mm" data-i18n="game.spawn.mm"></option><option value="chinatown" data-i18n="game.spawn.chinatown"></option><option value="tsurumi" data-i18n="game.spawn.tsurumi"></option><option value="kawasaki" data-i18n="game.spawn.kawasaki"></option><option value="haneda" data-i18n="game.spawn.haneda"></option></select></label><canvas id="t-spawnmap" class="spawnmap" width="440" height="250"></canvas>
         <div class="lobby-online" id="lobby-online"></div>
         <div class="lobby-row"><button class="btn sm" data-a="settings">⚙ <span data-i18n="game.menu.settings"></span></button>
         <button class="btn sm" data-a="controls">🎮 <span data-i18n="game.menu.controls"></span></button>
@@ -170,7 +170,7 @@ export class UI {
     $('#whatsnew [data-a=wnDaiba]').textContent = '🌈 ' + t('game.wn.daiba'); $('#whatsnew [data-a=wnSeisho]').textContent = '🗻 ' + t('game.wn.seisho'); $('#whatsnew [data-a=wnClose]').textContent = t('game.wn.close');
     this.screens('whatsnew');
   }
-  showTitle() { let seen = null; try { seen = localStorage.getItem('dn.seenVer'); } catch {} if (seen !== GAME.version && !this._wnShown && !/[?&](auto|go)=/.test(location.search)) { this._wnShown = true; this.showWhatsNew(); return; } this.screens('title'); $('#hud').classList.add('hidden'); $('#title .who').innerHTML = `${esc(t('game.title.hello'))} <b>${esc(displayName())}</b>` + (currentUser() ? '' : ` · <a href="account.html">${esc(t('game.title.login'))}</a>`); this.touchMode(null); const sp = $('#t-spawn'); if (sp) { sp.value = this.g.settings.spawn || 'pa'; sp.onchange = () => { this.g.settings.spawn = sp.value; this.g.saveSettings?.(); }; } const qc = CAR_BY_ID[this.g.garage.car]; $('#quick-car').textContent = qc ? `${qc.maker} ${qc.name}` : ''; this.updateOnline(); }
+  showTitle() { let seen = null; try { seen = localStorage.getItem('dn.seenVer'); } catch {} if (seen !== GAME.version && !this._wnShown && !/[?&](auto|go)=/.test(location.search)) { this._wnShown = true; this.showWhatsNew(); return; } this.screens('title'); $('#hud').classList.add('hidden'); $('#title .who').innerHTML = `${esc(t('game.title.hello'))} <b>${esc(displayName())}</b>` + (currentUser() ? '' : ` · <a href="account.html">${esc(t('game.title.login'))}</a>`); this.touchMode(null); const sp = $('#t-spawn'); if (sp) { sp.value = this.g.settings.spawn || 'pa'; sp.onchange = () => { this.g.settings.spawn = sp.value; this.g.saveSettings?.(); this.spawnPreview(sp.value); }; this.spawnPreview(sp.value); } const qc = CAR_BY_ID[this.g.garage.car]; $('#quick-car').textContent = qc ? `${qc.maker} ${qc.name}` : ''; this.updateOnline(); }
   // v2.5.2: icon + word on every quick button (in the play language) — icons alone were guesswork
   labelHUD() {
     const L3 = (ko, ja, en) => ({ ko, ja, en })[getLang()] || en;
@@ -622,6 +622,25 @@ export class UI {
   }
 
   // ───── HUD ─────
+  // v2.13 — spawn picker preview: an aerial map (the baked OSM raster) of the chosen start, ~2 km across, with the
+  // expressways drawn on top and an arrow at the spawn point facing the way you will set off
+  spawnPreview(region) {
+    const cv = $('#t-spawnmap'); if (!cv) return; const g = this.g; let sp = null;
+    try { sp = region === 'pa' ? { pos: new THREE.Vector3((PA_RECT.x0 + PA_RECT.x1) / 2, 0, (PA_RECT.z0 + PA_RECT.z1) / 2), yaw: 0 } : g.regionSpawn(region); } catch {}
+    if (!sp) { cv.hidden = true; return; } cv.hidden = false;
+    const draw = () => { const c = cv.getContext('2d'), W = cv.width, H = cv.height, k = W / 2200, m = { x: sp.pos.x, z: sp.pos.z };
+      const P = (x, z) => [(x - m.x) * k + W / 2, (z - m.z) * k + H / 2];
+      c.fillStyle = '#0d2236'; c.fillRect(0, 0, W, H); c.fillStyle = '#232c38'; // sea, then land polygons as a base
+      for (const l of MAP.land || []) { if (!l.pts?.length) continue; c.beginPath(); l.pts.forEach(([x, z], i) => { const [a, b] = P(x, z); i ? c.lineTo(a, b) : c.moveTo(a, b); }); c.closePath(); c.fill(); }
+      try { this.drawMapRaster(c, W, H, m, k, 1); } catch {}
+      c.lineCap = 'round';
+      for (const r of g.net.roads) { if (r.kind === 'local') continue; const S = r.samples; if (!S.some(q => Math.abs(q.p.x - m.x) < 1400 && Math.abs(q.p.z - m.z) < 900)) continue;
+        c.strokeStyle = r.kind === 'expressway' ? 'rgba(47,191,116,.95)' : 'rgba(143,224,178,.85)'; c.lineWidth = r.kind === 'expressway' ? 3 : 2; c.beginPath(); S.forEach((q, i) => { if (i % 3) return; const [a, b] = P(q.p.x, q.p.z); i ? c.lineTo(a, b) : c.moveTo(a, b); }); c.stroke(); }
+      const [ax, az] = P(sp.pos.x, sp.pos.z); c.save(); c.translate(ax, az); c.rotate(-sp.yaw + Math.PI); c.fillStyle = '#ff6a3d'; c.strokeStyle = '#fff'; c.lineWidth = 2;
+      c.beginPath(); c.moveTo(0, -13); c.lineTo(9, 9); c.lineTo(0, 4); c.lineTo(-9, 9); c.closePath(); c.fill(); c.stroke(); c.restore();
+      c.strokeStyle = 'rgba(255,255,255,.18)'; c.strokeRect(0.5, 0.5, W - 1, H - 1); };
+    draw(); for (const t of [300, 900, 2000, 4000]) setTimeout(() => { if ($('#t-spawn')?.value === region) draw(); }, t); // raster tiles arrive a moment later
+  }
   // v2.12 — plain-language glossary (data/glossary.js): the explanation in the player's language
   gloss(T) { const L = getLang(); return L === 'ko' ? T.ko : L === 'ja' ? T.jp : T.en; }
   showGlossary() {
@@ -845,7 +864,12 @@ export class UI {
     const poly = (pts, fill) => { c.beginPath(); pts.forEach(([x, z], i) => { const [a, b] = P(x, z); i ? c.lineTo(a, b) : c.moveTo(a, b); }); c.closePath(); c.fillStyle = fill; c.fill(); };
     // v2.7.1: all of Japan underneath (Natural Earth coastline), cities when zoomed out, the drivable area glowing
     if (k < 0.02) { c.fillStyle = '#1d2633'; c.strokeStyle = 'rgba(140,170,210,.45)'; c.lineWidth = 1 * dpr;
-      for (const R of JAPAN_LAND) { c.beginPath(); for (let i = 0; i < R.length; i += 2) { const [a, b] = P(R[i], R[i + 1]); i ? c.lineTo(a, b) : c.moveTo(a, b); } c.closePath(); c.fill(); c.stroke(); } }
+      for (const R of JAPAN_LAND) { c.beginPath(); for (let i = 0; i < R.length; i += 2) { const [a, b] = P(R[i], R[i + 1]); i ? c.lineTo(a, b) : c.moveTo(a, b); } c.closePath(); c.fill(); c.stroke(); }
+      // v2.13: the 47 prefectures — thin borders, names when zoomed out to region level
+      c.strokeStyle = 'rgba(160,190,230,.28)'; c.lineWidth = 0.8 * dpr;
+      for (const pf of JAPAN_PREFS) for (const R of pf.r) { c.beginPath(); for (let i = 0; i < R.length; i += 2) { const [a, b] = P(R[i], R[i + 1]); i ? c.lineTo(a, b) : c.moveTo(a, b); } c.closePath(); c.stroke(); }
+      if (k > 0.0004) { c.textAlign = 'center'; c.textBaseline = 'middle'; for (const pf of JAPAN_PREFS) { if (!pf.c) continue; const [a, b] = P(pf.c[0], pf.c[1]); if (a < -50 || b < -50 || a > W + 50 || b > H + 50) continue;
+        c.font = `600 ${10 * dpr}px "Hiragino Sans","Noto Sans JP",system-ui`; c.fillStyle = 'rgba(200,215,235,.55)'; c.fillText(pf.n, a, b + 12 * dpr); if (getLang() !== 'ja' && k > 0.0012) { c.font = `500 ${8.5 * dpr}px system-ui`; c.fillText(pf.en, a, b + 23 * dpr); } } } }
     for (const l of MAP.land || []) if (l.pts?.length > 2) poly(l.pts, l.main ? '#1d2633' : '#222c3a');
     if (k > 0.25) for (const b of MAP.buildings || []) poly(b.pts, '#3a4658');
     this.drawMapRaster(c, W, H, m, k, dpr);

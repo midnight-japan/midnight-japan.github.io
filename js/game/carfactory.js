@@ -6,9 +6,10 @@ export { requestGlb, loadManifest, hasGlb, glbEntry };
 
 /** Synchronous: uses the real model if it is already loaded (and starts loading it otherwise). */
 export function buildCarAuto(car, opts = {}) {
-  const e = opts.glb === false ? null : glbEntry(car.id);
+  const lod = opts.lod === 'low' ? 'lo' : undefined;
+  const e = opts.glb === false ? null : glbEntry(car.id, lod);
   if (e) { try { return buildGlbCar(car, e, opts); } catch (err) { console.warn('glb car', car.id, err); } }
-  if (opts.glb !== false && !opts.lazy) requestGlb(car.id).catch(() => {}); // lazy: the caller queues the download (traffic)
+  if (opts.glb !== false && !opts.lazy) requestGlb(car.id, lod).catch(() => {}); // lazy: the caller queues the download (traffic)
   return buildCar(car, opts);
 }
 /** Async: waits for the real model (if the car has one). */

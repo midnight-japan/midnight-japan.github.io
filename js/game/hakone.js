@@ -57,7 +57,7 @@ export class Hakone {
   }
   dem(x, z) { return this.D ? this.grid(this.D, x, z) : 0; }
   nearest(x, z) { let best = null; const cx = Math.floor(x / this.CS), cz = Math.floor(z / this.CS); const S = this.road.samples; for (let a = -1; a <= 1; a++) for (let b = -1; b <= 1; b++) for (const i of this.cell.get((cx + a) + ',' + (cz + b)) || []) { const q = S[i]; const d = (q.p.x - x) ** 2 + (q.p.z - z) ** 2; if (!best || d < best.d) best = { d, i }; } if (best) best.d = Math.sqrt(best.d); return best; }
-  lotAt(x, z) { for (const L of HAKONE.lots) { const dx = x - L.x, dz = z - L.z, s = Math.sin(L.yaw), c = Math.cos(L.yaw); const a = dx * s + dz * c, b = dx * c - dz * s; if (Math.abs(a) < L.l / 2 && Math.abs(b) < L.w / 2) return L; } return null; }
+  lotAt(x, z) { for (const L of HAKONE.lots) { const dx = x - L.x, dz = z - L.z; if (dx * dx + dz * dz > (L.l + L.w) * (L.l + L.w) * 0.25 + 4) continue; const s = Math.sin(L.yaw), c = Math.cos(L.yaw); const a = dx * s + dz * c, b = dx * c - dz * s; if (Math.abs(a) < L.l / 2 && Math.abs(b) < L.w / 2) return L; } return null; }
   // ground height off the road: car parks → their level; the road-side band → the cut/fill slope; else the terrain
   ground(x, z) {
     if (!this.H) return this.road ? this.road.samples[0].p.y : 0;
@@ -123,18 +123,21 @@ export class Hakone {
         for (let i = 0; i < S.length; i += 9) { const q = S[i], side = (i / 9) % 2 ? 1 : -1, d = hw2 + 4.5 + r3() * 2.5, x = q.p.x + q.left.x * d * side, z = q.p.z + q.left.z * d * side;
           if (this.lotAt(x, z)) continue; const y = this.ground(x, z); if (Math.abs(y - q.p.y) > 6) continue;
           (q.p.y < 650 ? by.sakura : by.maple).push([x, y, z, false, 0.8 + r3() * 0.35, r3() * 6.28, r3()]); } }
-      for (const [k, list] of Object.entries(by)) { if (!list.length) continue; const m = new THREE.InstancedMesh(G[k], mat, list.length);
-        list.forEach((s, i) => { o.position.set(s[0], s[1] - 0.3, s[2]); o.scale.setScalar(s[4] * (k === 'cedar' ? 1.5 : 1.1)); o.rotation.y = s[5]; o.updateMatrix(); m.setMatrixAt(i, o.matrix); m.setColorAt(i, speciesColor(k, s[6], C)); });
-        registerTrees(m, k, Float32Array.from(list.map(s => s[6])));
-        m.castShadow = false; m.receiveShadow = false; m.computeBoundingSphere(); g.add(m); } }
+      // v2.13: one InstancedMesh per species per 1 km cell (was one per species for all 13 km) → culled by distance
+      this.cells = this.cells || [];
+      for (const [k, all] of Object.entries(by)) { const cells = new Map(); for (const s of all) { const key = Math.floor(s[0] / 1000) + ',' + Math.floor(s[2] / 1000); let l = cells.get(key); if (!l) cells.set(key, l = []); l.push(s); }
+        for (const list of cells.values()) { const m = new THREE.InstancedMesh(G[k], mat, list.length);
+          list.forEach((s, i) => { o.position.set(s[0], s[1] - 0.3, s[2]); o.scale.setScalar(s[4] * (k === 'cedar' ? 1.5 : 1.1)); o.rotation.y = s[5]; o.updateMatrix(); m.setMatrixAt(i, o.matrix); m.setColorAt(i, speciesColor(k, s[6], C)); });
+          registerTrees(m, k, Float32Array.from(list.map(s => s[6])));
+          m.castShadow = false; m.receiveShadow = false; m.computeBoundingSphere(); m.userData.cullR = 2200; g.add(m); this.cells.push(m); } } }
     // v2.8 — roadside grass: susuki (pampas) and bamboo-grass tufts, golden in November, thinning away from the road
     { const Q = this.w?.q || 'high', n0 = Q === 'low' ? 2500 : Q === 'medium' ? 6000 : 14000, mat = floraMaterial(), geoG = grassGeometry(), C = new THREE.Color(), o = new THREE.Object3D(); let sd = 3; const r2 = () => (sd = (sd * 16807) % 2147483647) / 2147483647;
-      if (n0) { const m = new THREE.InstancedMesh(geoG, mat, n0); let n = 0;
+      if (n0) { const cells = new Map(); let n = 0; this.cells = this.cells || [];
         for (let t = 0; t < n0 * 3 && n < n0; t++) { const q = S[Math.floor(r2() * S.length)], side = r2() < 0.5 ? 1 : -1, d = hw + 1.5 + r2() * r2() * 40, x = q.p.x + q.left.x * d * side, z = q.p.z + q.left.z * d * side;
           if (this.lotAt(x, z)) continue; const y = this.ground(x, z); if (Math.abs(y - q.p.y) > 14) continue;
-          o.position.set(x, y - 0.05, z); o.rotation.y = r2() * 6.28; const sc = 1.1 + r2() * 1.6; o.scale.set(sc, sc * (0.8 + r2() * 0.9), sc); o.updateMatrix(); m.setMatrixAt(n, o.matrix);
-          const hi = ss(300, 900, y), gold = r2() * 0.5 + hi * 0.5; m.setColorAt(n++, C.setRGB(0.55 + 0.35 * gold, 0.58 + 0.12 * gold, 0.28)); }
-        m.count = n; m.computeBoundingSphere(); g.add(m); } }
+          o.position.set(x, y - 0.05, z); o.rotation.y = r2() * 6.28; const sc = 1.1 + r2() * 1.6; o.scale.set(sc, sc * (0.8 + r2() * 0.9), sc); o.updateMatrix();
+          const hi = ss(300, 900, y), gold = r2() * 0.5 + hi * 0.5; const key = Math.floor(x / 600) + ',' + Math.floor(z / 600); let l = cells.get(key); if (!l) cells.set(key, l = []); l.push([o.matrix.clone(), 0.55 + 0.35 * gold, 0.58 + 0.12 * gold]); n++; }
+        for (const list of cells.values()) { const m = new THREE.InstancedMesh(geoG, mat, list.length); list.forEach(([M, r, gg], i) => { m.setMatrixAt(i, M); m.setColorAt(i, C.setRGB(r, gg, 0.28)); }); m.computeBoundingSphere(); m.userData.cullR = 450; g.add(m); this.cells.push(m); } } } // v2.13: grass per 600 m cell, drawn within ~450 m
     // ── car parks: asphalt pad, stall lines, wheel stops ──
     const asphalt = surface('asphalt_worn', { tile: 6, tint: 0x8a8a8a }), white = new THREE.MeshStandardMaterial({ color: 0xeeeeea, roughness: 0.6 });
     const conc = surface('concrete', { tile: 3 }), dark = new THREE.MeshStandardMaterial({ color: 0x2b2f35, roughness: 0.6, metalness: 0.3 });
@@ -184,5 +187,7 @@ export class Hakone {
     const roof = new THREE.Mesh(new THREE.BoxGeometry(16, 0.6, 9), new THREE.MeshStandardMaterial({ color: 0xc7262e, roughness: 0.5 })); roof.position.set(s0.p.x, s0.p.y + 5.6, s0.p.z); roof.rotation.y = booth.rotation.y; g.add(roof);
     for (const o of [-7, 7]) { const pl = new THREE.Mesh(new THREE.BoxGeometry(0.5, 5.4, 0.5), conc); pl.position.set(s0.p.x + s0.left.x * o, s0.p.y + 2.7, s0.p.z + s0.left.z * o); g.add(pl); }
   }
-  update(env) { if (this.loungeGlass) this.loungeGlass.emissiveIntensity = (env?.night ?? 0) * 1.2; }
+  update(env) { if (this.loungeGlass) this.loungeGlass.emissiveIntensity = (env?.night ?? 0) * 1.2;
+    const cam = this.w.cam; this._cT = (this._cT || 0) - 1; if (!cam || !this.cells || this._cT > 0) return; this._cT = 20; // every ~20 frames
+    const f = this.w.q === 'low' ? 0.6 : 1; for (const m of this.cells) { const b = m.boundingSphere; m.visible = !!b && b.center.distanceTo(cam.position) - b.radius < (m.userData.cullR || 1500) * f; } }
 }

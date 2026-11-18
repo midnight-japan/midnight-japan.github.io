@@ -11,7 +11,7 @@ import { surface, chainlinkMaterial, windowTexture, glowTexture, weather } from 
 import { buildPortals } from './portals.js';
 import { Hakone, inHakone } from './hakone.js';
 import { COAST_W } from '../../data/coast-west.js';
-import { buildRoadMeshes, cullRoads, lampSpots, bridgeSpan, trenchPolys, PA_RECT, PA, PA_LAYOUT, MAP } from './roads.js';
+import { buildRoadMeshes, cullRoads, splitByCell, lampSpots, bridgeSpan, trenchPolys, PA_RECT, PA, PA_LAYOUT, MAP } from './roads.js';
 import { buildBay, noPierBay, inUmihotaru } from './bay.js';
 import { signMesh } from './signs.js';
 import { City } from './city.js';
@@ -134,10 +134,14 @@ class Static {
     if (!g.attributes.uv) g.setAttribute('uv', new THREE.Float32BufferAttribute(new Float32Array(g.attributes.position.count * 2), 2));
     let arr = this.b.get(mat); if (!arr) this.b.set(mat, arr = []); arr.push(g);
   }
+  // v2.13: merged per material AND per 1 km cell, so frustum + distance culling work (was one mesh per material for
+  // the whole map: ~3.7 M triangles drawn wherever you were)
   build(group, shadows = true) {
+    group.userData.cells ||= [];
     for (const [mat, arr] of this.b) {
-      const mesh = new THREE.Mesh(mergeGeometries(arr), mat);
-      mesh.castShadow = shadows && !mat.transparent; mesh.receiveShadow = true; group.add(mesh);
+      const merged = mergeGeometries(arr); arr.forEach(g => g.dispose()); if (!merged) continue;
+      for (const [key, g] of splitByCell(merged, 1000)) { const mesh = new THREE.Mesh(g, mat); mesh.castShadow = shadows && !mat.transparent; mesh.receiveShadow = true; mesh.userData.cell = key; group.add(mesh); group.userData.cells.push(mesh); }
+      merged.dispose();
     }
   }
 }
@@ -191,8 +195,9 @@ export class World {
     }
     for (const g of drop) this.group.remove(g);
     const out = new THREE.Group(); out.name = 'signs_merged'; let n = 0;
-    for (const { m, geos } of groups.values()) { const geo = mergeGeometries(geos, false); if (!geo) continue; const mesh = new THREE.Mesh(geo, m); mesh.castShadow = false; mesh.receiveShadow = true; out.add(mesh); n++; }
-    this.group.add(out);
+    out.userData.cells = [];
+    for (const { m, geos } of groups.values()) { const merged = mergeGeometries(geos, false); if (!merged) continue; for (const [key, geo] of splitByCell(merged, 1000)) { const mesh = new THREE.Mesh(geo, m); mesh.castShadow = false; mesh.receiveShadow = true; out.add(mesh); out.userData.cells.push(mesh); n++; } merged.dispose(); }
+    this.group.add(out); this.signGroup = out;
     return { signs: drop.length, meshes: n };
   }
   // helpers that place things in a local frame (PA-local, building-local)
@@ -1252,7 +1257,7 @@ export class World {
     this.hakone?.update(env);
     // v2.11 culling: road cells beyond the view range, and the whole Hakone region unless you are near it
     this._cullT = (this._cullT || 0) - dt;
-    if (this.cam && this._cullT <= 0) { this._cullT = 0.4; const R = this.q === 'low' ? 3500 : this.q === 'medium' ? 5500 : 8000; cullRoads(this.roadGroup, this.cam, R);
+    if (this.cam && this._cullT <= 0) { this._cullT = 0.4; const R = this.q === 'low' ? 3500 : this.q === 'medium' ? 5500 : 8000; cullRoads(this.roadGroup, this.cam, R); cullRoads(this.group, this.cam, R * 0.7); cullRoads(this.signGroup, this.cam, Math.min(R, 2500));
       if (this.hakone?.group) this.hakone.group.visible = this.cam.position.x < -40000; }
     this.t += dt;
     const n = env.night; // 0 day .. 1 night
@@ -1341,7 +1346,8 @@ export class World {
     }
     if (PA.inLot(x, z, walk ? 1.5 : 0.3)) return true;
     if (walk && this.walkRects.some(r => { let px = x, pz = z; if (r.f) [px, pz] = r.f.local(x, z); return px > r.x0 && px < r.x1 && pz > r.z0 && pz < r.z1; })) return true;
-    if (this.lotPolys) for (const P of this.lotPolys) if (inPoly(x, z, P)) return true;
+    if (this.lotPolys) { const B = this._lotBB || (this._lotBB = this.lotPolys.map(bbox)); // v2.13: bbox first (this ran thousands of times a frame)
+      for (let i = 0; i < this.lotPolys.length; i++) { const bb = B[i]; if (x < bb.x0 || x > bb.x1 || z < bb.z0 || z > bb.z1) continue; if (inPoly(x, z, this.lotPolys[i])) return true; } }
     if (walk && this.umiRing && inPoly(x, z, this.umiRing)) return true;
     if (inHakone(x, z)) { const L = this.hakone?.lotAt(x, z); if (L) return true; }
     const m = this.city ? this.city.maskAt(x, z) : -2;

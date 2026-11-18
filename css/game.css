@@ -427,3 +427,6 @@ body.photo .online-pill,body.photo .chat{display:none}
 .gl-list h3{margin:14px 0 6px;font-size:13px;letter-spacing:.14em;text-transform:uppercase;color:#ff8a5c}
 .gl-item{padding:9px 12px;margin-bottom:6px;background:rgba(255,255,255,.04);border-left:3px solid #ff3d6e}
 .gl-item b{font-size:15px}.gl-item small{margin-left:8px;color:var(--muted);font-size:11px}.gl-item p{margin:4px 0 0;font-size:13px;line-height:1.55;color:#e2e0dc}
+/* v2.13 spawn preview */
+.spawnmap{display:block;width:220px;height:125px;margin:8px auto 0;border:1px solid rgba(255,255,255,.14);background:#10141c}
+@media (max-width:760px){.spawnmap{width:180px;height:102px}}

@@ -44,7 +44,9 @@
    "head": [
     "clear_glass"
    ]
-  }
+  },
+  "lo": "r32_lo.glb",
+  "loTris": 25756
  },
  "r33": {
   "file": "r33.glb",
@@ -93,7 +95,9 @@
    "Rim_Color": "#b9bcc0",
    "Spring": "#3a3c40",
    "Breakmaterial": "#2b2d30"
-  }
+  },
+  "lo": "r33_lo.glb",
+  "loTris": 34617
  },
  "r35": {
   "file": "r35.glb",
@@ -141,7 +145,9 @@
     "RedLights",
     "RedightGlass"
    ]
-  }
+  },
+  "lo": "r35_lo.glb",
+  "loTris": 105370
  },
  "ae86": {
   "file": "ae86.glb",
@@ -179,7 +185,9 @@
    1.274,
    2.102
   ],
-  "notes": "Pop-up headlights are modeled in the raised position. Simplified from 706k to ~196k tris. Brake calipers stay on the body (not in wheel nodes). Source GLB taken from a GitHub copy (Z11430373/3d-race) whose triangle count (706,212) matches the Sketchfab page (706,225). Normalized on export: units = metres, car length scaled to the real vehicle, front = +Z, up = +Y, ground at y=0, centred on X/Z (wrapper node MJ_root). Wheel nodes wheel_fl/fr/rl/rr have their pivot at the wheel centre (axle = local X). fl = car's left = +X side."
+  "notes": "Pop-up headlights are modeled in the raised position. Simplified from 706k to ~196k tris. Brake calipers stay on the body (not in wheel nodes). Source GLB taken from a GitHub copy (Z11430373/3d-race) whose triangle count (706,212) matches the Sketchfab page (706,225). Normalized on export: units = metres, car length scaled to the real vehicle, front = +Z, up = +Y, ground at y=0, centred on X/Z (wrapper node MJ_root). Wheel nodes wheel_fl/fr/rl/rr have their pivot at the wheel centre (axle = local X). fl = car's left = +X side.",
+  "lo": "ae86_lo.glb",
+  "loTris": 23970
  },
  "fd3s": {
   "file": "fd3s.glb",
@@ -225,7 +233,9 @@
    "tail": [
     "Material.016"
    ]
-  }
+  },
+  "lo": "fd3s_lo.glb",
+  "loTris": 18089
  },
  "jza80": {
   "file": "jza80.glb",
@@ -276,7 +286,9 @@
   },
   "stripMap": [
    "Material_0"
-  ]
+  ],
+  "lo": "jza80_lo.glb",
+  "loTris": 17987
  },
  "a90": {
   "file": "a90.glb",
@@ -314,7 +326,9 @@
    1.302,
    2.19
   ],
-  "notes": "Simplified from 626k to ~215k tris. Detailed interior. An identical-poly copy exists under another uploader (srush651); 3dcarsmodels appears to be the original. Normalized on export: units = metres, car length scaled to the real vehicle, front = +Z, up = +Y, ground at y=0, centred on X/Z (wrapper node MJ_root). Wheel nodes wheel_fl/fr/rl/rr have their pivot at the wheel centre (axle = local X). fl = car's left = +X side."
+  "notes": "Simplified from 626k to ~215k tris. Detailed interior. An identical-poly copy exists under another uploader (srush651); 3dcarsmodels appears to be the original. Normalized on export: units = metres, car length scaled to the real vehicle, front = +Z, up = +Y, ground at y=0, centred on X/Z (wrapper node MJ_root). Wheel nodes wheel_fl/fr/rl/rr have their pivot at the wheel centre (axle = local X). fl = car's left = +X side.",
+  "lo": "a90_lo.glb",
+  "loTris": 38151
  },
  "na1": {
   "file": "na1.glb",
@@ -361,7 +375,9 @@
    "tail": [
     "Material.009"
    ]
-  }
+  },
+  "lo": "na1_lo.glb",
+  "loTris": 19853
  },
  "ek9": {
   "file": "ek9.glb",
@@ -409,7 +425,9 @@
     0.17,
     12
    ]
-  }
+  },
+  "lo": "ek9_lo.glb",
+  "loTris": 29592
  },
  "evo9": {
   "file": "evo9.glb",
@@ -447,7 +465,9 @@
    1.517,
    2.245
   ],
-  "notes": "Original Maya model per author (description mentions Forza only as a use case). Normalized on export: units = metres, car length scaled to the real vehicle, front = +Z, up = +Y, ground at y=0, centred on X/Z (wrapper node MJ_root). Wheel nodes wheel_fl/fr/rl/rr have their pivot at the wheel centre (axle = local X). fl = car's left = +X side."
+  "notes": "Original Maya model per author (description mentions Forza only as a use case). Normalized on export: units = metres, car length scaled to the real vehicle, front = +Z, up = +Y, ground at y=0, centred on X/Z (wrapper node MJ_root). Wheel nodes wheel_fl/fr/rl/rr have their pivot at the wheel centre (axle = local X). fl = car's left = +X side.",
+  "lo": "evo9_lo.glb",
+  "loTris": 25412
  },
  "gr86": {
   "file": "gr86.glb",
@@ -491,7 +511,9 @@
     "back_lights.001"
    ]
   },
-  "cockpit": "proc"
+  "cockpit": "proc",
+  "lo": "gr86_lo.glb",
+  "loTris": 32499
  },
  "z33": {
   "file": "z33.glb",
@@ -536,7 +558,9 @@
    "head": [
     "Material.004"
    ]
-  }
+  },
+  "lo": "z33_lo.glb",
+  "loTris": 26900
  },
  "crown": {
   "file": "crown.glb",
@@ -574,7 +598,9 @@
    1.458,
    2.348
   ],
-  "notes": "Typical Japanese taxi/patrol-car sedan body. Wheels are simple low-poly discs. Body material \"Crown\" is textured (trim/details). Normalized on export: units = metres, car length scaled to the real vehicle, front = +Z, up = +Y, ground at y=0, centred on X/Z (wrapper node MJ_root). Wheel nodes wheel_fl/fr/rl/rr have their pivot at the wheel centre (axle = local X). fl = car's left = +X side."
+  "notes": "Typical Japanese taxi/patrol-car sedan body. Wheels are simple low-poly discs. Body material \"Crown\" is textured (trim/details). Normalized on export: units = metres, car length scaled to the real vehicle, front = +Z, up = +Y, ground at y=0, centred on X/Z (wrapper node MJ_root). Wheel nodes wheel_fl/fr/rl/rr have their pivot at the wheel centre (axle = local X). fl = car's left = +X side.",
+  "lo": "crown_lo.glb",
+  "loTris": 23801
  },
  "police": {
   "file": "crown.glb",
@@ -612,7 +638,9 @@
    1.458,
    2.348
   ],
-  "notes": "Add light bar and black/white paint in code. Normalized on export: units = metres, car length scaled to the real vehicle, front = +Z, up = +Y, ground at y=0, centred on X/Z (wrapper node MJ_root). Wheel nodes wheel_fl/fr/rl/rr have their pivot at the wheel centre (axle = local X). fl = car's left = +X side."
+  "notes": "Add light bar and black/white paint in code. Normalized on export: units = metres, car length scaled to the real vehicle, front = +Z, up = +Y, ground at y=0, centred on X/Z (wrapper node MJ_root). Wheel nodes wheel_fl/fr/rl/rr have their pivot at the wheel centre (axle = local X). fl = car's left = +X side.",
+  "lo": "crown_lo.glb",
+  "loTris": 23801
  },
  "police_unmarked": {
   "file": "crown.glb",
@@ -650,7 +678,9 @@
    1.458,
    2.348
   ],
-  "notes": "Unmarked: use dark paint. Normalized on export: units = metres, car length scaled to the real vehicle, front = +Z, up = +Y, ground at y=0, centred on X/Z (wrapper node MJ_root). Wheel nodes wheel_fl/fr/rl/rr have their pivot at the wheel centre (axle = local X). fl = car's left = +X side."
+  "notes": "Unmarked: use dark paint. Normalized on export: units = metres, car length scaled to the real vehicle, front = +Z, up = +Y, ground at y=0, centred on X/Z (wrapper node MJ_root). Wheel nodes wheel_fl/fr/rl/rr have their pivot at the wheel centre (axle = local X). fl = car's left = +X side.",
+  "lo": "crown_lo.glb",
+  "loTris": 23801
  },
  "taxi": {
   "file": "crown.glb",
@@ -688,7 +718,9 @@
    1.458,
    2.348
   ],
-  "notes": "Add taxi roof sign in code. Normalized on export: units = metres, car length scaled to the real vehicle, front = +Z, up = +Y, ground at y=0, centred on X/Z (wrapper node MJ_root). Wheel nodes wheel_fl/fr/rl/rr have their pivot at the wheel centre (axle = local X). fl = car's left = +X side."
+  "notes": "Add taxi roof sign in code. Normalized on export: units = metres, car length scaled to the real vehicle, front = +Z, up = +Y, ground at y=0, centred on X/Z (wrapper node MJ_root). Wheel nodes wheel_fl/fr/rl/rr have their pivot at the wheel centre (axle = local X). fl = car's left = +X side.",
+  "lo": "crown_lo.glb",
+  "loTris": 23801
  },
  "p911": {
   "file": "p911.glb",
@@ -724,7 +756,9 @@
    1.307,
    2.26
   ],
-  "notes": "Whole car uses ONE texture atlas material (Porsche_911_C4S_2020_Aerokit), so paint cannot be recolored by material. 992 C4S with aero kit. Simplified from 323k to ~200k tris. Normalized on export: units = metres, car length scaled to the real vehicle, front = +Z, up = +Y, ground at y=0, centred on X/Z (wrapper node MJ_root). Wheel nodes wheel_fl/fr/rl/rr have their pivot at the wheel centre (axle = local X). fl = car's left = +X side."
+  "notes": "Whole car uses ONE texture atlas material (Porsche_911_C4S_2020_Aerokit), so paint cannot be recolored by material. 992 C4S with aero kit. Simplified from 323k to ~200k tris. Normalized on export: units = metres, car length scaled to the real vehicle, front = +Z, up = +Y, ground at y=0, centred on X/Z (wrapper node MJ_root). Wheel nodes wheel_fl/fr/rl/rr have their pivot at the wheel centre (axle = local X). fl = car's left = +X side.",
+  "lo": "p911_lo.glb",
+  "loTris": 30762
  },
  "e46": {
   "file": "e46.glb",
@@ -770,7 +804,9 @@
     "Glass_ext-red",
     "Glass_-_Red_-_Rough_0.4"
    ]
-  }
+  },
+  "lo": "e46_lo.glb",
+  "loTris": 74689
  },
  "model3": {
   "file": "model3.glb",
@@ -817,45 +853,9 @@
    "head": [
     "innerLights"
    ]
-  }
- },
- "jimny": {
-  "file": "jimny.glb",
-  "title": "JIMNY 2019",
-  "author": "paige.visuals",
-  "source": "https://sketchfab.com/3d-models/jimny-2019-2c95627ba090412b88883733bcaee568",
-  "license": "CC-BY-4.0",
-  "substitute": null,
-  "stylized": true,
-  "tris": 10680,
-  "bytes": 187904,
-  "forward": "+z",
-  "up": "+y",
-  "paint": [
-   "SUKI"
-  ],
-  "glass": [
-   "window"
-  ],
-  "wheels": {
-   "fl": "wheel_fl",
-   "fr": "wheel_fr",
-   "rl": "wheel_rl",
-   "rr": "wheel_rr"
   },
-  "hood": null,
-  "doors": null,
-  "trunk": null,
-  "engine": null,
-  "bbox": [
-   -0.859,
-   0,
-   -1.74,
-   0.859,
-   1.757,
-   1.74
-  ],
-  "notes": "Very low-poly (10.7k tris) blocky model of the JB64 Jimny. Rear spare tire stays on the body. Paint material guess: SUKI (body shell). Normalized on export: units = metres, car length scaled to the real vehicle, front = +Z, up = +Y, ground at y=0, centred on X/Z (wrapper node MJ_root). Wheel nodes wheel_fl/fr/rl/rr have their pivot at the wheel centre (axle = local X). fl = car's left = +X side."
+  "lo": "model3_lo.glb",
+  "loTris": 23864
  },
  "gdb": {
   "file": "gdb.glb",
@@ -926,9 +926,11 @@
   "notes": "Whole truck is one untextured material (mat_23) - plain white; wheels not separable. No glass material. Normalized on export: units = metres, car length scaled to the real vehicle, front = +Z, up = +Y, ground at y=0, centred on X/Z (wrapper node MJ_root). Wheel nodes wheel_fl/fr/rl/rr have their pivot at the wheel centre (axle = local X). fl = car's left = +X side.",
   "split": {
    "mat": "mat_23",
-   "cab": 2.0,
+   "cab": 2,
    "low": 0.8
-  }
+  },
+  "lo": "truck_lo.glb",
+  "loTris": 46787
  },
  "bus": {
   "file": "bus.glb",
@@ -962,7 +964,9 @@
    2.494,
    3.495
   ],
-  "notes": "Untextured (mostly white) materials; wheels not separable. Possibly a left-hand-drive export version (passenger door is on the right side of the body). Normalized on export: units = metres, car length scaled to the real vehicle, front = +Z, up = +Y, ground at y=0, centred on X/Z (wrapper node MJ_root). Wheel nodes wheel_fl/fr/rl/rr have their pivot at the wheel centre (axle = local X). fl = car's left = +X side."
+  "notes": "Untextured (mostly white) materials; wheels not separable. Possibly a left-hand-drive export version (passenger door is on the right side of the body). Normalized on export: units = metres, car length scaled to the real vehicle, front = +Z, up = +Y, ground at y=0, centred on X/Z (wrapper node MJ_root). Wheel nodes wheel_fl/fr/rl/rr have their pivot at the wheel centre (axle = local X). fl = car's left = +X side.",
+  "lo": "bus_lo.glb",
+  "loTris": 21331
  },
  "s15": {
   "file": "s15.glb",
@@ -1054,7 +1058,9 @@
    "head": [
     "flglass"
    ]
-  }
+  },
+  "lo": "rps13_lo.glb",
+  "loTris": 35431
  },
  "altow": {
   "file": "altow.glb",
@@ -1122,7 +1128,9 @@
    "van": true,
    "belt": 0.55,
    "low": 0.55
-  }
+  },
+  "lo": "hiace_lo.glb",
+  "loTris": 18004
  },
  "leaf": {
   "file": "leaf.glb",
@@ -1153,7 +1161,9 @@
    1.576,
    2.24
   ],
-  "notes": "Converted from an STL solid: ONE material for everything (no separate glass/tires/lights) - recoloring tints the whole car. Wheels not separable. Simplified from 354k to ~200k tris. Normalized on export: units = metres, car length scaled to the real vehicle, front = +Z, up = +Y, ground at y=0, centred on X/Z (wrapper node MJ_root). Wheel nodes wheel_fl/fr/rl/rr have their pivot at the wheel centre (axle = local X). fl = car's left = +X side."
+  "notes": "Converted from an STL solid: ONE material for everything (no separate glass/tires/lights) - recoloring tints the whole car. Wheels not separable. Simplified from 354k to ~200k tris. Normalized on export: units = metres, car length scaled to the real vehicle, front = +Z, up = +Y, ground at y=0, centred on X/Z (wrapper node MJ_root). Wheel nodes wheel_fl/fr/rl/rr have their pivot at the wheel centre (axle = local X). fl = car's left = +X side.",
+  "lo": "leaf_lo.glb",
+  "loTris": 17987
  },
  "r34": {
   "file": "r34.glb",
@@ -1192,7 +1202,9 @@
    1.341,
    2.3
   ],
-  "notes": "Author-made in Blender 2.83 (62k tris). Generic Blender material names renamed on export (paint r34_paint, taillight, headlight_lens with emissive = base texture so lamps glow in their own colours). Normalized on export: units = metres, car length scaled to the real vehicle, front = +Z, up = +Y, ground at y=0, centred on X/Z (wrapper node MJ_root). Wheel nodes wheel_fl/fr/rl/rr have their pivot at the wheel centre (axle = local X). fl = car's left = +X side."
+  "notes": "Author-made in Blender 2.83 (62k tris). Generic Blender material names renamed on export (paint r34_paint, taillight, headlight_lens with emissive = base texture so lamps glow in their own colours). Normalized on export: units = metres, car length scaled to the real vehicle, front = +Z, up = +Y, ground at y=0, centred on X/Z (wrapper node MJ_root). Wheel nodes wheel_fl/fr/rl/rr have their pivot at the wheel centre (axle = local X). fl = car's left = +X side.",
+  "lo": "r34_lo.glb",
+  "loTris": 18342
  },
  "fl5": {
   "file": "fl5.glb",
@@ -1230,7 +1242,9 @@
    1.421,
    2.279
   ],
-  "notes": "Author-made in Blender (595k tris, simplified on export). Materials renamed for in-game paint and lamps. Normalized on export: units = metres, car length scaled to the real vehicle, front = +Z, up = +Y, ground at y=0, centred on X/Z (wrapper node MJ_root). Wheel nodes wheel_fl/fr/rl/rr have their pivot at the wheel centre (axle = local X). fl = car's left = +X side."
+  "notes": "Author-made in Blender (595k tris, simplified on export). Materials renamed for in-game paint and lamps. Normalized on export: units = metres, car length scaled to the real vehicle, front = +Z, up = +Y, ground at y=0, centred on X/Z (wrapper node MJ_root). Wheel nodes wheel_fl/fr/rl/rr have their pivot at the wheel centre (axle = local X). fl = car's left = +X side.",
+  "lo": "fl5_lo.glb",
+  "loTris": 75884
  },
  "mustang": {
   "file": "mustang.glb",
@@ -1269,7 +1283,9 @@
    1.4,
    2.395
   ],
-  "notes": "Author-made in Blender 2.8 (534k tris, simplified on export). Plain white source materials retinted by name (French names: carroserie = body, phare = headlamp). Normalized on export: units = metres, car length scaled to the real vehicle, front = +Z, up = +Y, ground at y=0, centred on X/Z (wrapper node MJ_root). Wheel nodes wheel_fl/fr/rl/rr have their pivot at the wheel centre (axle = local X). fl = car's left = +X side."
+  "notes": "Author-made in Blender 2.8 (534k tris, simplified on export). Plain white source materials retinted by name (French names: carroserie = body, phare = headlamp). Normalized on export: units = metres, car length scaled to the real vehicle, front = +Z, up = +Y, ground at y=0, centred on X/Z (wrapper node MJ_root). Wheel nodes wheel_fl/fr/rl/rr have their pivot at the wheel centre (axle = local X). fl = car's left = +X side.",
+  "lo": "mustang_lo.glb",
+  "loTris": 43398
  },
  "jzx100": {
   "file": "jzx100.glb",
@@ -1311,21 +1327,24 @@
  },
  "lfa": {
   "file": "lfa.glb",
-  "title": "Low Poly Lexus LFA",
-  "author": "yokatann",
-  "source": "https://sketchfab.com/3d-models/low-poly-lexus-lfa-56c3a62e5bb645d8afaf1dcfa4b665ea",
+  "title": "2011_lexus_lfa",
+  "author": "007 (tangwang920)",
+  "source": "https://sketchfab.com/3d-models/ac9616cb34e04749a669ac863ce39bb7",
   "license": "CC-BY-4.0",
-  "substitute": "stylized low-poly LFA (5.6k tris)",
-  "stylized": true,
-  "tris": 3696,
-  "bytes": 69184,
+  "substitute": null,
+  "stylized": false,
+  "tris": 138394,
+  "bytes": 2784308,
   "forward": "+z",
   "up": "+y",
   "paint": [
-   "lfa_paint"
+   "Lexus_LFAGold_2011Paint_Material"
   ],
   "glass": [
-   "window_glass"
+   "Lexus_LFAGold_2011LicensePlateDefaultA_Material",
+   "Lexus_LFAGold_2011Window_Material",
+   "RED_GLASS",
+   "ORANGE_GLASS"
   ],
   "wheels": {
    "fl": "wheel_fl",
@@ -1338,14 +1357,16 @@
   "trunk": null,
   "engine": null,
   "bbox": [
-   -0.929,
+   -1.031,
    0,
    -2.253,
-   0.929,
-   1.238,
+   1.031,
+   1.237,
    2.253
   ],
-  "notes": "Low-poly stylized model; recognisable LFA proportions. Normalized on export: units = metres, car length scaled to the real vehicle, front = +Z, up = +Y, ground at y=0, centred on X/Z (wrapper node MJ_root). Wheel nodes wheel_fl/fr/rl/rr have their pivot at the wheel centre (axle = local X). fl = car's left = +X side."
+  "notes": "v2.13: Sketchfab download, normalised with tools/car-normalize.mjs",
+  "lo": "lfa_lo.glb",
+  "loTris": 23570
  },
  "carry": {
   "file": "carry.glb",
@@ -1397,6 +1418,623 @@
    -0.343,
    1.36,
    0.72
-  ]
+  ],
+  "lo": "carry_lo.glb",
+  "loTris": 22238
+ },
+ "s13": {
+  "file": "s13.glb",
+  "title": "1992 Nissan Silvia S13",
+  "author": "bagged_ls (lstance)",
+  "source": "https://sketchfab.com/3d-models/6fa8f1948f954e3b980b5e96f203815a",
+  "license": "CC-BY-4.0",
+  "substitute": null,
+  "stylized": false,
+  "tris": 43951,
+  "bytes": 709632,
+  "forward": "+z",
+  "up": "+y",
+  "paint": [
+   "CarPaint",
+   "UnderBody",
+   "CarPaint2",
+   "Dblack",
+   "DBlackIn"
+  ],
+  "glass": [
+   "TailAlpha",
+   "HeadAlpha1",
+   "HeadAlpha3",
+   "Windows"
+  ],
+  "lamps": {
+   "head": [
+    "HeadAlpha1",
+    "HeadAlpha3",
+    "HeadlightInside"
+   ],
+   "tail": [
+    "TailAlpha",
+    "Taillight"
+   ]
+  },
+  "wheels": {
+   "fl": "wheel_fl",
+   "fr": "wheel_fr",
+   "rl": "wheel_rl",
+   "rr": "wheel_rr"
+  },
+  "hood": null,
+  "doors": null,
+  "trunk": null,
+  "engine": null,
+  "bbox": [
+   -0.957,
+   0,
+   -2.26,
+   0.957,
+   1.295,
+   2.26
+  ],
+  "notes": "v2.13: Sketchfab download, normalised with tools/car-normalize.mjs",
+  "lo": "s13_lo.glb",
+  "loTris": 21000
+ },
+ "ap1": {
+  "file": "ap1.glb",
+  "title": "1999 Honda S2000 AP1",
+  "author": "mc010699 (mc010699)",
+  "source": "https://sketchfab.com/3d-models/737fd0a261fd4f32b431c838dcc57c0f",
+  "license": "CC-BY-4.0",
+  "substitute": null,
+  "stylized": false,
+  "tris": 134811,
+  "bytes": 2007412,
+  "forward": "+z",
+  "up": "+y",
+  "paint": [
+   "PaintBase",
+   "PanelGapBlack",
+   "GlossBlack"
+  ],
+  "glass": [
+   "WindshieldFrame",
+   "GlassTemp"
+  ],
+  "lamps": {
+   "head": [
+    "HeadlightBumpMap"
+   ],
+   "tail": [
+    "Taillight",
+    "TaillightLens"
+   ]
+  },
+  "wheels": {
+   "fl": "wheel_fl",
+   "fr": "wheel_fr",
+   "rl": "wheel_rl",
+   "rr": "wheel_rr"
+  },
+  "hood": null,
+  "doors": null,
+  "trunk": null,
+  "engine": null,
+  "bbox": [
+   -0.916,
+   0,
+   -2.068,
+   0.916,
+   1.295,
+   2.068
+  ],
+  "notes": "v2.13: Sketchfab download, normalised with tools/car-normalize.mjs",
+  "lo": "ap1_lo.glb",
+  "loTris": 28127
+ },
+ "nd": {
+  "file": "nd.glb",
+  "title": "2019 Mazda MX-5",
+  "author": "007 (tangwang920)",
+  "source": "https://sketchfab.com/3d-models/7da983e65e774e56a0c4a102e691cd65",
+  "license": "CC-BY-4.0",
+  "substitute": null,
+  "stylized": false,
+  "tris": 162101,
+  "bytes": 3114140,
+  "forward": "+z",
+  "up": "+y",
+  "paint": [
+   "MX5MI_Hight_Gloss_Black1",
+   "MX5MI_Body_Cloth1"
+  ],
+  "glass": [
+   "MX5MI_Cabin_A1",
+   "MX5MI_Glass1",
+   "MX5MI_Cabin_Grid_A_004",
+   "MX5MI_Engine_A1",
+   "MX5MI_Glass_Light1",
+   "glass_slight"
+  ],
+  "wheels": {
+   "fl": "wheel_fl",
+   "fr": "wheel_fr",
+   "rl": "wheel_rl",
+   "rr": "wheel_rr"
+  },
+  "hood": null,
+  "doors": null,
+  "trunk": null,
+  "engine": null,
+  "bbox": [
+   -0.97,
+   0,
+   -1.957,
+   0.97,
+   1.257,
+   1.957
+  ],
+  "notes": "v2.13: Sketchfab download, normalised with tools/car-normalize.mjs",
+  "lo": "nd_lo.glb",
+  "loTris": 30118
+ },
+ "rx8": {
+  "file": "rx8.glb",
+  "title": "Mazda rx-8 exterior base",
+  "author": "ShaheerHashmi (ShaheerHashmi)",
+  "source": "https://sketchfab.com/3d-models/978e2947e3a949649a18abb45e41f025",
+  "license": "CC-BY-4.0",
+  "substitute": null,
+  "stylized": false,
+  "tris": 165170,
+  "bytes": 1473676,
+  "forward": "+z",
+  "up": "+y",
+  "paint": [
+   "paint_rx8_yellow",
+   "Blackgray_1",
+   "Blackgray"
+  ],
+  "glass": [
+   "WindScreen",
+   "headlights",
+   "Material_375",
+   "RearLightGlass"
+  ],
+  "lamps": {
+   "head": [
+    "headlights"
+   ],
+   "tail": [
+    "RearLightGlass"
+   ]
+  },
+  "wheels": {
+   "fl": "wheel_fl",
+   "fr": "wheel_fr",
+   "rl": "wheel_rl",
+   "rr": "wheel_rr"
+  },
+  "hood": null,
+  "doors": null,
+  "trunk": null,
+  "engine": null,
+  "bbox": [
+   -0.955,
+   0,
+   -2.217,
+   0.954,
+   1.357,
+   2.217
+  ],
+  "notes": "v2.13: Sketchfab download, normalised with tools/car-normalize.mjs",
+  "lo": "rx8_lo.glb",
+  "loTris": 22034
+ },
+ "wagonr": {
+  "file": "wagonr.glb",
+  "title": "Wagon R",
+  "author": "tkanimationsd742 (tkanimationsd742)",
+  "source": "https://sketchfab.com/3d-models/6700812ecaa840199bdc31fc3b921385",
+  "license": "CC-BY-4.0",
+  "substitute": null,
+  "stylized": false,
+  "tris": 60065,
+  "bytes": 1513272,
+  "forward": "+z",
+  "up": "+y",
+  "paint": [
+   "Car_Paint"
+  ],
+  "glass": [
+   "Basic_Glass"
+  ],
+  "lamps": {
+   "head": [
+    "headlights.0"
+   ],
+   "tail": [
+    "taillights.0"
+   ]
+  },
+  "wheels": {
+   "fl": "wheel_fl",
+   "fr": "wheel_fr",
+   "rl": "wheel_rl",
+   "rr": "wheel_rr"
+  },
+  "hood": null,
+  "doors": null,
+  "trunk": null,
+  "engine": null,
+  "bbox": [
+   -0.808,
+   0,
+   -1.697,
+   0.808,
+   1.58,
+   1.697
+  ],
+  "notes": "v2.13: Sketchfab download, normalised with tools/car-normalize.mjs",
+  "lo": "wagonr_lo.glb",
+  "loTris": 27414
+ },
+ "dc2": {
+  "file": "dc2.glb",
+  "title": "1998 Honda Integra Type R DC2",
+  "author": "007 (tangwang920)",
+  "source": "https://sketchfab.com/3d-models/d4a40c0f29e64138874e74d8559e71cd",
+  "license": "CC-BY-4.0",
+  "substitute": null,
+  "stylized": false,
+  "tris": 118336,
+  "bytes": 2657088,
+  "forward": "+z",
+  "up": "+y",
+  "paint": [
+   "Integraphong3SG1"
+  ],
+  "glass": [
+   "Integraphong7SG1",
+   "Integraphong10SG1",
+   "Integraphong14SG1",
+   "Integraphong11SG1",
+   "Integraphong1SG1",
+   "Integraphong15SG1",
+   "Integraphong23SG1",
+   "Integraphong16SG1"
+  ],
+  "wheels": {
+   "fl": "wheel_fl",
+   "fr": "wheel_fr",
+   "rl": "wheel_rl",
+   "rr": "wheel_rr"
+  },
+  "hood": null,
+  "doors": null,
+  "trunk": null,
+  "engine": null,
+  "bbox": [
+   -0.95,
+   0,
+   -2.19,
+   0.95,
+   1.518,
+   2.19
+  ],
+  "notes": "v2.13: Sketchfab download, normalised with tools/car-normalize.mjs",
+  "lo": "dc2_lo.glb",
+  "loTris": 25383
+ },
+ "fc3s": {
+  "file": "fc3s.glb",
+  "title": "1987_mazda_rx-7_fc",
+  "author": "007 (tangwang920)",
+  "source": "https://sketchfab.com/3d-models/c1f2e01bc8084dd997d91722c3dea2fe",
+  "license": "CC-BY-4.0",
+  "substitute": null,
+  "stylized": false,
+  "tris": 30589,
+  "bytes": 777192,
+  "forward": "+z",
+  "up": "+y",
+  "paint": [
+   "carPaint"
+  ],
+  "glass": [
+   "badges",
+   "red_glass",
+   "orange_glass",
+   "glass_surr",
+   "light_glass_N",
+   "windows",
+   "light_glass"
+  ],
+  "wheels": {
+   "fl": "wheel_fl",
+   "fr": "wheel_fr",
+   "rl": "wheel_rl",
+   "rr": "wheel_rr"
+  },
+  "hood": null,
+  "doors": null,
+  "trunk": null,
+  "engine": null,
+  "bbox": [
+   -0.903,
+   0,
+   -2.155,
+   0.902,
+   1.263,
+   2.155
+  ],
+  "notes": "v2.13: Sketchfab download, normalised with tools/car-normalize.mjs",
+  "lo": "fc3s_lo.glb",
+  "loTris": 21557
+ },
+ "hijet": {
+  "file": "hijet.glb",
+  "title": "Asia Towner / Daihatsu HiJet",
+  "author": "Red Fox / nokillnando (nokillnando)",
+  "source": "https://sketchfab.com/3d-models/05af2473934e4bc68975fa89f842481c",
+  "license": "CC-BY-4.0",
+  "substitute": null,
+  "stylized": false,
+  "tris": 36108,
+  "bytes": 1915548,
+  "forward": "+z",
+  "up": "+y",
+  "paint": [
+   "Body"
+  ],
+  "glass": [
+   "Windows",
+   "Lights",
+   "Wheel"
+  ],
+  "wheels": {
+   "fl": "wheel_fl",
+   "fr": "wheel_fr",
+   "rl": "wheel_rl",
+   "rr": "wheel_rr"
+  },
+  "hood": null,
+  "doors": null,
+  "trunk": null,
+  "engine": null,
+  "bbox": [
+   -0.819,
+   0,
+   -1.697,
+   0.819,
+   1.846,
+   1.697
+  ],
+  "notes": "v2.13: Sketchfab download, normalised with tools/car-normalize.mjs",
+  "lo": "hijet_lo.glb",
+  "loTris": 21326
+ },
+ "acty": {
+  "file": "acty.glb",
+  "title": "Honda Acty Ha3",
+  "author": "metalab (lukutaes)",
+  "source": "https://sketchfab.com/3d-models/f2288e2b992a4afd906371729401258f",
+  "license": "CC-BY-4.0",
+  "substitute": null,
+  "stylized": false,
+  "tris": 136291,
+  "bytes": 2845952,
+  "forward": "+z",
+  "up": "+y",
+  "paint": [
+   "MAINBODY.4"
+  ],
+  "glass": [
+   "icon001",
+   "windscreen.3"
+  ],
+  "lamps": {
+   "head": [],
+   "tail": [
+    "LIGHT_ON_TAIL.4"
+   ]
+  },
+  "wheels": {
+   "fl": "wheel_fl",
+   "fr": "wheel_fr",
+   "rl": "wheel_rl",
+   "rr": "wheel_rr"
+  },
+  "hood": null,
+  "doors": null,
+  "trunk": null,
+  "engine": null,
+  "bbox": [
+   -0.808,
+   0,
+   -1.597,
+   0.808,
+   1.657,
+   1.597
+  ],
+  "notes": "v2.13: Sketchfab download, normalised with tools/car-normalize.mjs",
+  "lo": "acty_lo.glb",
+  "loTris": 23723
+ },
+ "elf": {
+  "file": "elf.glb",
+  "title": "Isuzu Elf series",
+  "author": "Romanov_13 (Romanov13)",
+  "source": "https://sketchfab.com/3d-models/070bc8b65a224ca89a03bb6d67e22edc",
+  "license": "CC-BY-4.0",
+  "substitute": null,
+  "stylized": false,
+  "tris": 153545,
+  "bytes": 3739660,
+  "forward": "+z",
+  "up": "+y",
+  "paint": [
+   "Paint6Mtl",
+   "Paint5Mtl",
+   "Paint21Mtl"
+  ],
+  "glass": [
+   "LMirrorGlass1Mtl"
+  ],
+  "wheels": {
+   "fl": "wheel_fl",
+   "fr": "wheel_fr",
+   "rl": "wheel_rl",
+   "rr": "wheel_rr"
+  },
+  "hood": null,
+  "doors": null,
+  "trunk": null,
+  "engine": null,
+  "bbox": [
+   -0.71,
+   0,
+   -2.345,
+   0.71,
+   1.667,
+   2.345
+  ],
+  "notes": "v2.13: Sketchfab download, normalised with tools/car-normalize.mjs",
+  "lo": "elf_lo.glb",
+  "loTris": 55924
+ },
+ "accord": {
+  "file": "accord.glb",
+  "title": "Honda Accord 2004",
+  "author": "dirocris (dirocris)",
+  "source": "https://sketchfab.com/3d-models/deefd0face794e3b89b8f7908bbf2235",
+  "license": "CC-BY-4.0",
+  "substitute": null,
+  "stylized": false,
+  "tris": 34246,
+  "bytes": 1508516,
+  "forward": "+z",
+  "up": "+y",
+  "paint": [
+   "Black__spec_1",
+   "Black2__spec_1",
+   "Black__spec_1_0"
+  ],
+  "glass": [
+   "Glassfront__env1",
+   "Grey__env_25_sp1",
+   "Glassback__env_1",
+   "Glassa__env_5_s1",
+   "Glassa__env_5_s1_0",
+   "Glassback__env_1_0",
+   "vehiclelights4_0",
+   "Glassa__env_5_s1_1",
+   "Glassa__env_5_s1_2",
+   "Windscreen__env1"
+  ],
+  "wheels": {
+   "fl": "wheel_fl",
+   "fr": "wheel_fr",
+   "rl": "wheel_rl",
+   "rr": "wheel_rr"
+  },
+  "hood": null,
+  "doors": null,
+  "trunk": null,
+  "engine": null,
+  "bbox": [
+   -1.021,
+   0,
+   -2.365,
+   1.021,
+   1.459,
+   2.365
+  ],
+  "notes": "v2.13: Sketchfab download, normalised with tools/car-normalize.mjs",
+  "lo": "accord_lo.glb",
+  "loTris": 25717
+ },
+ "xtrail": {
+  "file": "xtrail.glb",
+  "title": "2023 Nissan X-Trail 4x4-i",
+  "author": "Ddiaz Design (ddiaz-design)",
+  "source": "https://sketchfab.com/3d-models/f9f2cbdacac74ee7acfe1c731195ccaa",
+  "license": "CC-BY-4.0",
+  "substitute": null,
+  "stylized": false,
+  "tris": 134788,
+  "bytes": 2739560,
+  "forward": "+z",
+  "up": "+y",
+  "paint": [
+   "Car_Paint"
+  ],
+  "glass": [
+   "red_glass",
+   "Glass"
+  ],
+  "lamps": {
+   "head": [],
+   "tail": [
+    "Interior_Details"
+   ]
+  },
+  "wheels": {
+   "fl": "wheel_fl",
+   "fr": "wheel_fr",
+   "rl": "wheel_rl",
+   "rr": "wheel_rr"
+  },
+  "hood": null,
+  "doors": null,
+  "trunk": null,
+  "engine": null,
+  "bbox": [
+   -1.062,
+   0,
+   -2.33,
+   1.062,
+   1.688,
+   2.33
+  ],
+  "notes": "v2.13: Sketchfab download, normalised with tools/car-normalize.mjs",
+  "lo": "xtrail_lo.glb",
+  "loTris": 37686
+ },
+ "hustler": {
+  "file": "hustler.glb",
+  "title": "Car - Suzuki Hustler",
+  "author": "mflit (mflit)",
+  "source": "https://sketchfab.com/3d-models/d514c7df40194aaa9949010685763df2",
+  "license": "CC-BY-4.0",
+  "substitute": null,
+  "stylized": false,
+  "tris": 206954,
+  "bytes": 2982424,
+  "forward": "+z",
+  "up": "+y",
+  "paint": [],
+  "glass": [],
+  "wheels": {
+   "fl": "wheel_fl",
+   "fr": "wheel_fr",
+   "rl": "wheel_rl",
+   "rr": "wheel_rr"
+  },
+  "hood": null,
+  "doors": null,
+  "trunk": null,
+  "engine": null,
+  "bbox": [
+   -0.892,
+   0,
+   -1.697,
+   0.892,
+   1.561,
+   1.698
+  ],
+  "notes": "v2.13: Sketchfab download, normalised with tools/car-normalize.mjs",
+  "lo": "hustler_lo.glb",
+  "loTris": 189098
  }
 }
