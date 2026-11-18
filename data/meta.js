@@ -1,8 +1,18 @@
 // Shared game metadata: version, changelog, regions. Update VERSION + CHANGELOG on every release.
-export const GAME = { title: 'MIDNIGHT JAPAN', titleJa: 'ミッドナイト・ジャパン', version: '2.10.0', build: '2026.11.18' };
+export const GAME = { title: 'MIDNIGHT JAPAN', titleJa: 'ミッドナイト・ジャパン', version: '2.11.0', build: '2026.11.18' };
 
 // Newest first. type: new | change | fix | known
 export const CHANGELOG = [
+  {
+    version: '2.11.0', date: '2026-11-18', codename: 'Festival',
+    summary: { ko: '웹사이트와 게임 UI를 완전히 새 디자인으로: 카본 블랙에 마젠타→오렌지 그라데이션, 사선 버튼과 각진 패널, 굵은 이탤릭 타이포. NPC 차량에 운전자가 타고, 새 대표 스크린샷.', ja: 'サイトとゲームUIをまったく新しいデザインに：カーボンブラックにマゼンタ→オレンジのグラデーション、斜めのボタンと角を落としたパネル、太いイタリック。NPCの車に運転手が乗り、新しいスクリーンショット。', en: 'A completely new look for the site and the in-game UI: carbon black with a magenta-to-orange gradient, slanted buttons, cut-corner panels and bold italic type. NPC cars now have drivers, plus new screenshots.' },
+    items: [
+      { type: 'change', ko: '웹사이트 전면 리디자인: 새 첫 화면(벚꽃 토게), 사선 버튼, 각진 카드, 사선 섹션 구분, 그라데이션 포인트', ja: 'サイトを全面リデザイン：新しいトップ（桜の峠）、斜めのボタン、角を落としたカード、斜めのセクション区切り、グラデーションのアクセント', en: 'Site redesign: new hero (the cherry-blossom touge), slanted buttons, cut-corner cards, diagonal section bands, gradient accents' },
+      { type: 'change', ko: '게임 UI 리디자인: 타이틀·메뉴·팝업·HUD 버튼·지도 패널·알림을 같은 디자인 언어로, 반짝임·글로우 효과는 걷어내 눈이 편안하게', ja: 'ゲームUIをリデザイン：タイトル・メニュー・ポップアップ・HUDボタン・地図パネル・通知を同じデザイン言語に、キラキラやグロー効果は外して目にやさしく', en: 'In-game UI redesign: title, menus, pop-ups, HUD buttons, map panels and toasts in the same language; shine/glow effects removed for a calmer look' },
+      { type: 'new', ko: 'NPC 차량 운전석에 운전자 탑승(주차 중엔 빈 좌석)', ja: 'NPCの車の運転席に運転手（駐車中は空席）', en: 'NPC cars have a driver at the wheel (empty seat when parked)' },
+      { type: 'change', ko: 'GitHub README 갱신: 새 대표 이미지와 v2.6~v2.11 요약', ja: 'GitHubのREADMEを更新：新しいメイン画像とv2.6〜v2.11の要約', en: 'GitHub README refreshed: new header image and a v2.6–v2.11 summary' },
+    ],
+  },
   {
     version: '2.10.0', date: '2026-11-18', codename: 'Living City',
     summary: { ko: '살아 있는 거리: 스포츠카가 지나가면 멈춰서 촬영하거나 손 흔드는 사람, 스마트폰 보는 사람, 나란히 걷는 커플. 수도고 야간 도로공사(추월차선 규제)가 일정 시간 생겼다 철수하고, 차가 벚꽃잎·낙엽을 흩날립니다.', ja: '生きた街：スポーツカーが通ると立ち止まって撮影したり手を振る人、スマホを見る人、並んで歩くカップル。首都高の夜間工事（右車線規制）が一定時間現れて撤収し、車が桜の花びらや落ち葉を舞い上げます。', en: 'A living street: people stop to film or wave at a passing sports car, check their phones, couples walk side by side. Shutokō night road works (right-lane closures) come and go, and your car kicks up cherry petals and fallen leaves.' },

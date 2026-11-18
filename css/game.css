@@ -390,3 +390,30 @@ body.photo .online-pill,body.photo .chat{display:none}
   .t-side{top:auto!important;bottom:calc(max(14px,env(safe-area-inset-bottom)) + 140px)!important;right:max(10px,env(safe-area-inset-right))!important;left:auto!important;grid-template-columns:48px 48px!important}
   .t-side button{width:48px!important;height:48px!important}
 }
+/* ═══ v2.11 "FESTIVAL" game UI — same design language as the new site: carbon panels, magenta → orange accents,
+   parallelogram buttons, angled panel corners, bold italic headings; calm (no glows / pulsing) ═══ */
+:root{--bg:#0a0a0c;--panel:rgba(16,16,20,.94);--line:rgba(255,255,255,.12);--text:#f6f5f3;--muted:#b0ada8;--sodium:#ff6a3d;--fest:linear-gradient(100deg,#ff2f70,#ff6a3d 55%,#ffb836);--cut:12px}
+#loading{background:radial-gradient(900px 500px at 75% -10%,rgba(255,61,110,.14),transparent 60%),#0a0a0c}
+.bar{border-radius:0;height:3px}.bar i{background:var(--fest)!important}
+.logo{font-style:italic;font-weight:700;text-transform:uppercase;letter-spacing:-.01em}.logo b{background:var(--fest);-webkit-background-clip:text;background-clip:text;color:transparent}
+.logo.big{text-shadow:none}
+#title{background:linear-gradient(105deg,rgba(10,10,12,.9) 0%,rgba(10,10,12,.55) 45%,rgba(10,10,12,.15) 80%)}
+.btn{border-radius:0!important;transform:skewX(-10deg);font-style:italic;letter-spacing:.02em;background:rgba(255,255,255,.05);border:1px solid var(--line)}
+.btn>*{transform:skewX(10deg)}
+.btn:hover{transform:skewX(-10deg) translateY(-1px);border-color:rgba(255,106,61,.7);background:rgba(255,106,61,.1)}
+.btn.primary,.btn.primary:hover{background:var(--fest)!important;color:#fff!important;border:0;text-transform:uppercase}
+#title.show .btn.primary.big{animation:ui-rise .5s var(--ease-out) both!important;box-shadow:0 12px 30px -12px rgba(255,61,110,.7)}
+.btn.primary::before{display:none}
+.menu,.panel,.popup{border-radius:0!important;clip-path:polygon(0 0,calc(100% - var(--cut)) 0,100% var(--cut),100% 100%,var(--cut) 100%,0 calc(100% - var(--cut)));background:linear-gradient(160deg,rgba(28,28,34,.96),rgba(14,14,18,.96))!important;border:1px solid var(--line)!important}
+.menu h2,.panel h2,.popup h2{font-style:italic;text-transform:uppercase;letter-spacing:.01em}
+.menu h2::after,.panel h2::after{content:'';display:block;width:44px;height:3px;margin-top:6px;background:var(--fest)}
+#hud .hudbar .autobtn{border-radius:0!important;transform:skewX(-10deg);background:rgba(12,12,16,.72);border:1px solid rgba(255,255,255,.14)}
+#hud .hudbar .autobtn>*{display:inline-block;transform:skewX(10deg)}
+#hud .hudbar .autobtn.on,#autobtn.on{background:var(--fest)!important;border-color:transparent!important}
+.hud-menu{border-radius:0!important;transform:skewX(-10deg)}
+.toast{border-radius:0!important;border-left:3px solid #ff3d6e!important;background:rgba(14,14,18,.92)!important}
+#minimap{border-radius:0}
+#map .qt-card,#map .qt-h,#map .qt-list,.mapsel{border-radius:0!important}
+#map .qt-h{background:var(--fest)!important;color:#fff!important}
+.keyhint{border-radius:0!important}
+@media (prefers-reduced-motion:reduce){.btn,.btn>*,#hud .hudbar .autobtn,#hud .hudbar .autobtn>*{transform:none!important}}

@@ -15,6 +15,7 @@ const srcset = s => `${shotSrc(s, 800)} 800w, ${shotSrc(s, 1600)} 1600w`;
 
 // ── Hero slideshow: [screenshot, location label (Japanese road-sign style, not translated)]
 const SLIDES = [
+  ['50-touge-sakura', 'アネスト岩田ターンパイク箱根 · 桜'], ['51-pa-autumn', '大黒PA · 秋'],
   ['47-hud-k1', '首都高速K1横羽線 · 新子安'], ['45-tokyo-tower', '東京タワー · 3D都市モデル'], ['48-pa-lights', '大黒PA · 深夜'], ['40-real-yokohama', '横浜みなとみらい · 3D都市モデル'], ['27-c1night', '首都高速都心環状線 · 銀座'],
   ['29-hakone_dusk', 'アネスト岩田ターンパイク箱根'], ['31-k1rain', '首都高速K1横羽線 · 雨の夜'], ['33-rainbow', 'レインボーブリッジ · 東京湾'],
   ['42-tokyo-night', '東京 · 都心の夜'], ['26-k1-night', '首都高速K1横羽線'],

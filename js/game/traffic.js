@@ -79,6 +79,24 @@ export class Traffic {
     const q = [...want]; const next = () => { const id = q.shift(); if (!id) return; requestGlb(id).catch(() => {}).finally(next); };
     next(); next();
   }
+  // v2.10: a driver at the wheel of every moving NPC car (seated torso + head, a few outfits; hidden when parked)
+  driverFor(ai) {
+    if (!this._drv) { const skin = [0xe8c4a4, 0xd9b08c, 0xc8956e].map(c => new THREE.MeshStandardMaterial({ color: c, roughness: 0.7 })), shirt = [0x1c2433, 0xe8e8e4, 0x2b2b2e, 0x4a5a7a, 0x6b2a2a, 0x3c4a3a, 0x8a8a90].map(c => new THREE.MeshStandardMaterial({ color: c, roughness: 0.85 })), hair = new THREE.MeshStandardMaterial({ color: 0x15120f, roughness: 0.8 });
+      const torso = new THREE.CylinderGeometry(0.15, 0.19, 0.5, 10); torso.translate(0, 0.25, 0); torso.scale(1.25, 1, 0.75);
+      const head = new THREE.SphereGeometry(0.095, 14, 10); head.scale(0.92, 1.1, 1); head.translate(0, 0.66, 0.01);
+      const cap = new THREE.SphereGeometry(0.1, 14, 8, 0, Math.PI * 2, 0, Math.PI * 0.55); cap.scale(0.95, 1.05, 1.05); cap.translate(0, 0.675, -0.005);
+      const arm = new THREE.CylinderGeometry(0.045, 0.05, 0.42, 6); arm.rotateX(-1.1); arm.translate(0, 0.33, 0.17);
+      this._drv = { skin, shirt, hair, torso, head, cap, arm }; }
+    const D = this._drv, g = new THREE.Group(), r = a => a[Math.floor(Math.random() * a.length)];
+    const sh = r(D.shirt), sk = r(D.skin);
+    g.add(new THREE.Mesh(D.torso, sh), new THREE.Mesh(D.head, sk), new THREE.Mesh(D.cap, D.hair));
+    for (const x of [-0.17, 0.17]) { const m = new THREE.Mesh(D.arm, sh); m.position.x = x; g.add(m); }
+    const c = ai.car, big = c.cat === 'traffic' && (c.id === 'bus' || c.id === 'truck');
+    const hw = c.W / 2000, x = -Math.min(0.38, hw * 0.48) * (c.lhd ? -1 : 1);
+    g.position.set(big ? -hw * 0.55 : x, big ? 1.15 : Math.max(0.28, c.H / 1000 * 0.24), big ? c.L / 2000 - 1.3 : -c.wb / 1000 * 0.08);
+    return g;
+  }
+  seatDriver(ai) { if (ai.driver) ai.driver.removeFromParent(); ai.driver = this.driverFor(ai); ai.model.root.add(ai.driver); ai.driver.visible = ai.mode !== 'parked'; }
   swapModels() {
     let n = 0;
     for (const ai of this.cars) {
@@ -87,7 +105,7 @@ export class Traffic {
       const model = buildCarAuto(ai.car, { lod: 'low', color: ai.color, glb: true, realLights: false }); if (!model.isGlb) continue;
       old.root.remove(ai.beam); this.scene.remove(old.root); old.dispose?.();
       model.root.add(ai.beam); model.root.position.copy(old.root.position); model.root.rotation.copy(old.root.rotation); Object.assign(model.lights, L);
-      this.scene.add(model.root); ai.model = model; n++;
+      this.scene.add(model.root); ai.model = model; n++; if (ai.driver) { model.root.add(ai.driver); }
     }
   }
   createAI(id, opts = {}) {
@@ -102,6 +120,7 @@ export class Traffic {
     this.scene.add(model.root);
     const ai = { car, model, beam, road: null, lane: null, s: 0, dir: 1, v: 0, vDes: 0, mode: 'road', t: 0, id: Math.random(), color, pos: new THREE.Vector3(), yaw: 0, radius: car.W / 2000, halfL: car.L / 2000, ...opts };
     ai.spin = 0;
+    this.seatDriver(ai);
     this.cars.push(ai);
     return ai;
   }
@@ -180,7 +199,7 @@ export class Traffic {
   }
   spawnParked(id, spot, noDriver = false, plain = false) {
     const ai = this.createAI(id); ai.plain = plain;
-    spot.taken = true; ai.spot = spot; ai.mode = 'parked'; ai.pos.copy(spot.pos); ai.yaw = spot.yaw;
+    spot.taken = true; ai.spot = spot; ai.mode = 'parked'; ai.pos.copy(spot.pos); ai.yaw = spot.yaw; if (ai.driver) ai.driver.visible = false;
     ai.stay = 60 + Math.random() * 400;
     if (!noDriver) this.g.npc?.spawnMeetGroup(ai);
     // some show-offs: hood open, stance
@@ -231,6 +250,7 @@ export class Traffic {
     let ph = null;
     if (player) ph = this.net.hits(player.pos.x, player.pos.z).filter(h => h.inside && Math.abs(h.y - player.pos.y) < 2);
     for (const ai of this.cars) {
+      if (ai.driver) ai.driver.visible = ai.mode !== 'parked' && !ai.accident; // v2.10: seat empty when parked
       ai.t += dt;
       if (ai.mode === 'road') this.driveRoad(ai, dt, byLane, ph, player);
       else if (ai.mode === 'path') this.drivePath(ai, dt, player);

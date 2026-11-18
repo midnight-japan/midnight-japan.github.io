@@ -1,9 +1,10 @@
 # 📜 MIDNIGHT JAPAN 업데이트 기록 · Changelog
 
-현재 버전 · Current: **v2.10.0** · [▶ 웹에서 플레이](https://midnight-japan.github.io/) · [🌐 업데이트 페이지](https://midnight-japan.github.io/changelog.html)
+현재 버전 · Current: **v2.11.0** · [▶ 웹에서 플레이](https://midnight-japan.github.io/) · [🌐 업데이트 페이지](https://midnight-japan.github.io/changelog.html)
 
 | 버전 | 날짜 | 이름 | 요약 |
 |---|---|---|---|
+| [v2.11.0](#v2110--festival-2026-11-18) | 2026-11-18 | Festival | 웹사이트와 게임 UI를 완전히 새 디자인으로: 카본 블랙에 마젠타→오렌지 그라데이션, 사선 버튼과 각진 패널, 굵은 이탤릭 타이포. NPC 차량에 운전자가 타고, 새 대표 스크린샷. |
 | [v2.10.0](#v2100--living-city-2026-11-18) | 2026-11-18 | Living City | 살아 있는 거리: 스포츠카가 지나가면 멈춰서 촬영하거나 손 흔드는 사람, 스마트폰 보는 사람, 나란히 걷는 커플. 수도고 야간 도로공사(추월차선 규제)가 일정 시간 생겼다 철수하고, 차가 벚꽃잎·낙엽을 흩날립니다. |
 | [v2.9.0](#v290--four-seasons-2026-11-18) | 2026-11-18 | Four Seasons | 사계절 도입(봄 벚꽃 흩날리는 토게, 여름 신록, 가을 단풍, 겨울 앙상한 나무와 눈), 하코네 턴파이크에 비상주차대·주차대, 편의점 앞 아스팔트 주차장과 실제 편의점 브랜드, 콕핏·모바일 버그 수정. |
 | [v2.8.0](#v280--autumn-leaves-2026-11-18) | 2026-11-18 | Autumn Leaves | 나무를 전부 새로 만들었습니다: 은행·느티나무·벚나무·녹나무·곰솔·삼나무·단풍나무가 지역과 11월 단풍색에 맞게 서 있고, 하코네엔 황금빛 억새가 핍니다. 은빛 구름 가장자리와 권운, 곡선 가로등, 수도고식 교각, 회색 콘크리트 지면. |
@@ -51,6 +52,23 @@
 | [v0.2.0](#v020--bayshore-2026-11-05) | 2026-11-05 | Bayshore | 수도고속 완간선을 따라 하네다까지, 도쿄만 아쿠아라인 해저터널을 지나 우미호타루 PA까지. 실제 3D 차량 모델과 열리는 보닛도 들어왔어요. |
 | [v0.1.1](#v011--one-click-2026-11-04) | 2026-11-04 | One Click | 링크 하나로 바로 플레이. 크롬에서 공식 사이트 주소만 열면 설치 없이 실행돼요. |
 | [v0.1.0](#v010--first-meet-2026-11-04) | 2026-11-04 | First Meet | 첫 공개 버전. 다이코쿠 JCT·PA와 다이코쿠 부두 일대를 3D로 구현했습니다. |
+
+---
+
+## v2.11.0 — Festival (2026-11-18)
+
+> 웹사이트와 게임 UI를 완전히 새 디자인으로: 카본 블랙에 마젠타→오렌지 그라데이션, 사선 버튼과 각진 패널, 굵은 이탤릭 타이포. NPC 차량에 운전자가 타고, 새 대표 스크린샷.
+> A completely new look for the site and the in-game UI: carbon black with a magenta-to-orange gradient, slanted buttons, cut-corner panels and bold italic type. NPC cars now have drivers, plus new screenshots.
+
+**✨ 추가 · New**
+
+- NPC 차량 운전석에 운전자 탑승(주차 중엔 빈 좌석)<br><sub>NPC cars have a driver at the wheel (empty seat when parked)</sub>
+
+**🔧 변경 · Changed**
+
+- 웹사이트 전면 리디자인: 새 첫 화면(벚꽃 토게), 사선 버튼, 각진 카드, 사선 섹션 구분, 그라데이션 포인트<br><sub>Site redesign: new hero (the cherry-blossom touge), slanted buttons, cut-corner cards, diagonal section bands, gradient accents</sub>
+- 게임 UI 리디자인: 타이틀·메뉴·팝업·HUD 버튼·지도 패널·알림을 같은 디자인 언어로, 반짝임·글로우 효과는 걷어내 눈이 편안하게<br><sub>In-game UI redesign: title, menus, pop-ups, HUD buttons, map panels and toasts in the same language; shine/glow effects removed for a calmer look</sub>
+- GitHub README 갱신: 새 대표 이미지와 v2.6~v2.11 요약<br><sub>GitHub README refreshed: new header image and a v2.6–v2.11 summary</sub>
 
 ---
 
