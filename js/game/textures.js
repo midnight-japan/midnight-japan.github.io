@@ -46,12 +46,17 @@ function findReal(role) {
   return null;
 }
 
+// v2.13.2: one image per file, shared by every material that uses it (clones share the GPU texture through
+// THREE.Source). Each material used to load its own copy — 192 duplicate 2K maps, ~2.4 GB of video memory.
+const texCache = new Map();
 function loadMap(name, map, srgb, rep) {
   const hi = hiRes && manifest?.materials?.[name]?.hi?.includes(map);
-  const t = loader.load(new URL(`textures/${name}/${hi ? '2k/' : loRes ? 'm/' : ''}${map}.jpg`, BASE).href);
-  t.wrapS = t.wrapT = THREE.RepeatWrapping; t.anisotropy = anisotropy;
-  if (srgb) t.colorSpace = THREE.SRGBColorSpace;
-  t.repeat.set(rep, rep);
+  const url = new URL(`textures/${name}/${hi ? '2k/' : loRes ? 'm/' : ''}${map}.jpg`, BASE).href;
+  let base = texCache.get(url);
+  if (!base) { base = loader.load(url); base.wrapS = base.wrapT = THREE.RepeatWrapping; base.anisotropy = anisotropy; if (srgb) base.colorSpace = THREE.SRGBColorSpace; texCache.set(url, base); }
+  const t = base.clone(); t.repeat.set(rep, rep); t.needsUpdate = false;
+  // a clone made before the image arrived must be told when it does (they share the Source, not the update flag)
+  if (!base.image || !base.image.complete) { const im = base.image; const done = () => { t.needsUpdate = true; }; if (im?.addEventListener) im.addEventListener('load', done, { once: true }); else setTimeout(done, 1500); }
   return t;
 }
 

@@ -1,8 +1,15 @@
 // Shared game metadata: version, changelog, regions. Update VERSION + CHANGELOG on every release.
-export const GAME = { title: 'MIDNIGHT JAPAN', titleJa: 'ミッドナイト・ジャパン', version: '2.13.1', build: '2026.11.18' };
+export const GAME = { title: 'MIDNIGHT JAPAN', titleJa: 'ミッドナイト・ジャパン', version: '2.13.2', build: '2026.11.18' };
 
 // Newest first. type: new | change | fix | known
 export const CHANGELOG = [
+  {
+    version: '2.13.2', date: '2026-11-18', codename: 'Lighter',
+    summary: { ko: '메모리 절약: 같은 지면·벽 텍스처를 재질마다 따로 올리던 문제를 고쳐 그래픽 메모리를 약 0.6GB 줄였습니다. C1·하코네·K1·완간선 장거리 자율주행 점검 완료.', ja: 'メモリ節約：同じ地面・壁テクスチャをマテリアルごとに別々に読み込んでいた問題を修正し、グラフィックメモリを約0.6GB削減。C1・箱根・K1・湾岸線の長距離自動運転を点検。', en: 'Memory saving: the same ground and wall textures were uploaded once per material — now shared, about 0.6 GB less video memory. Long autopilot drives on C1, Hakone, K1 and the Bayshore checked.' },
+    items: [
+      { type: 'fix', ko: '지면·벽·콘크리트 등 텍스처를 이미지 1장으로 공유(2K 텍스처 192→170장, 약 2.4GB→1.9GB) — 저사양·휴대폰에서 탭이 종료될 위험 감소', ja: '地面・壁・コンクリートなどのテクスチャを1枚の画像で共有（2Kテクスチャ192→170枚、約2.4GB→1.9GB）— 低スペック機・スマホでタブが落ちる危険を低減', en: 'Ground, wall and concrete textures now share one image each (2K maps 192→170, ~2.4 GB→1.9 GB) — less risk of the tab being killed on low-memory machines and phones' },
+    ],
+  },
   {
     version: '2.13.1', date: '2026-11-18', codename: 'Way Out',
     summary: { ko: '버그 수정: 대흑 PA 주차장에서 자율주행이 보이지 않는 벽에 막히거나 옆 칸 주차 차량을 길막으로 오인해 멈추던 문제를 고쳤습니다.', ja: '不具合修正：大黒PAの駐車場で自動運転が見えない壁に止まったり、隣の駐車車両を障害物と誤認して止まる問題を修正しました。', en: 'Bug fixes: the autopilot no longer stops at an invisible wall in the Daikoku PA car park or mistakes cars in the neighbouring bays for obstacles.' },
