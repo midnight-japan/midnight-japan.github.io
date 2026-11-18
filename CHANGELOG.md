@@ -1,9 +1,10 @@
 # 📜 MIDNIGHT JAPAN 업데이트 기록 · Changelog
 
-현재 버전 · Current: **v2.13.4** · [▶ 웹에서 플레이](https://midnight-japan.github.io/) · [🌐 업데이트 페이지](https://midnight-japan.github.io/changelog.html)
+현재 버전 · Current: **v2.13.5** · [▶ 웹에서 플레이](https://midnight-japan.github.io/) · [🌐 업데이트 페이지](https://midnight-japan.github.io/changelog.html)
 
 | 버전 | 날짜 | 이름 | 요약 |
 |---|---|---|---|
+| [v2.13.5](#v2135--garage-52-2026-11-18) | 2026-11-18 | Garage 52 | 실제 차량 4대 추가로 총 52대 — 프렐류드 BB6·BB1, 시빅 EG 해치백, 레거시 B4 tS. 바퀴가 차체와 한 덩어리인 모델도 바퀴만 떼어 내 굴러가게 처리. |
 | [v2.13.4](#v2134--full-service-2026-11-18) | 2026-11-18 | Full Service | 주유소 풀서비스(직원이 나와 유종 추천·주유·창 닦기·결제·출차 유도), 도심 어디서든 자율주행 시작, 실제 차량 5대 추가(48대). |
 | [v2.13.3](#v2133--smooth-ride-2026-11-18) | 2026-11-18 | Smooth Ride | 60fps 우선 기본값(내장 GPU는 낮음, 그 외 중간), 프레임에 따라 그리는 거리까지 줄이는 자동 조절, 자율주행 커브 감속과 내비 경로 엄수, NPC 역주행처럼 보이던 문제, 흰 덩어리 트럭·버스 교체, 더 자연스러운 나무, 아주 작게까지 줄어드는 볼륨, 설정 중에도 게임 계속, 로딩 화면 사진, 새 사이트 로고. |
 | [v2.13.2](#v2132--lighter-2026-11-18) | 2026-11-18 | Lighter | 메모리 절약: 같은 지면·벽 텍스처를 재질마다 따로 올리던 문제를 고쳐 그래픽 메모리를 약 0.6GB 줄였습니다. C1·하코네·K1·완간선 장거리 자율주행 점검 완료. |
@@ -59,6 +60,21 @@
 | [v0.2.0](#v020--bayshore-2026-11-05) | 2026-11-05 | Bayshore | 수도고속 완간선을 따라 하네다까지, 도쿄만 아쿠아라인 해저터널을 지나 우미호타루 PA까지. 실제 3D 차량 모델과 열리는 보닛도 들어왔어요. |
 | [v0.1.1](#v011--one-click-2026-11-04) | 2026-11-04 | One Click | 링크 하나로 바로 플레이. 크롬에서 공식 사이트 주소만 열면 설치 없이 실행돼요. |
 | [v0.1.0](#v010--first-meet-2026-11-04) | 2026-11-04 | First Meet | 첫 공개 버전. 다이코쿠 JCT·PA와 다이코쿠 부두 일대를 3D로 구현했습니다. |
+
+---
+
+## v2.13.5 — Garage 52 (2026-11-18)
+
+> 실제 차량 4대 추가로 총 52대 — 프렐류드 BB6·BB1, 시빅 EG 해치백, 레거시 B4 tS. 바퀴가 차체와 한 덩어리인 모델도 바퀴만 떼어 내 굴러가게 처리.
+> 4 more real cars, 52 in total — Prelude BB6 and BB1, Civic EG hatchback, Legacy B4 tS. Models whose wheels were fused to the body now get them split out so they roll.
+
+**✨ 추가 · New**
+
+- 실제 차량 4대(CC-BY, 순정): 혼다 프렐류드 SiR(BB6), 혼다 프렐류드 4세대(BB1), 혼다 시빅 EG 해치백, 스바루 레거시 B4 2.5GT tS(BM9) — 총 52대<br><sub>4 real cars (CC-BY, stock): Honda Prelude SiR (BB6), Prelude 4th gen (BB1), Civic EG hatchback, Subaru Legacy B4 2.5GT tS (BM9) — 52 in total</sub>
+
+**🔧 변경 · Changed**
+
+- 차량 변환 도구: 바퀴가 차체 메시에 붙은 모델에서 연결된 부품 단위로 타이어·휠을 찾아 분리(굴러가는 바퀴). 게임 리핑이 의심되는 S14·데미오·DC5·레거시 왜건 모델과 텍스처가 깨지는 세드릭 모델은 저작권·품질 이유로 제외<br><sub>Car pipeline: wheels fused into the body mesh are found by connected parts and split out so they roll. S14, Demio, DC5 and Legacy wagon models that look like game rips, and a Cedric with broken textures, were left out for copyright / quality reasons</sub>
 
 ---
 

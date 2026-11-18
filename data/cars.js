@@ -437,7 +437,7 @@ const ALL_CARS = [
   { id: 'civiceg', maker: 'Honda', name: 'Civic Ferio', chassis: 'EG8', year: 1995, cat: 'jdm', playable: true,
     engine: { type: 'I4', code: 'D15B', disp: 1493, hp: 130, nm: 138, redline: 7200, idle: 750, turbo: false },
     trans: { type: 'MT', gears: [3.230, 1.900, 1.269, 0.966, 0.742], final: 4.4, rev: 3.0 }, drive: 'FF',
-    mass: 1050, L: 4395, W: 1695, H: 1380, wb: 2620, plate: 'private',
+    mass: 1050, L: 4070, W: 1695, H: 1380, wb: 2620, plate: 'private',
     colors: ['#e8e8e4', '#c4c7cb', '#2c4a7a', '#7a1720'],
     desc: { ko: '가볍고 단정한 90년대 시빅 세단.', ja: '軽くて端正な90年代シビックセダン。', en: 'A light, tidy 90s Civic saloon.' } },
   { id: 'odyssey', maker: 'Honda', name: 'LaGreat', chassis: 'RL1', year: 1999, cat: 'jdm', playable: true,
@@ -464,6 +464,18 @@ const ALL_CARS = [
     mass: 1700, L: 4555, W: 1840, H: 1285, wb: 2470, plate: 'private',
     colors: ['#b31b28', '#151619', '#e8e8e4', '#c4c7cb'],
     desc: { ko: '4WD·4WS 하이테크 GT.', ja: '4WD・4WSのハイテクGT。', en: 'The four-wheel-drive, four-wheel-steer tech GT.' } },
+  { id: 'cedric', maker: 'Nissan', name: 'Cedric V30 Turbo', chassis: 'Y30', year: 1985, cat: 'jdm', playable: true,
+    engine: { type: 'V6', code: 'VG30ET', disp: 2960, hp: 195, nm: 265, redline: 6000, idle: 650, turbo: true },
+    trans: { type: 'AT', gears: [2.458, 1.458, 1.0, 0.686], final: 3.7, rev: 2.18 }, drive: 'FR',
+    mass: 1480, L: 4690, W: 1690, H: 1435, wb: 2730, plate: 'private',
+    colors: ['#151619', '#e8e8e4', '#5a4a3a', '#c4c7cb'],
+    desc: { ko: '80년대 쇼와 고급 세단, 지금은 구샤(旧車) 아이콘.', ja: '昭和の高級セダン、今は旧車の定番。', en: 'The Shōwa-era luxury saloon — a kyūsha icon today.' } },
+  { id: 'legacy', maker: 'Subaru', name: 'Legacy B4 2.5GT tS', chassis: 'BM9', year: 2010, cat: 'jdm', playable: true,
+    engine: { type: 'F4', code: 'EJ25', disp: 2457, hp: 285, nm: 350, redline: 6500, idle: 700, turbo: true },
+    trans: { type: 'MT', gears: [3.454, 1.947, 1.366, 0.972, 0.738, 0.666], final: 4.11, rev: 3.33 }, drive: 'AWD',
+    mass: 1520, L: 4730, W: 1780, H: 1505, wb: 2750, plate: 'private',
+    colors: ['#1d2a4a', '#e8e8e4', '#151619', '#c4c7cb'],
+    desc: { ko: 'STI가 다듬은 수평대향 터보 AWD 세단.', ja: 'STIが仕立てた水平対向ターボAWDセダン。', en: 'An STI-tuned flat-four turbo AWD saloon.' } },
   { id: 'carry', maker: 'Suzuki', name: 'Carry Truck KC', chassis: 'DD51T', year: 1993, cat: 'kei', playable: true,
     engine: { type: 'I3', code: 'F6A', disp: 657, hp: 46, nm: 57, redline: 6500, idle: 900, turbo: false },
     trans: { type: 'MT', gears: [5.106, 2.978, 1.866, 1.252, 0.896], final: 5.125, rev: 5.39 }, drive: 'RR',
@@ -493,7 +505,7 @@ const ALL_CARS = [
 // v2.7: only cars with a real, recognisable manufacturer-accurate 3D model remain. Retired: procedural stand-ins
 // (Roadster, S2000, Copen, S660, N-BOX, Sakura, Prius, Every), stylised/low-poly models (Alto Works, Jimny, LFA) and
 // the untextured HiAce, and the Leaf (an STL conversion: one material, no glass).
-export const RETIRED = new Set(['s660', 'nbox', 'sakura', 'prius', 'every', 'altow', 'hiace', 'leaf', 'celica', 'fit', 'wrx', 'pajero', 'brz', 'cx5', 'nsx2', 'copen', 'z32', 'march', 'note', 'elgrand', 'jimny', 'ls400', 'rx450', 'forester5', 'swift', 'delica', 'forester', 'prelude', 'prelude4', 'civiceg']); // v2.13.4: prelude/prelude4/civiceg — wheels baked into the body (cannot roll)
+export const RETIRED = new Set(['s660', 'nbox', 'sakura', 'prius', 'every', 'altow', 'hiace', 'leaf', 'celica', 'fit', 'wrx', 'pajero', 'brz', 'cx5', 'nsx2', 'copen', 'z32', 'march', 'note', 'elgrand', 'jimny', 'ls400', 'rx450', 'forester5', 'swift', 'delica', 'forester', 'cedric']); // cedric: texture renders as a white wireframe
 // v2.12: new Sketchfab models still being converted / checked — listed here until each one passes (wheels, size, cockpit)
 export const PENDING = new Set([]);
 const SHOW_PENDING = typeof location !== 'undefined' && /[?&]pending=1/.test(location.search); // QA only

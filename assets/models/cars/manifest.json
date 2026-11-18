@@ -2246,5 +2246,198 @@
   "notes": "v2.13: Sketchfab download, normalised with tools/car-normalize.mjs",
   "lo": "gto_lo.glb",
   "loTris": 19735
+ },
+ "prelude": {
+  "file": "prelude.glb",
+  "title": "Honda Prelude 1997 Free",
+  "author": "Black Snow (BlackSnow02)",
+  "source": "https://sketchfab.com/3d-models/d539a25580d347a6b3447fdc82031280",
+  "license": "CC-BY-4.0",
+  "substitute": null,
+  "stylized": false,
+  "tris": 36865,
+  "bytes": 479840,
+  "forward": "+z",
+  "up": "+y",
+  "paint": [
+   "Black_Metal_Paint"
+  ],
+  "glass": [
+   "glaaa",
+   "Glass.001",
+   "Glass.002"
+  ],
+  "wheels": {
+   "fl": "wheel_fl",
+   "fr": "wheel_fr",
+   "rl": "wheel_rl",
+   "rr": "wheel_rr"
+  },
+  "hood": null,
+  "doors": null,
+  "trunk": null,
+  "engine": null,
+  "bbox": [
+   -0.963,
+   0,
+   -2.26,
+   0.963,
+   1.275,
+   2.26
+  ],
+  "notes": "v2.13: Sketchfab download, normalised with tools/car-normalize.mjs",
+  "lo": "prelude_lo.glb",
+  "loTris": 20872
+ },
+ "prelude4": {
+  "file": "prelude4.glb",
+  "title": "Honda Prelude 4",
+  "author": "Fastomas (Fastomas)",
+  "source": "https://sketchfab.com/3d-models/f2d1ef9e746746fcb78cc63e2fcb1b0e",
+  "license": "CC-BY-4.0",
+  "substitute": null,
+  "stylized": false,
+  "tris": 43884,
+  "bytes": 443964,
+  "forward": "+z",
+  "up": "+y",
+  "paint": [
+   "Black",
+   "Body"
+  ],
+  "glass": [
+   "BlackGlass",
+   "Glass"
+  ],
+  "lamps": {
+   "head": [],
+   "tail": [
+    "RearLights"
+   ]
+  },
+  "wheels": {
+   "fl": "wheel_fl",
+   "fr": "wheel_fr",
+   "rl": "wheel_rl",
+   "rr": "wheel_rr"
+  },
+  "hood": null,
+  "doors": null,
+  "trunk": null,
+  "engine": null,
+  "bbox": [
+   -0.94,
+   0,
+   -2.22,
+   0.94,
+   1.278,
+   2.22
+  ],
+  "notes": "v2.13: Sketchfab download, normalised with tools/car-normalize.mjs",
+  "lo": "prelude4_lo.glb",
+  "loTris": 18495
+ },
+ "civiceg": {
+  "file": "civiceg.glb",
+  "title": "1995 Honda Civic DX",
+  "author": "Substep (substep)",
+  "source": "https://sketchfab.com/3d-models/6a8799c153ce474a94d8388ed1ee0290",
+  "license": "CC-BY-4.0",
+  "substitute": null,
+  "stylized": false,
+  "tris": 90655,
+  "bytes": 1130204,
+  "forward": "+z",
+  "up": "+y",
+  "paint": [
+   "Block"
+  ],
+  "glass": [],
+  "wheels": {
+   "fl": "wheel_fl",
+   "fr": "wheel_fr",
+   "rl": "wheel_rl",
+   "rr": "wheel_rr"
+  },
+  "hood": null,
+  "doors": null,
+  "trunk": null,
+  "engine": null,
+  "bbox": [
+   -0.948,
+   0,
+   -2.035,
+   0.948,
+   1.342,
+   2.035
+  ],
+  "notes": "v2.13: Sketchfab download, normalised with tools/car-normalize.mjs",
+  "cockpit": "proc",
+  "lo": "civiceg_lo.glb",
+  "loTris": 59260
+ },
+ "legacy": {
+  "file": "legacy.glb",
+  "title": "2010 Subaru Legacy 2.5GT tS (BM9)",
+  "author": "ilvskf (ilvskf)",
+  "source": "https://sketchfab.com/3d-models/ac37399c27e64c7c940dad5aca0a567c",
+  "license": "CC-BY-4.0",
+  "substitute": null,
+  "stylized": false,
+  "tris": 151844,
+  "bytes": 3905448,
+  "forward": "+z",
+  "up": "+y",
+  "paint": [
+   "body_car_paint"
+  ],
+  "glass": [
+   "rear_tail_glass",
+   "ext_lights_glass",
+   "Glass",
+   "front_glass_reflector",
+   "Material_203",
+   "int_seats_belts",
+   "int_icons",
+   "material",
+   "streeing_icons",
+   "int_streeing_badge_sti",
+   "button",
+   "INT_cockpit_details",
+   "supra_interior_pedals",
+   "shift_chrome",
+   "int_seats_sti_badges",
+   "CSR2_TNR_Rim14A",
+   "wiper",
+   "CSR2_Badge"
+  ],
+  "lamps": {
+   "head": [],
+   "tail": [
+    "rear_tail_glass",
+    "INT_cockpit_details"
+   ]
+  },
+  "wheels": {
+   "fl": "wheel_fl",
+   "fr": "wheel_fr",
+   "rl": "wheel_rl",
+   "rr": "wheel_rr"
+  },
+  "hood": null,
+  "doors": null,
+  "trunk": null,
+  "engine": null,
+  "bbox": [
+   -1.005,
+   0,
+   -2.365,
+   1.005,
+   1.465,
+   2.365
+  ],
+  "notes": "v2.13: Sketchfab download, normalised with tools/car-normalize.mjs",
+  "lo": "legacy_lo.glb",
+  "loTris": 70094
  }
 }

@@ -1,8 +1,16 @@
 // Shared game metadata: version, changelog, regions. Update VERSION + CHANGELOG on every release.
-export const GAME = { title: 'MIDNIGHT JAPAN', titleJa: 'ミッドナイト・ジャパン', version: '2.13.4', build: '2026.11.18' };
+export const GAME = { title: 'MIDNIGHT JAPAN', titleJa: 'ミッドナイト・ジャパン', version: '2.13.5', build: '2026.11.18' };
 
 // Newest first. type: new | change | fix | known
 export const CHANGELOG = [
+  {
+    version: '2.13.5', date: '2026-11-18', codename: 'Garage 52',
+    summary: { ko: '실제 차량 4대 추가로 총 52대 — 프렐류드 BB6·BB1, 시빅 EG 해치백, 레거시 B4 tS. 바퀴가 차체와 한 덩어리인 모델도 바퀴만 떼어 내 굴러가게 처리.', ja: '実車4台追加で計52台 — プレリュードBB6・BB1、シビックEGハッチバック、レガシィB4 tS。タイヤが車体と一体のモデルもタイヤだけ切り離して回るように。', en: '4 more real cars, 52 in total — Prelude BB6 and BB1, Civic EG hatchback, Legacy B4 tS. Models whose wheels were fused to the body now get them split out so they roll.' },
+    items: [
+      { type: 'new', ko: '실제 차량 4대(CC-BY, 순정): 혼다 프렐류드 SiR(BB6), 혼다 프렐류드 4세대(BB1), 혼다 시빅 EG 해치백, 스바루 레거시 B4 2.5GT tS(BM9) — 총 52대', ja: '実車4台（CC-BY、純正）：ホンダ・プレリュードSiR（BB6）、プレリュード4代目（BB1）、シビックEGハッチバック、スバル・レガシィB4 2.5GT tS（BM9） — 計52台', en: '4 real cars (CC-BY, stock): Honda Prelude SiR (BB6), Prelude 4th gen (BB1), Civic EG hatchback, Subaru Legacy B4 2.5GT tS (BM9) — 52 in total' },
+      { type: 'change', ko: '차량 변환 도구: 바퀴가 차체 메시에 붙은 모델에서 연결된 부품 단위로 타이어·휠을 찾아 분리(굴러가는 바퀴). 게임 리핑이 의심되는 S14·데미오·DC5·레거시 왜건 모델과 텍스처가 깨지는 세드릭 모델은 저작권·품질 이유로 제외', ja: '車両変換ツール：タイヤが車体メッシュと一体のモデルから、つながった部品単位でタイヤ・ホイールを見つけて分離（回るタイヤ）。ゲームからの抜き出しが疑われるS14・デミオ・DC5・レガシィワゴンと、テクスチャが崩れるセドリックは著作権・品質の理由で不採用', en: 'Car pipeline: wheels fused into the body mesh are found by connected parts and split out so they roll. S14, Demio, DC5 and Legacy wagon models that look like game rips, and a Cedric with broken textures, were left out for copyright / quality reasons' },
+    ],
+  },
   {
     version: '2.13.4', date: '2026-11-18', codename: 'Full Service',
     summary: { ko: '주유소 풀서비스(직원이 나와 유종 추천·주유·창 닦기·결제·출차 유도), 도심 어디서든 자율주행 시작, 실제 차량 5대 추가(48대).', ja: 'ガソリンスタンドのフルサービス（店員が出てきて油種のおすすめ・給油・窓拭き・会計・出庫誘導）、街中どこからでも自動運転、実車5台追加（48台）。', en: 'Full-service fuel stations (an attendant recommends the fuel, fills up, wipes the glass, takes payment and waves you out), autopilot from any city street, 5 more real cars (48).' },
