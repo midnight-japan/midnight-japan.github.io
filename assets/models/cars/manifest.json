@@ -1346,5 +1346,57 @@
    2.253
   ],
   "notes": "Low-poly stylized model; recognisable LFA proportions. Normalized on export: units = metres, car length scaled to the real vehicle, front = +Z, up = +Y, ground at y=0, centred on X/Z (wrapper node MJ_root). Wheel nodes wheel_fl/fr/rl/rr have their pivot at the wheel centre (axle = local X). fl = car's left = +X side."
+ },
+ "carry": {
+  "file": "carry.glb",
+  "title": "Suzuki Carry Kei Truck 1993",
+  "author": "777angels777",
+  "source": "https://sketchfab.com/3d-models/suzuki-carry-kei-truck-1993-bf028ba79f854d7b80ec038a27894ad7",
+  "license": "CC-BY-4.0",
+  "substitute": null,
+  "stylized": false,
+  "tris": 132553,
+  "bytes": 2488988,
+  "forward": "+z",
+  "up": "+y",
+  "paint": [
+   "Car_paint"
+  ],
+  "glass": [
+   "Glass_clean"
+  ],
+  "lamps": {
+   "head": [
+    "headlights_chrome"
+   ],
+   "tail": [
+    "taillights"
+   ]
+  },
+  "wheels": {
+   "fl": "wheel_fl",
+   "fr": "wheel_fr",
+   "rl": "wheel_rl",
+   "rr": "wheel_rr"
+  },
+  "hood": null,
+  "doors": null,
+  "trunk": null,
+  "engine": null,
+  "bbox": [
+   -0.894,
+   0,
+   -1.648,
+   0.894,
+   1.728,
+   1.648
+  ],
+  "notes": "v2.12: normalised by tools (metres, +z forward, wheels split into wheel_* nodes, simplified 304k→133k tris, WebP textures, meshopt). Right-hand drive with full cabin (steering wheel, speedometer, seats).",
+  "cockpit": "glb",
+  "eye": [
+   -0.343,
+   1.36,
+   0.72
+  ]
  }
 }

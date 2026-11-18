@@ -376,6 +376,7 @@ export function buildGlbCar(car, e, opts = {}) {
     });
     let fitted = false;
     const fit = () => {
+      if (info.cockpit === 'glb' && info.eye) { parts.eye.set(info.eye[0], info.eye[1], info.eye[2]).add(vis.position); parts.eyePitch = 0.08; fitted = true; return; } // v2.12: the model's own cabin, eye set by hand (cab-over kei truck)
       fitted = true; if (!interiorG) return;
       root.updateMatrixWorld(true);
       const rc = new THREE.Raycaster(); rc.near = 0.02; rc.far = 3.5;
@@ -415,10 +416,10 @@ export function buildGlbCar(car, e, opts = {}) {
     model.setCockpitView = on => {
       on = !!on; if (on === model.cockpitView) return; model.cockpitView = on;
       if (on && !fitted) fit();
-      for (const o of procShell) o.visible = on && inCabin.has(o);
+      for (const o of procShell) o.visible = on && inCabin.has(o) && info.cockpit !== 'glb';
       for (const o of glbInside) o.visible = true;
       for (const d of parts.doors) d.pivot.visible = false;
-      vis.visible = !(on && info.cockpit === 'proc'); trimU.uCk.value = on ? 1 : 0; // v2.9: models without window openings: the procedural cabin + glass in cockpit view
+      vis.visible = !(on && info.cockpit === 'proc'); trimU.uCk.value = on && info.cockpit !== 'glb' ? 1 : 0; // v2.9: models without window openings: the procedural cabin + glass in cockpit view
       if (on && info.cockpit === 'proc') for (const o of procShell) o.visible = true;
       for (const m of glbMats) { m.side = on ? THREE.DoubleSide : THREE.FrontSide; m.needsUpdate = true; }
       if (procHood) procHood.visible = false;

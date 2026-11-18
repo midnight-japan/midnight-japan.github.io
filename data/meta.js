@@ -1,8 +1,17 @@
 // Shared game metadata: version, changelog, regions. Update VERSION + CHANGELOG on every release.
-export const GAME = { title: 'MIDNIGHT JAPAN', titleJa: 'ミッドナイト・ジャパン', version: '2.11.1', build: '2026.11.18' };
+export const GAME = { title: 'MIDNIGHT JAPAN', titleJa: 'ミッドナイト・ジャパン', version: '2.12.0', build: '2026.11.18' };
 
 // Newest first. type: new | change | fix | known
 export const CHANGELOG = [
+  {
+    version: '2.12.0', date: '2026-11-18', codename: 'Kei Truck',
+    summary: { ko: '실제 모델 경트럭 스즈키 캐리 추가(원본 실내 그대로 콕핏), 차·일본 도로를 몰라도 이해할 수 있는 용어 사전, 새 게임 아이콘.', ja: '実車モデルの軽トラ、スズキ・キャリイを追加（純正インテリアのままのコクピット）、クルマや日本の道を知らなくても分かる用語集、新しいアイコン。', en: 'A real-model Suzuki Carry kei truck (with its own cab as the cockpit), a plain-language glossary for anyone new to cars or Japanese roads, and a new game icon.' },
+    items: [
+      { type: 'new', ko: '스즈키 캐리 트럭(DD51T): 실내·계기판·핸들까지 있는 고품질 모델(CC-BY), 콕핏은 원본 실내 그대로. 시내·도로에도 경트럭이 달림', ja: 'スズキ・キャリイ トラック（DD51T）：室内・メーター・ハンドルまである高品質モデル（CC-BY）、コクピットは純正の室内そのまま。街や道路にも軽トラが走る', en: 'Suzuki Carry truck (DD51T): a detailed model with full cab, gauges and wheel (CC-BY); the cockpit is its own real cab. Kei trucks now drive around town too' },
+      { type: 'new', ko: '용어 사전(📖, 메뉴): 완간선·수도고·C1·PA·JCT·ETC·토게·비상주차대·차선규제, 츠라이치·샤코탄·VIP·오니캔·캠버·차고조, 경차·경트럭·JDM·터보·로터리·구동방식·변속기를 쉬운 말로. 차고 스탠스 프리셋 아래에 설명, 처음 들어가는 도로에선 한 줄 안내', ja: '用語集（📖・メニュー）：湾岸線・首都高・C1・PA・JCT・ETC・峠・非常駐車帯・車線規制、ツライチ・シャコタン・VIP・鬼キャン・キャンバー・車高調、軽自動車・軽トラ・JDM・ターボ・ロータリー・駆動方式・変速機をやさしく解説。ガレージの車高プリセットの下に説明、初めて走る道路では一言ガイド', en: 'Glossary (📖, menu): the Bayshore, Shutokō, C1, PA, JCT, ETC, touge, emergency bays and lane closures; tsuraichi, shakotan, VIP, oni-camber, camber, coilovers; kei cars and trucks, JDM, turbo, rotary, drivetrains and gearboxes — in plain words. Explained under the garage stance presets, and a one-line tip the first time you drive onto a kind of road' },
+      { type: 'change', ko: '새 게임 아이콘(석양과 고속도로), 이전 아이콘 교체', ja: '新しいアイコン（夕日と高速道路）、以前のアイコンを置き換え', en: 'New game icon (sunset over the expressway), replacing the old one' },
+    ],
+  },
   {
     version: '2.11.1', date: '2026-11-18', codename: 'Tune-up',
     summary: { ko: '버그 수정과 최적화: 제동 시 앞이 숙여지고 가속 시 뒤로 앉도록 차체 움직임 방향 수정, 그려지는 삼각형을 최대 70% 줄인 거리 컬링, 추적 카메라가 고가·건물을 통과하지 않게, R35 차체 반사 개선, NPC 차량 야간 조명, 일본 지도 경계 수정, 이탤릭 제거.', ja: '不具合修正と最適化：ブレーキで前が沈み加速で後ろが沈むよう車体の動きの向きを修正、描画する三角形を最大70%減らす距離カリング、追従カメラが高架や建物を突き抜けないように、R35の車体反射を改善、NPC車両の夜間ライト、日本地図の境界を修正、イタリック体を廃止。', en: 'Fixes and optimisation: the nose now dives under braking and squats on throttle (it was reversed), distance culling draws up to 70% fewer triangles, the chase camera no longer passes through decks or buildings, smoother R35 paint reflections, NPC car lights at night, a correct Japan outline on the map, upright text.' },

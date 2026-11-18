@@ -1,9 +1,10 @@
 # 📜 MIDNIGHT JAPAN 업데이트 기록 · Changelog
 
-현재 버전 · Current: **v2.11.1** · [▶ 웹에서 플레이](https://midnight-japan.github.io/) · [🌐 업데이트 페이지](https://midnight-japan.github.io/changelog.html)
+현재 버전 · Current: **v2.12.0** · [▶ 웹에서 플레이](https://midnight-japan.github.io/) · [🌐 업데이트 페이지](https://midnight-japan.github.io/changelog.html)
 
 | 버전 | 날짜 | 이름 | 요약 |
 |---|---|---|---|
+| [v2.12.0](#v2120--kei-truck-2026-11-18) | 2026-11-18 | Kei Truck | 실제 모델 경트럭 스즈키 캐리 추가(원본 실내 그대로 콕핏), 차·일본 도로를 몰라도 이해할 수 있는 용어 사전, 새 게임 아이콘. |
 | [v2.11.1](#v2111--tune-up-2026-11-18) | 2026-11-18 | Tune-up | 버그 수정과 최적화: 제동 시 앞이 숙여지고 가속 시 뒤로 앉도록 차체 움직임 방향 수정, 그려지는 삼각형을 최대 70% 줄인 거리 컬링, 추적 카메라가 고가·건물을 통과하지 않게, R35 차체 반사 개선, NPC 차량 야간 조명, 일본 지도 경계 수정, 이탤릭 제거. |
 | [v2.11.0](#v2110--festival-2026-11-18) | 2026-11-18 | Festival | 웹사이트와 게임 UI를 완전히 새 디자인으로: 카본 블랙에 마젠타→오렌지 그라데이션, 사선 버튼과 각진 패널, 굵은 이탤릭 타이포. NPC 차량에 운전자가 타고, 새 대표 스크린샷. |
 | [v2.10.0](#v2100--living-city-2026-11-18) | 2026-11-18 | Living City | 살아 있는 거리: 스포츠카가 지나가면 멈춰서 촬영하거나 손 흔드는 사람, 스마트폰 보는 사람, 나란히 걷는 커플. 수도고 야간 도로공사(추월차선 규제)가 일정 시간 생겼다 철수하고, 차가 벚꽃잎·낙엽을 흩날립니다. |
@@ -53,6 +54,22 @@
 | [v0.2.0](#v020--bayshore-2026-11-05) | 2026-11-05 | Bayshore | 수도고속 완간선을 따라 하네다까지, 도쿄만 아쿠아라인 해저터널을 지나 우미호타루 PA까지. 실제 3D 차량 모델과 열리는 보닛도 들어왔어요. |
 | [v0.1.1](#v011--one-click-2026-11-04) | 2026-11-04 | One Click | 링크 하나로 바로 플레이. 크롬에서 공식 사이트 주소만 열면 설치 없이 실행돼요. |
 | [v0.1.0](#v010--first-meet-2026-11-04) | 2026-11-04 | First Meet | 첫 공개 버전. 다이코쿠 JCT·PA와 다이코쿠 부두 일대를 3D로 구현했습니다. |
+
+---
+
+## v2.12.0 — Kei Truck (2026-11-18)
+
+> 실제 모델 경트럭 스즈키 캐리 추가(원본 실내 그대로 콕핏), 차·일본 도로를 몰라도 이해할 수 있는 용어 사전, 새 게임 아이콘.
+> A real-model Suzuki Carry kei truck (with its own cab as the cockpit), a plain-language glossary for anyone new to cars or Japanese roads, and a new game icon.
+
+**✨ 추가 · New**
+
+- 스즈키 캐리 트럭(DD51T): 실내·계기판·핸들까지 있는 고품질 모델(CC-BY), 콕핏은 원본 실내 그대로. 시내·도로에도 경트럭이 달림<br><sub>Suzuki Carry truck (DD51T): a detailed model with full cab, gauges and wheel (CC-BY); the cockpit is its own real cab. Kei trucks now drive around town too</sub>
+- 용어 사전(📖, 메뉴): 완간선·수도고·C1·PA·JCT·ETC·토게·비상주차대·차선규제, 츠라이치·샤코탄·VIP·오니캔·캠버·차고조, 경차·경트럭·JDM·터보·로터리·구동방식·변속기를 쉬운 말로. 차고 스탠스 프리셋 아래에 설명, 처음 들어가는 도로에선 한 줄 안내<br><sub>Glossary (📖, menu): the Bayshore, Shutokō, C1, PA, JCT, ETC, touge, emergency bays and lane closures; tsuraichi, shakotan, VIP, oni-camber, camber, coilovers; kei cars and trucks, JDM, turbo, rotary, drivetrains and gearboxes — in plain words. Explained under the garage stance presets, and a one-line tip the first time you drive onto a kind of road</sub>
+
+**🔧 변경 · Changed**
+
+- 새 게임 아이콘(석양과 고속도로), 이전 아이콘 교체<br><sub>New game icon (sunset over the expressway), replacing the old one</sub>
 
 ---
 

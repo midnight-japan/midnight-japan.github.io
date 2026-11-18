@@ -11,10 +11,10 @@ const _pa = new THREE.Vector3(), _pb = new THREE.Vector3();
 const clamp = (x, a, b) => Math.max(a, Math.min(b, x));
 const lerp = (a, b, t) => a + (b - a) * t;
 const MEET_POOL = ['r34', 'r32', 'r33', 'r35', 's15', 'rps13', 'z33', 'gr86', 'ae86', 'jza80', 'a90', 'jzx100', 'fd3s', 'na1', 'ek9', 'fl5', 'evo9', 'gdb', 'p911', 'e46', 'mustang', 'model3', 'r34', 'jza80', 'fd3s'];
-const CITY_POOL = ['taxi', 'taxi', 'taxi', 'crown', 'crown', 'model3', 'truck', 'truck', 'bus', 'fl5', 'r35', 'gr86', 'ek9', 'jzx100', 'e46', 'z33'];
+const CITY_POOL = ['carry', 'carry', 'taxi', 'taxi', 'taxi', 'crown', 'crown', 'model3', 'truck', 'truck', 'bus', 'fl5', 'r35', 'gr86', 'ek9', 'jzx100', 'e46', 'z33'];
 // NPC traffic uses cars that have real 3D models (the procedural-only kei/hybrid models stay player-selectable)
 // v2.3: everyday Japanese traffic first (taxis, Crowns, vans, trucks, kei cars, Leafs, buses); sports cars are rare on the road
-const TRAFFIC_POOL = ['taxi', 'taxi', 'taxi', 'crown', 'crown', 'crown', 'truck', 'truck', 'truck', 'truck', 'bus', 'bus', 'model3', 'model3', 'crown', 'a90', 'jzx100', 'e46', 'gr86', 'fl5'];
+const TRAFFIC_POOL = ['carry', 'taxi', 'taxi', 'taxi', 'crown', 'crown', 'crown', 'truck', 'truck', 'truck', 'truck', 'bus', 'bus', 'model3', 'model3', 'crown', 'a90', 'jzx100', 'e46', 'gr86', 'fl5'];
 
 // Merge all static meshes of a car model by material (keeps wheels, doors, lights animatable).
 export function mergeModel(model) {
@@ -96,7 +96,7 @@ export class Traffic {
     g.position.set(big ? -hw * 0.55 : x, big ? 1.15 : Math.max(0.28, c.H / 1000 * 0.24), big ? c.L / 2000 - 1.3 : -c.wb / 1000 * 0.08);
     return g;
   }
-  seatDriver(ai) { if (ai.driver) ai.driver.removeFromParent(); ai.driver = this.driverFor(ai); ai.model.root.add(ai.driver); ai.driver.visible = ai.mode !== 'parked'; }
+  seatDriver(ai) { if (ai.seatD) ai.seatD.removeFromParent(); ai.seatD = this.driverFor(ai); ai.model.root.add(ai.seatD); ai.seatD.visible = ai.mode !== 'parked'; }
   swapModels() {
     let n = 0;
     for (const ai of this.cars) {
@@ -105,7 +105,7 @@ export class Traffic {
       const model = buildCarAuto(ai.car, { lod: 'low', color: ai.color, glb: true, realLights: false }); if (!model.isGlb) continue;
       old.root.remove(ai.beam); this.scene.remove(old.root); old.dispose?.();
       model.root.add(ai.beam); model.root.position.copy(old.root.position); model.root.rotation.copy(old.root.rotation); Object.assign(model.lights, L);
-      this.scene.add(model.root); ai.model = model; n++; if (ai.driver) { model.root.add(ai.driver); }
+      this.scene.add(model.root); ai.model = model; n++; if (ai.seatD) { model.root.add(ai.seatD); }
     }
   }
   createAI(id, opts = {}) {
@@ -199,7 +199,7 @@ export class Traffic {
   }
   spawnParked(id, spot, noDriver = false, plain = false) {
     const ai = this.createAI(id); ai.plain = plain;
-    spot.taken = true; ai.spot = spot; ai.mode = 'parked'; ai.pos.copy(spot.pos); ai.yaw = spot.yaw; if (ai.driver) ai.driver.visible = false;
+    spot.taken = true; ai.spot = spot; ai.mode = 'parked'; ai.pos.copy(spot.pos); ai.yaw = spot.yaw; if (ai.seatD) ai.seatD.visible = false;
     ai.stay = 60 + Math.random() * 400;
     if (!noDriver) this.g.npc?.spawnMeetGroup(ai);
     // some show-offs: hood open, stance
@@ -250,7 +250,7 @@ export class Traffic {
     let ph = null;
     if (player) ph = this.net.hits(player.pos.x, player.pos.z).filter(h => h.inside && Math.abs(h.y - player.pos.y) < 2);
     for (const ai of this.cars) {
-      if (ai.driver) ai.driver.visible = ai.mode !== 'parked' && !ai.accident; // v2.10: seat empty when parked
+      if (ai.seatD) ai.seatD.visible = ai.mode !== 'parked' && !ai.accident; // v2.10: seat empty when parked
       if (ai.model.isGlb && this.g.camera) { const cp = this.g.camera.position, dd = (ai.pos.x - cp.x) ** 2 + (ai.pos.z - cp.z) ** 2, R = this.g.quality === 'low' ? 350 : this.g.quality === 'medium' ? 600 : 900; ai.model.root.visible = dd < R * R; } // v2.11: far cars are a few pixels — not drawn
       ai.t += dt;
       if (ai.mode === 'road') this.driveRoad(ai, dt, byLane, ph, player);

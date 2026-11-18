@@ -15,6 +15,7 @@ import { GOALS } from './goals.js';
 import { PLACES } from '../../data/places.js';
 import { JAPAN_LAND, JAPAN_CITIES } from '../../data/japan.js';
 import { DESTS } from '../../data/destinations.js';
+import { GLOSSARY, STANCE_TERM, ROAD_TERM, term } from '../../data/glossary.js';
 import { DEFAULT_SETTINGS } from './main.js';
 import { ASSIST_SETTING_KEYS, assistsFromSettings, applyDifficulty } from './vehicle.js';
 
@@ -68,7 +69,7 @@ export class UI {
           <div class="row"><input type="color" id="g-color"><select id="g-finish"><option value="metallic">Metallic</option><option value="solid">Solid</option><option value="pearl">Pearl</option><option value="matte">Matte</option></select>
           <label class="mini"><span data-i18n="game.garage.rim"></span><input type="color" id="g-rim" value="#b9bcc0"></label></div></div>
         <div class="gsec tune"><h3 data-i18n="game.garage.stance"></h3>
-          <div class="presets" id="g-spre"></div>
+          <div class="presets" id="g-spre"></div><p class="g-term" id="g-term"></p>
           <label class="sl"><span data-i18n="game.garage.camberF"></span><input type="range" id="g-cf" min="-20" max="3" step="0.5"><b></b></label>
           <label class="sl"><span data-i18n="game.garage.camberR"></span><input type="range" id="g-cr" min="-22" max="3" step="0.5"><b></b></label>
           <label class="sl"><span data-i18n="game.garage.ride"></span><input type="range" id="g-ride" min="-0.12" max="0.08" step="0.005"><b></b></label>
@@ -127,6 +128,7 @@ export class UI {
         <button class="btn primary" data-a="resume" data-i18n="game.menu.resume"></button>
         <button class="btn" data-a="garage" data-i18n="game.menu.garage"></button>
         <button class="btn" data-a="goals" id="goals-btn"></button>
+        <button class="btn" data-a="glossary" id="gloss-btn">📖 <span class="gl-lb"></span></button>
         <button class="btn" data-a="outfit" data-i18n="game.menu.outfit"></button>
         <button class="btn" data-a="settings" data-i18n="game.menu.settings"></button>
         <button class="btn" data-a="controls" data-i18n="game.menu.controls"></button>
@@ -172,6 +174,7 @@ export class UI {
   // v2.5.2: icon + word on every quick button (in the play language) — icons alone were guesswork
   labelHUD() {
     const L3 = (ko, ja, en) => ({ ko, ja, en })[getLang()] || en;
+    { const gl = document.querySelector('#gloss-btn .gl-lb'); if (gl) gl.textContent = L3('용어 사전', '用語集', 'Glossary'); }
     const set = (sel, ic, txt) => { const b = document.querySelector(sel); if (b) b.innerHTML = `<span class="ic">${ic}</span><span class="lb">${esc(txt)}</span>`; };
     set('#hud .garbtn', '🔧', L3('차고', 'ガレージ', 'Garage')); set('#hud .mapbtn', '🗺', L3('지도', '地図', 'Map'));
     const wx = { auto: '🌤', clear: '☀️', cloudy: '☁️', rain: '🌧', storm: '⛈', fog: '🌫' }[this.g.settings.weather] || '🌤'; set('#wxbtn', wx, L3('날씨', '天気', 'Weather'));
@@ -197,6 +200,8 @@ export class UI {
       case 'drive': g.closeGarage(true); break;
       case 'garageBack': g.closeGarage(false); break;
       case 'pause': this.togglePause(); break;
+      case 'glossary': this.showGlossary(); break;
+      case 'glossClose': $('#glossary')?.remove(); break;
       case 'resume': this.togglePause(false); break;
       case 'garage': {
         const v = g.vehicle;
@@ -286,6 +291,7 @@ export class UI {
     $('#g-l-tf').textContent = L3('앞 토 (+ 토인)', 'フロント トー (+イン)', 'Front toe (+ in)'); $('#g-l-tr').textContent = L3('뒤 토 (+ 토인)', 'リア トー (+イン)', 'Rear toe (+ in)'); $('#g-l-rk').textContent = L3('레이크 (뒤 높이)', 'レーキ（後ろ上がり）', 'Rake (rear up)');
     const curSt = S.stance || 'custom';
     $('#g-spre').innerHTML = [...Object.keys(STANCE_PRESETS), 'custom'].map(k => `<button data-sp="${k}" class="${curSt === k ? 'on' : ''}">${esc(SPN[k])}</button>`).join('');
+    { const tk = STANCE_TERM[curSt], T = tk && term(tk), el = $('#g-term'); if (el) el.innerHTML = T ? `<b>${esc(T.ja)}</b> — ${esc(this.gloss(T))}` : ''; } // v2.12: what the preset means
     $('#g-spre').onclick = ev => { const b = ev.target.closest('[data-sp]'); if (!b || b.dataset.sp === 'custom') return; g.applyPreview({ stance: b.dataset.sp, ...STANCE_PRESETS[b.dataset.sp] }); this.showGarage(); };
     const sl = (sel, key, fmt) => { const i = $(sel); i.value = S[key]; const out = i.nextElementSibling; out.textContent = fmt(+i.value); i.oninput = () => { out.textContent = fmt(+i.value); g.applyPreview({ [key]: +i.value, stance: 'custom' }); $('#g-spre').querySelectorAll('button').forEach(b => b.classList.toggle('on', b.dataset.sp === 'custom')); }; };
     sl('#g-cf', 'camberF', v => v.toFixed(1) + '°'); sl('#g-cr', 'camberR', v => v.toFixed(1) + '°');
@@ -616,6 +622,24 @@ export class UI {
   }
 
   // ───── HUD ─────
+  // v2.12 — plain-language glossary (data/glossary.js): the explanation in the player's language
+  gloss(T) { const L = getLang(); return L === 'ko' ? T.ko : L === 'ja' ? T.jp : T.en; }
+  showGlossary() {
+    $('#glossary')?.remove(); const L = getLang();
+    const H = { ko: ['용어 사전', '차나 일본 도로를 잘 몰라도 괜찮아요', { stance: '차고·튜닝', drive: '운전', road: '도로', car: '자동차' }], ja: ['用語集', 'クルマや日本の道路に詳しくなくても大丈夫', { stance: '車高・カスタム', drive: '運転', road: '道路', car: 'クルマ' }] }[L] || ['Glossary', 'No car or Japan know-how needed', { stance: 'Stance & tuning', drive: 'Driving', road: 'Roads', car: 'Cars' }];
+    const groups = ['road', 'stance', 'drive', 'car'].map(tag => `<h3>${esc(H[2][tag])}</h3>` + GLOSSARY.filter(g => g.tag === tag).map(g => `<div class="gl-item"><b lang="ja">${esc(g.ja)}</b>${g.r ? `<small>${esc(g.r)}</small>` : ''}<p>${esc(this.gloss(g))}</p></div>`).join('')).join('');
+    const el = document.createElement('div'); el.id = 'glossary'; el.className = 'screen show dim';
+    el.innerHTML = `<div class="menu gl-box"><h2>📖 ${esc(H[0])}</h2><p class="gl-sub">${esc(H[1])}</p><div class="gl-list">${groups}</div><button class="btn sm" data-a="glossClose">✕</button></div>`;
+    $('#ui').appendChild(el);
+  }
+  // first time you drive onto a kind of road (湾岸線, C1, a touge …): a short card saying what it is
+  roadTip(road) {
+    if (!road?.name || this._tipRoad === road.name) return; this._tipRoad = road.name;
+    const hit = ROAD_TERM.find(([re]) => re.test(road.name)); if (!hit) return; const T = term(hit[1]); let seen = {};
+    try { seen = JSON.parse(localStorage.getItem('dn.tips') || '{}'); } catch {}
+    if (seen[T.k]) return; seen[T.k] = 1; try { localStorage.setItem('dn.tips', JSON.stringify(seen)); } catch {}
+    this.toast(`📖 ${T.ja} — ${this.gloss(T)}`, 'info', 9);
+  }
   toast(msg, kind = 'info', dur = 3) {
     const box = $('#hud .toasts'); const e = el('div', 'toast ' + kind, esc(msg)); box.appendChild(e);
     while (box.children.length > 4) box.firstChild.remove();
@@ -641,6 +665,7 @@ export class UI {
     if (this._promptT !== undefined) { this._promptT -= dt; if (this._promptT <= 0) { $('#hud .prompt').classList.remove('show'); this._promptT = undefined; } }
     if (g.mode !== 'drive' && g.mode !== 'walk') return;
     if (g.mode === 'drive' && g.vehicle) this.drawSpeedo(g.vehicle, dt); // every frame: smooth needle/gear motion
+    if (g.mode === 'drive' && g.vehicle?.road && (this._tipT = (this._tipT || 0) - dt) <= 0) { this._tipT = 1; this.roadTip(g.vehicle.road); }
     if ((this._gtT = (this._gtT || 0) - dt) <= 0 && g.goals) { this._gtT = 0.5; const G = g.goals, el2 = $('#goaltrack');
       const next = GOALS.find(d => !G.done(d.id) && d.target && G.progress(d) > 0) || GOALS.find(d => !G.done(d.id));
       if (!next) el2.innerHTML = `🏆 ${esc(t('game.goal.all'))}`; else { const p = G.progress(next); el2.innerHTML = `<span class="gt-k">🏆 ${G.count}/${GOALS.length}</span> ${next.icon} ${esc(t('game.goal.' + next.id))}${next.target ? ` <b>${p}/${next.target}</b>` : ''}`; } }

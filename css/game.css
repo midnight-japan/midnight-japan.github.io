@@ -420,3 +420,10 @@ body.photo .online-pill,body.photo .chat{display:none}
 
 /* v2.11.1: upright type everywhere (no italics) */
 .btn,.logo,.menu h2,.panel h2,.popup h2,#ui h1,#ui h2,#ui h3,#ui b,#ui em{font-style:normal!important}
+/* v2.12 glossary */
+.g-term{margin:6px 0 2px;font-size:12.5px;line-height:1.55;color:#cfcac4}.g-term b{color:#ffb07a;margin-right:4px}
+#glossary{z-index:40}.gl-box{width:min(720px,94vw);max-height:86vh;overflow:hidden;display:flex;flex-direction:column}
+.gl-sub{color:var(--muted);margin:0 0 6px;font-size:13px}.gl-list{overflow-y:auto;padding-right:6px}
+.gl-list h3{margin:14px 0 6px;font-size:13px;letter-spacing:.14em;text-transform:uppercase;color:#ff8a5c}
+.gl-item{padding:9px 12px;margin-bottom:6px;background:rgba(255,255,255,.04);border-left:3px solid #ff3d6e}
+.gl-item b{font-size:15px}.gl-item small{margin-left:8px;color:var(--muted);font-size:11px}.gl-item p{margin:4px 0 0;font-size:13px;line-height:1.55;color:#e2e0dc}
