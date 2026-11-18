@@ -11,10 +11,10 @@ const _pa = new THREE.Vector3(), _pb = new THREE.Vector3();
 const clamp = (x, a, b) => Math.max(a, Math.min(b, x));
 const lerp = (a, b, t) => a + (b - a) * t;
 const MEET_POOL = ['s13', 'ap1', 'nd', 'rx8', 'fc3s', 'dc2', 'lfa', 'r34', 'r32', 'r33', 'r35', 's15', 'rps13', 'z33', 'gr86', 'ae86', 'jza80', 'a90', 'jzx100', 'fd3s', 'na1', 'ek9', 'fl5', 'evo9', 'gdb', 'p911', 'e46', 'mustang', 'model3', 'r34', 'jza80', 'fd3s'];
-const CITY_POOL = ['xtrail', 'accord', 'hijet', 'acty', 'elf', 'wagonr', 'wagonr', 'nd', 'taxi', 'taxi', 'taxi', 'crown', 'crown', 'model3', 'truck', 'truck', 'bus', 'fl5', 'r35', 'gr86', 'ek9', 'jzx100', 'e46', 'z33'];
+const CITY_POOL = ['xtrail', 'accord', 'hijet', 'acty', 'elf', 'wagonr', 'wagonr', 'nd', 'taxi', 'taxi', 'taxi', 'crown', 'crown', 'model3', 'elf', 'elf', 'fl5', 'r35', 'gr86', 'ek9', 'jzx100', 'e46', 'z33'];
 // NPC traffic uses cars that have real 3D models (the procedural-only kei/hybrid models stay player-selectable)
 // v2.3: everyday Japanese traffic first (taxis, Crowns, vans, trucks, kei cars, Leafs, buses); sports cars are rare on the road
-const TRAFFIC_POOL = ['xtrail', 'accord', 'elf', 'elf', 'hijet', 'acty', 'wagonr', 'taxi', 'taxi', 'taxi', 'crown', 'crown', 'crown', 'truck', 'truck', 'truck', 'truck', 'bus', 'bus', 'model3', 'model3', 'crown', 'a90', 'jzx100', 'e46', 'gr86', 'fl5'];
+const TRAFFIC_POOL = ['xtrail', 'accord', 'elf', 'elf', 'hijet', 'acty', 'wagonr', 'taxi', 'taxi', 'taxi', 'crown', 'crown', 'crown', 'elf', 'elf', 'elf', 'elf', 'model3', 'model3', 'crown', 'a90', 'jzx100', 'e46', 'gr86', 'fl5'];
 
 // Merge all static meshes of a car model by material (keeps wheels, doors, lights animatable).
 export function mergeModel(model) {
@@ -190,7 +190,7 @@ export class Traffic {
     const big = this.world.parkingSpots.filter(s => s.size === 'l');
     // the large bays are mostly full of trucks resting (as at any expressway PA), and ordinary cars are parked all over
     // the rest of the lot — commuters, families, delivery vans — not only the meet crowd
-    for (const s of big) if (!s.taken && Math.random() < 0.7) this.spawnParked(Math.random() < 0.75 ? 'truck' : 'bus', s, true, true);
+    for (const s of big) if (!s.taken && Math.random() < 0.7) this.spawnParked('elf', s, true, true); // v2.13.3: the Canter / Rosa models are single-material clay — the Elf is the real-model truck
     for (const s of spots) if (!s.taken && Math.random() < 0.22) this.spawnParked(TRAFFIC_POOL[Math.floor(Math.random() * TRAFFIC_POOL.length)], s, true, true);
     // police: patrol car on the expressway + parked units at the post
     const pol = this.createAI('police'); pol.police = true; this.placeOnRoad(pol, bay, bay.lanes.find(l => l.dir === 1 && l.i === 0), 600); pol.vDes = 22;
@@ -251,7 +251,7 @@ export class Traffic {
     if (player) ph = this.net.hits(player.pos.x, player.pos.z).filter(h => h.inside && Math.abs(h.y - player.pos.y) < 2);
     for (const ai of this.cars) {
       if (ai.seatD) ai.seatD.visible = ai.mode !== 'parked' && !ai.accident; // v2.10: seat empty when parked
-      if (ai.model.isGlb && this.g.camera) { const cp = this.g.camera.position, dd = (ai.pos.x - cp.x) ** 2 + (ai.pos.z - cp.z) ** 2, R = this.g.quality === 'low' ? 350 : this.g.quality === 'medium' ? 600 : 900; ai.model.root.visible = dd < R * R; } // v2.11: far cars are a few pixels — not drawn
+      if (ai.model.isGlb && this.g.camera) { const cp = this.g.camera.position, dd = (ai.pos.x - cp.x) ** 2 + (ai.pos.z - cp.z) ** 2, R = (this.g.quality === 'low' ? 350 : this.g.quality === 'medium' ? 600 : 900) * (this.visScale || 1); ai.model.root.visible = dd < R * R; } // v2.11: far cars are a few pixels — not drawn
       ai.t += dt;
       if (ai.mode === 'road') this.driveRoad(ai, dt, byLane, ph, player);
       else if (ai.mode === 'path') this.drivePath(ai, dt, player);
@@ -367,7 +367,8 @@ export class Traffic {
     const yaw = Math.atan2(t.x * ai.dir, t.z * ai.dir);
     let dy = yaw - ai.yaw; while (dy > Math.PI) dy -= Math.PI * 2; while (dy < -Math.PI) dy += Math.PI * 2;
     ai.steer = clamp(dy * 3, -0.5, 0.5);
-    ai.yaw += dy * (1 - Math.exp(-dt * 10));
+    if (Math.abs(dy) > 1.0) { ai.yaw = yaw; ai.steer = 0; } // v2.13.3: just placed / recycled — face the lane at once (it spun round, looking like wrong-way driving)
+    else ai.yaw += dy * (1 - Math.exp(-dt * 10));
   }
   // move an AI onto another road keeping its lateral position (it then eases into the lane)
   transfer(ai, road, lane, s) {
@@ -428,6 +429,11 @@ export class Traffic {
       if (inStall && Math.abs(ax - fx) > 1.5) { const q = W(ax, clamp(fz, -38, 38)); q.r = 1.2; pts.push(q); } // v2.13.1: reach the aisle before turning (r = arrival radius)
       pts.push(W(x, band), W(L.endX[1], band), W(L.exit[0] - 6, L.exit[1] + 1), to.clone());
     }
+    // v2.13.3: never cut a corner across the perimeter fence — a leg whose middle leaves the lot gets a bend point
+    // pulled 6 m in towards the lot centre (the autopilot rubbed along the fence at the exit corner and stalled)
+    for (let i = 0; i < pts.length - 2; i++) { const a = pts[i], b = pts[i + 1], mx = (a.x + b.x) / 2, mz = (a.z + b.z) / 2;
+      if (PA.inLot(mx, mz, -2) || !PA.inLot(a.x, a.z, 1) || !PA.inLot(b.x, b.z, 1)) continue;
+      const dx = PA.cx - mx, dz = PA.cz - mz, L2 = Math.hypot(dx, dz) || 1; pts.splice(i + 1, 0, new THREE.Vector3(mx + dx / L2 * 6, 0, mz + dz / L2 * 6)); i++; }
     return pts;
   }
   drivePath(ai, dt, player) {

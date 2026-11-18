@@ -1,8 +1,19 @@
 // Shared game metadata: version, changelog, regions. Update VERSION + CHANGELOG on every release.
-export const GAME = { title: 'MIDNIGHT JAPAN', titleJa: 'ミッドナイト・ジャパン', version: '2.13.2', build: '2026.11.18' };
+export const GAME = { title: 'MIDNIGHT JAPAN', titleJa: 'ミッドナイト・ジャパン', version: '2.13.3', build: '2026.11.18' };
 
 // Newest first. type: new | change | fix | known
 export const CHANGELOG = [
+  {
+    version: '2.13.3', date: '2026-11-18', codename: 'Smooth Ride',
+    summary: { ko: '60fps 우선 기본값(내장 GPU는 낮음, 그 외 중간), 프레임에 따라 그리는 거리까지 줄이는 자동 조절, 자율주행 커브 감속과 내비 경로 엄수, NPC 역주행처럼 보이던 문제, 흰 덩어리 트럭·버스 교체, 더 자연스러운 나무, 아주 작게까지 줄어드는 볼륨, 설정 중에도 게임 계속, 로딩 화면 사진, 새 사이트 로고.', ja: '60fps優先の初期設定（内蔵GPUは低、それ以外は中）、フレームに応じて描画距離まで下げる自動調整、自動運転のカーブ減速とナビ経路の厳守、NPCが逆走して見えた問題、白い塊のトラック・バスを交換、より自然な木、ごく小さくまで下がる音量、設定中もゲーム継続、ロード画面の写真、新しいサイトロゴ。', en: '60-fps-first defaults (Low on integrated GPUs, Medium otherwise), an auto-governor that also cuts draw distance, autopilot slows for bends and sticks to the GPS route, NPC cars no longer look like they drive the wrong way, the white clay truck and bus replaced, more natural trees, volume that goes really quiet, settings without pausing, a loading-screen photo and the new site logo.' },
+    items: [
+      { type: 'change', ko: '성능: 기본 화질을 60fps 기준으로(M1 같은 내장 GPU·휴대폰은 낮음, 그 외 중간 — 기존 저장값도 한 번 이동), 프레임이 떨어지면 그림자·해상도뿐 아니라 도로·소품·NPC 차량의 그리는 거리도 줄이고 2배 빨리 반응, 표지판 텍스처 해상도 상한, GPU에 올린 지오메트리 사본 해제', ja: '性能：初期画質を60fps基準に（M1などの内蔵GPU・スマホは低、それ以外は中 — 既存の保存値も一度だけ移行）、フレームが落ちると影・解像度だけでなく道路・小物・NPC車両の描画距離も下げ、反応も2倍速く、標識テクスチャの解像度上限、GPUに送ったジオメトリのコピーを解放', en: 'Performance: 60-fps defaults (Low on integrated GPUs such as M1 and on phones, Medium otherwise — saved settings move once), the governor now also shortens the draw distance of roads, props and NPC cars and reacts twice as fast, capped sign-texture resolution, CPU copies of uploaded geometry freed' },
+      { type: 'fix', ko: '자율주행: 커브에서 감속(횡가속 5→2.6m/s²), 제한속도의 약 1.25배까지만, 목적지가 있으면 경로가 계산될 때까지 분기점을 추측하지 않음(이탈 최대 13m), 주차장 출구 모서리에서 펜스에 걸리던 문제', ja: '自動運転：カーブで減速（横G 5→2.6m/s²）、制限速度の約1.25倍まで、目的地があればルートが出るまで分岐を推測しない（逸脱最大13m）、駐車場出口の角でフェンスに引っかかる問題', en: 'Autopilot: slows for bends (lateral 5→2.6 m/s²), keeps to about 1.25× the limit, never guesses at junctions while the GPS route is being worked out (max 13 m off route), no longer rubs along the fence at the car-park exit corner' },
+      { type: 'fix', ko: 'NPC 차량이 재배치된 직후 반대 방향을 보며 회전해 역주행처럼 보이던 문제, 지도 NPC 아이콘을 진행 방향 화살표로(주차 차량은 표시 안 함), 단일 재질이라 흰 덩어리로 보이던 캔터 트럭·로자 버스를 이스즈 엘프로 교체', ja: 'NPC車両が再配置直後に逆を向いて回り逆走に見えた問題、地図のNPCアイコンを進行方向の矢印に（駐車車両は非表示）、単一マテリアルで白い塊に見えたキャンター・ローザをいすゞエルフに交換', en: 'NPC cars spun round right after being re-placed (looked like wrong-way driving), map NPC icons are now heading arrows (parked cars hidden), the single-material white Canter truck and Rosa bus are replaced by the Isuzu Elf' },
+      { type: 'change', ko: '나무 잎을 1.6배 빽빽하게, 11월 색을 초록 위주로(은행·단풍만 노랑·빨강)', ja: '木の葉を1.6倍密に、11月の色を緑中心に（イチョウ・モミジだけ黄・赤）', en: 'Tree crowns 1.6× fuller, November colours mostly green (only ginkgo and maple turn yellow and red)' },
+      { type: 'change', ko: '소리: 체감 곡선으로 낮은 단계가 훨씬 조용하게, 1% 단위 조절 / 설정 화면을 열어도 게임이 멈추지 않음 / 로딩 화면에 분위기 사진 / 사이트 로고·파비콘 새 아이콘으로(캐시 갱신)', ja: '音：体感カーブで低い段階がずっと静かに、1%刻み / 設定画面を開いてもゲームが止まらない / ロード画面に雰囲気のある写真 / サイトのロゴ・ファビコンを新アイコンに（キャッシュ更新）', en: 'Sound: a perceptual curve so low settings are really quiet, 1 % steps / settings no longer pause the game / an atmospheric photo on the loading screen / site logo and favicon updated to the new icon (cache-busted)' },
+    ],
+  },
   {
     version: '2.13.2', date: '2026-11-18', codename: 'Lighter',
     summary: { ko: '메모리 절약: 같은 지면·벽 텍스처를 재질마다 따로 올리던 문제를 고쳐 그래픽 메모리를 약 0.6GB 줄였습니다. C1·하코네·K1·완간선 장거리 자율주행 점검 완료.', ja: 'メモリ節約：同じ地面・壁テクスチャをマテリアルごとに別々に読み込んでいた問題を修正し、グラフィックメモリを約0.6GB削減。C1・箱根・K1・湾岸線の長距離自動運転を点検。', en: 'Memory saving: the same ground and wall textures were uploaded once per material — now shared, about 0.6 GB less video memory. Long autopilot drives on C1, Hakone, K1 and the Bayshore checked.' },

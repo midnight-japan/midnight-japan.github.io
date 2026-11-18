@@ -171,12 +171,15 @@ export class Autopilot {
       target = r.at(this.s + look * dir, this.lane.lat, _p);
       if ((dir > 0 && this.s + look > r.length) || (dir < 0 && this.s - look < 0)) { const nx = this.nextAtEnd(); if (nx) target = nx.road.at(clamp(nx.s + (dir > 0 ? this.s + look - r.length : look - this.s) * nx.lane.dir, 0, nx.road.length), nx.lane.lat, _p); }
       // speed: limit + 15 %, slowed for the curvature ahead (3.2 m/s² lateral)
-      vDes = r.kind === 'local' ? (r.speed / 3.6) * 1.15 : 120; // v2.2: open road → as fast as the car will go (still slowed for bends and traffic)
+      // v2.13.3: a calmer driver — about 20 % over the posted limit at most (was "as fast as the car goes"), and bends
+      // taken at ~2.6 m/s² of lateral acceleration (was 5), braking for them earlier and more gently
+      const lim = (r.speed || (r.kind === 'local' ? 40 : r.kind === 'mountain' ? 50 : 80)) / 3.6;
+      vDes = r.kind === 'local' ? lim * 1.1 : Math.min(lim * 1.25, 36);
       const t0 = r.dirAt(this.s); const h0 = Math.atan2(t0.x, t0.z);
-      for (let d = 15; d <= Math.max(60, speed * speed / 4); d += 15) {
+      for (let d = 10; d <= Math.max(80, speed * speed / 3); d += 10) {
         const s2 = this.s + d * dir; if (s2 < 0 || s2 > r.length) break;
         const t1 = r.dirAt(s2), k = Math.abs(angle(Math.atan2(t1.x, t1.z) - h0)) / d;
-        const vc = Math.sqrt(5 / Math.max(k, 1e-4)); vDes = Math.min(vDes, Math.sqrt(vc * vc + 2 * 4.5 * Math.max(0, d - 15)));
+        const vc = Math.sqrt(2.6 / Math.max(k, 1e-4)); vDes = Math.min(vDes, Math.sqrt(vc * vc + 2 * 2.5 * Math.max(0, d - 10)));
       }
       if (this.sigT > 0) this.sigT -= dt; else this.signal = 0;
     }
@@ -228,7 +231,9 @@ export class Autopilot {
     const dvs = (this.net.diverges?.get(r) || []).filter(d => d.dir === dir && d.to !== r && (navOn ? true : !AVOID.test(d.to.id) && !/^x_/.test(d.to.id)));
     if (!this.plan) for (const d of dvs) {
       const ahead = (d.s - this.s) * dir; if (ahead < 120 || ahead > 450) continue;
-      if (this.decided?.has(d)) continue; (this.decided ||= new Set()).add(d);
+      if (this.decided?.has(d)) continue;
+      if (this.g.nav?.target && !navOn) continue; // v2.13.3: a destination is set but the route is still being worked out — wait, never guess
+      (this.decided ||= new Set()).add(d);
       const nTo = this.visits.get(d.to.id) || 0, nHere = this.visits.get(r.id) || 0;
       const take = navOn ? this.onRoute(d.to) : nTo === 0 ? Math.random() < 0.85 : Math.random() < 0.2 / (1 + nTo - Math.min(nTo, nHere));
       if (!take) continue;

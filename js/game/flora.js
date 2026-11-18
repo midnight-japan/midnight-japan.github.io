@@ -88,7 +88,8 @@ function tree(seed, { trunkH, trunkR, bark, limbs = [], crowns, uv = LEAF, needl
   const g = new G();
   g.limb([0, -0.3, 0], [0, trunkH, 0], trunkR, trunkR * 0.6, bark, 7);
   for (const [x, y, z, r] of limbs) g.limb([0, trunkH * 0.75, 0], [x, y, z], r, r * 0.45, bark, 5);
-  for (const [cx, cy, cz, rx, ry, rz, n, sz] of crowns) {
+  for (const [cx, cy, cz, rx, ry, rz, n0, sz] of crowns) {
+    const n = Math.round(n0 * 1.6); // v2.13.3: fuller crowns (gaps made the trees look moth-eaten)
     for (let k = 0; k < n; k++) {
       // points biased to the shell (dense outer foliage, a few inner cards)
       const u = rnd() * 2 - 1, th = rnd() * Math.PI * 2, rr = Math.pow(rnd(), 0.35), sq = Math.sqrt(1 - u * u);
@@ -104,13 +105,13 @@ function tree(seed, { trunkH, trunkR, bark, limbs = [], crowns, uv = LEAF, needl
 const BARK = { grey: [0.42, 0.4, 0.37], brown: [0.36, 0.27, 0.2], red: [0.42, 0.24, 0.18], dark: [0.25, 0.21, 0.18] };
 export const SPECIES = {
   ginkgo: { col: [[0.93, 0.74, 0.16], [0.82, 0.7, 0.2], [0.6, 0.62, 0.22]], make: sd => tree(sd, { trunkH: 4.2, trunkR: 0.24, bark: BARK.grey, crowns: [[0, 5.6, 0, 1.7, 2.6, 1.7, 70, 1.5], [0, 8.2, 0, 1.1, 1.5, 1.1, 34, 1.3]] }) },
-  zelkova: { col: [[0.78, 0.45, 0.18], [0.66, 0.5, 0.2], [0.5, 0.52, 0.22]], make: sd => tree(sd, { trunkH: 3.4, trunkR: 0.3, bark: BARK.grey, limbs: [[1.8, 6.2, 0.3, 0.14], [-1.6, 6.4, -0.5, 0.14], [0.2, 6.8, 1.7, 0.13]], crowns: [[0, 6.8, 0, 3.2, 2.0, 3.2, 120, 1.7]] }) },
-  sakura: { col: [[0.66, 0.3, 0.2], [0.7, 0.42, 0.2], [0.48, 0.46, 0.22]], make: sd => tree(sd, { trunkH: 2.2, trunkR: 0.28, bark: BARK.dark, limbs: [[2.4, 4.0, 0.6, 0.15], [-2.2, 4.1, -0.8, 0.15], [0.4, 4.6, 2.3, 0.13], [-0.6, 4.4, -2.3, 0.13]], crowns: [[0, 4.6, 0, 3.6, 1.5, 3.6, 120, 1.6]] }) },
+  zelkova: { col: [[0.62, 0.5, 0.22], [0.42, 0.52, 0.22], [0.36, 0.5, 0.2]], make: sd => tree(sd, { trunkH: 3.4, trunkR: 0.3, bark: BARK.grey, limbs: [[1.8, 6.2, 0.3, 0.14], [-1.6, 6.4, -0.5, 0.14], [0.2, 6.8, 1.7, 0.13]], crowns: [[0, 6.8, 0, 3.2, 2.0, 3.2, 120, 1.7]] }) },
+  sakura: { col: [[0.66, 0.38, 0.22], [0.44, 0.48, 0.22], [0.38, 0.47, 0.2]], make: sd => tree(sd, { trunkH: 2.2, trunkR: 0.28, bark: BARK.dark, limbs: [[2.4, 4.0, 0.6, 0.15], [-2.2, 4.1, -0.8, 0.15], [0.4, 4.6, 2.3, 0.13], [-0.6, 4.4, -2.3, 0.13]], crowns: [[0, 4.6, 0, 3.6, 1.5, 3.6, 120, 1.6]] }) },
   camphor: { col: [[0.3, 0.46, 0.2], [0.36, 0.5, 0.22], [0.26, 0.4, 0.18]], make: sd => tree(sd, { trunkH: 2.8, trunkR: 0.34, bark: BARK.brown, limbs: [[1.6, 5.0, 0.4, 0.16], [-1.5, 5.2, -0.4, 0.16]], crowns: [[0, 5.6, 0, 3.0, 2.6, 3.0, 130, 1.7], [1.4, 6.6, 0.8, 1.6, 1.4, 1.6, 30, 1.4]] }) },
   pine: { col: [[0.2, 0.33, 0.18], [0.24, 0.36, 0.2], [0.18, 0.3, 0.17]], make: sd => tree(sd, { trunkH: 6.0, trunkR: 0.22, bark: BARK.red, limbs: [[1.6, 4.6, 0.4, 0.09], [-1.4, 5.4, -0.6, 0.09], [0.6, 6.4, 1.3, 0.08]], uv: NEEDLE, crowns: [[1.5, 4.8, 0.4, 1.4, 0.55, 1.4, 26, 1.4], [-1.3, 5.6, -0.6, 1.3, 0.5, 1.3, 24, 1.3], [0.5, 6.6, 1.2, 1.1, 0.45, 1.1, 20, 1.2], [0, 7.3, 0, 1.2, 0.6, 1.2, 24, 1.2]] }) },
   cedar: { col: [[0.16, 0.27, 0.16], [0.2, 0.3, 0.17], [0.15, 0.24, 0.14]], make: sd => tree(sd, { trunkH: 9.0, trunkR: 0.3, bark: BARK.red, uv: NEEDLE, crowns: [[0, 5.5, 0, 1.9, 2.2, 1.9, 60, 1.6], [0, 8.4, 0, 1.4, 2.0, 1.4, 44, 1.4], [0, 11.0, 0, 0.8, 1.6, 0.8, 26, 1.2]] }) },
   maple: { col: [[0.78, 0.16, 0.1], [0.86, 0.34, 0.1], [0.62, 0.55, 0.18]], make: sd => tree(sd, { trunkH: 2.4, trunkR: 0.2, bark: BARK.dark, limbs: [[1.6, 3.8, 0.4, 0.1], [-1.5, 3.9, -0.5, 0.1]], crowns: [[0, 4.2, 0, 2.6, 1.6, 2.6, 90, 1.3]] }) },
-  far: { col: [[0.3, 0.42, 0.2], [0.6, 0.5, 0.2], [0.26, 0.36, 0.18]], make: sd => tree(sd, { trunkH: 3.4, trunkR: 0.26, bark: BARK.brown, crowns: [[0, 5.2, 0, 2.6, 2.4, 2.6, 12, 2.8]] }) },
+  far: { col: [[0.3, 0.42, 0.2], [0.42, 0.46, 0.2], [0.26, 0.36, 0.18]], make: sd => tree(sd, { trunkH: 3.4, trunkR: 0.26, bark: BARK.brown, crowns: [[0, 5.2, 0, 2.6, 2.4, 2.6, 12, 2.8]] }) },
 };
 export const SPECIES_IDS = Object.keys(SPECIES);
 let geos = null;

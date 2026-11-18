@@ -64,23 +64,21 @@ function setupPageMotion() {
 
 export const esc = s => String(s ?? '').replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
 
-// Original emblem: JCT loop ramp + mainline + crescent moon.
+// v2.13.3 emblem (same as the app icon): sunset over the expressway, festival gradient
 export function emblem(id = 'em') {
   return `<svg viewBox="0 0 512 512" aria-hidden="true" focusable="false">
   <defs>
-    <linearGradient id="${id}bg" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#14213f"/><stop offset="1" stop-color="#05070d"/></linearGradient>
-    <mask id="${id}m"><rect width="512" height="512" fill="#fff"/><circle cx="418" cy="98" r="46" fill="#000"/></mask>
+    <linearGradient id="${id}f" x1="0" y1="1" x2="1" y2="0"><stop offset="0" stop-color="#ff2f70"/><stop offset=".55" stop-color="#ff6a3d"/><stop offset="1" stop-color="#ffb836"/></linearGradient>
+    <linearGradient id="${id}bg" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#17151c"/><stop offset="1" stop-color="#08080b"/></linearGradient>
+    <clipPath id="${id}sq"><rect width="512" height="512" rx="112"/></clipPath><clipPath id="${id}sun"><circle cx="336" cy="236" r="132"/></clipPath>
   </defs>
-  <rect width="512" height="512" rx="112" fill="url(#${id}bg)"/>
-  <circle cx="392" cy="118" r="52" fill="#f6e7bf" mask="url(#${id}m)"/>
-  <path d="M40 410H240A110 110 0 1 0 130 300V470" fill="none" stroke="#05070d" stroke-width="58" stroke-linecap="round"/>
-  <path d="M40 410H240A110 110 0 1 0 130 300V470" fill="none" stroke="#ff9a2e" stroke-width="30" stroke-linecap="round"/>
-  <path d="M40 410H240" stroke="#ffd29a" stroke-width="4" stroke-dasharray="14 14"/>
-  <path d="M130 370V470" stroke="#05070d" stroke-width="58"/>
-  <path d="M130 360V470" stroke="#ff9a2e" stroke-width="30" stroke-linecap="round"/>
-  <path d="M36 190H476" stroke="#05070d" stroke-width="50" stroke-linecap="round"/>
-  <path d="M36 190H476" stroke="#2fbf71" stroke-width="28" stroke-linecap="round"/>
-  <path d="M60 190H452" stroke="#e9fff2" stroke-width="4" stroke-dasharray="18 16"/>
+  <g clip-path="url(#${id}sq)"><rect width="512" height="512" fill="url(#${id}bg)"/><circle cx="336" cy="236" r="132" fill="url(#${id}f)"/>
+  <g fill="#08080b" clip-path="url(#${id}sun)"><rect x="190" y="248" width="300" height="10"/><rect x="190" y="276" width="300" height="14"/><rect x="190" y="308" width="300" height="18"/></g>
+  <rect x="0" y="330" width="512" height="182" fill="#0b0b0e"/>
+  <path d="M-40 512 C 120 470, 220 400, 300 334 L 336 334 C 290 400, 230 470, 150 512 Z" fill="#202027"/>
+  <path d="M-40 512 C 120 470, 220 400, 300 334" fill="none" stroke="#f4f2ee" stroke-width="10" stroke-linecap="round"/>
+  <path d="M150 512 C 230 470, 290 400, 336 334" fill="none" stroke="#f4f2ee" stroke-width="10" stroke-linecap="round"/>
+  <path d="M55 512 C 175 470, 262 400, 318 334" fill="none" stroke="url(#${id}f)" stroke-width="7" stroke-dasharray="26 22" stroke-linecap="round"/></g>
 </svg>`;
 }
 

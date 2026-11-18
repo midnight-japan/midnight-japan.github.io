@@ -928,9 +928,7 @@
    "mat": "mat_23",
    "cab": 2,
    "low": 0.8
-  },
-  "lo": "truck_lo.glb",
-  "loTris": 46787
+  }
  },
  "bus": {
   "file": "bus.glb",
@@ -1128,9 +1126,7 @@
    "van": true,
    "belt": 0.55,
    "low": 0.55
-  },
-  "lo": "hiace_lo.glb",
-  "loTris": 18004
+  }
  },
  "leaf": {
   "file": "leaf.glb",

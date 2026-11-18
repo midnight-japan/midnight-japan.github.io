@@ -430,3 +430,12 @@ body.photo .online-pill,body.photo .chat{display:none}
 /* v2.13 spawn preview */
 .spawnmap{display:block;width:220px;height:125px;margin:8px auto 0;border:1px solid rgba(255,255,255,.14);background:#10141c}
 @media (max-width:760px){.spawnmap{width:180px;height:102px}}
+/* v2.13.3: settings over the running game — translucent, game visible */
+#settings.live{background:rgba(6,6,10,.35)!important;backdrop-filter:none!important}
+/* v2.13.3 loading photo */
+#loading{overflow:hidden}
+#loading .load-photo{position:absolute;inset:-4%;background:#0a0a0c center/cover no-repeat;filter:saturate(1.05) brightness(.62);animation:load-drift 24s ease-in-out infinite alternate}
+#loading .load-photo::after{content:'';position:absolute;inset:0;background:linear-gradient(180deg,rgba(10,10,12,.15) 0%,rgba(10,10,12,.35) 45%,rgba(10,10,12,.92) 100%)}
+#loading .load-box{position:relative;z-index:1;margin-top:auto;margin-bottom:9vh}
+@keyframes load-drift{from{transform:scale(1.02) translate(0,0)}to{transform:scale(1.1) translate(-2%,-1%)}}
+@media (prefers-reduced-motion:reduce){#loading .load-photo{animation:none}}

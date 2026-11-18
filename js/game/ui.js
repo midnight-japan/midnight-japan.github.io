@@ -42,7 +42,7 @@ export class UI {
   build() {
     const r = this.root;
     r.innerHTML = `
-      <div id="loading" class="screen show"><div class="load-box"><div class="logo">MIDNIGHT <b>JAPAN</b><small>ミッドナイト・ジャパン</small></div><div class="bar"><i></i></div><div class="load-msg"></div><div class="ver">v${GAME.version}</div></div></div>
+      <div id="loading" class="screen show"><div class="load-photo" id="load-photo"></div><div class="load-box"><div class="logo">MIDNIGHT <b>JAPAN</b><small>ミッドナイト・ジャパン</small></div><div class="bar"><i></i></div><div class="load-msg"></div><div class="ver">v${GAME.version}</div></div></div>
       <div id="title" class="screen"><div class="title-box">
         <div class="logo big">MIDNIGHT <b>JAPAN</b><small>ミッドナイト・ジャパン · v${GAME.version}</small></div>
         <div class="who"></div>
@@ -155,6 +155,9 @@ export class UI {
       </div>
       <div id="fatal" class="screen"><div class="menu"><h2>⚠</h2><p id="fatal-msg"></p><a class="btn" href="index.html">← Home</a></div></div>`;
     this.relabel();
+    { // v2.13.3: a moody shot behind the loading bar (slow Ken Burns drift), different each visit
+      const P = ['50-touge-sakura', '48-pa-lights', '27-c1night', '33-rainbow', '45-tokyo-tower', '29-hakone_dusk', '31-k1rain', '42-tokyo-night', '51-pa-autumn', '40-real-yokohama'];
+      const f = P[Math.floor(Math.random() * P.length)], el = document.getElementById('load-photo'); if (el) el.style.backgroundImage = `url(docs/screenshots/${f}${innerWidth < 900 ? '-800' : ''}.jpg)`; }
     r.addEventListener('click', e => { const b = e.target.closest('[data-a]'); if (b) { this.g.audio?.sfx('ui_click'); this.action(b.dataset.a, b); } const c = e.target.closest('[data-c]'); if (c) this.carAction(c.dataset.c); });
     this.wireTouch();
     this.speedo = $('#speedo').getContext('2d'); this.mini = $('#minimap').getContext('2d'); $('#minimap').addEventListener('click', () => this.toggleMap(true));
@@ -215,8 +218,9 @@ export class UI {
       case 'goalsClose': this.screens('pause'); this.updateGoals(); break;
       case 'outfit': this.screens('outfit'); this.buildOutfit(); break;
       case 'outfitClose': this.screens('pause'); break;
-      case 'settings': this.prevScreen = g.mode === 'title' ? 'title' : 'pause'; this.screens('settings'); this.buildSettings(); break;
-      case 'settingsClose': this.screens(this.prevScreen || 'pause'); if (this.prevScreen === 'title') this.showTitle(); break;
+      // v2.13.3: settings never pause the drive — the game keeps running underneath, closing returns straight to it
+      case 'settings': this.prevScreen = g.mode === 'title' ? 'title' : 'hud'; if (g.mode === 'drive' || g.mode === 'walk') this.paused = false; this.screens('settings'); $('#settings')?.classList.add('live'); this.buildSettings(); break;
+      case 'settingsClose': $('#settings')?.classList.remove('live'); if (this.prevScreen === 'title') { this.screens('title'); this.showTitle(); } else { this.screens(null); this.paused = false; this.showHUD?.(); } break;
       case 'controls': this.prevScreen = g.mode === 'title' ? 'title' : 'pause'; this.screens('controls'); this.buildControls(); break;
       case 'controlsClose': this.screens(this.prevScreen || 'pause'); if (this.prevScreen === 'title') this.showTitle(); break;
       case 'timeDay': g.tod.setHours(12); break;
@@ -336,7 +340,7 @@ export class UI {
   buildSettings() {
     const g = this.g, s = g.settings;
     const sel = (key, opts, label, reload) => `<label><span>${esc(t(label))}${reload ? ' ↻' : ''}</span><select data-s="${key}" ${reload ? 'data-reload="1"' : ''}>${opts.map(([v, l]) => `<option value="${v}" ${String(s[key]) === String(v) ? 'selected' : ''}>${esc(l)}</option>`).join('')}</select></label>`;
-    const rng = (key, label, min = 0, max = 1, step = 0.05) => `<label><span>${esc(t(label))}</span><input type="range" data-s="${key}" min="${min}" max="${max}" step="${step}" value="${s[key]}"></label>`;
+    const rng = (key, label, min = 0, max = 1, step = 0.01) => `<label><span>${esc(t(label))}</span><input type="range" data-s="${key}" min="${min}" max="${max}" step="${step}" value="${s[key]}"></label>`;
     const chk = (key, label) => `<label class="chk"><input type="checkbox" data-s="${key}" ${s[key] ? 'checked' : ''}><span>${esc(t(label))}</span></label>`;
     // driving difficulty / assists (labels fall back to built-in en/ko/ja text until the i18n keys exist)
     const tf = (k, f) => { const x = t(k); return x !== k ? x : typeof f === 'string' ? f : (f[getLang()] || f.en); };
@@ -804,7 +808,9 @@ export class UI {
       c.globalAlpha = 0.85; c.beginPath(); r.samples.forEach((q, i) => { if (i % 3 && i !== r.samples.length - 1) return; i ? c.lineTo(q.p.x, q.p.z) : c.moveTo(q.p.x, q.p.z); }); c.stroke();
     }
     c.globalAlpha = 1;
-    for (const ai of this.g.traffic.cars) { if (ai.pos.distanceToSquared(pos) > RR * RR) continue; c.fillStyle = ai.police ? (ai.pursuit ? '#ff3030' : '#4a8cff') : 'rgba(255,255,255,.8)'; const q = 2.6 / S * 1.6; c.fillRect(ai.pos.x - q, ai.pos.z - q, q * 2, q * 2); }
+    for (const ai of this.g.traffic.cars) { if (ai.pos.distanceToSquared(pos) > RR * RR || ai.mode === 'parked' && !ai.police) continue; // v2.13.3: small car chevrons pointing where they drive (parked cars left off)
+      const q = 2.6 / S * 1.6, sn = Math.sin(ai.yaw), cs = Math.cos(ai.yaw); c.fillStyle = ai.police ? (ai.pursuit ? '#ff3030' : '#4a8cff') : '#e9edf3'; c.strokeStyle = 'rgba(0,0,0,.7)'; c.lineWidth = q * 0.35;
+      c.beginPath(); c.moveTo(ai.pos.x + sn * q * 1.6, ai.pos.z + cs * q * 1.6); c.lineTo(ai.pos.x - sn * q + cs * q * 0.9, ai.pos.z - cs * q - sn * q * 0.9); c.lineTo(ai.pos.x - sn * q * 0.5, ai.pos.z - cs * q * 0.5); c.lineTo(ai.pos.x - sn * q - cs * q * 0.9, ai.pos.z - cs * q + sn * q * 0.9); c.closePath(); c.fill(); c.stroke(); }
     this.drawNav(c, 1 / S);
     c.restore();
     // pointers on the edge for the destination / police
@@ -895,7 +901,9 @@ export class UI {
       const g0 = P(-20000, 0), rad = Math.max(10 * dpr, 70000 * k); c.strokeStyle = 'rgba(47,191,116,.9)'; c.lineWidth = 2 * dpr; c.setLineDash([5 * dpr, 4 * dpr]); c.beginPath(); c.arc(g0[0], g0[1], rad, 0, 7); c.stroke(); c.setLineDash([]);
       c.font = `800 ${12 * dpr}px system-ui`; c.fillStyle = '#7ff0b0'; c.fillText('MIDNIGHT JAPAN', g0[0], g0[1] + rad + 14 * dpr); }
     // traffic
-    for (const ai of this.g.traffic?.cars || []) { const [a, b] = P(ai.pos.x, ai.pos.z); if (a < 0 || b < 0 || a > W || b > H) continue; c.fillStyle = ai.police ? '#4a8cff' : 'rgba(255,255,255,.8)'; c.fillRect(a - 2 * dpr, b - 2 * dpr, 4 * dpr, 4 * dpr); }
+    for (const ai of this.g.traffic?.cars || []) { const [a, b] = P(ai.pos.x, ai.pos.z); if (a < 0 || b < 0 || a > W || b > H || (ai.mode === 'parked' && !ai.police)) continue;
+      const q = 3.2 * dpr, sn = Math.sin(ai.yaw), cs = Math.cos(ai.yaw); c.fillStyle = ai.police ? '#4a8cff' : '#e9edf3'; c.strokeStyle = 'rgba(0,0,0,.75)'; c.lineWidth = dpr;
+      c.beginPath(); c.moveTo(a + sn * q * 1.6, b + cs * q * 1.6); c.lineTo(a - sn * q + cs * q * 0.9, b - cs * q - sn * q * 0.9); c.lineTo(a - sn * q * 0.5, b - cs * q * 0.5); c.lineTo(a - sn * q - cs * q * 0.9, b - cs * q + sn * q * 0.9); c.closePath(); c.fill(); c.stroke(); }
     // labels: road names (expressways always, ramps/streets when zoomed), landmarks, places
     c.textAlign = 'center'; c.textBaseline = 'middle';
     // Japanese name + its reading in the player's language on a second, smaller line

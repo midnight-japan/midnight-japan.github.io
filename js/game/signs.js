@@ -1251,7 +1251,8 @@ export const SIGN_KINDS = Object.keys(S).filter(k => k !== 'sub_plate').concat([
 
 // ───────────────────────── rendering / caching ─────────────────────────
 const _cache = new Map();
-let _aniso = 8;
+let _aniso = 8, _maxPx = 1024;
+export function setSignResolution(px) { _maxPx = px; }
 
 function stableKey(o) {
   if (o === null || typeof o !== 'object') return JSON.stringify(o);
@@ -1264,7 +1265,7 @@ function getSpec(kind, opts) {
   return f(opts || {});
 }
 function renderSpec(spec, canvas, ...args) {
-  const ppm = Math.min(2048 / Math.max(spec.w, spec.h), 1600);
+  const ppm = Math.min(_maxPx / Math.max(spec.w, spec.h), 1600); // v2.13.3: capped (2048 px signs cost ~1 GB of video memory)
   canvas = canvas || document.createElement('canvas');
   const cw = Math.max(16, Math.round(spec.w * ppm)), ch = Math.max(16, Math.round(spec.h * ppm));
   if (canvas.width !== cw) canvas.width = cw;

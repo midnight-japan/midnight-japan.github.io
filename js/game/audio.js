@@ -1425,14 +1425,14 @@ export class GameAudio {
     this._crackle = makeCrackle(ctx);
     try { this.banks = new Banks(ctx); for (const n of SFX_FILES) this.banks.buffer(n); } catch (e) { this.banks = null; this._err(e); }
     // master chain: buses → master → glue comp → limiter → out
-    this.master = G(this._vol.master);
+    this.master = G(Math.pow(this._vol.master, 3) * 0.8);
     this.comp = ctx.createDynamicsCompressor();
     this.comp.threshold.value = -20; this.comp.knee.value = 10; this.comp.ratio.value = 4; this.comp.attack.value = 0.005; this.comp.release.value = 0.25;
     this.limiter = ctx.createDynamicsCompressor();
     this.limiter.threshold.value = -3; this.limiter.knee.value = 0; this.limiter.ratio.value = 20; this.limiter.attack.value = 0.001; this.limiter.release.value = 0.1;
     this.out = G(0.85); // makeup gain after the heavier levelling compressor
     this.master.connect(this.comp); this.comp.connect(this.limiter); this.limiter.connect(this.out); this.out.connect(ctx.destination);
-    this.bus = { engine: G(this._vol.engine), sfx: G(this._vol.sfx), ambient: G(this._vol.ambient), radio: G(this._vol.radio) };
+    this.bus = { engine: G(this._vol.engine ** 2), sfx: G(this._vol.sfx ** 2), ambient: G(this._vol.ambient ** 2), radio: G(this._vol.radio ** 2) };
     for (const k in this.bus) this.bus[k].connect(this.master);
     // shared reverb (small, generated impulse) — SFX / siren / ambience send into revIn
     this.revIn = G(1);
@@ -1487,8 +1487,10 @@ export class GameAudio {
       for (const k of ['master', 'engine', 'sfx', 'ambient', 'radio']) if (v[k] !== undefined) this._vol[k] = clamp(num(v[k], this._vol[k]), 0, 1);
       if (!this.ctx) return;
       const t = this.ctx.currentTime;
-      sp(this.master.gain, this._vol.master, t, 0.05);
-      for (const k in this.bus) sp(this.bus[k].gain, this._vol[k], t, 0.05);
+      // v2.13.3: perceptual (cubic) slider curve and a quieter top end — the lowest settings were still loud
+      const curve = x => Math.pow(x, 3) * 0.8;
+      sp(this.master.gain, curve(this._vol.master), t, 0.05);
+      for (const k in this.bus) sp(this.bus[k].gain, Math.pow(this._vol[k], 2), t, 0.05);
     } catch (e) { this._err(e); }
   }
   setListener(pos, forward, up) {
@@ -1626,7 +1628,7 @@ export class GameAudio {
       u.pitch = clamp(num(opts.pitch, R[1] * (0.9 + sv * 0.2)), 0, 2);
       if (role === 'police' && opts.megaphone !== false) this.sfx?.('megaphone');
       const busVol = opts.channel === 'radio' ? this._vol.radio : this._vol.sfx;
-      u.volume = clamp(num(opts.volume, 1) * this._vol.master * busVol, 0, 1);
+      u.volume = clamp(num(opts.volume, 1) * Math.pow(this._vol.master, 3) * 0.8 * busVol * busVol, 0, 1);
       ss.speak(u);
     } catch (e) { this._err(e); }
   }

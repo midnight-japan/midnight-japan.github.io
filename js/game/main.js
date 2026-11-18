@@ -12,7 +12,7 @@ import { GAME } from '../../data/meta.js';
 import { detectLang, setLang, t } from '../i18n.js';
 import { displayName, currentUser, updateUser } from '../account.js';
 import { initTextures } from './textures.js';
-import { setSignAnisotropy } from './signs.js';
+import { setSignAnisotropy, setSignResolution } from './signs.js';
 import { RoadNet, PA_RECT, PA } from './roads.js';
 import { Fx } from './fx.js';
 import { defaultStance, STANCE_PRESETS } from './carmodel.js';
@@ -54,15 +54,19 @@ const load = (k, d) => { try { return { ...d, ...(JSON.parse(localStorage.getIte
 const save = (k, v) => { try { localStorage.setItem(k, JSON.stringify(v)); } catch {} };
 
 const isMobile = /Android|iPhone|iPad|iPod|Mobile|SamsungBrowser/i.test(navigator.userAgent) || (navigator.maxTouchPoints > 1 && /Mac/.test(navigator.platform));
+// v2.13.3: integrated GPUs (Apple M-series laptops, Intel/AMD iGPU) start on Low — 60 fps first, the player can raise it
+const integratedAtStart = (() => { try { const gl = document.createElement('canvas').getContext('webgl2'); const ext = gl?.getExtension('WEBGL_debug_renderer_info'); const r = ext ? gl.getParameter(ext.UNMASKED_RENDERER_WEBGL) : ''; gl?.getExtension('WEBGL_lose_context')?.loseContext();
+  return /Apple M\d|Apple GPU|Intel|Iris|UHD|HD Graphics|Radeon\(TM\) Graphics|Vega \d|Mali|Adreno|PowerVR/i.test(r) && !/RTX|GTX|Radeon RX|Arc A\d|M\d (Pro|Max|Ultra)/i.test(r); } catch { return false; } })();
 export const DEFAULT_SETTINGS = {
-  quality: isMobile ? 'low' : 'high', resScale: 1, transmission: 'auto', assist: true, units: 'kmh', etc: true,
+  quality: isMobile || integratedAtStart ? 'low' : 'medium', // v2.13.3: 60 fps first — high/ultra are opt-in resScale: 1, transmission: 'auto', assist: true, units: 'kmh', etc: true,
   difficulty: 'standard', steerAssist: 'standard', stm: 'sport', tcs: 'sport', abs: true, police: 'normal',
-  master: 0.6, engine: 0.7, sfx: 0.6, ambient: 0.45, radio: 0.5, dj: false, voice: false, spawn: 'pa', weather: 'auto', season: 'auto', damage: false, tilt: false, shake: true, fps: true, timeSpeed: 1, bloom: true, online: true, touch: isMobile ? 'on' : 'auto',
+  master: 0.6, engine: 0.75, sfx: 0.7, ambient: 0.6, radio: 0.65, dj: false, voice: false, spawn: 'pa', weather: 'auto', season: 'auto', damage: false, tilt: false, shake: true, fps: true, timeSpeed: 1, bloom: true, online: true, touch: isMobile ? 'on' : 'auto',
 };
 
 class Game {
   constructor() {
     this.settings = load(SETTINGS_KEY, DEFAULT_SETTINGS);
+    if (!this.settings.qv) { this.settings.quality = DEFAULT_SETTINGS.quality; this.settings.qv = 2; try { localStorage.setItem(SETTINGS_KEY, JSON.stringify(this.settings)); } catch {} } // v2.13.3: one-time move to the 60-fps defaults
     if (!this.settings.fpsOn) { this.settings.fps = true; this.settings.fpsOn = 1; }
     if (!this.settings.v253) { for (const k of ['master', 'engine', 'sfx', 'ambient', 'radio']) if (typeof this.settings[k] === 'number') this.settings[k] = +(this.settings[k] * 0.75).toFixed(2); this.settings.v253 = 1; } // v2.5.3: everything was too loud
     if (!this.settings.v24) { this.settings.damage = false; this.settings.v24 = 1; } // v2.4: body damage is an option, off by default
@@ -114,6 +118,7 @@ class Game {
     this.scene.add(this.camera);
     await initTextures(renderer, this.quality);
     setSignAnisotropy(this.quality === 'low' ? 2 : 8);
+    setSignResolution(this.quality === 'low' ? 512 : this.quality === 'ultra' ? 1536 : 1024);
     this.ui.loading(0.2, t('game.load.roads'));
     this.net = new RoadNet();
     const bay = this.net.byId.bayshore;
@@ -865,7 +870,7 @@ class Game {
     const G = this.gov ||= { lvl: isMobile ? 3 : this.integratedGPU() ? 2 : 0, low: 0, high: 0, cool: 0, applied: -1 };
     G.cool = Math.max(0, G.cool - 0.5);
     if (this.fps < 54) { G.low++; G.high = 0; } else if (this.fps > 63) { G.high++; G.low = 0; } else { G.low = 0; G.high = 0; }
-    if (G.low >= 4 && G.cool <= 0 && G.lvl < 8) { G.lvl++; G.low = 0; G.cool = 3; }
+    if (G.low >= 2 && G.cool <= 0 && G.lvl < 8) { G.lvl++; G.low = 0; G.cool = 1.5; } // v2.13.3: reacts twice as fast
     else if (G.high >= 16 && G.cool <= 0 && G.lvl > 0) { G.lvl--; G.high = 0; G.cool = 6; }
     if (G.applied !== G.lvl) this.applyGov(G.lvl);
   }
@@ -877,6 +882,8 @@ class Game {
     if (sun?.shadow) { const want = L >= 6 ? 512 : L >= 2 ? 1024 : (this.quality === 'ultra' ? 4096 : 2048); if (sun.shadow.mapSize.x !== want) { sun.shadow.mapSize.set(want, want); sun.shadow.map?.dispose(); sun.shadow.map = null; } }
     G.shadowEvery = L >= 6 ? 4 : L >= 2 ? 2 : 1;
     this.world.dynOff = L >= 4;
+    this.world.cullScale = L >= 6 ? 0.5 : L >= 4 ? 0.65 : L >= 2 ? 0.8 : 1; // v2.13.3: draw distance follows the frame rate too
+    if (this.traffic) this.traffic.visScale = L >= 6 ? 0.5 : L >= 3 ? 0.7 : 1;
     this.world.city && (this.world.city.detail = L >= 5 ? 0.7 : 1);
     if (this.plateau) this.plateau.detail = L >= 5 ? 1.6 : 1;
     const pr = this.basePR() * (L >= 8 ? 0.7 : L >= 7 ? 0.85 : 1);

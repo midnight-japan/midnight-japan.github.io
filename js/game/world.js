@@ -1227,6 +1227,11 @@ export class World {
     this.group.add(grp);
     this.paintStats = { nText, nSigns, nStops, nCurves, nMerges };
     try { this.paintStats.merged = this.mergeSigns(); } catch (e) { console.warn('merge signs', e); }
+    // v2.13.3: the static road / prop / sign cells are never read back on the CPU (driving uses the road network, not
+    // the meshes) — drop their JS copies once uploaded to the GPU (~0.8 GB of JS heap)
+    for (const L of [this.roadGroup?.userData.cells, this.group.userData.cells, this.signGroup?.userData.cells]) for (const m of L || []) {
+      if (m.isInstancedMesh) continue; const g = m.geometry; if (!g.boundingSphere) g.computeBoundingSphere(); if (!g.boundingBox) g.computeBoundingBox();
+      const free = function () { this.array = null; }; for (const a of Object.values(g.attributes)) a.onUpload(free); g.index?.onUpload(free); }
   }
 
   // ───────────────────────── skyline: Minato Mirai, Kawasaki factories, Tokyo ─────────────────────────
@@ -1257,7 +1262,7 @@ export class World {
     this.hakone?.update(env);
     // v2.11 culling: road cells beyond the view range, and the whole Hakone region unless you are near it
     this._cullT = (this._cullT || 0) - dt;
-    if (this.cam && this._cullT <= 0) { this._cullT = 0.4; const R = this.q === 'low' ? 3500 : this.q === 'medium' ? 5500 : 8000; cullRoads(this.roadGroup, this.cam, R); cullRoads(this.group, this.cam, R * 0.7); cullRoads(this.signGroup, this.cam, Math.min(R, 2500));
+    if (this.cam && this._cullT <= 0) { this._cullT = 0.4; const R = (this.q === 'low' ? 3500 : this.q === 'medium' ? 5500 : 8000) * (this.cullScale || 1); cullRoads(this.roadGroup, this.cam, R); cullRoads(this.group, this.cam, R * 0.7); cullRoads(this.signGroup, this.cam, Math.min(R, 2500));
       if (this.hakone?.group) this.hakone.group.visible = this.cam.position.x < -40000; }
     this.t += dt;
     const n = env.night; // 0 day .. 1 night
