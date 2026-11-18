@@ -4,6 +4,7 @@
 // come with them. Facade windows, night lights and traffic-signal cycles are drawn by shaders, so a whole tile is a
 // handful of draw calls. Map data © OpenStreetMap contributors (ODbL 1.0).
 import * as THREE from 'three';
+import { speciesGeos, floraMaterial, speciesAt, speciesColor } from './flora.js';
 import { surface, weather } from './textures.js';
 import { MAP } from './roads.js';
 import { signCanvas } from './signs.js';
@@ -353,10 +354,10 @@ export class City {
     const g = (role, tile, tint) => { const s = surface(role, { tile, tint }); const m = s.clone(); m.polygonOffset = true; m.polygonOffsetFactor = -0.5; m.polygonOffsetUnits = -0.5; return m; };
     const water = new THREE.MeshStandardMaterial({ color: 0x0d2230, roughness: 0.12, metalness: 0.2, envMapIntensity: 0.5 });
     if (this.world.sea?.material.normalMap) { water.normalMap = this.world.sea.material.normalMap; water.normalScale = new THREE.Vector2(0.25, 0.25); }
-    this.mGround = { 12: g('concrete', 6, 0xb8b8b2), 0: g('grass', 3, 0x9fb27a), 1: g('concrete_old', 5, 0xb0b0ac), 2: g('gravel', 3, 0xc7b08a), 3: water, 4: g('parking', 5, 0xffffff), 5: g('pavement', 4, 0xffffff), 6: g('pavement', 4, 0xffffff), 7: g('gravel', 2, 0x9a948c), 8: g('concrete_old', 5, 0xa8a8a4), 9: g('sand', 3, 0xffffff), 10: g('grass', 3, 0x6f8a52), 11: g('grass', 2.5, 0x9cc070) };
+    this.mGround = { 12: g('concrete', 6, 0xb8b8b2), 0: g('grass', 3, 0x9fb27a), 1: g('pavement', 5, 0xbdbfc0), 2: g('gravel', 3, 0xc7b08a), 3: water, 4: g('parking', 5, 0xffffff), 5: g('pavement', 4, 0xffffff), 6: g('pavement', 4, 0xffffff), 7: g('gravel', 2, 0x9a948c), 8: g('concrete_smooth', 5, 0xb2b4b5), 9: g('sand', 3, 0xffffff), 10: g('grass', 3, 0x6f8a52), 11: g('grass', 2.5, 0x9cc070) };
     this.mLand = surface('concrete', { tile: 6, tint: 0xc9c6bf });
-    this.treeGeo = [0, 1, 2, 3].map(treeGeometry);
-    this.mTree = new THREE.MeshStandardMaterial({ vertexColors: true, roughness: 0.85 });
+    this.treeGeo = speciesGeos(); // v2.8: species trees (flora.js)
+    this.mTree = floraMaterial();
     weather(this.mProp, 0.5);
     this.ready = true;
     return true;
@@ -443,15 +444,15 @@ export class City {
     for (const c in o.ground) add(flat(o.ground[c]), this.mGround[c] || this.mGround[1], false, true);
     if (o.wires.length) { const g = new THREE.BufferGeometry(); g.setAttribute('position', new THREE.BufferAttribute(o.wires, 3)); g.computeBoundingSphere(); const l = new THREE.LineSegments(g, this.mWire); l.matrixAutoUpdate = false; l.updateMatrix(); grp.add(l); }
     if (o.trees.length) {
-      const n = o.trees.length / 5; const byV = [[], [], [], []];
-      for (let k2 = 0; k2 < n; k2++) byV[Math.min(3, o.trees[k2 * 5 + 4] | 0)].push(k2);
+      const n = o.trees.length / 5; const bySp = new Map();
+      const hsh = (x, z) => { const v = Math.sin(x * 12.9898 + z * 78.233) * 43758.5453; return v - Math.floor(v); };
+      for (let k2 = 0; k2 < n; k2++) { const b = k2 * 5, sp = speciesAt(o.trees[b + 4] | 0, ox + o.trees[b], oz + o.trees[b + 1], hsh(ox + o.trees[b], oz + o.trees[b + 1])); let l = bySp.get(sp); if (!l) bySp.set(sp, l = []); l.push(k2); }
       const M = new THREE.Matrix4(), Q = new THREE.Quaternion(), Y = new THREE.Vector3(0, 1, 0), P = new THREE.Vector3(), Sc = new THREE.Vector3(), C = new THREE.Color();
-      byV.forEach((ids, v) => {
-        if (!ids.length) return;
-        const im = new THREE.InstancedMesh(this.treeGeo[v], this.mTree, ids.length);
-        ids.forEach((k2, n2) => { const b = k2 * 5; const s = o.trees[b + 2]; Q.setFromAxisAngle(Y, o.trees[b + 3]); P.set(o.trees[b], 0, o.trees[b + 1]); Sc.set(s, s * (0.9 + (o.trees[b + 3] % 0.2)), s); M.compose(P, Q, Sc); im.setMatrixAt(n2, M); C.setHSL(0.22 + (o.trees[b + 3] % 0.07), 0.35, 0.42 + (k2 % 7) * 0.02); im.setColorAt(n2, C); });
-        im.castShadow = shadows; im.receiveShadow = false; im.computeBoundingSphere(); grp.add(im);
-      });
+      for (const [sp, ids] of bySp) {
+        const im = new THREE.InstancedMesh(this.treeGeo[sp], this.mTree, ids.length);
+        ids.forEach((k2, n2) => { const b = k2 * 5; const s = o.trees[b + 2], h = hsh(o.trees[b] + 0.37, o.trees[b + 1]); Q.setFromAxisAngle(Y, o.trees[b + 3]); P.set(o.trees[b], 0, o.trees[b + 1]); Sc.set(s, s * (0.9 + h * 0.25), s); M.compose(P, Q, Sc); im.setMatrixAt(n2, M); im.setColorAt(n2, speciesColor(sp, h, C)); });
+        im.castShadow = shadows && sp !== 'far'; im.receiveShadow = false; im.computeBoundingSphere(); grp.add(im);
+      }
     }
     // swap in
     if (t.group) { this.group.remove(t.group); disposeGroup(t.group); }

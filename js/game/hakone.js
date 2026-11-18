@@ -3,6 +3,7 @@
 // a viewpoint lay-by half way up and the Daikanyama (大観山) summit car park with its lounge, toilets, vending machines
 // and the railing over Lake Ashi with Mt Fuji beyond.
 import * as THREE from 'three';
+import { speciesGeos, floraMaterial, speciesColor, grassGeometry } from './flora.js';
 import { HAKONE } from '../../data/map-hakone.js';
 import { surface } from './textures.js';
 
@@ -63,9 +64,10 @@ export class Hakone {
     for (let k = 0; k < pos.count; k++) {
       const i = k % G.w, j = Math.floor(k / G.w), x = G.x0 + i * G.step, z = G.z0 + j * G.step; const h = this.H[j * G.w + i] * G.scale;
       pos.setXYZ(k, x, h, z);
-      const hi = ss(400, 1000, h); col[k * 3] = 0.42 + 0.08 * hi; col[k * 3 + 1] = 0.5 + 0.06 * hi; col[k * 3 + 2] = 0.32; // greener low, paler grassland near the ridge
+      const hi = ss(400, 1000, h); col[k * 3] = 0.66 + 0.36 * hi; col[k * 3 + 1] = 0.92 + 0.04 * hi; col[k * 3 + 2] = 0.5 + 0.12 * hi; // v2.8: brighter, straw-tinted towards the ridge (November) // greener low, paler grassland near the ridge
     }
     geo.setAttribute('color', new THREE.BufferAttribute(col, 3)); geo.computeVertexNormals();
+    { const uv = geo.attributes.uv; for (let k = 0; k < pos.count; k++) uv.setXY(k, pos.getX(k), pos.getZ(k)); uv.needsUpdate = true; } // v2.8: UVs in metres (the grass texture was stretched over the whole range → flat brown)
     const grass = surface('grass', { tile: 6, tint: 0xffffff }).clone(); grass.vertexColors = true;
     const terr = new THREE.Mesh(geo, grass); terr.receiveShadow = true; g.add(terr);
     // ── cut / fill slopes along both sides of the road (follow the road exactly, meet the terrain 30 m out) ──
@@ -101,9 +103,20 @@ export class Hakone {
       const y = this.ground(x, z); if (y > 900 && rnd() < 0.7) continue; // the summit ridge is open bamboo-grass
       spots.push([x, y, z, rnd() < 0.62, 0.75 + rnd() * 0.6, rnd() * 6.28]);
     }
-    const ced = spots.filter(s => s[3]), bro = spots.filter(s => !s[3]);
-    const im = (geo, mat, list) => { const m = new THREE.InstancedMesh(geo, mat, list.length), o = new THREE.Object3D(); list.forEach((s, i) => { o.position.set(s[0], s[1] - 0.3, s[2]); o.scale.setScalar(s[4]); o.rotation.y = s[5]; o.updateMatrix(); m.setMatrixAt(i, o.matrix); }); m.castShadow = true; m.frustumCulled = false; g.add(m); };
-    im(cone, mCed, ced); im(trunk, mTr, spots); im(blob, mBro, bro);
+    // v2.8: real species (flora.js) — sugi cedar plantations, momiji maple and zelkova in autumn colour
+    { const G = speciesGeos(), mat = floraMaterial(), C = new THREE.Color(), o = new THREE.Object3D(), by = { cedar: [], maple: [], zelkova: [] };
+      for (const sp of spots) { const h = (Math.sin(sp[0] * 12.9898 + sp[2] * 78.233) * 43758.5453) % 1; by[sp[3] ? 'cedar' : Math.abs(h) < 0.55 ? 'maple' : 'zelkova'].push([...sp, Math.abs(h)]); }
+      for (const [k, list] of Object.entries(by)) { if (!list.length) continue; const m = new THREE.InstancedMesh(G[k], mat, list.length);
+        list.forEach((s, i) => { o.position.set(s[0], s[1] - 0.3, s[2]); o.scale.setScalar(s[4] * (k === 'cedar' ? 1.5 : 1.1)); o.rotation.y = s[5]; o.updateMatrix(); m.setMatrixAt(i, o.matrix); m.setColorAt(i, speciesColor(k, s[6], C)); });
+        m.castShadow = false; m.receiveShadow = false; m.computeBoundingSphere(); g.add(m); } }
+    // v2.8 — roadside grass: susuki (pampas) and bamboo-grass tufts, golden in November, thinning away from the road
+    { const Q = this.w?.q || 'high', n0 = Q === 'low' ? 2500 : Q === 'medium' ? 6000 : 14000, mat = floraMaterial(), geoG = grassGeometry(), C = new THREE.Color(), o = new THREE.Object3D(); let sd = 3; const r2 = () => (sd = (sd * 16807) % 2147483647) / 2147483647;
+      if (n0) { const m = new THREE.InstancedMesh(geoG, mat, n0); let n = 0;
+        for (let t = 0; t < n0 * 3 && n < n0; t++) { const q = S[Math.floor(r2() * S.length)], side = r2() < 0.5 ? 1 : -1, d = hw + 1.5 + r2() * r2() * 40, x = q.p.x + q.left.x * d * side, z = q.p.z + q.left.z * d * side;
+          if (this.lotAt(x, z)) continue; const y = this.ground(x, z); if (Math.abs(y - q.p.y) > 14) continue;
+          o.position.set(x, y - 0.05, z); o.rotation.y = r2() * 6.28; const sc = 1.1 + r2() * 1.6; o.scale.set(sc, sc * (0.8 + r2() * 0.9), sc); o.updateMatrix(); m.setMatrixAt(n, o.matrix);
+          const hi = ss(300, 900, y), gold = r2() * 0.5 + hi * 0.5; m.setColorAt(n++, C.setRGB(0.55 + 0.35 * gold, 0.58 + 0.12 * gold, 0.28)); }
+        m.count = n; m.computeBoundingSphere(); g.add(m); } }
     // ── car parks: asphalt pad, stall lines, wheel stops ──
     const asphalt = surface('asphalt_worn', { tile: 6, tint: 0x8a8a8a }), white = new THREE.MeshStandardMaterial({ color: 0xeeeeea, roughness: 0.6 });
     const conc = surface('concrete', { tile: 3 }), dark = new THREE.MeshStandardMaterial({ color: 0x2b2f35, roughness: 0.6, metalness: 0.3 });

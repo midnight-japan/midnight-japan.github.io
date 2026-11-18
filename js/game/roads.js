@@ -877,7 +877,12 @@ export function buildRoadMeshes(net, opts = {}) {
   }
   if (legs.length) {
     const col = new THREE.CylinderGeometry(1.1, 1.3, 1, 20); col.translate(0, 0.5, 0);
-    const cap = new THREE.BoxGeometry(1, 1.4, 2.4); cap.translate(0, -0.7, 0);
+    // v2.8: Shutokō T-pier head instead of a box — deep at the column, tapering to thin chamfered ends (haunched
+    // underside), extruded across the deck; length is the instance x-scale
+    const capShape = new THREE.Shape(); capShape.moveTo(-0.5, 0); capShape.lineTo(0.5, 0); capShape.lineTo(0.5, -0.5); capShape.lineTo(0.47, -0.62);
+    capShape.quadraticCurveTo(0.2, -0.72, 0.12, -1.4); capShape.lineTo(-0.12, -1.4); capShape.quadraticCurveTo(-0.2, -0.72, -0.47, -0.62); capShape.lineTo(-0.5, -0.5); capShape.closePath();
+    const cap = new THREE.ExtrudeGeometry(capShape, { depth: 2.4, bevelEnabled: false, curveSegments: 6 }); cap.translate(0, 0, -1.2);
+    { const uv = cap.attributes.uv, p = cap.attributes.position; for (let i = 0; i < p.count; i++) uv.setXY(i, p.getX(i) * 8 + p.getZ(i), p.getY(i)); } // metres-ish UVs for the concrete
     const colMesh = new THREE.InstancedMesh(col, concreteOld, legs.length);
     const capMesh = new THREE.InstancedMesh(cap, concreteOld, caps.length);
     const m4 = new THREE.Matrix4(), q = new THREE.Quaternion(), sc = new THREE.Vector3(), pos = new THREE.Vector3(), Y = new THREE.Vector3(0, 1, 0);

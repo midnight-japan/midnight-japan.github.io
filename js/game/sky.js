@@ -70,8 +70,8 @@ export class TimeOfDay {
     const m = new THREE.ShaderMaterial({
       uniforms: { t: { value: 0 }, sunDir: { value: new THREE.Vector3(0, 1, 0) }, sunCol: { value: new THREE.Color(1, 1, 1) }, amb: { value: new THREE.Color(0.6, 0.65, 0.7) },
         cover: { value: 0.45 }, night: { value: 0 }, off: { value: new THREE.Vector2() } },
-      vertexShader: 'varying vec2 vW; varying vec2 vL; uniform vec2 off; void main(){ vec4 w = modelMatrix * vec4(position,1.0); vW = w.xz + off; vL = position.xz; gl_Position = projectionMatrix * viewMatrix * w; }',
-      fragmentShader: `uniform float t, cover, night; uniform vec3 sunDir, sunCol, amb; varying vec2 vW; varying vec2 vL;
+      vertexShader: 'varying vec2 vW; varying vec2 vL; varying vec3 vV; uniform vec2 off; void main(){ vec4 w = modelMatrix * vec4(position,1.0); vW = w.xz + off; vL = position.xz; vV = w.xyz - cameraPosition; gl_Position = projectionMatrix * viewMatrix * w; }',
+      fragmentShader: `uniform float t, cover, night; uniform vec3 sunDir, sunCol, amb; varying vec2 vW; varying vec2 vL; varying vec3 vV;
         float h(vec2 p){ return fract(sin(dot(p, vec2(127.1,311.7))) * 43758.5453); }
         float n(vec2 p){ vec2 i = floor(p), f = fract(p); f = f*f*(3.0-2.0*f);
           return mix(mix(h(i), h(i+vec2(1,0)), f.x), mix(h(i+vec2(0,1)), h(i+vec2(1,1)), f.x), f.y); }
@@ -84,9 +84,15 @@ export class TimeOfDay {
           float sh = fbm(p + sunDir.xz * 0.05);           // cheap self-shadow toward the sun
           vec3 lit = sunCol * (1.15 - 0.55 * thick) * (0.75 + 0.25 * (d - sh) * 4.0);
           vec3 c = amb * (0.75 - 0.35 * thick) + lit * max(sunDir.y, 0.0) * 1.1;
+          // v2.8: silver lining — thin cloud edges light up looking towards the sun (forward scattering)
+          float mu = max(dot(normalize(vV), sunDir), 0.0); c += sunCol * pow(mu, 7.0) * (1.0 - thick) * 1.6 * smoothstep(-0.05, 0.2, sunDir.y);
+          // v2.8: high cirrus streaks above the cumulus (thin, wind-stretched, catch the sunset colour)
+          vec2 q = vW / vec2(5200.0, 21000.0) + vec2(t * 0.0012, 0.0); float ci = smoothstep(0.52, 0.86, fbm(q) * 0.8 + fbm(q * 4.0) * 0.3) * 0.5 * (1.0 - a);
+          vec3 cc = mix(amb * 1.1 + sunCol * 0.5 * max(sunDir.y + 0.1, 0.0), vec3(0.1, 0.08, 0.08), night);
+          c = mix(cc, c, a / max(a + ci, 1e-3));
           c = mix(c, vec3(0.16, 0.11, 0.09) * (1.0 - 0.4 * thick), night);  // underside lit by the city at night
           float edge = 1.0 - smoothstep(9000.0, 15000.0, length(vL));
-          gl_FragColor = vec4(c, a * edge * (0.92 - 0.3 * night)); }`,
+          gl_FragColor = vec4(c, max(a, ci) * edge * (0.92 - 0.3 * night)); }`,
       transparent: true, forceSinglePass: true, depthWrite: false, fog: false, side: THREE.DoubleSide
     });
     const g = new THREE.PlaneGeometry(32000, 32000, 1, 1); g.rotateX(-Math.PI / 2);

@@ -1,8 +1,19 @@
 // Shared game metadata: version, changelog, regions. Update VERSION + CHANGELOG on every release.
-export const GAME = { title: 'MIDNIGHT JAPAN', titleJa: 'ミッドナイト・ジャパン', version: '2.7.1', build: '2026.11.18' };
+export const GAME = { title: 'MIDNIGHT JAPAN', titleJa: 'ミッドナイト・ジャパン', version: '2.8.0', build: '2026.11.18' };
 
 // Newest first. type: new | change | fix | known
 export const CHANGELOG = [
+  {
+    version: '2.8.0', date: '2026-11-18', codename: 'Autumn Leaves',
+    summary: { ko: '나무를 전부 새로 만들었습니다: 은행·느티나무·벚나무·녹나무·곰솔·삼나무·단풍나무가 지역과 11월 단풍색에 맞게 서 있고, 하코네엔 황금빛 억새가 핍니다. 은빛 구름 가장자리와 권운, 곡선 가로등, 수도고식 교각, 회색 콘크리트 지면.', ja: '木をすべて作り直しました：イチョウ・ケヤキ・サクラ・クスノキ・クロマツ・スギ・モミジが地域と11月の紅葉色に合わせて並び、箱根には黄金色のススキ。雲の銀の縁取りと巻雲、曲線の街灯、首都高らしい橋脚、灰色のコンクリート地面。', en: 'Every tree is new: ginkgo, zelkova, cherry, camphor, black pine, cedar and maple stand by region in November colours, with golden susuki grass in Hakone. Silver-lined clouds and cirrus, swan-neck street lamps, Shutokō-style pier heads, grey concrete ground.' },
+    items: [
+      { type: 'new', ko: '수종별 나무 7종(잎 다발 카드 + 가지): 가로수는 은행·느티나무, 공원은 벚나무·녹나무, 해안은 곰솔, 하코네는 삼나무·단풍 — 도시 전체·PA·하코네 공통', ja: '樹種別の木7種（葉の房のカード＋枝）：街路樹はイチョウ・ケヤキ、公園はサクラ・クスノキ、海沿いはクロマツ、箱根はスギ・モミジ — 街全体・PA・箱根で共通', en: 'Seven tree species (leaf-spray cards on real limbs): ginkgo and zelkova avenues, cherry and camphor in parks, black pine by the sea, cedar and maple in Hakone — city-wide, the PA and Hakone' },
+      { type: 'new', ko: '하코네 도로변 억새·조릿대 풀(품질별 2,500~14,000포기), 하코네 지형 풀 텍스처가 제대로 보이도록 수정', ja: '箱根の道路沿いにススキ・ササ（画質別に2,500〜14,000株）、箱根の地形の草テクスチャが正しく見えるよう修正', en: 'Hakone roadside susuki and bamboo grass (2,500–14,000 tufts by quality); Hakone terrain grass texture fixed (it was stretched to flat brown)' },
+      { type: 'new', ko: '하늘: 태양 쪽 구름 가장자리가 은빛으로 빛나고, 높은 권운층 추가', ja: '空：太陽側の雲の縁が銀色に光り、高層の巻雲を追加', en: 'Sky: cloud edges glow silver towards the sun, plus a high cirrus layer' },
+      { type: 'change', ko: '네모 오브젝트 정리: 가로등은 곡선 암 + 타원형 등기구, 교각 머리는 양끝이 얇아지는 수도고식 T형', ja: '四角いオブジェクトを整理：街灯は曲線アーム＋楕円の灯具、橋脚の頭部は両端が細くなる首都高のT形', en: 'No more boxes: swan-neck lamp arms with oval luminaires, tapered Shutokō T-pier heads' },
+      { type: 'fix', ko: '맵 전체 지면이 갈색 흙처럼 보이던 문제(벽용 텍스처 사용) → 회색 바닥 콘크리트', ja: 'マップ全体の地面が茶色の土に見えた問題（壁用テクスチャを使用）→ 灰色の床コンクリート', en: 'Ground across the map looked like brown earth (a wall texture) → grey floor concrete' },
+    ],
+  },
   {
     version: '2.7.1', date: '2026-11-18', codename: 'Wayfinder',
     summary: { ko: '지도에서 일본 전체를 볼 수 있고, 사진·방향·거리가 보이는 빠른 이동 카드로 텔레포트가 쉬워졌습니다. 내비가 PA 주차장에서도 하네다·하코네·C1까지 경로를 찾고, 자율주행이 그 경로를 따라갑니다.', ja: '地図で日本全体を見渡せ、写真・方向・距離が分かるクイック移動カードでテレポートが簡単に。ナビがPAの駐車場からも羽田・箱根・C1までルートを見つけ、自動運転がそのルートをたどります。', en: 'The map zooms out to all of Japan, and quick-travel cards with a photo, direction and distance make teleporting easy. GPS now routes from the PA car park to Haneda, Hakone and C1, and the autopilot follows the route.' },

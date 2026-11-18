@@ -5,6 +5,7 @@
 import { placeAt } from '../../data/places.js';
 import { PRODUCTS, productTexture, coverTexture, priceStripTexture } from './goods.js';
 import * as THREE from 'three';
+import { speciesGeos, floraMaterial, speciesColor } from './flora.js';
 import { mergeGeometries } from 'three/addons/utils/BufferGeometryUtils.js';
 import { surface, chainlinkMaterial, windowTexture, glowTexture, weather } from './textures.js';
 import { buildPortals } from './portals.js';
@@ -263,7 +264,7 @@ export class World {
   // ───────────────────────── ground & sea ─────────────────────────
   buildGround(S) {
     const port = surface('asphalt_worn', { tile: 8, tint: 0x9a9ea3 });
-    const land = surface('concrete_old', { tile: 7, tint: 0xa2a5a6 }); // urban ground: weathered concrete / packed earth
+    const land = surface('pavement', { tile: 6, tint: 0xb6b8ba }); // v2.8: grey yard concrete (the wall texture read as brown earth everywhere)
     const wall = surface('concrete_old', { tile: 4 });
     const iron = new THREE.MeshStandardMaterial({ color: 0x2b2b2b, roughness: 0.6, metalness: 0.6 });
     const bol = new THREE.CylinderGeometry(0.25, 0.35, 0.7, 12);
@@ -391,19 +392,12 @@ export class World {
     const lumps = [0, 1, 2, 3].map(i => lump(1.25 + i * 0.12, i * 1.7 + 0.3));
     const stem = new THREE.CylinderGeometry(0.13, 0.24, 3.2, 9); stem.translate(0, 1.6, 0);
     const limb = new THREE.CylinderGeometry(0.06, 0.11, 1.8, 6); limb.translate(0, 0.9, 0);
-    const tree = (x, z) => {
-      const s = 0.85 + rnd() * 0.4, rot = rnd() * 6.28;
-      P.add(stem, trunk, x, 0, z, rot, s, s, s);
-      for (let k = 0; k < 3; k++) { // limbs: tilt via a pre-rotated copy
-        const a = rot + k * 2.1; const g = limb.clone(); g.rotateZ(0.55); g.rotateY(a); P.add(g, trunk, x, 2.6 * s, z, 0, s, s, s); }
-      const n = 7 + Math.floor(rnd() * 3);
-      for (let k = 0; k < n; k++) {
-        const a = rnd() * 6.28, r = (k === 0 ? 0 : 0.9 + rnd() * 0.9) * s, y = (3.9 + (k === 0 ? 0.6 : rnd() * 1.4 - 0.3)) * s;
-        P.add(lumps[k % 4], k % 3 ? leafA : leafB, x + Math.cos(a) * r, y, z + Math.sin(a) * r, rnd() * 6, s * (0.9 + rnd() * 0.35), s * (0.85 + rnd() * 0.3), s * (0.9 + rnd() * 0.35));
-      }
-    };
-    for (let x = -46; x <= 30; x += 12) tree(x + rnd() * 2, -62);
-    for (let z = -76; z <= 20; z += 12) tree(85, z + rnd() * 2);
+    // v2.8: planter trees are real species (flora.js): zelkova and camphor along the lot, instanced
+    { const spots = []; for (let x = -46; x <= 30; x += 12) spots.push([x + rnd() * 2, -62]); for (let z = -76; z <= 20; z += 12) spots.push([85, z + rnd() * 2]);
+      const G = speciesGeos(), mat = floraMaterial(), C = new THREE.Color(), V = new THREE.Vector3(), o = new THREE.Object3D();
+      for (const sp of ['zelkova', 'camphor']) { const list = spots.filter((_, i) => (i % 3 === 0) === (sp === 'camphor')); const m = new THREE.InstancedMesh(G[sp], mat, list.length);
+        list.forEach(([x, z], i) => { PA.toWorld(x, z, V); o.position.set(V.x, 0, V.z); o.rotation.y = rnd() * 6.28; o.scale.setScalar(0.8 + rnd() * 0.3); o.updateMatrix(); m.setMatrixAt(i, o.matrix); m.setColorAt(i, speciesColor(sp, rnd(), C)); });
+        m.castShadow = true; m.computeBoundingSphere(); this.scene.add(m); } }
     // perimeter chain-link fence with gaps for the entrance / exit
     const fence = chainlinkMaterial();
     const post = new THREE.CylinderGeometry(0.04, 0.04, 2.2, 6); const galv = surface('metal', { tile: 1 });
@@ -677,8 +671,9 @@ export class World {
     const poolMatW = this.night(new THREE.MeshBasicMaterial({ map: glowTexture(), color: 0xe4ebff, transparent: true, opacity: 0, blending: THREE.AdditiveBlending, depthWrite: false, polygonOffset: true, polygonOffsetFactor: -6 }), 0, 0.85);
     poolMatW.userData.opacityMode = true;
     const poleG = new THREE.CylinderGeometry(0.12, 0.18, 1, 10); poleG.translate(0, 0.5, 0);
-    const armG = new THREE.BoxGeometry(0.1, 0.1, 1); armG.translate(0, 0, 0.5);
-    const headG = new THREE.BoxGeometry(0.45, 0.14, 0.9);
+    // v2.8: swan-neck arm (tapered tube rising out of the pole) and a flat oval LED/sodium luminaire — no boxes
+    const armG = new THREE.TubeGeometry(new THREE.QuadraticBezierCurve3(new THREE.Vector3(0, -0.55, 0), new THREE.Vector3(0, 0.04, 0.32), new THREE.Vector3(0, 0, 1)), 12, 0.055, 6, false);
+    const headG = new THREE.SphereGeometry(0.5, 16, 8); headG.scale(0.45, 0.16, 0.9);
     const pools = [];
     // road lamps (sodium-orange on Shuto)
     for (const L of lampSpots(this.net)) {
