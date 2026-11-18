@@ -1,9 +1,10 @@
 # 📜 MIDNIGHT JAPAN 업데이트 기록 · Changelog
 
-현재 버전 · Current: **v2.6.0** · [▶ 웹에서 플레이](https://midnight-japan.github.io/) · [🌐 업데이트 페이지](https://midnight-japan.github.io/changelog.html)
+현재 버전 · Current: **v2.6.1** · [▶ 웹에서 플레이](https://midnight-japan.github.io/) · [🌐 업데이트 페이지](https://midnight-japan.github.io/changelog.html)
 
 | 버전 | 날짜 | 이름 | 요약 |
 |---|---|---|---|
+| [v2.6.1](#v261--clear-road-2026-11-18) | 2026-11-18 | Clear Road | 도로망 전수 점검: 데크가 서로 뚫고 지나가던 15곳, 접속부 단차, 지상 도로를 가로막던 램프 방호벽을 모두 수정하고 램프의 급경사·덜컹임을 완화했습니다. |
 | [v2.6.0](#v260--skyline-2026-11-14) | 2026-11-14 | Skyline | 후지산처럼 도쿄 랜드마크가 멀리서도 선명하게: 도쿄도청·신주쿠 초고층군·롯폰기힐스·미드타운·아자부다이힐스·도라노몬힐스·요코하마 랜드마크타워 추가, 야간 조명과 30km 밖에서도 보이는 항공장애등, 덜 뿌연 공기·밝아진 밤, 창고 외벽 디테일, 무게감 있는 차체 움직임과 수도고 이음매 진동. |
 | [v2.5.4](#v254--no-dead-ends-2026-11-14) | 2026-11-14 | No Dead Ends | 맵 전체 도로 끝 자동 점검으로 끊긴 곳 모두 연결(나마무기 K1 5.6m 절벽, 다이코쿠 JCT 만안선→다이코쿠 램프, 하네다 만안선 단차, 공중에서 끝나던 츠루미·시바우라 램프), 텔레포트는 도로와 진행 방향을 골라서. |
 | [v2.5.3](#v253--night-fixes-2026-11-14) | 2026-11-14 | Night Fixes | 베이브리지 서쪽 끝 막다른 길 연결, 나란한 고가 사이 구멍 메움과 중앙 방호벽, 터널에서 내려 점프하면 바다 위로 가던 버그, 시빅 번호판, 전체 음량·사이렌 낮춤, 경찰·NPC가 따라붙지 않게, VTEC 소리 강화. |
@@ -45,6 +46,23 @@
 | [v0.2.0](#v020--bayshore-2026-11-05) | 2026-11-05 | Bayshore | 수도고속 완간선을 따라 하네다까지, 도쿄만 아쿠아라인 해저터널을 지나 우미호타루 PA까지. 실제 3D 차량 모델과 열리는 보닛도 들어왔어요. |
 | [v0.1.1](#v011--one-click-2026-11-04) | 2026-11-04 | One Click | 링크 하나로 바로 플레이. 크롬에서 공식 사이트 주소만 열면 설치 없이 실행돼요. |
 | [v0.1.0](#v010--first-meet-2026-11-04) | 2026-11-04 | First Meet | 첫 공개 버전. 다이코쿠 JCT·PA와 다이코쿠 부두 일대를 3D로 구현했습니다. |
+
+---
+
+## v2.6.1 — Clear Road (2026-11-18)
+
+> 도로망 전수 점검: 데크가 서로 뚫고 지나가던 15곳, 접속부 단차, 지상 도로를 가로막던 램프 방호벽을 모두 수정하고 램프의 급경사·덜컹임을 완화했습니다.
+> Full road-network audit: 15 places where decks cut through each other, a junction step and a ramp wall blocking a street are fixed, and steep, jolting ramps are smoothed.
+
+**🔧 변경 · Changed**
+
+- 램프 종단 다듬기: 급격한 경사 변화 44→23곳, 12% 이상 급경사 16→5곳, 분기·합류 이음부 블렌딩 30→60m<br><sub>Ramp profiles faired: sudden grade breaks 44→23, steep (>12 %) spots 16→5, join blends 30→60 m</sub>
+
+**🐞 수정 · Fixed**
+
+- 다이코쿠 JCT: K5 하행 끝이 반대 방향 상층 데크 높이로 끌려 올라가던 버그 수정 → K5→완안선 램프가 다시 고가에서 분기하고, 다이코쿠 부두 지상 도로를 가로막던 벽이 사라짐<br><sub>Daikoku JCT: the end of K5 southbound was hauled up to the opposite-direction upper deck — fixed, so the K5→Bayshore ramp leaves the viaduct again and the wall across the Daikoku-futō street is gone</sub>
+- 머리 위 여유 높이 부족 자동 보정: 다이시 출구(K1 아래 3.6m), 이시카와초 JCT K3→K1 램프, 도심환상선 겹친 터널 — 최소 5m(터널 7.2m) 확보<br><sub>Headroom auto-fix: Daishi exit (3.6 m under K1), the Ishikawachō K3→K1 ramp and the stacked C1 tunnels now keep at least 5 m (7.2 m in tunnels)</sub>
+- 나마무기: K1 본선이 합류 램프 높이를 따라가며 생기던 1m 단차 제거, 램프 끝이 지상 도로와 만나는 곳의 턱 제거<br><sub>Namamugi: a 1 m step where K1 followed a merging ramp's height is gone; ramp feet now meet street level flush</sub>
 
 ---
 

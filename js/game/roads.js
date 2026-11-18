@@ -256,6 +256,11 @@ function joinSteppedEnds(defs) {
       if (o === d || o.kind !== 'expressway') continue; let S = o.pts[0];
       if (Math.hypot(S[0] - E[0], S[2] - E[2]) > 4 && o.lanesB > 0) S = o.pts[o.pts.length - 1]; // a two-way road's far end (b_sb → Bayshore at Haneda)
       if (Math.hypot(S[0] - E[0], S[2] - E[2]) > 14) continue;
+      // v2.6.1: only a road that carries on in the same direction — K5 southbound ends under the start of K5
+      // northbound (stacked 10 m higher, opposite way) and was hauled up into that deck
+      { const Ep = d.pts[Math.max(0, d.pts.length - 3)], so = S === o.pts[0], On = so ? o.pts[Math.min(2, o.pts.length - 1)] : o.pts[Math.max(0, o.pts.length - 3)];
+        const ax = E[0] - Ep[0], az = E[2] - Ep[2], bx = On[0] - S[0], bz = On[2] - S[2];
+        if ((ax * bx + az * bz) / ((Math.hypot(ax, az) * Math.hypot(bx, bz)) || 1) < 0.3) continue; }
       const dy = S[1] - E[1]; if (Math.abs(dy) < 0.4 || Math.abs(dy) > 12) continue;
       const acc = cum(d), L = acc[acc.length - 1], B = Math.min(250, L * 0.6);
       d.pts = d.pts.map((p, i) => [p[0], p[1] + dy * sm(Math.max(0, 1 - (L - acc[i]) / B)), p[2]]);
@@ -333,6 +338,8 @@ export class RoadNet {
       }
     }
     this._res = [];
+    this.fairRamps();
+    this.clearances();
     this.snapSeams();
     this.findJunctions();
     this.flushJoins();
@@ -340,14 +347,25 @@ export class RoadNet {
   // Where a ramp leaves / joins a road, the part of it lying on the parent deck must have the parent's height, then blend
   // smoothly into its own profile — otherwise the ramp floats 1–2 m over the main lanes (a step for car and eye).
   flushJoins() {
+    // v2.6.1: end-to-start continuations (K1 横羽線 → K1 at Namamugi ended 0.8–1 m above the road it runs on into)
+    for (const r of this.roads) {
+      if (r.kind === 'local' || r.lanesB) continue;
+      const S = r.samples, L = r.length, E = S[S.length - 1], e = E.p;
+      const nx = this.roads.find(o => o !== r && o.kind !== 'local' && !o.lanesB && Math.hypot(o.samples[0].p.x - e.x, o.samples[0].p.z - e.z) < 4 && o.samples[0].t.x * E.t.x + o.samples[0].t.z * E.t.z > 0.8);
+      if (!nx) continue;
+      const dy = nx.samples[0].p.y - e.y; if (Math.abs(dy) < 0.05 || Math.abs(dy) > 3) continue;
+      const B = Math.min(180, L * 0.5); for (const q of S) { const u = (L - q.s) / B; if (u < 1) { const t = 1 - u; q.p.y += dy * t * t * (3 - 2 * t); } }
+      this._grades(r);
+    }
     const pairs = [];
     for (const [parent, l] of this.diverges) for (const d of l) pairs.push([d.to, parent, 0]);
     for (const [child, d] of this.links) pairs.push([child, d.to, 1]);
     for (const [r, parent, atEnd] of pairs) {
       if (r.kind === 'local' || r === parent) continue;
+      if (r.kind === 'expressway' && parent.kind !== 'expressway') continue; // v2.6.1: a main line never follows a merging ramp's height
       const S = r.samples, n = S.length, idx = i => atEnd ? n - 1 - i : i;
       const pY = (p) => { let y = null; for (const h of this.hits(p.x, p.z)) if (h.road === parent && !h.beyond && h.lat <= parent.edgeL + 0.5 && h.lat >= parent.edgeR - 0.5 && Math.abs(h.y - p.y) < 4) y = h.y; return y; };
-      let k = 0, lastOff = 0; const BL = 30;
+      let k = 0, lastOff = 0; const BL = 60; // v2.6.1: 30 → 60 m blend (a 6–8 % grade break at every join)
       for (; k < n; k++) { const q = S[idx(k)]; const y = pY(q.p); if (y === null) break; lastOff = y - q.p.y; q.p.y = y; }
       if (!k) continue;
       const s0 = S[idx(k - 1)].s;
@@ -383,6 +401,54 @@ export class RoadNet {
     const bay = this.byId.bayshore, pin = this.byId.pa_in;
     this.sPAin = bay && pin ? (this.diverges.get(bay) || []).find(d => d.to === pin)?.s ?? 0 : 0;
   }
+  // v2.6.1 — OSM ramp heights come in per-way steps: a light fairing pass removes the sudden grade breaks (a jolt at
+  // speed) on ramps, leaving 30 m at each end untouched so the joins found later still meet
+  fairRamps() {
+    for (const r of this.roads) {
+      if (r.kind !== 'ramp' || r.samples.length < 40) continue;
+      const S = r.samples, L = r.length, y = S.map(q => q.p.y), w = S.map(q => Math.min(1, Math.max(0, (Math.min(q.s, L - q.s) - 30) / 40)));
+      for (let pass = 0; pass < 40; pass++) { const z = y.slice(); for (let i = 1; i < S.length - 1; i++) if (w[i] > 0) y[i] = z[i] + ((z[i - 1] + 2 * z[i] + z[i + 1]) / 4 - z[i]) * w[i]; }
+      S.forEach((q, i) => { q.p.y = y[i]; });
+      this._grades(r);
+    }
+  }
+  _grades(r) { const S = r.samples; for (let i = 0; i < S.length; i++) { const a = S[Math.max(0, i - 1)], b = S[Math.min(S.length - 1, i + 1)]; S[i].grade = (b.p.y - a.p.y) / Math.max(0.01, Math.hypot(b.p.x - a.p.x, b.p.z - a.p.z)); } }
+  // v2.6.1 — two carriageways crossing one over the other with too little headroom (大師 exit 3.6 m under K1, K3→K1
+  // ramp under K3, the stacked C1 tunnels): the lower road dips (or, when it is at ground level, the upper one rises)
+  // smoothly over ±160 m until there is 5 m of headroom (7.2 m between tunnels, for the tunnel box)
+  clearances() {
+    const sm = t => t * t * (3 - 2 * t);
+    // roads that join (an end of one lies on the other's deck) converge in height on purpose — never pushed apart
+    const joined = new Set();
+    for (const r of this.roads) for (const q of [r.samples[0], r.samples[r.samples.length - 1]]) for (const h of this.hits(q.p.x, q.p.z)) if (h.road !== r && Math.abs(h.y - q.p.y) < 1.6 && h.lat <= h.road.edgeL + 2 && h.lat >= h.road.edgeR - 2) { joined.add(r.index + ':' + h.road.index); joined.add(h.road.index + ':' + r.index); }
+    for (let iter = 0; iter < 3; iter++) {
+      const need = new Map(); // road → [{s, d}] (d < 0 lower, d > 0 raise)
+      const add = (r, s, d) => { let l = need.get(r); if (!l) need.set(r, l = []); l.push({ s, d }); };
+      for (const r of this.roads) {
+        if (r.kind === 'local') continue;
+        const S = r.samples;
+        for (let i = 0; i < S.length; i += 2) {
+          const p = S[i].p;
+          for (const h of this.hits(p.x, p.z)) {
+            const o = h.road; if (o === r || o.kind === 'local' || h.beyond || joined.has(r.index + ':' + o.index)) continue;
+            if (Math.min(h.lat - o.edgeR, o.edgeL - h.lat) < 1.0) continue;
+            const dy = h.y - p.y; if (dy < 0.6) continue; // r is the lower road
+            const req = (p.y < -0.6 || h.y < -0.6) ? 7.2 : 5.0; if (dy >= req) continue;
+            const def = req - dy, endR = Math.min(S[i].s, r.length - S[i].s), endO = Math.min(h.s, o.length - h.s);
+            if (p.y - def < 0.3 && p.y > -0.3 || endR < 40) { if (endO >= 40) add(o, h.s, def); }
+            else add(r, S[i].s, -def);
+          }
+        }
+      }
+      if (!need.size) break;
+      for (const [r, l] of need) {
+        const S = r.samples, L = r.length;
+        for (const q of S) { let lo = 0, hi = 0; for (const n of l) { const w = 1 - sm(Math.min(1, Math.abs(q.s - n.s) / 160)); if (n.d < 0) lo = Math.min(lo, n.d * w); else hi = Math.max(hi, n.d * w); }
+          const tap = sm(Math.min(1, Math.min(q.s, L - q.s) / 60)); q.p.y += (lo + hi) * 1.05 * tap; }
+        this._grades(r);
+      }
+    }
+  }
   // v2.2 — where a ramp runs on top of a carriageway (diverge / merge tapers) both decks must be the same surface: the
   // lesser road's samples take the main road's height there (they differed by up to 1 m → a step when changing lanes)
   snapSeams() {
@@ -392,12 +458,15 @@ export class RoadNet {
       const S = r.samples, fixed = new Uint8Array(S.length); let any = false;
       for (let i = 0; i < S.length; i++) {
         const p = S[i].p; let best = null;
-        for (const h of this.hits(p.x, p.z)) { if (h.road === r || h.road.kind === 'local' || !h.inside || h.beyond) continue; const d = h.y - p.y; if (Math.abs(d) > 0.03 && Math.abs(d) < 1.3 && rank(h.road) > rank(r) && (!best || Math.abs(d) < Math.abs(best - p.y))) best = h.y; }
+        for (const h of this.hits(p.x, p.z)) { if (h.road === r || !h.inside || h.beyond) continue;
+          // v2.6.1: a ramp foot crossing a street at ground level takes the street's height (futo_out landed 1 m above 大黒橋通り)
+          const streetFoot = h.road.kind === 'local' && r.kind === 'ramp' && p.y < 2 && Math.abs(h.y) < 0.5 && h.lat <= h.road.edgeL - 0.5 && h.lat >= h.road.edgeR + 0.5;
+          if (h.road.kind === 'local' && !streetFoot) continue; const d = h.y - p.y; if (Math.abs(d) > 0.03 && Math.abs(d) < 1.3 && (rank(h.road) > rank(r) || streetFoot) && (!best || Math.abs(d) < Math.abs(best - p.y))) best = h.y; }
         if (best !== null) { p.y = best; fixed[i] = 1; any = true; }
       }
       if (!any) continue;
       const y = S.map(q => q.p.y);
-      for (let pass = 0; pass < 30; pass++) { const z = y.slice(); for (let i = 1; i < S.length - 1; i++) if (!fixed[i]) y[i] = (z[i - 1] + 2 * z[i] + z[i + 1]) / 4; }
+      for (let pass = 0; pass < 140; pass++) { const z = y.slice(); for (let i = 1; i < S.length - 1; i++) if (!fixed[i]) y[i] = (z[i - 1] + 2 * z[i] + z[i + 1]) / 4; }
       S.forEach((q, i) => { q.p.y = y[i]; });
       for (let i = 0; i < S.length; i++) { const a = S[Math.max(0, i - 1)], b = S[Math.min(S.length - 1, i + 1)]; S[i].grade = (b.p.y - a.p.y) / Math.max(0.01, Math.hypot(b.p.x - a.p.x, b.p.z - a.p.z)); }
     }

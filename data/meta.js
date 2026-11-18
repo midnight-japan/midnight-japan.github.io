@@ -1,8 +1,18 @@
 // Shared game metadata: version, changelog, regions. Update VERSION + CHANGELOG on every release.
-export const GAME = { title: 'MIDNIGHT JAPAN', titleJa: 'ミッドナイト・ジャパン', version: '2.6.0', build: '2026.11.14' };
+export const GAME = { title: 'MIDNIGHT JAPAN', titleJa: 'ミッドナイト・ジャパン', version: '2.6.1', build: '2026.11.18' };
 
 // Newest first. type: new | change | fix | known
 export const CHANGELOG = [
+  {
+    version: '2.6.1', date: '2026-11-18', codename: 'Clear Road',
+    summary: { ko: '도로망 전수 점검: 데크가 서로 뚫고 지나가던 15곳, 접속부 단차, 지상 도로를 가로막던 램프 방호벽을 모두 수정하고 램프의 급경사·덜컹임을 완화했습니다.', ja: '道路網を全数点検：デッキ同士がめり込んでいた15か所、接続部の段差、地上の道路をふさいでいたランプの防護壁をすべて修正し、ランプの急勾配とガタつきを緩和しました。', en: 'Full road-network audit: 15 places where decks cut through each other, a junction step and a ramp wall blocking a street are fixed, and steep, jolting ramps are smoothed.' },
+    items: [
+      { type: 'fix', ko: '다이코쿠 JCT: K5 하행 끝이 반대 방향 상층 데크 높이로 끌려 올라가던 버그 수정 → K5→완안선 램프가 다시 고가에서 분기하고, 다이코쿠 부두 지상 도로를 가로막던 벽이 사라짐', ja: '大黒JCT：K5下り線の終点が反対方向の上層デッキの高さまで引き上げられていた不具合を修正 → K5→湾岸線ランプが再び高架から分岐し、大黒ふ頭の地上道路をふさいでいた壁が消えた', en: 'Daikoku JCT: the end of K5 southbound was hauled up to the opposite-direction upper deck — fixed, so the K5→Bayshore ramp leaves the viaduct again and the wall across the Daikoku-futō street is gone' },
+      { type: 'fix', ko: '머리 위 여유 높이 부족 자동 보정: 다이시 출구(K1 아래 3.6m), 이시카와초 JCT K3→K1 램프, 도심환상선 겹친 터널 — 최소 5m(터널 7.2m) 확보', ja: '頭上クリアランス不足を自動補正：大師出口（K1の下3.6m）、石川町JCTのK3→K1ランプ、都心環状線の重なったトンネル — 最低5m（トンネルは7.2m）を確保', en: 'Headroom auto-fix: Daishi exit (3.6 m under K1), the Ishikawachō K3→K1 ramp and the stacked C1 tunnels now keep at least 5 m (7.2 m in tunnels)' },
+      { type: 'fix', ko: '나마무기: K1 본선이 합류 램프 높이를 따라가며 생기던 1m 단차 제거, 램프 끝이 지상 도로와 만나는 곳의 턱 제거', ja: '生麦：K1本線が合流ランプの高さに引っ張られてできていた1mの段差を解消、ランプの末端が地上道路と交わる所の段差も解消', en: 'Namamugi: a 1 m step where K1 followed a merging ramp\'s height is gone; ramp feet now meet street level flush' },
+      { type: 'change', ko: '램프 종단 다듬기: 급격한 경사 변화 44→23곳, 12% 이상 급경사 16→5곳, 분기·합류 이음부 블렌딩 30→60m', ja: 'ランプの縦断を整形：急な勾配変化44→23か所、12%超の急勾配16→5か所、分岐・合流部のつなぎを30→60mに', en: 'Ramp profiles faired: sudden grade breaks 44→23, steep (>12 %) spots 16→5, join blends 30→60 m' },
+    ],
+  },
   {
     version: '2.6.0', date: '2026-11-14', codename: 'Skyline',
     summary: { ko: '후지산처럼 도쿄 랜드마크가 멀리서도 선명하게: 도쿄도청·신주쿠 초고층군·롯폰기힐스·미드타운·아자부다이힐스·도라노몬힐스·요코하마 랜드마크타워 추가, 야간 조명과 30km 밖에서도 보이는 항공장애등, 덜 뿌연 공기·밝아진 밤, 창고 외벽 디테일, 무게감 있는 차체 움직임과 수도고 이음매 진동.', ja: '富士山のように東京のランドマークが遠くからでもくっきり：東京都庁・西新宿の超高層群・六本木ヒルズ・ミッドタウン・麻布台ヒルズ・虎ノ門ヒルズ・横浜ランドマークタワーを追加、夜のライトアップと30km先でも見える航空障害灯、霞を薄く・夜を明るく、倉庫の外壁ディテール、重みのある車体の動きと首都高の継ぎ目。', en: 'Tokyo landmarks read from far away like Mt Fuji: Tochō, the West Shinjuku towers, Roppongi Hills, Midtown, Azabudai Hills, Toranomon Hills and Yokohama Landmark Tower added, night lighting and aviation lights visible from 30 km, clearer air and brighter nights, detailed warehouses, weighty body motion and Shutokō expansion joints.' },
