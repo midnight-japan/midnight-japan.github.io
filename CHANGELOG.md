@@ -1,9 +1,10 @@
 # 📜 MIDNIGHT JAPAN 업데이트 기록 · Changelog
 
-현재 버전 · Current: **v2.13.9** · [▶ 웹에서 플레이](https://midnight-japan.github.io/) · [🌐 업데이트 페이지](https://midnight-japan.github.io/changelog.html)
+현재 버전 · Current: **v2.13.10** · [▶ 웹에서 플레이](https://midnight-japan.github.io/) · [🌐 업데이트 페이지](https://midnight-japan.github.io/changelog.html)
 
 | 버전 | 날짜 | 이름 | 요약 |
 |---|---|---|---|
+| [v2.13.10](#v21310--next-stop-2026-11-18) | 2026-11-18 | Next Stop | 전철에 승객: 창문이 뚫린 차체와 투명 유리, 형광등이 켜진 실내, 파란 롱시트와 손잡이 봉, 앉고 서 있는 승객 — 출퇴근 시간엔 만원, 심야엔 한산. |
 | [v2.13.9](#v2139--all-japan-2026-11-18) | 2026-11-18 | All Japan | 사이트 지역 페이지를 일본 전체 지도로(도도부현·주요 도시·오키나와 인셋, 플레이 가능 지역과 오사카 예정 표시), 지역마다 명소 일러스트와 「여기서 달리기」 버튼. 다이코쿠 PA 입구·출구에 段差あり 표시와 과속방지턱. |
 | [v2.13.8](#v2138--living-streets-2026-11-18) | 2026-11-18 | Living Streets | 거리에 사람과 동물: 시간대별 보행자(등하교 학생, 출퇴근 직장인, 장보는 사람), 비둘기 무리와 까마귀, 하코네 산길의 사슴. |
 | [v2.13.7](#v2137--irasshaimase-2026-11-18) | 2026-11-18 | Irasshaimase | 다이코쿠 PA 편의점에 직원: 계산대 점원(들어오면 돌아보며 인사, 계산할 때 응대)과 진열대를 정리하는 아르바이트생. 진열대 상품이 선반 안에 묻혀 안 보이던 문제 수정. |
@@ -64,6 +65,21 @@
 | [v0.2.0](#v020--bayshore-2026-11-05) | 2026-11-05 | Bayshore | 수도고속 완간선을 따라 하네다까지, 도쿄만 아쿠아라인 해저터널을 지나 우미호타루 PA까지. 실제 3D 차량 모델과 열리는 보닛도 들어왔어요. |
 | [v0.1.1](#v011--one-click-2026-11-04) | 2026-11-04 | One Click | 링크 하나로 바로 플레이. 크롬에서 공식 사이트 주소만 열면 설치 없이 실행돼요. |
 | [v0.1.0](#v010--first-meet-2026-11-04) | 2026-11-04 | First Meet | 첫 공개 버전. 다이코쿠 JCT·PA와 다이코쿠 부두 일대를 3D로 구현했습니다. |
+
+---
+
+## v2.13.10 — Next Stop (2026-11-18)
+
+> 전철에 승객: 창문이 뚫린 차체와 투명 유리, 형광등이 켜진 실내, 파란 롱시트와 손잡이 봉, 앉고 서 있는 승객 — 출퇴근 시간엔 만원, 심야엔 한산.
+> Passengers on the trains: a body with real window openings and clear glass, a lit cabin, blue long bench seats and grab rails, seated and standing passengers — packed at rush hour, nearly empty late at night.
+
+**✨ 추가 · New**
+
+- 전철 실내와 승객(혼잡도는 시간대에 따라: 출퇴근 만원·낮 보통·심야 한산), 밤에는 실내 불빛<br><sub>Train cabins with passengers (load by the hour: packed at rush hour, normal by day, nearly empty late at night), lit at night</sub>
+
+**🐞 수정 · Fixed**
+
+- 전철 문이 차체 폭 전체를 막는 상자였던 문제 → 양쪽 얇은 문짝<br><sub>Train doors were full-width blocks through the car → thin door leaves on each side</sub>
 
 ---
 

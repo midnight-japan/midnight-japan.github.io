@@ -1,8 +1,16 @@
 // Shared game metadata: version, changelog, regions. Update VERSION + CHANGELOG on every release.
-export const GAME = { title: 'MIDNIGHT JAPAN', titleJa: 'ミッドナイト・ジャパン', version: '2.13.9', build: '2026.11.18' };
+export const GAME = { title: 'MIDNIGHT JAPAN', titleJa: 'ミッドナイト・ジャパン', version: '2.13.10', build: '2026.11.18' };
 
 // Newest first. type: new | change | fix | known
 export const CHANGELOG = [
+  {
+    version: '2.13.10', date: '2026-11-18', codename: 'Next Stop',
+    summary: { ko: '전철에 승객: 창문이 뚫린 차체와 투명 유리, 형광등이 켜진 실내, 파란 롱시트와 손잡이 봉, 앉고 서 있는 승객 — 출퇴근 시간엔 만원, 심야엔 한산.', ja: '電車に乗客：窓の開いた車体と透明ガラス、蛍光灯の点いた車内、青いロングシートと吊り手の棒、座る人と立つ人 — 通勤時間は満員、深夜はがらがら。', en: 'Passengers on the trains: a body with real window openings and clear glass, a lit cabin, blue long bench seats and grab rails, seated and standing passengers — packed at rush hour, nearly empty late at night.' },
+    items: [
+      { type: 'new', ko: '전철 실내와 승객(혼잡도는 시간대에 따라: 출퇴근 만원·낮 보통·심야 한산), 밤에는 실내 불빛', ja: '電車の車内と乗客（混雑は時間帯で：通勤時は満員・昼は普通・深夜はがらがら）、夜は車内の明かり', en: 'Train cabins with passengers (load by the hour: packed at rush hour, normal by day, nearly empty late at night), lit at night' },
+      { type: 'fix', ko: '전철 문이 차체 폭 전체를 막는 상자였던 문제 → 양쪽 얇은 문짝', ja: '電車のドアが車体の幅いっぱいの箱だった問題 → 両側の薄い扉に', en: 'Train doors were full-width blocks through the car → thin door leaves on each side' },
+    ],
+  },
   {
     version: '2.13.9', date: '2026-11-18', codename: 'All Japan',
     summary: { ko: '사이트 지역 페이지를 일본 전체 지도로(도도부현·주요 도시·오키나와 인셋, 플레이 가능 지역과 오사카 예정 표시), 지역마다 명소 일러스트와 「여기서 달리기」 버튼. 다이코쿠 PA 입구·출구에 段差あり 표시와 과속방지턱.', ja: 'サイトの地域ページを日本全図に（都道府県・主要都市・沖縄の差し込み、プレイ可能エリアと大阪予定を表示）、地域ごとに名所のイラストと「ここから走る」ボタン。大黒PAの入口・出口に段差ありの表示とハンプ。', en: 'The site regions page is now a map of all Japan (prefectures, major cities, Okinawa inset, drivable area and planned Osaka) with a landmark illustration and a “Drive here” button per region. 段差あり markings and speed humps at the Daikoku PA entry and exit.' },
