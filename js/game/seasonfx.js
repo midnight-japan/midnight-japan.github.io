@@ -40,6 +40,12 @@ export class SeasonFX {
             else col = mix(vec3(0.85, 0.35, 0.1), vec3(0.9, 0.7, 0.15), vR); }
           gl_FragColor = vec4(col * mix(1.0, 0.35, uNight), al * 0.95); }`,
     });
+    // v2.9: petals / leaves kicked up behind the car when it drives through them (CPU pool, one draw call)
+    const K = 160; this.kick = { n: K, p: new Float32Array(K * 3), v: new Float32Array(K * 3), life: new Float32Array(K), next: 0, acc: 0 };
+    const kg = new THREE.BufferGeometry(); kg.setAttribute('position', new THREE.BufferAttribute(this.kick.p, 3)); const kr = new Float32Array(K); for (let i = 0; i < K; i++) kr[i] = Math.random(); kg.setAttribute('aR', new THREE.BufferAttribute(kr, 1));
+    const km = m.clone(); km.uniforms = this.kU = { ...THREE.UniformsUtils.clone(this.uni) };
+    km.vertexShader = `attribute float aR; uniform float uPx; varying float vR; varying float vA; void main(){ vR = aR; vA = 1.0; vec4 mv = viewMatrix * vec4(position, 1.0); gl_Position = projectionMatrix * mv; gl_PointSize = 0.13 * uPx / max(1.0, -mv.z); }`;
+    this.kpts = new THREE.Points(kg, km); this.kpts.frustumCulled = false; this.kpts.renderOrder = 3; this.kpts.visible = false; game.scene.add(this.kpts);
     this.pts = new THREE.Points(geo, m); this.pts.frustumCulled = false; this.pts.renderOrder = 3; this.pts.visible = false;
     game.scene.add(this.pts);
     this.apply();
@@ -55,5 +61,16 @@ export class SeasonFX {
     else if (s === 'spring') { kind = 1; amt = hakone ? 0.55 : 0.12; }
     else if (s === 'autumn') { kind = 3; amt = hakone ? 0.3 : 0.06; }
     U.uKind.value = kind; U.uAmt.value = amt; this.pts.visible = kind > 0 && amt > 0;
+    // kick-up behind the wheels: spring petals / autumn leaves lying on the road, thickest on the Hakone touge
+    const v = this.g.vehicle, k = this.kick, kU = this.kU; kU.uKind.value = s === 'spring' ? 1 : 3; kU.uPx.value = U.uPx.value; kU.uNight.value = U.uNight.value;
+    if (v && this.g.mode === 'drive' && (s === 'spring' || s === 'autumn') && v.onRoad && !(v.airborne > 0)) { const sp = Math.abs(v.vx || 0), rate = sp > 6 ? (hakone ? 60 : 14) * Math.min(1, sp / 30) : 0; k.acc += rate * dt;
+      while (k.acc >= 1) { k.acc -= 1; const i = k.next; k.next = (k.next + 1) % k.n; const f = v.forward, side = Math.random() < 0.5 ? 1 : -1, l = v.left;
+        k.p[i * 3] = v.pos.x - f.x * 1.6 + l.x * side * 0.8; k.p[i * 3 + 1] = v.pos.y + 0.1; k.p[i * 3 + 2] = v.pos.z - f.z * 1.6 + l.z * side * 0.8;
+        k.v[i * 3] = v.vel.x * 0.35 + (Math.random() - 0.5) * 2 + l.x * side * 1.5; k.v[i * 3 + 1] = 1.5 + Math.random() * 2.5 + sp * 0.05; k.v[i * 3 + 2] = v.vel.z * 0.35 + (Math.random() - 0.5) * 2 + l.z * side * 1.5; k.life[i] = 2.5 + Math.random() * 1.5; } }
+    let any = false;
+    for (let i = 0; i < k.n; i++) { if (k.life[i] <= 0) { k.p[i * 3 + 1] = -1e4; continue; } any = true; k.life[i] -= dt; const j = i * 3;
+      k.v[j] *= 1 - dt * 1.2; k.v[j + 2] *= 1 - dt * 1.2; k.v[j + 1] = Math.max(-0.9, k.v[j + 1] - 3.5 * dt); // light: drag + slow fall
+      k.p[j] += (k.v[j] + Math.sin(k.life[i] * 5 + i) * 0.6) * dt; k.p[j + 1] += k.v[j + 1] * dt; k.p[j + 2] += k.v[j + 2] * dt; if (k.p[j + 1] < (v?.pos.y ?? 0) - 0.5) k.life[i] = 0; }
+    this.kpts.visible = any; if (any) this.kpts.geometry.attributes.position.needsUpdate = true;
   }
 }

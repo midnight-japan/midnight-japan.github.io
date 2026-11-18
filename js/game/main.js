@@ -20,6 +20,7 @@ import { setGlbCompiler } from './carglb.js';
 import { Nav } from './nav.js';
 import { Autopilot } from './autopilot.js';
 import { SeasonFX } from './seasonfx.js';
+import { Roadworks } from './roadworks.js';
 import { Dialog } from './dialog.js';
 import { World } from './world.js';
 import { TimeOfDay } from './sky.js';
@@ -190,6 +191,7 @@ class Game {
     this.planes = new Planes(this);
     this.weather = new Weather(this);
     try { this.seasonFx = new SeasonFX(this); } catch (e) { console.warn('season', e); }
+    this.roadworks = new Roadworks(this);
     this.fx = new Fx(this);
     this.nav = new Nav(this);
     this.autopilot = new Autopilot(this);
@@ -798,6 +800,7 @@ class Game {
     if (this.nav && !paused) { try { this.nav.update(dt); this.snapUpdate(dt); } catch (e) { console.warn('nav', e); } }
     if (this.weather) { try { const w = this.weather.update(paused ? 0 : dt, this.camera, this.env); this.env.rain = w.rain; this.env.wet = w.wet; } catch (e) { console.warn('weather', e); this.weather = null; } }
     if (this.seasonFx) { try { this.seasonFx.update(paused ? 0 : dt, this.camera); } catch (e) { console.warn('season', e); this.seasonFx = null; } }
+    if (this.roadworks && !paused) { try { this.roadworks.update(dt); } catch (e) { console.warn('roadworks', e); this.roadworks = null; } }
     this.world.update(dt, this.env);
     this.world.updateDynamicLights(dt, this.focus, this.env.night);
     this.world.city?.update(dt, this.focus, this.env.night);

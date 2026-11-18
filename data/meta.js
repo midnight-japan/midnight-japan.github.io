@@ -1,8 +1,17 @@
 // Shared game metadata: version, changelog, regions. Update VERSION + CHANGELOG on every release.
-export const GAME = { title: 'MIDNIGHT JAPAN', titleJa: 'ミッドナイト・ジャパン', version: '2.9.0', build: '2026.11.18' };
+export const GAME = { title: 'MIDNIGHT JAPAN', titleJa: 'ミッドナイト・ジャパン', version: '2.10.0', build: '2026.11.18' };
 
 // Newest first. type: new | change | fix | known
 export const CHANGELOG = [
+  {
+    version: '2.10.0', date: '2026-11-18', codename: 'Living City',
+    summary: { ko: '살아 있는 거리: 스포츠카가 지나가면 멈춰서 촬영하거나 손 흔드는 사람, 스마트폰 보는 사람, 나란히 걷는 커플. 수도고 야간 도로공사(추월차선 규제)가 일정 시간 생겼다 철수하고, 차가 벚꽃잎·낙엽을 흩날립니다.', ja: '生きた街：スポーツカーが通ると立ち止まって撮影したり手を振る人、スマホを見る人、並んで歩くカップル。首都高の夜間工事（右車線規制）が一定時間現れて撤収し、車が桜の花びらや落ち葉を舞い上げます。', en: 'A living street: people stop to film or wave at a passing sports car, check their phones, couples walk side by side. Shutokō night road works (right-lane closures) come and go, and your car kicks up cherry petals and fallen leaves.' },
+    items: [
+      { type: 'new', ko: '보행자 성격: 차 마니아(스포츠카가 지나가거나 회전수를 올리면 멈춰 폰으로 촬영·손 흔들기), 걷다 멈춰 스마트폰 보기, 커플은 같은 속도로 나란히 걷기, 비 오면 우산', ja: '歩行者の個性：クルマ好き（スポーツカーの通過や空ぶかしで立ち止まり撮影・手を振る）、立ち止まってスマホ、カップルは並んで同じ歩調で、雨なら傘', en: 'Pedestrian characters: car fans film or wave at a sports car going by (or revving), people stop to check their phones, couples walk side by side, umbrellas in the rain' },
+      { type: 'new', ko: '도로공사: 고속도로 앞쪽에 추월차선 규제(1차로는 유지) — 60m 라바콘 테이퍼, 깜빡이는 화살표 트럭, 500m·200m 전 「この先 工事中 / 右車線規制」 표지. 2.5~5.5분 뒤 철수, 밤에 더 자주. AI 차량과 자율주행이 미리 차선 변경', ja: '道路工事：前方の高速道路で右車線規制（第一通行帯は維持）— 60mのコーンのテーパー、点滅する矢印板車、500m・200m手前に「この先 工事中／右車線規制」。2.5〜5.5分で撤収、夜ほど多い。AIと自動運転は早めに車線変更', en: 'Road works: a right-lane closure ahead on the expressway (the travel lane stays open) — 60 m cone taper, blinking arrow-board truck, 「この先 工事中 / 右車線規制」 boards 500 m and 200 m before. Packed up after 2.5–5.5 min, more often at night; AI traffic and the autopilot move over early' },
+      { type: 'new', ko: '봄엔 벚꽃잎, 가을엔 낙엽이 차 뒤로 흩날림(하코네 토게에서 가장 많이)', ja: '春は桜の花びら、秋は落ち葉が車の後ろに舞う（箱根の峠で最も多く）', en: 'Cherry petals in spring and fallen leaves in autumn swirl up behind the car (most on the Hakone touge)' },
+    ],
+  },
   {
     version: '2.9.0', date: '2026-11-18', codename: 'Four Seasons',
     summary: { ko: '사계절 도입(봄 벚꽃 흩날리는 토게, 여름 신록, 가을 단풍, 겨울 앙상한 나무와 눈), 하코네 턴파이크에 비상주차대·주차대, 편의점 앞 아스팔트 주차장과 실제 편의점 브랜드, 콕핏·모바일 버그 수정.', ja: '四季を導入（春は桜吹雪の峠、夏は新緑、秋は紅葉、冬は葉の落ちた木と雪）、箱根ターンパイクに非常駐車帯・駐車帯、コンビニ前のアスファルト駐車場と実在のコンビニ、コクピットとスマホの不具合を修正。', en: 'Four seasons (cherry petals on the touge in spring, summer green, autumn colour, bare trees and snow in winter), emergency bays and parking strips on the Hakone Turnpike, asphalt car parks and real chains at convenience stores, cockpit and phone fixes.' },

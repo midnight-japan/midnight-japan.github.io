@@ -1,9 +1,10 @@
 # 📜 MIDNIGHT JAPAN 업데이트 기록 · Changelog
 
-현재 버전 · Current: **v2.9.0** · [▶ 웹에서 플레이](https://midnight-japan.github.io/) · [🌐 업데이트 페이지](https://midnight-japan.github.io/changelog.html)
+현재 버전 · Current: **v2.10.0** · [▶ 웹에서 플레이](https://midnight-japan.github.io/) · [🌐 업데이트 페이지](https://midnight-japan.github.io/changelog.html)
 
 | 버전 | 날짜 | 이름 | 요약 |
 |---|---|---|---|
+| [v2.10.0](#v2100--living-city-2026-11-18) | 2026-11-18 | Living City | 살아 있는 거리: 스포츠카가 지나가면 멈춰서 촬영하거나 손 흔드는 사람, 스마트폰 보는 사람, 나란히 걷는 커플. 수도고 야간 도로공사(추월차선 규제)가 일정 시간 생겼다 철수하고, 차가 벚꽃잎·낙엽을 흩날립니다. |
 | [v2.9.0](#v290--four-seasons-2026-11-18) | 2026-11-18 | Four Seasons | 사계절 도입(봄 벚꽃 흩날리는 토게, 여름 신록, 가을 단풍, 겨울 앙상한 나무와 눈), 하코네 턴파이크에 비상주차대·주차대, 편의점 앞 아스팔트 주차장과 실제 편의점 브랜드, 콕핏·모바일 버그 수정. |
 | [v2.8.0](#v280--autumn-leaves-2026-11-18) | 2026-11-18 | Autumn Leaves | 나무를 전부 새로 만들었습니다: 은행·느티나무·벚나무·녹나무·곰솔·삼나무·단풍나무가 지역과 11월 단풍색에 맞게 서 있고, 하코네엔 황금빛 억새가 핍니다. 은빛 구름 가장자리와 권운, 곡선 가로등, 수도고식 교각, 회색 콘크리트 지면. |
 | [v2.7.1](#v271--wayfinder-2026-11-18) | 2026-11-18 | Wayfinder | 지도에서 일본 전체를 볼 수 있고, 사진·방향·거리가 보이는 빠른 이동 카드로 텔레포트가 쉬워졌습니다. 내비가 PA 주차장에서도 하네다·하코네·C1까지 경로를 찾고, 자율주행이 그 경로를 따라갑니다. |
@@ -50,6 +51,19 @@
 | [v0.2.0](#v020--bayshore-2026-11-05) | 2026-11-05 | Bayshore | 수도고속 완간선을 따라 하네다까지, 도쿄만 아쿠아라인 해저터널을 지나 우미호타루 PA까지. 실제 3D 차량 모델과 열리는 보닛도 들어왔어요. |
 | [v0.1.1](#v011--one-click-2026-11-04) | 2026-11-04 | One Click | 링크 하나로 바로 플레이. 크롬에서 공식 사이트 주소만 열면 설치 없이 실행돼요. |
 | [v0.1.0](#v010--first-meet-2026-11-04) | 2026-11-04 | First Meet | 첫 공개 버전. 다이코쿠 JCT·PA와 다이코쿠 부두 일대를 3D로 구현했습니다. |
+
+---
+
+## v2.10.0 — Living City (2026-11-18)
+
+> 살아 있는 거리: 스포츠카가 지나가면 멈춰서 촬영하거나 손 흔드는 사람, 스마트폰 보는 사람, 나란히 걷는 커플. 수도고 야간 도로공사(추월차선 규제)가 일정 시간 생겼다 철수하고, 차가 벚꽃잎·낙엽을 흩날립니다.
+> A living street: people stop to film or wave at a passing sports car, check their phones, couples walk side by side. Shutokō night road works (right-lane closures) come and go, and your car kicks up cherry petals and fallen leaves.
+
+**✨ 추가 · New**
+
+- 보행자 성격: 차 마니아(스포츠카가 지나가거나 회전수를 올리면 멈춰 폰으로 촬영·손 흔들기), 걷다 멈춰 스마트폰 보기, 커플은 같은 속도로 나란히 걷기, 비 오면 우산<br><sub>Pedestrian characters: car fans film or wave at a sports car going by (or revving), people stop to check their phones, couples walk side by side, umbrellas in the rain</sub>
+- 도로공사: 고속도로 앞쪽에 추월차선 규제(1차로는 유지) — 60m 라바콘 테이퍼, 깜빡이는 화살표 트럭, 500m·200m 전 「この先 工事中 / 右車線規制」 표지. 2.5~5.5분 뒤 철수, 밤에 더 자주. AI 차량과 자율주행이 미리 차선 변경<br><sub>Road works: a right-lane closure ahead on the expressway (the travel lane stays open) — 60 m cone taper, blinking arrow-board truck, 「この先 工事中 / 右車線規制」 boards 500 m and 200 m before. Packed up after 2.5–5.5 min, more often at night; AI traffic and the autopilot move over early</sub>
+- 봄엔 벚꽃잎, 가을엔 낙엽이 차 뒤로 흩날림(하코네 토게에서 가장 많이)<br><sub>Cherry petals in spring and fallen leaves in autumn swirl up behind the car (most on the Hakone touge)</sub>
 
 ---
 

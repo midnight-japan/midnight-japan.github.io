@@ -28,13 +28,19 @@ export class Walkers {
     const N = this.net(); if (!N) return false;
     const sp = N.randomNear(f.x, f.z, 30, 200); if (!sp || sp.c.cls > 4) return false;
     let h; try { h = createHuman(randomOutfit()); } catch (e) { return false; }
-    const w = { h, c: sp.c, i: sp.i, d: sp.d, dir: Math.random() < 0.5 ? 1 : -1, side: Math.random() < 0.5 ? 1 : -1, v: 1.05 + Math.random() * 0.5, yaw: 0, pause: 0, ox: 0, oz: 0 };
+    // v2.9 personalities: car fans stop and film / wave at a passing sports car, phone-checkers stop to read, couples
+    // walk side by side at the same pace
+    const w = { h, c: sp.c, i: sp.i, d: sp.d, dir: Math.random() < 0.5 ? 1 : -1, side: Math.random() < 0.5 ? 1 : -1, v: 1.05 + Math.random() * 0.5, yaw: 0, pause: 0, ox: 0, oz: 0, lat: 0,
+      fan: Math.random() < 0.3, phoney: Math.random() < 0.35, act: null, cool: 0 };
     w.umb = umbrella(); w.umb.position.set(0.12, (h.height || 1.7) + 0.08, 0.06); w.umb.visible = false; h.object.add(w.umb);
-    this.g.scene.add(h.object); this.list.push(w); this.pose(w, true); return true;
+    this.g.scene.add(h.object); this.list.push(w); this.pose(w, true);
+    if (Math.random() < 0.2 && this.list.length < this.max) { let h2; try { h2 = createHuman(randomOutfit()); } catch { h2 = null; }
+      if (h2) { const m = { ...w, h: h2, lead: w, lat: 0.6, fan: w.fan, phoney: false, umb: null }; m.umb = umbrella(); m.umb.position.copy(w.umb.position); m.umb.visible = false; h2.object.add(m.umb); w.lat = -0.05; this.g.scene.add(h2.object); this.list.push(m); this.pose(m, true); } }
+    return true;
   }
-  remove(w) { w.umb?.removeFromParent(); this.g.scene.remove(w.h.object); try { w.h.dispose(); } catch {} this.list.splice(this.list.indexOf(w), 1); }
+  remove(w) { for (const m of this.list) if (m.lead === w) m.lead = null; w.umb?.removeFromParent(); this.g.scene.remove(w.h.object); try { w.h.dispose(); } catch {} this.list.splice(this.list.indexOf(w), 1); }
   pose(w, snap) {
-    const S = this.seg(w.c, w.i); const off = w.c.w / 2 + (w.c.cls <= 3 ? 1.6 : 0.8);
+    const S = this.seg(w.c, w.i); const off = w.c.w / 2 + (w.c.cls <= 3 ? 1.6 : 0.8) + (w.lat || 0) * w.side;
     const hx = S.tx * w.dir, hz = S.tz * w.dir;
     const x = S.a[0] + S.tx * w.d + S.tz * off * w.side, z = S.a[1] + S.tz * w.d - S.tx * off * w.side;
     w.h.object.position.set(x + w.ox, 0.05, z + w.oz);
@@ -63,8 +69,16 @@ export class Walkers {
       if (drive) { const dx = p.x - v.pos.x, dz = p.z - v.pos.z, d2 = dx * dx + dz * dz; if (d2 < 16 && Math.abs(v.kmh) > 3) { const d = Math.sqrt(d2) || 1; w.ox += dx / d * dt * 4; w.oz += dz / d * dt * 4; speed = 0; } }
       // step back onto the pavement line once the car has gone (the side-step used to be overwritten by pose())
       const k = Math.min(1, dt * 0.8); w.ox -= w.ox * k; w.oz -= w.oz * k;
+      // a sports car going by (or revving close by): fans stop, turn to it and film or wave
+      w.cool -= dt;
+      if (drive && w.fan && w.cool <= 0 && !w.act) { const dx = v.pos.x - p.x, dz = v.pos.z - p.z, d = Math.hypot(dx, dz); const sporty = ['jdm', 'euro', 'us'].includes(v.car?.cat);
+        if (sporty && d < 32 && (Math.abs(v.kmh) > 25 || (v.engine?.rpm || 0) > 4500)) { w.act = Math.random() < 0.65 ? 'photo' : 'wave'; w.actT = 3 + Math.random() * 3; w.pause = w.actT; w.cool = 25; } }
+      if (!w.act && w.phoney && w.pause <= 0 && Math.random() < dt * 0.015) { w.act = 'phone'; w.actT = 4 + Math.random() * 6; w.pause = w.actT; }
+      if (w.act) { w.actT -= dt; if (w.actT <= 0) w.act = null; }
+      if (w.lead) { const L = w.lead; w.c = L.c; w.i = L.i; w.d = L.d; w.dir = L.dir; w.side = L.side; w.pause = L.pause; if (L.act === 'photo' || L.act === 'wave') { w.act = L.act; w.actT = L.actT; } speed = L.pause > 0 ? 0 : L.v; this.pose(w, false); }
       if (w.pause > 0) { w.pause -= dt; speed = 0; }
-      let step = speed * dt;
+      let step = w.lead ? 0 : speed * dt;
+      if (!w.lead) w.vNow = speed;
       for (let guard = 0; guard < 3 && step > 0; guard++) {
         const S = this.seg(w.c, w.i); const rem = w.dir > 0 ? S.L - w.d : w.d;
         if (step < rem) { w.d += step * w.dir; step = 0; break; }
@@ -81,10 +95,11 @@ export class Walkers {
         } else { w.dir = -w.dir; w.pause = 1 + Math.random() * 3; }
       }
       this.pose(w, false);
-      if (w.umb) w.umb.visible = raining;
+      if ((w.act === 'photo' || w.act === 'wave') && v) { const dx = v.pos.x - p.x, dz = v.pos.z - p.z; w.yaw = Math.atan2(dx, dz); w.h.object.rotation.y = w.yaw; } // face the car
+      if (w.umb) w.umb.visible = raining && w.act !== 'photo';
       const d2 = (p.x - f.x) ** 2 + (p.z - f.z) ** 2;
       w.h.object.visible = d2 < 200 * 200;
-      if (w.h.object.visible && (d2 < 70 * 70 || this.g.frame % 3 === 0)) { try { w.h.update(d2 < 70 * 70 ? dt : dt * 3, { speed, action: speed > 0.1 ? 'walk' : 'idle' }); } catch {} }
+      if (w.h.object.visible && (d2 < 70 * 70 || this.g.frame % 3 === 0)) { try { w.h.update(d2 < 70 * 70 ? dt : dt * 3, { speed, action: w.act && speed < 0.1 ? w.act : speed > 0.1 ? 'walk' : 'idle' }); } catch {} }
     }
   }
 }

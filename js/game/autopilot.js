@@ -156,7 +156,8 @@ export class Autopilot {
       const r = this.road, dir = this.dir;
       // lane: the overtaking lane, or the side of the junction we are about to take
       this.laneT -= dt;
-      const want = this.plan ? this.plan.lane : this.fastLane(r, dir);
+      let want = this.plan ? this.plan.lane : this.fastLane(r, dir);
+      { const rw = g.roadworks; if (rw && rw.closed(r, dir, this.s, want, 500)) { const alt = r.lanes.filter(l => l.dir === dir && !rw.closed(r, dir, this.s, l, 500)).sort((a, b) => Math.abs(a.lat - want.lat) - Math.abs(b.lat - want.lat))[0]; if (alt) want = alt; } } // v2.10: road works
       if (want !== this.lane && this.laneT <= 0) {
         const ls = r.lanes.filter(l => l.dir === dir).sort((a, b) => (a.lat - b.lat) * Math.sign(want.lat - this.lane.lat));
         const step = ls.find(l => (l.lat - this.lane.lat) * Math.sign(want.lat - this.lane.lat) > 0.5);

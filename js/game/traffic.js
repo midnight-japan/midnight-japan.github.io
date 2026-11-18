@@ -290,7 +290,10 @@ export class Traffic {
       let right = same.filter(l => lft(l) < lft(ai.lane)).sort((a, b) => lft(b) - lft(a))[0], left = same.filter(l => lft(l) > lft(ai.lane)).sort((a, b) => lft(a) - lft(b))[0];
       if (right === fast) right = null;
       let target = null;
-      if (ai.lane === fast && left) target = left; // dropped into the overtaking lane by a junction → move over
+      const rw = this.g.roadworks; const shut = l => rw && rw.closed(road, ai.dir, ai.s, l, 450);
+      if (right && shut(right)) right = null;
+      if (shut(ai.lane) && left) { if (free(left, 25, 12) || Math.random() < dt * 0.5) target = left; else ai.yieldSlow = 2; } // v2.10: lane closed ahead — merge left
+      else if (ai.lane === fast && left) target = left; // dropped into the overtaking lane by a junction → move over
       else if (ai.yieldT > 0 && Math.random() < dt * 4) {
         // honked at: move AWAY from the player (who is behind) — never across into their lane
         const ps = ai.yieldSide ?? 0; // −1 player on our right, +1 on our left, 0 same lane
