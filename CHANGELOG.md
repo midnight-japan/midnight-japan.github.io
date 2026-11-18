@@ -1,9 +1,10 @@
 # 📜 MIDNIGHT JAPAN 업데이트 기록 · Changelog
 
-현재 버전 · Current: **v2.7.0** · [▶ 웹에서 플레이](https://midnight-japan.github.io/) · [🌐 업데이트 페이지](https://midnight-japan.github.io/changelog.html)
+현재 버전 · Current: **v2.7.1** · [▶ 웹에서 플레이](https://midnight-japan.github.io/) · [🌐 업데이트 페이지](https://midnight-japan.github.io/changelog.html)
 
 | 버전 | 날짜 | 이름 | 요약 |
 |---|---|---|---|
+| [v2.7.1](#v271--wayfinder-2026-11-18) | 2026-11-18 | Wayfinder | 지도에서 일본 전체를 볼 수 있고, 사진·방향·거리가 보이는 빠른 이동 카드로 텔레포트가 쉬워졌습니다. 내비가 PA 주차장에서도 하네다·하코네·C1까지 경로를 찾고, 자율주행이 그 경로를 따라갑니다. |
 | [v2.7.0](#v270--real-cars-2026-11-18) | 2026-11-18 | Real Cars | 애매한 차량 모델 12종을 정리해 실제 모델이 있는 차만 남기고, 차가 노면에 붙어 달리도록 수직 물리와 노면별 접지력을 새로 만들었습니다. |
 | [v2.6.1](#v261--clear-road-2026-11-18) | 2026-11-18 | Clear Road | 도로망 전수 점검: 데크가 서로 뚫고 지나가던 15곳, 접속부 단차, 지상 도로를 가로막던 램프 방호벽을 모두 수정하고 램프의 급경사·덜컹임을 완화했습니다. |
 | [v2.6.0](#v260--skyline-2026-11-14) | 2026-11-14 | Skyline | 후지산처럼 도쿄 랜드마크가 멀리서도 선명하게: 도쿄도청·신주쿠 초고층군·롯폰기힐스·미드타운·아자부다이힐스·도라노몬힐스·요코하마 랜드마크타워 추가, 야간 조명과 30km 밖에서도 보이는 항공장애등, 덜 뿌연 공기·밝아진 밤, 창고 외벽 디테일, 무게감 있는 차체 움직임과 수도고 이음매 진동. |
@@ -47,6 +48,23 @@
 | [v0.2.0](#v020--bayshore-2026-11-05) | 2026-11-05 | Bayshore | 수도고속 완간선을 따라 하네다까지, 도쿄만 아쿠아라인 해저터널을 지나 우미호타루 PA까지. 실제 3D 차량 모델과 열리는 보닛도 들어왔어요. |
 | [v0.1.1](#v011--one-click-2026-11-04) | 2026-11-04 | One Click | 링크 하나로 바로 플레이. 크롬에서 공식 사이트 주소만 열면 설치 없이 실행돼요. |
 | [v0.1.0](#v010--first-meet-2026-11-04) | 2026-11-04 | First Meet | 첫 공개 버전. 다이코쿠 JCT·PA와 다이코쿠 부두 일대를 3D로 구현했습니다. |
+
+---
+
+## v2.7.1 — Wayfinder (2026-11-18)
+
+> 지도에서 일본 전체를 볼 수 있고, 사진·방향·거리가 보이는 빠른 이동 카드로 텔레포트가 쉬워졌습니다. 내비가 PA 주차장에서도 하네다·하코네·C1까지 경로를 찾고, 자율주행이 그 경로를 따라갑니다.
+> The map zooms out to all of Japan, and quick-travel cards with a photo, direction and distance make teleporting easy. GPS now routes from the PA car park to Haneda, Hakone and C1, and the autopilot follows the route.
+
+**✨ 추가 · New**
+
+- 일본 전체 지도(🗾 버튼): 해안선과 주요 도시 51곳, 플레이 지역 표시<br><sub>All-Japan map (🗾 button): coastline, 51 major cities and the drivable area</sub>
+- 빠른 이동: 13개 목적지 카드에 실제 게임 화면 사진, 현재 진행 방향 기준 화살표, 방위와 거리. 고르면 그 자리에서 진행 방향을 골라 출발<br><sub>Quick travel: 13 destination cards with an in-game photo, an arrow relative to your heading, compass point and distance; pick one, then pick the direction to set off in</sub>
+
+**🐞 수정 · Fixed**
+
+- 내비: PA 주차장 등 고속도로 밖에서도 경로 탐색, 왕복 도로 끝(완안선 하네다 쪽 등) 연결 — 하네다·하코네·C1 경로가 안 잡히던 문제 수정<br><sub>GPS: routes from off the expressway (PA car park) and across two-way road ends (Bayshore at Haneda) — Haneda, Hakone and C1 routes now found</sub>
+- 자율주행: 목적지가 있으면 분기점에서 경로대로 진행(출구 포함), 주차장에서 통로로 먼저 나간 뒤 이동, 서 있는 사람·통로 건너편 차 때문에 멈추던 문제 수정<br><sub>Autopilot: follows the GPS route at junctions (exits included), leaves a bay into the aisle first, no longer stops for people standing about or cars across the aisle</sub>
 
 ---
 

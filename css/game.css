@@ -360,3 +360,13 @@ body.photo .online-pill,body.photo .chat{display:none}
 #map .mapsel .ms-name b{font:800 20px system-ui;color:#fff;letter-spacing:.01em}
 #map .mapsel .ms-name small{font:600 12px system-ui;color:#ffcf8a}
 #map .mapsel .btn small{display:block;font:600 10px system-ui;opacity:.75;margin-top:2px}
+/* v2.7.1 quick travel */
+#map .qt{position:absolute;left:16px;top:60px;bottom:24px;width:270px;display:flex;flex-direction:column;pointer-events:auto;z-index:2}
+#map .qt-h{font:800 13px system-ui;letter-spacing:.08em;text-transform:uppercase;color:#ffcf8a;padding:8px 12px;background:rgba(8,14,26,.9);border:1px solid rgba(255,255,255,.14);border-radius:12px 12px 0 0;cursor:pointer}
+#map .qt-list{overflow-y:auto;display:flex;flex-direction:column;gap:6px;padding:8px;background:rgba(8,14,26,.82);border:1px solid rgba(255,255,255,.14);border-top:0;border-radius:0 0 12px 12px;backdrop-filter:blur(8px)}
+#map .qt-card{display:grid;grid-template-columns:84px 1fr;grid-template-rows:auto auto;gap:2px 10px;align-items:center;text-align:left;padding:6px;border-radius:10px;border:1px solid transparent;background:rgba(255,255,255,.04);color:#fff;cursor:pointer}
+#map .qt-card:hover,#map .qt-card:focus-visible{border-color:#ffb347;background:rgba(255,179,71,.12)}
+#map .qt-card img{grid-row:1/3;width:84px;height:48px;object-fit:cover;border-radius:6px;background:#1d2633}
+#map .qt-t b{display:block;font:700 13px "Hiragino Sans","Noto Sans JP",system-ui}#map .qt-t small{color:#9fb0c8;font-size:11px}
+#map .qt-d{font:600 11px system-ui;color:#7ff0b0;display:flex;align-items:center;gap:6px}#map .qt-d i{display:inline-block;font-style:normal;color:#ffb347;font-size:12px}
+@media (max-width:760px){#map .qt{top:auto;bottom:84px;left:8px;right:8px;width:auto;max-height:46vh}#map .qt:not(.open) .qt-list{display:none}#map .qt-h{border-radius:12px}#map .qt.open .qt-h{border-radius:12px 12px 0 0}}

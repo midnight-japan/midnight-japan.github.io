@@ -1,8 +1,18 @@
 // Shared game metadata: version, changelog, regions. Update VERSION + CHANGELOG on every release.
-export const GAME = { title: 'MIDNIGHT JAPAN', titleJa: 'ミッドナイト・ジャパン', version: '2.7.0', build: '2026.11.18' };
+export const GAME = { title: 'MIDNIGHT JAPAN', titleJa: 'ミッドナイト・ジャパン', version: '2.7.1', build: '2026.11.18' };
 
 // Newest first. type: new | change | fix | known
 export const CHANGELOG = [
+  {
+    version: '2.7.1', date: '2026-11-18', codename: 'Wayfinder',
+    summary: { ko: '지도에서 일본 전체를 볼 수 있고, 사진·방향·거리가 보이는 빠른 이동 카드로 텔레포트가 쉬워졌습니다. 내비가 PA 주차장에서도 하네다·하코네·C1까지 경로를 찾고, 자율주행이 그 경로를 따라갑니다.', ja: '地図で日本全体を見渡せ、写真・方向・距離が分かるクイック移動カードでテレポートが簡単に。ナビがPAの駐車場からも羽田・箱根・C1までルートを見つけ、自動運転がそのルートをたどります。', en: 'The map zooms out to all of Japan, and quick-travel cards with a photo, direction and distance make teleporting easy. GPS now routes from the PA car park to Haneda, Hakone and C1, and the autopilot follows the route.' },
+    items: [
+      { type: 'new', ko: '일본 전체 지도(🗾 버튼): 해안선과 주요 도시 51곳, 플레이 지역 표시', ja: '日本全体の地図（🗾ボタン）：海岸線と主要51都市、プレイエリアを表示', en: 'All-Japan map (🗾 button): coastline, 51 major cities and the drivable area' },
+      { type: 'new', ko: '빠른 이동: 13개 목적지 카드에 실제 게임 화면 사진, 현재 진행 방향 기준 화살표, 방위와 거리. 고르면 그 자리에서 진행 방향을 골라 출발', ja: 'クイック移動：13か所の目的地カードにゲーム画面の写真、進行方向基準の矢印、方位と距離。選ぶとその場で進行方向を選んで出発', en: 'Quick travel: 13 destination cards with an in-game photo, an arrow relative to your heading, compass point and distance; pick one, then pick the direction to set off in' },
+      { type: 'fix', ko: '내비: PA 주차장 등 고속도로 밖에서도 경로 탐색, 왕복 도로 끝(완안선 하네다 쪽 등) 연결 — 하네다·하코네·C1 경로가 안 잡히던 문제 수정', ja: 'ナビ：PA駐車場など高速道路の外からもルート探索、往復道路の端（湾岸線の羽田側など）の接続 — 羽田・箱根・C1のルートが出なかった不具合を修正', en: 'GPS: routes from off the expressway (PA car park) and across two-way road ends (Bayshore at Haneda) — Haneda, Hakone and C1 routes now found' },
+      { type: 'fix', ko: '자율주행: 목적지가 있으면 분기점에서 경로대로 진행(출구 포함), 주차장에서 통로로 먼저 나간 뒤 이동, 서 있는 사람·통로 건너편 차 때문에 멈추던 문제 수정', ja: '自動運転：目的地があれば分岐でルート通りに進行（出口を含む）、駐車場では通路に出てから移動、立っている人や通路向かいの車で止まる不具合を修正', en: 'Autopilot: follows the GPS route at junctions (exits included), leaves a bay into the aisle first, no longer stops for people standing about or cars across the aisle' },
+    ],
+  },
   {
     version: '2.7.0', date: '2026-11-18', codename: 'Real Cars',
     summary: { ko: '애매한 차량 모델 12종을 정리해 실제 모델이 있는 차만 남기고, 차가 노면에 붙어 달리도록 수직 물리와 노면별 접지력을 새로 만들었습니다.', ja: '曖昧な車両モデル12車種を整理して実在のモデルがある車だけを残し、車が路面に張り付いて走るよう上下方向の物理と路面ごとのグリップを作り直しました。', en: 'Twelve vague car models retired so only cars with real models remain, and new vertical physics and per-surface grip keep the car planted on the road.' },

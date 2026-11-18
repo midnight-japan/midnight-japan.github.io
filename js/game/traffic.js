@@ -398,7 +398,10 @@ export class Traffic {
     } else {
       // leave: up the nearest aisle to the south-east band, then east to the exit
       const ax = [...L.carAisles, L.truck.aisle, L.meet.aisle].reduce((a, b) => Math.abs(b - fx) < Math.abs(a - fx) ? b : a);
-      const x = Math.abs(ax - fx) < 10 && Math.abs(fz) < 40 ? ax : cx;
+      const inStall = Math.abs(ax - fx) < 10 && Math.abs(fz) < 40, x = inStall ? ax : cx;
+      // v2.7.1: out of the stall into its aisle first, then along the aisle — the straight line to the band ran
+      // across the next row of parked cars
+      if (inStall && Math.abs(ax - fx) > 1.5) pts.push(W(ax, clamp(fz, -38, 38)));
       pts.push(W(x, band), W(L.endX[1], band), W(L.exit[0] - 6, L.exit[1] + 1), to.clone());
     }
     return pts;

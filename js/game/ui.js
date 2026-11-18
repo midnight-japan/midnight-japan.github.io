@@ -13,6 +13,8 @@ import { OUTFIT_OPTIONS } from './humans.js';
 import { PA_RECT, MAP } from './roads.js';
 import { GOALS } from './goals.js';
 import { PLACES } from '../../data/places.js';
+import { JAPAN_LAND, JAPAN_CITIES } from '../../data/japan.js';
+import { DESTS } from '../../data/destinations.js';
 import { DEFAULT_SETTINGS } from './main.js';
 import { ASSIST_SETTING_KEYS, assistsFromSettings, applyDifficulty } from './vehicle.js';
 
@@ -140,7 +142,7 @@ export class UI {
       <div id="controls" class="screen dim"><div class="menu wide"><h2 data-i18n="game.menu.controls"></h2><div id="c-body"></div><button class="btn primary" data-a="controlsClose" data-i18n="game.menu.back"></button></div></div>
       <div id="outfit" class="screen side"><div class="panel"><div class="ph"><h2 data-i18n="game.menu.outfit"></h2><button class="x" data-a="outfitClose">✕</button></div><div id="o-body"></div></div></div>
       <div id="shop" class="popup"><h3 id="shop-title"></h3><div id="shop-list"></div><button class="btn sm" data-a="shopClose">✕</button></div>
-      <div id="map" class="screen dim"><canvas id="bigmap"></canvas><div class="mapctl"><button class="btn sm" data-a="mapIn">＋</button><button class="btn sm" data-a="mapOut">－</button><button class="btn sm" data-a="mapMe">◎</button><button class="btn sm" data-a="mapAll">⤢</button></div><div class="maphint" data-i18n="game.map.hint2"></div><div class="mapsel" id="mapsel" hidden><span class="ms-t"></span><button class="btn sm primary" data-a="mapNav" data-i18n="game.map.route"></button><button class="btn sm" data-a="mapTp" data-i18n="game.map.tp"></button></div><button class="btn sm mapx" data-a="mapClose">✕</button></div>
+      <div id="map" class="screen dim"><canvas id="bigmap"></canvas><div class="mapctl"><button class="btn sm" data-a="mapIn">＋</button><button class="btn sm" data-a="mapOut">－</button><button class="btn sm" data-a="mapMe">◎</button><button class="btn sm" data-a="mapAll">⤢</button><button class="btn sm" data-a="mapJapan" title="Japan">🗾</button></div><div class="qt" id="qt"><div class="qt-h" data-a="qtToggle"></div><div class="qt-list" id="qt-list"></div></div><div class="maphint" data-i18n="game.map.hint2"></div><div class="mapsel" id="mapsel" hidden><span class="ms-t"></span><button class="btn sm primary" data-a="mapNav" data-i18n="game.map.route"></button><button class="btn sm" data-a="mapTp" data-i18n="game.map.tp"></button></div><button class="btn sm mapx" data-a="mapClose">✕</button></div>
       <div id="touch" class="hidden">
         <div class="t-drive">
           <div class="t-steer"><button data-t="left">◀</button><button data-t="right">▶</button></div>
@@ -239,6 +241,9 @@ export class UI {
       case 'mapOut': this.mapZoom(1 / 1.6); break;
       case 'mapMe': this.mapCenterMe(); break;
       case 'mapAll': this.mapFitAll(); break;
+      case 'mapJapan': this.mapJapan(); break;
+      case 'qtToggle': $('#qt').classList.toggle('open'); break;
+      default: if (a.startsWith('qt:')) { const d = DESTS.find(x => x.id === a.slice(3)); if (d) { this.mapFollow = false; this.mv.x = d.x; this.mv.z = d.z; this.mv.k = Math.max(this.mv.k, 0.25); this.mapSel = { x: d.x, z: d.z }; this.showMapSel(d.x, d.z); this.drawBigMap(); if (innerWidth < 760) $('#qt').classList.remove('open'); } } break;
       case 'plateRandom': { const cur = g.carSetup(g.previewId).plate; const p = { ...cur, region: PLATE_REGIONS[Math.floor(Math.random() * 8)], kana: PLATE_KANA[Math.floor(Math.random() * 30)], num: 1 + Math.floor(Math.random() * 9999) }; g.applyPreview({ plate: p }); this.fillPlate(); break; }
     }
   }
@@ -505,10 +510,28 @@ export class UI {
     if (!this.mv) { this.mv = { x: 0, z: 0, k: 0.35 * dpr }; this.wireMap(cv); }
     // v2.2: open on your own position (≈ 2.5 km across) and keep following you; driving / autopilot carry on underneath
     this.mv.k = Math.min(cv.width, cv.height) / 2500; this.mapFollow = true; this.mapCenterMe();
+    this.buildQuickTravel();
     clearInterval(this._mapLive); this._mapLive = setInterval(() => { if (!this.mapOpen) { clearInterval(this._mapLive); return; } if (this.mapFollow) { const p = this.mapPos(); if (p) { this.mv.x = p.x; this.mv.z = p.z; } } this.drawBigMap(); }, 150);
   }
+  // v2.7.1 — quick travel: every destination with its photo, which way it lies from you (arrow turned to your heading,
+  // compass point) and how far; picking one centres the map there and offers the carriageway + direction buttons
+  buildQuickTravel() {
+    const box = $('#qt-list'); if (!box) return; const p = this.mapPos(); const g = this.g;
+    const yaw = g.mode === 'walk' ? g.player?.yaw ?? 0 : g.vehicle?.yaw ?? 0;
+    const DIRS = { ko: ['북', '북동', '동', '남동', '남', '남서', '서', '북서'], ja: ['北', '北東', '東', '南東', '南', '南西', '西', '北西'] }[getLang()] || ['N', 'NE', 'E', 'SE', 'S', 'SW', 'W', 'NW'];
+    $('#qt .qt-h').textContent = ({ ko: '빠른 이동', ja: 'クイック移動' })[getLang()] || 'Quick travel';
+    box.innerHTML = DESTS.map(d => {
+      const dx = d.x - (p?.x ?? 0), dz = d.z - (p?.z ?? 0), dist = Math.hypot(dx, dz);
+      const brg = Math.atan2(dx, dz), rel = brg - yaw; // game yaw: 0 = +z (south)
+      const comp = DIRS[Math.round(((Math.atan2(dx, -dz) * 180 / Math.PI) + 360) % 360 / 45) % 8];
+      const rd = getLang() !== 'ja' ? reading(d.name) : '';
+      const km = dist < 1000 ? Math.round(dist) + ' m' : (dist / 1000).toFixed(dist < 10000 ? 1 : 0) + ' km';
+      return `<button class="qt-card" data-a="qt:${d.id}"><img src="assets/tp/${d.id}.webp" alt="" loading="lazy" onerror="this.style.visibility='hidden'"><span class="qt-t"><b>${esc(d.name)}</b>${rd ? `<small>${esc(rd)}</small>` : ''}</span><span class="qt-d"><i style="transform:rotate(${(-rel * 180 / Math.PI).toFixed(0)}deg)">▲</i>${esc(comp)} · ${km}</span></button>`;
+    }).join('');
+  }
   mapPos() { return this.g.mode === 'walk' ? this.g.player?.pos : this.g.vehicle?.pos; }
-  mapZoom(f, cx, cy) { const cv = $('#bigmap'), m = this.mv; cx ??= cv.width / 2; cy ??= cv.height / 2; const wx = m.x + (cx - cv.width / 2) / m.k, wz = m.z + (cy - cv.height / 2) / m.k; m.k = Math.max(0.01, Math.min(12, m.k * f)); m.x = wx - (cx - cv.width / 2) / m.k; m.z = wz - (cy - cv.height / 2) / m.k; this.drawBigMap(); }
+  mapZoom(f, cx, cy) { const cv = $('#bigmap'), m = this.mv; cx ??= cv.width / 2; cy ??= cv.height / 2; const wx = m.x + (cx - cv.width / 2) / m.k, wz = m.z + (cy - cv.height / 2) / m.k; m.k = Math.max(0.00012, Math.min(12, m.k * f)); m.x = wx - (cx - cv.width / 2) / m.k; m.z = wz - (cy - cv.height / 2) / m.k; this.drawBigMap(); }
+  mapJapan() { const cv = $('#bigmap'); this.mapFollow = false; this.mv.x = 300000; this.mv.z = -100000; this.mv.k = 0.95 * Math.min(cv.width / 2400000, cv.height / 2700000); this.drawBigMap(); } // v2.7.1: all of Japan
   mapCenterMe() { this.mapFollow = true; const p = this.mapPos(); if (p) { this.mv.x = p.x; this.mv.z = p.z; } this.drawBigMap(); }
   mapFitAll() { const cv = $('#bigmap'); let a = [1e9, 1e9, -1e9, -1e9]; for (const r of this.g.net.roads) for (const q of r.samples) { a[0] = Math.min(a[0], q.p.x); a[1] = Math.min(a[1], q.p.z); a[2] = Math.max(a[2], q.p.x); a[3] = Math.max(a[3], q.p.z); } this.mv.x = (a[0] + a[2]) / 2; this.mv.z = (a[1] + a[3]) / 2; this.mv.k = 0.9 * Math.min(cv.width / (a[2] - a[0]), cv.height / (a[3] - a[1])); this.drawBigMap(); }
   wireMap(cv) {
@@ -790,6 +813,9 @@ export class UI {
     const dpr = W / (cv.getBoundingClientRect().width || innerWidth);
     c.clearRect(0, 0, W, H); c.fillStyle = 'rgba(10,26,51,.78)'; c.fillRect(0, 0, W, H); // sea (translucent: the drive goes on underneath)
     const poly = (pts, fill) => { c.beginPath(); pts.forEach(([x, z], i) => { const [a, b] = P(x, z); i ? c.lineTo(a, b) : c.moveTo(a, b); }); c.closePath(); c.fillStyle = fill; c.fill(); };
+    // v2.7.1: all of Japan underneath (Natural Earth coastline), cities when zoomed out, the drivable area glowing
+    if (k < 0.02) { c.fillStyle = '#1d2633'; c.strokeStyle = 'rgba(140,170,210,.45)'; c.lineWidth = 1 * dpr;
+      for (const R of JAPAN_LAND) { c.beginPath(); for (let i = 0; i < R.length; i += 2) { const [a, b] = P(R[i], R[i + 1]); i ? c.lineTo(a, b) : c.moveTo(a, b); } c.closePath(); c.fill(); c.stroke(); } }
     for (const l of MAP.land || []) if (l.pts?.length > 2) poly(l.pts, l.main ? '#1d2633' : '#222c3a');
     if (k > 0.25) for (const b of MAP.buildings || []) poly(b.pts, '#3a4658');
     this.drawMapRaster(c, W, H, m, k, dpr);
@@ -800,7 +826,7 @@ export class UI {
       c.strokeStyle = pass ? col : 'rgba(0,0,0,.55)'; c.lineCap = c.lineJoin = 'round';
       c.lineWidth = Math.max(pass ? 1.5 * dpr : 3 * dpr, (r.edgeL - r.edgeR) * k + (pass ? 0 : 2 * dpr));
       c.globalAlpha = r.samples.some(q => q.p.y < -0.6) && pass ? 0.75 : 1;
-      const step = k < 0.05 ? 8 : k < 0.3 ? 3 : 1;
+      const step = k < 0.002 ? 60 : k < 0.05 ? 8 : k < 0.3 ? 3 : 1;
       c.beginPath(); r.samples.forEach((q, i) => { if (i % step && i !== r.samples.length - 1) return; const [a, b] = P(q.p.x, q.p.z); i ? c.lineTo(a, b) : c.moveTo(a, b); }); c.stroke();
     }
     c.globalAlpha = 1;
@@ -809,6 +835,11 @@ export class UI {
     // route / destination / police last seen, and the picked point
     c.save(); c.translate(W / 2, H / 2); c.scale(k, k); c.translate(-m.x, -m.z); this.drawNav(c, 1 / k * dpr); c.restore();
     if (this.mapSel) { const [a, b] = P(this.mapSel.x, this.mapSel.z); c.strokeStyle = '#ffb347'; c.lineWidth = 3 * dpr; c.beginPath(); c.arc(a, b, 10 * dpr, 0, Math.PI * 2); c.stroke(); c.beginPath(); c.moveTo(a, b - 18 * dpr); c.lineTo(a, b + 18 * dpr); c.moveTo(a - 18 * dpr, b); c.lineTo(a + 18 * dpr, b); c.stroke(); }
+    if (k < 0.004) { // city names across Japan + a glow round the drivable region
+      c.textAlign = 'center'; c.textBaseline = 'middle';
+      for (const [n, x, z, pop] of JAPAN_CITIES) { if (pop < (k < 0.0006 ? 1500000 : 300000)) continue; const [a, b] = P(x, z); c.fillStyle = '#ffd38a'; c.beginPath(); c.arc(a, b, 2.5 * dpr, 0, 7); c.fill(); c.font = `700 ${11 * dpr}px "Hiragino Sans","Noto Sans JP",system-ui`; c.lineWidth = 3 * dpr; c.strokeStyle = 'rgba(0,0,0,.8)'; c.strokeText(n, a, b - 10 * dpr); c.fillStyle = '#fff'; c.fillText(n, a, b - 10 * dpr); }
+      const g0 = P(-20000, 0), rad = Math.max(10 * dpr, 70000 * k); c.strokeStyle = 'rgba(47,191,116,.9)'; c.lineWidth = 2 * dpr; c.setLineDash([5 * dpr, 4 * dpr]); c.beginPath(); c.arc(g0[0], g0[1], rad, 0, 7); c.stroke(); c.setLineDash([]);
+      c.font = `800 ${12 * dpr}px system-ui`; c.fillStyle = '#7ff0b0'; c.fillText('MIDNIGHT JAPAN', g0[0], g0[1] + rad + 14 * dpr); }
     // traffic
     for (const ai of this.g.traffic?.cars || []) { const [a, b] = P(ai.pos.x, ai.pos.z); if (a < 0 || b < 0 || a > W || b > H) continue; c.fillStyle = ai.police ? '#4a8cff' : 'rgba(255,255,255,.8)'; c.fillRect(a - 2 * dpr, b - 2 * dpr, 4 * dpr, 4 * dpr); }
     // labels: road names (expressways always, ramps/streets when zoomed), landmarks, places
@@ -818,16 +849,16 @@ export class UI {
       c.font = `700 ${size * dpr}px "Hiragino Sans","Noto Sans JP",system-ui,sans-serif`; c.lineWidth = 3 * dpr; c.strokeStyle = 'rgba(0,0,0,.8)'; c.strokeText(txt, a, b); c.fillStyle = col; c.fillText(txt, a, b);
       if (rd) { c.font = `600 ${size * 0.78 * dpr}px system-ui,sans-serif`; const y2 = b + size * 1.05 * dpr; c.strokeText(rd, a, y2); c.fillStyle = col; c.globalAlpha = 0.85; c.fillText(rd, a, y2); c.globalAlpha = 1; } };
     const seen = new Set();
-    for (const r of roads) { if (!r.name || seen.has(r.name)) continue; if (r.kind !== 'expressway' && k < (r.kind === 'ramp' ? 0.6 : 1.2)) continue; seen.add(r.name); const q = r.samples[r.samples.length >> 1].p; lab(r.name.replace(/（.*?）/g, ''), q.x, q.z, r.kind === 'expressway' ? 13 : 11, r.kind === 'expressway' ? '#b6f5cf' : '#dde4ee'); }
+    if (k >= 0.004) for (const r of roads) { if (!r.name || seen.has(r.name)) continue; if (r.kind !== 'expressway' && k < (r.kind === 'ramp' ? 0.6 : 1.2)) continue; seen.add(r.name); const q = r.samples[r.samples.length >> 1].p; lab(r.name.replace(/（.*?）/g, ''), q.x, q.z, r.kind === 'expressway' ? 13 : 11, r.kind === 'expressway' ? '#b6f5cf' : '#dde4ee'); }
     // place names: wards always, towns/wharves from mid zoom, JCTs/spots when zoomed in
-    for (const pl of PLACES) {
+    for (const pl of k < 0.004 ? [] : PLACES) {
       const need = pl.kind === 'ward' || pl.kind === 'water' ? 0 : pl.kind === 'jct' || pl.kind === 'spot' ? 0.15 * dpr : 0.05 * dpr;
       if (k < need) continue;
       lab(pl.kind === 'jct' ? '⬡ ' + pl.name : pl.name, pl.x, pl.z, pl.kind === 'ward' ? 14 : 11, pl.kind === 'water' ? '#8fc8ff' : pl.kind === 'jct' ? '#b6f5cf' : pl.kind === 'ward' ? '#ffffff' : '#c9d2de');
     }
     // landmarks: bigger than street names; the one by the picked point (or under the cursor) grows and gets a ring
     const sel = this.mapSel, hov = this._mapHover;
-    for (const l of MAP.landmarks || []) { const near = (sel && Math.hypot(sel.x - l.x, sel.z - l.z) < 600 / Math.max(0.2, k)) || (hov && Math.hypot(hov.x - l.x, hov.z - l.z) < 40 / k);
+    for (const l of k < 0.004 ? [] : MAP.landmarks || []) { const near = (sel && Math.hypot(sel.x - l.x, sel.z - l.z) < 600 / Math.max(0.2, k)) || (hov && Math.hypot(hov.x - l.x, hov.z - l.z) < 40 / k);
       if (near) { const [a, b] = P(l.x, l.z); c.beginPath(); c.arc(a, b, 16 * dpr, 0, 7); c.strokeStyle = '#ffd38a'; c.lineWidth = 2.5 * dpr; c.stroke(); }
       lab('◆ ' + l.name, l.x, l.z, near ? 21 : 14, near ? '#fff2c8' : '#ffd38a'); }
     lab('大黒PA', (PA_RECT.x0 + PA_RECT.x1) / 2, (PA_RECT.z0 + PA_RECT.z1) / 2, 15, '#ffb347');

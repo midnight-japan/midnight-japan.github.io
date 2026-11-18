@@ -85,7 +85,7 @@ export class Nav {
   }
 
   // ── expressway network (driving direction, diverges and ramp links) ──
-  planExpress(p, v) {
+  planExpress(p, v, startOv = null) {
     const net = this.g.net, T = this.target, STEP = 6;
     const id = (r, i) => r.id + '|' + i;
     const parse = k => { const j = k.lastIndexOf('|'); return [net.byId[k.slice(0, j)], +k.slice(j + 1)]; };
@@ -94,11 +94,17 @@ export class Nav {
     const clampI = (r, i) => Math.max(0, Math.min(r.samples.length - 1, i));
     // which way am I driving on this road?
     let h0 = v.surface?.hit, r0 = v.road;
-    // v2.7: not on an expressway (PA lot, street, lot exit): start from the nearest carriageway running our way
-    if (!r0 || !h0 || r0.kind === 'local') { let b = null; const fx = Math.sin(v.yaw), fz = Math.cos(v.yaw);
-      for (const r of net.roads) { if (r.kind === 'local') continue; for (let i = 0; i < r.samples.length; i += 3) { const q = r.samples[i]; const d2 = (q.p.x - p.x) ** 2 + (q.p.z - p.z) ** 2; if (d2 > 600 * 600 || (b && d2 >= b.d2)) continue; if (!r.lanesB && q.t.x * fx + q.t.z * fz < -0.3 && d2 > 80 * 80) continue; b = { d2, r, s: q.s }; } }
-      if (!b) return null; r0 = b.r; h0 = { s: b.s }; }
-    const t0 = r0.dirAt(h0.s); const dirNow = (t0.x * Math.sin(v.yaw) + t0.z * Math.cos(v.yaw)) >= 0 ? 1 : -1;
+    // v2.7.1: not on an expressway (PA lot, street, lot exit): try the nearest carriageways in turn (the nearest one
+    // from the Daikoku PA lot is the dead-end entry ramp) until one has a route
+    if (!startOv && (!r0 || !h0 || r0.kind === 'local')) {
+      const best = new Map();
+      for (const r of net.roads) { if (r.kind === 'local') continue; for (let i = 0; i < r.samples.length; i += 3) { const q = r.samples[i]; const d2 = (q.p.x - p.x) ** 2 + (q.p.z - p.z) ** 2; if (d2 > 900 * 900) continue; const b = best.get(r); if (!b || d2 < b.d2) best.set(r, { d2, r, s: q.s }); } }
+      const list = [...best.values()].sort((a, b) => a.d2 - b.d2).slice(0, 8);
+      for (const c of list) { const res = this.planExpress(p, v, c); if (res) return res; }
+      return null;
+    }
+    if (startOv) { r0 = startOv.r; h0 = { s: Math.min(startOv.s + 1, r0.length - 1) }; }
+    const t0 = r0.dirAt(h0.s); const dirNow = startOv ? (r0.lanesB && (t0.x * Math.sin(v.yaw) + t0.z * Math.cos(v.yaw)) < 0 ? -1 : 1) : (t0.x * Math.sin(v.yaw) + t0.z * Math.cos(v.yaw)) >= 0 ? 1 : -1;
     const start = id(r0, clampI(r0, idxAt(r0, h0.s))) + '|' + dirNow;
     // goal (v2.5.2): every road sample within ~400 m of the closest one is a candidate, each costing the straight walk
     // left to the target — a virtual sink picks the best reachable one (before: the single closest sample, often on
@@ -118,10 +124,12 @@ export class Nav {
       if (dir === 1) {
         const s0 = S[i].s, s1 = S[clampI(r, j)].s + (j >= S.length - 1 ? 5 : 0);
         for (const d of net.diverges.get(r) || []) if (d.dir === 1 && d.s >= s0 - 1 && d.s <= s1) out.push([id(d.to, 0) + '|1', 5]);
-        if (i >= S.length - 1 - STEP) { const L = net.links.get(r); if (L) out.push([id(L.to, clampI(L.to, idxAt(L.to, L.s))) + '|' + (L.dir || 1), 5]); }
+        if (i >= S.length - 1 - STEP) { const L = net.links.get(r); if (L) out.push([id(L.to, clampI(L.to, idxAt(L.to, L.s))) + '|' + (L.dir || 1), 5]);
+          else for (const c of this.cont(r, 1)) out.push([id(c.to, clampI(c.to, idxAt(c.to, c.s))) + '|' + c.dir, 5]); }
       } else {
         const s0 = S[clampI(r, j)].s, s1 = S[i].s;
         for (const d of net.diverges.get(r) || []) if (d.dir === -1 && d.s >= s0 && d.s <= s1 + 1) out.push([id(d.to, 0) + '|1', 5]);
+        if (i <= STEP) for (const c of this.cont(r, -1)) out.push([id(c.to, clampI(c.to, idxAt(c.to, c.s))) + '|' + c.dir, 5]);
       }
       return out;
     };
@@ -133,6 +141,19 @@ export class Nav {
     return path;
   }
 
+  // v2.7.1 — where a road runs on past its end into another one (two-way Bayshore → one-way decks at Haneda / the Bay
+  // Bridge, a two-way road joining mid-way): found from geometry, cached per road end
+  cont(r, dir) {
+    const C = this._cont || (this._cont = new Map()), key = r.id + '|' + dir; if (C.has(key)) return C.get(key);
+    const net = this.g.net, S = r.samples, E = dir > 0 ? S[S.length - 1] : S[0], tx = E.t.x * dir, tz = E.t.z * dir, out = [];
+    for (const o of net.roads) { if (o === r || o.kind === 'local') continue;
+      const a = o.samples[0], z = o.samples[o.samples.length - 1];
+      if (Math.hypot(a.p.x - E.p.x, a.p.z - E.p.z) < 30 && Math.abs(a.p.y - E.p.y) < 3 && a.t.x * tx + a.t.z * tz > 0.6) out.push({ to: o, dir: 1, s: 0 });
+      else if (o.lanesB && Math.hypot(z.p.x - E.p.x, z.p.z - E.p.z) < 30 && Math.abs(z.p.y - E.p.y) < 3 && -(z.t.x * tx + z.t.z * tz) > 0.6) out.push({ to: o, dir: -1, s: o.length }); }
+    if (!out.length) for (const h of net.hits(E.p.x + tx * 4, E.p.z + tz * 4)) { const o = h.road; if (o === r || o.kind === 'local' || !h.inside || Math.abs(h.y - E.p.y) > 2) continue;
+      const u = o.samples[h.i].t, d = u.x * tx + u.z * tz; if (d > 0.6) out.push({ to: o, dir: 1, s: h.s }); else if (d < -0.6 && o.lanesB) out.push({ to: o, dir: -1, s: h.s }); }
+    C.set(key, out); return out;
+  }
   // next-turn hint from the route: angle between the current heading and the route a bit ahead
   hint(p, yaw) {
     if (!this.route || this.route.length < 2) return null;
