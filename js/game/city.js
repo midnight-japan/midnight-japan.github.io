@@ -465,7 +465,7 @@ export class City {
     this.group.add(grp);
     // colliders → grid (world coords)
     t.cols = o.cols.map(([x, z, hx, hz, ry, y0, y1]) => ({ x: x + ox, z: z + oz, hx, hz, c: Math.cos(ry), s: Math.sin(ry), y0, y1, kind: 'city' }));
-    t.fuels = []; for (let k = 0; k < (o.fuels?.length || 0); k += 5) t.fuels.push({ x: o.fuels[k] + ox, z: o.fuels[k + 1] + oz, tx: o.fuels[k + 2], tz: o.fuels[k + 3], brand: o.fuels[k + 4] });
+    if (o.fuelWhy) this.fuelWhy = o.fuelWhy; t.synFuel = (o.synFuel || []).map((v, i) => v + (i % 2 ? oz : ox)); t.fuels = []; for (let k = 0; k < (o.fuels?.length || 0); k += 7) t.fuels.push({ x: o.fuels[k] + ox, z: o.fuels[k + 1] + oz, tx: o.fuels[k + 2], tz: o.fuels[k + 3], brand: o.fuels[k + 4], ox: o.fuels[k + 5] + ox, oz: o.fuels[k + 6] + oz });
     for (const c of t.cols) { const r = Math.max(c.hx, c.hz); for (let i = Math.floor((c.x - r) / this.CG); i <= Math.floor((c.x + r) / this.CG); i++) for (let j = Math.floor((c.z - r) / this.CG); j <= Math.floor((c.z + r) / this.CG); j++) { const kk = i * 100003 + j; let a = this.cgrid.get(kk); if (!a) this.cgrid.set(kk, a = []); a.push(c); } }
     t.runways = o.runways.map(([ax, az, bx, bz, w]) => [ax + ox, az + oz, bx + ox, bz + oz, w]);
     t.gates = []; for (let q = 0; q < o.gates.length; q += 3) t.gates.push([o.gates[q] + ox, o.gates[q + 1] + oz, o.gates[q + 2]]);

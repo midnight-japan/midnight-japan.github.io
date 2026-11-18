@@ -36,7 +36,7 @@ export class FuelStation {
     const o = randomOutfit(); o.top = 'racing_jacket'; o.hair = 'cap'; o.topColor = ['#d4421a', '#1d5fbf', '#c81e2a', '#1d8a4a'][f.brand % 4]; // station uniform + cap
     let h; try { h = createHuman(o); } catch { h = null; }
     const nx = -f.tz, nz = f.tx; // office side
-    const office = new THREE.Vector3(f.x + nx * 7 + f.tx * 6, v.pos.y, f.z + nz * 7 + f.tz * 6);
+    const office = f.ox !== undefined ? new THREE.Vector3(f.ox, v.pos.y, f.oz) : new THREE.Vector3(f.x + nx * 7 + f.tx * 6, v.pos.y, f.z + nz * 7 + f.tz * 6);
     // the filler is on the car's left rear on most JDM cars (the attendant stands there)
     const yw = v.yaw, side = 1, fill = new THREE.Vector3(v.pos.x + Math.cos(yw) * 1.25 * side - Math.sin(yw) * (car.L / 2000 - 0.9), v.pos.y, v.pos.z - Math.sin(yw) * 1.25 * side - Math.cos(yw) * (car.L / 2000 - 0.9));
     if (h) { h.object.position.copy(office); g.scene.add(h.object); }

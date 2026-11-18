@@ -191,7 +191,7 @@ function buildTile(T, lod, opts) {
   const ground = {};             // land use class → Flat
   const wires = new Buf(3);
   const trees = new Buf(5);
-  const fuels = [], forecourts = [];               // x, z, tx, tz, brand per pump island      // x, z, scale, rot, variant
+  const fuels = [], forecourts = [], synFuel = [];               // x, z, tx, tz, brand per pump island      // x, z, scale, rot, variant
   const cols = [];               // [x, z, hx, hz, ry, y0, y1]
   const DEC = new Buf(6);        // v2.1 road text + traffic signs: position, atlas uv, back-plate flag
   const lamps = [];              // [x, y, z]
@@ -332,7 +332,7 @@ function buildTile(T, lod, opts) {
 
   // fuel station (ガソリンスタンド): open forecourt under a lit canopy on pillars, pump islands with dispensers, a brand
   // fascia that glows at night and a tall price pole — drivable in, only the pillars / pumps / pole collide
-  function gasStation(cx, cz, tx, tz, hl, hw, seed, toStreet = 0) {
+  function gasStation(cx, cz, tx, tz, hl, hw, seed, toStreet = 0, opts = {}) {
     const H = 5.4, nx = -tz, nz = tx;
     const at = (a, b) => [cx + tx * a + nx * b, cz + tz * a + nz * b];
     // v2.13.4: the forecourt (and its driveway to the street) is drivable in the access mask — cars pull up to the pumps
@@ -343,17 +343,70 @@ function buildTile(T, lod, opts) {
     gm.box(cx, H - 0.02, cz, tx, tz, hl * 0.86, hw * 0.8, 0.02, [1, 0.98, 0.94], [1, 0, 0, 0]);   // canopy downlights
     for (const a of [-0.62, 0.62]) for (const b of [-0.5, 0.5]) { const [x, z] = at(a * hl, b * hw); pm.box(x, H / 2, z, tx, tz, 0.22, 0.22, H / 2, [0.88, 0.88, 0.86], [PLAIN, 0, 0, 0]); cols.push([x, z, 0.25, 0.25, 0, -1, H]); }
     const islands = hl > 9 ? [-0.32, 0.32] : [0];
+    // v2.13.6: the sales office (事務所) behind the canopy, away from the street — glass front facing the pumps
+    const away = toStreet > 0 ? -1 : 1, [ox, oz] = at(hl * 0.35, away * (hw + 3.2));
+    if (!opts.noOffice) {
+      bm.box(ox, 1.6, oz, tx, tz, 3.6, 2.4, 1.6, [0.95, 0.95, 0.93], [PLAIN, 0, 0, 0]);                      // office walls
+      gm.box(ox - nx * away * 2.42, 1.35, oz - nz * away * 2.42, tx, tz, 2.6, 0.02, 0.9, [0.75, 0.88, 0.95], [1, 0, 0, 0]); // lit glass front
+      gm.box(ox - nx * away * 2.45, 3.0, oz - nz * away * 2.45, tx, tz, 3.62, 0.03, 0.22, BR, [1, 0, 0, 0]);   // brand band
+      cols.push([ox, oz, 3.7, 2.5, Math.atan2(-tz, tx), -1, 3.2]);
+    }
+    const oX = ox - nx * away * 3.4, oZ = oz - nz * away * 3.4; // the attendant steps out of the door here
     for (const a of islands) for (const b of hw > 6 ? [-0.22, 0.22] : [0]) {
       const [x, z] = at(a * hl, b * hw);
       pm.box(x, 0.1, z, tx, tz, 1.5, 0.45, 0.1, [0.78, 0.78, 0.76], [PLAIN, 0, 0, 0]);                 // island kerb
       for (const d of [-0.75, 0.75]) { const px = x + tx * d, pz = z + tz * d; pm.box(px, 0.95, pz, tx, tz, 0.35, 0.28, 0.75, [0.95, 0.95, 0.95], [PLAIN, 0, 0, 0]); gm.box(px + nx * 0.29, 1.15, pz + nz * 0.29, tx, tz, 0.22, 0.01, 0.16, [0.6, 0.9, 1], [1, 0, 0, 0]); gm.box(px, 1.72, pz, tx, tz, 0.36, 0.29, 0.06, BR, [1, 0, 0, 0]); }
       cols.push([x, z, 1.55, 0.5, Math.atan2(-tz, tx), -1, 1.8]);
-      fuels.push(x, z, tx, tz, seed % 4); // v2.13.4: pump island for the full-service sequence (fuelstation.js)
+      fuels.push(x, z, tx, tz, seed % 4, oX, oZ); // v2.13.4: pump island for the full-service sequence (fuelstation.js)
     }
     // price pole at the street-side corner: brand panel + three lit price rows (レギュラー / ハイオク / 軽油)
     { const [x, z] = at(hl + 1.6, -hw + 0.6); pm.cyl(x, z, 0, 7.2, 0.14, 8, [0.6, 0.62, 0.64], [PLAIN, 0, 0, 0]); cols.push([x, z, 0.2, 0.2, 0, -1, 7.2]);
       gm.box(x, 7.6, z, nx, nz, 0.9, 0.12, 0.55, BR, [1, 0, 0, 0]);
       for (let k = 0; k < 3; k++) { pm.box(x, 6.55 - k * 0.5, z, nx, nz, 0.9, 0.1, 0.22, [0.06, 0.06, 0.07], [PLAIN, 0, 0, 0]); gm.box(x, 6.55 - k * 0.5, z, nx, nz, 0.5, 0.115, 0.13, k === 1 ? [1, 0.25, 0.15] : [1, 0.75, 0.2], [1, 0, 0, 0]); } }
+  }
+  // ── v2.13.6: more fuel stations — Japan has one every kilometre or so along any main road (ENEOS, apollostation,
+  // Cosmo, Idemitsu …). OSM misses many, so each tile adds stations along its arterials on empty lots: no building
+  // footprint, street, junction or water inside, at least 550 m from any other station. Deterministic per tile.
+  if (mid) {
+    const have = []; const P0 = T.p || [];
+    for (let k = 0; k < P0.length; k += 4) if (P0[k] === PT.FUEL) have.push([P0[k + 1] * D, P0[k + 2] * D]);
+    for (const a of T.b || []) if (a[0] === B.GAS) have.push([a[5] * D, a[6] * D]);
+    const fps = []; for (const a of T.b || []) { let x0 = 1e9, z0 = 1e9, x1 = -1e9, z1 = -1e9; for (let k = 5; k < a.length; k += 2) { const x = a[k] * D, z = a[k + 1] * D; x0 = Math.min(x0, x); x1 = Math.max(x1, x); z0 = Math.min(z0, z); z1 = Math.max(z1, z); } if (x1 > x0) fps.push([x0, z0, x1, z1]); }
+    const wat = []; for (const a of T.l || []) { if (a[0] !== L.WATER) continue; const pts = []; for (let k = 1; k < a.length; k += 2) pts.push([a[k] * D, a[k + 1] * D]); if (pts.length >= 3) wat.push(pts); }
+    let arterial = 0; for (const st of streets) if (st.cls <= S.TERTIARY && !(st.flags & 21)) for (let k = 0; k < st.pts.length - 1; k++) arterial += Math.hypot(st.pts[k + 1][0] - st.pts[k][0], st.pts[k + 1][1] - st.pts[k][1]);
+    const want = Math.min(5, Math.round(arterial / 900)) - have.length; let added = 0, tries = 0;
+    const hl = 8, hw = 5.5;
+    const cand = []; for (const st of streets) { if (st.cls > S.TERTIARY || (st.flags & 21) || st.w < 6) continue; // sample every 30 m along the whole street (OSM splits streets into short segments)
+      let run = 0, next = 25; for (let k = 0; k < st.pts.length - 1; k++) { const [ax, az] = st.pts[k], [bx, bz] = st.pts[k + 1], L0 = Math.hypot(bx - ax, bz - az);
+        while (L0 > 10 && next < run + L0) { const d = next - run; if (d > 3 && d < L0 - 3) cand.push({ st, ax, az, bx, bz, L0, d, h: hash2(Math.round(ax + d), Math.round(az * 3 + d)) }); next += 30; } run += L0; } }
+    cand.sort((p, q) => p.h - q.h);
+    const why = self.__fuelWhy || (self.__fuelWhy = {}); const no = k => { why[k] = (why[k] || 0) + 1; };
+    if (want <= 0) no('enough'); for (const c of cand) { if (added >= want || ++tries > 400) break;
+      const tx = (c.bx - c.ax) / c.L0, tz = (c.bz - c.az) / c.L0, px = c.ax + tx * c.d, pz = c.az + tz * c.d, side = c.h < 0.5 ? 1 : -1;
+      const sw = (c.st.flags & 8) ? (c.st.cls <= S.PRIMARY ? 3.5 : 2.5) : 0.8, set = c.st.w / 2 + sw + 2.5 + hw + 3; // + office row behind
+      const nx = -tz * side, nz = tx * side, cx = px + nx * set, cz = pz + nz * set;
+      if (cx < 30 || cz < 30 || cx > 970 || cz > 970) { no('edge'); continue; }
+      if ([...have].some(([x, z]) => Math.hypot(x - cx, z - cz) < 420)) { no('spacing'); continue; }
+      if (nearJunction(px, pz, 30)) { no('junction'); continue; }
+      // footprint incl. office row and driveway: hl+4 along, from the kerb to hw+7 behind
+      const ex0 = -hl - 4, ex1 = hl + 4, ey0 = -(set - c.st.w / 2 - 0.5), ey1 = hw + 7;
+      const corner = (a, b) => [cx + tx * a + nx * b, cz + tz * a + nz * b];
+      const box = [corner(ex0, ey0), corner(ex1, ey0), corner(ex1, ey1), corner(ex0, ey1)];
+      let bx0 = 1e9, bz0 = 1e9, bx1 = -1e9, bz1 = -1e9; for (const [x, z] of box) { bx0 = Math.min(bx0, x); bx1 = Math.max(bx1, x); bz0 = Math.min(bz0, z); bz1 = Math.max(bz1, z); }
+      let bad = false;
+      for (const f of fps) { if (f[2] < bx0 || f[0] > bx1 || f[3] < bz0 || f[1] > bz1) continue; // bbox overlap → exact: any footprint corner inside the lot or lot corner inside the footprint bbox
+        const cs = [[f[0], f[1]], [f[2], f[1]], [f[2], f[3]], [f[0], f[3]]]; if (cs.some(([x, z]) => inPoly(x, z, box)) || box.some(([x, z]) => x > f[0] && x < f[2] && z > f[1] && z < f[3]) || inPoly((f[0] + f[2]) / 2, (f[1] + f[3]) / 2, box)) { bad = true; break; } }
+      if (bad) { no('building'); continue; }
+      for (let a = -1; a <= 1 && !bad; a += 0.5) for (let b = -0.9; b <= 1; b += 0.45) { const [x, z] = corner(a * (hl + 3), b > 0 ? b * (hw + 6) : b * hw); const dd = segs.dist(x, z, sg => sg.st !== c.st && sg.cls <= S.PED); if (dd && dd.d < dd.s.w / 2 + 1.5) { bad = true; break; } }
+      if (bad) { no('street'); continue; } if (wat.some(W2 => inPoly(cx, cz, W2))) { no('water'); continue; }
+      // land evidence: some building within 120 m (keeps stations off empty reclaimed land / the sea)
+      if (!fps.some(f => Math.hypot((f[0] + f[2]) / 2 - cx, (f[1] + f[3]) / 2 - cz) < 120)) { no('noland'); continue; }
+      C(cx, cz); gasStation(cx, cz, tx, tz, hl, hw, Math.floor(c.h * 9973), -set * side);
+      // forecourt concrete
+      { const q = [corner(ex0, ey0 + 0.6), corner(ex1, ey0 + 0.6), corner(ex1, hw + 7), corner(ex0, hw + 7)]; const gy = 0.04;
+        walk.tri([q[0][0], gy, q[0][1]], [q[1][0], gy, q[1][1]], [q[2][0], gy, q[2][1]], [0.72, 0.72, 0.7]); walk.tri([q[0][0], gy, q[0][1]], [q[2][0], gy, q[2][1]], [q[3][0], gy, q[3][1]], [0.72, 0.72, 0.7]); }
+      have.push([cx, cz]); synFuel.push(cx, cz); added++;
+    }
   }
   // ── points: traffic signals + crossings, vending machines, bus stops, konbini pole signs, chimneys ──
   const P = T.p || [];
@@ -608,7 +661,7 @@ function buildTile(T, lod, opts) {
     }
     // ── fuel station (ガソリンスタンド): open forecourt under a lit canopy on pillars, pump islands with dispensers,
     // a brand fascia that glows at night and a tall price pole at the kerb — drivable in, only pillars/pumps collide ──
-    if (cls === B.GAS && ob.hl > 3 && ob.hw > 3) { gasStation(cx, cz, ob.tx, ob.tz, ob.hl, ob.hw, seed); continue; }
+    if (cls === B.GAS && ob.hl > 3 && ob.hw > 3) { gasStation(cx, cz, ob.tx, ob.tz, ob.hl, ob.hw, seed, 0, { noOffice: true }); continue; }
     // ── storage tank: cylinder + dome ──
     if (cls === B.TANK) {
       const rad = Math.sqrt(A / Math.PI);
@@ -951,7 +1004,7 @@ function buildTile(T, lod, opts) {
   }
   const mask = mid ? buildMask(T, streets, forecourts) : null;
   const landR = buildLand(T, streets, OX, OZ, landF);
-  const out = { dec: DEC.out(), mask, landR, runways, gates, rails, stations, fuels, net, sigs, land: landF.out(), bm: bm.out(), pm: pm.out(), gm: gm.out(), sg: sg.out(), road: road.out(), walk: walk.out(), paint: paint.out(), wires: wires.out(), trees: trees.out(), cols, lamps, water, bridges, ground: {} };
+  const out = { dec: DEC.out(), mask, landR, runways, gates, rails, stations, fuels, synFuel, fuelWhy: self.__fuelWhy, net, sigs, land: landF.out(), bm: bm.out(), pm: pm.out(), gm: gm.out(), sg: sg.out(), road: road.out(), walk: walk.out(), paint: paint.out(), wires: wires.out(), trees: trees.out(), cols, lamps, water, bridges, ground: {} };
   for (const c in ground) out.ground[c] = ground[c].out();
   return out;
 }

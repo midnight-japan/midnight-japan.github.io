@@ -1,8 +1,16 @@
 // Shared game metadata: version, changelog, regions. Update VERSION + CHANGELOG on every release.
-export const GAME = { title: 'MIDNIGHT JAPAN', titleJa: 'ミッドナイト・ジャパン', version: '2.13.5', build: '2026.11.18' };
+export const GAME = { title: 'MIDNIGHT JAPAN', titleJa: 'ミッドナイト・ジャパン', version: '2.13.6', build: '2026.11.18' };
 
 // Newest first. type: new | change | fix | known
 export const CHANGELOG = [
+  {
+    version: '2.13.6', date: '2026-11-18', codename: 'Fill Up',
+    summary: { ko: '주유소 대폭 추가: 간선도로를 따라 약 1km마다 빈 땅에 주유소(캐노피·펌프·가격 간판·사무실)를 배치 — 모든 주유소에서 풀서비스.', ja: 'ガソリンスタンドを大幅追加：幹線道路沿いに約1kmごと、空き地にスタンド（キャノピー・給油機・価格看板・事務所）を配置 — 全店でフルサービス。', en: 'Many more fuel stations: one about every kilometre along main roads on free lots (canopy, pumps, price pole, office) — full service at every one.' },
+    items: [
+      { type: 'new', ko: '주유소가 지도에 빠져 있던 곳까지 간선도로변 빈 땅에 자동 배치(다른 주유소와 420m 이상, 교차로·건물·물가 회피), 주행 가능한 콘크리트 바닥과 진입로 포함', ja: '地図に載っていない所も幹線道路沿いの空き地にスタンドを自動配置（他店から420m以上、交差点・建物・水辺を避ける）、走れるコンクリート敷地と出入口つき', en: 'Fuel stations are placed on free lots along main roads where the map had none (420 m+ apart, clear of junctions, buildings and water), with a drivable concrete forecourt and driveway' },
+      { type: 'new', ko: '주유소 사무실(유리 정면·브랜드 띠) — 직원이 실제 사무실 문에서 걸어 나옴', ja: 'スタンドの事務所（ガラス張り・ブランド帯） — 店員が本当に事務所のドアから出てくる', en: 'A sales office at each station (glass front, brand band) — the attendant now walks out of its door' },
+    ],
+  },
   {
     version: '2.13.5', date: '2026-11-18', codename: 'Garage 52',
     summary: { ko: '실제 차량 4대 추가로 총 52대 — 프렐류드 BB6·BB1, 시빅 EG 해치백, 레거시 B4 tS. 바퀴가 차체와 한 덩어리인 모델도 바퀴만 떼어 내 굴러가게 처리.', ja: '実車4台追加で計52台 — プレリュードBB6・BB1、シビックEGハッチバック、レガシィB4 tS。タイヤが車体と一体のモデルもタイヤだけ切り離して回るように。', en: '4 more real cars, 52 in total — Prelude BB6 and BB1, Civic EG hatchback, Legacy B4 tS. Models whose wheels were fused to the body now get them split out so they roll.' },
