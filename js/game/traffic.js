@@ -425,7 +425,7 @@ export class Traffic {
       const inStall = Math.abs(ax - fx) < 10 && Math.abs(fz) < 40, x = inStall ? ax : cx;
       // v2.7.1: out of the stall into its aisle first, then along the aisle — the straight line to the band ran
       // across the next row of parked cars
-      if (inStall && Math.abs(ax - fx) > 1.5) pts.push(W(ax, clamp(fz, -38, 38)));
+      if (inStall && Math.abs(ax - fx) > 1.5) { const q = W(ax, clamp(fz, -38, 38)); q.r = 1.2; pts.push(q); } // v2.13.1: reach the aisle before turning (r = arrival radius)
       pts.push(W(x, band), W(L.endX[1], band), W(L.exit[0] - 6, L.exit[1] + 1), to.clone());
     }
     return pts;

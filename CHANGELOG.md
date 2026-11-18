@@ -1,9 +1,10 @@
 # 📜 MIDNIGHT JAPAN 업데이트 기록 · Changelog
 
-현재 버전 · Current: **v2.13.0** · [▶ 웹에서 플레이](https://midnight-japan.github.io/) · [🌐 업데이트 페이지](https://midnight-japan.github.io/changelog.html)
+현재 버전 · Current: **v2.13.1** · [▶ 웹에서 플레이](https://midnight-japan.github.io/) · [🌐 업데이트 페이지](https://midnight-japan.github.io/changelog.html)
 
 | 버전 | 날짜 | 이름 | 요약 |
 |---|---|---|---|
+| [v2.13.1](#v2131--way-out-2026-11-18) | 2026-11-18 | Way Out | 버그 수정: 대흑 PA 주차장에서 자율주행이 보이지 않는 벽에 막히거나 옆 칸 주차 차량을 길막으로 오인해 멈추던 문제를 고쳤습니다. |
 | [v2.13.0](#v2130--garage-43-2026-11-18) | 2026-11-18 | Garage 43 | 실제 차량 모델 14종 추가(총 43종) — S13 실비아, S2000, 로드스터 ND, RX-8, RX-7 FC, 인테그라 타입R, LFA, 왜건R, 허슬러, 엑스트레일, 어코드, 하이젯, 액티, 엘프. NPC용 저폴리곤 모델과 격자 컬링으로 저화질 60fps, 일본 지도에 47개 도도부현, 스폰 지역 지도 미리보기. |
 | [v2.12.0](#v2120--kei-truck-2026-11-18) | 2026-11-18 | Kei Truck | 실제 모델 경트럭 스즈키 캐리 추가(원본 실내 그대로 콕핏), 차·일본 도로를 몰라도 이해할 수 있는 용어 사전, 새 게임 아이콘. |
 | [v2.11.1](#v2111--tune-up-2026-11-18) | 2026-11-18 | Tune-up | 버그 수정과 최적화: 제동 시 앞이 숙여지고 가속 시 뒤로 앉도록 차체 움직임 방향 수정, 그려지는 삼각형을 최대 70% 줄인 거리 컬링, 추적 카메라가 고가·건물을 통과하지 않게, R35 차체 반사 개선, NPC 차량 야간 조명, 일본 지도 경계 수정, 이탤릭 제거. |
@@ -55,6 +56,22 @@
 | [v0.2.0](#v020--bayshore-2026-11-05) | 2026-11-05 | Bayshore | 수도고속 완간선을 따라 하네다까지, 도쿄만 아쿠아라인 해저터널을 지나 우미호타루 PA까지. 실제 3D 차량 모델과 열리는 보닛도 들어왔어요. |
 | [v0.1.1](#v011--one-click-2026-11-04) | 2026-11-04 | One Click | 링크 하나로 바로 플레이. 크롬에서 공식 사이트 주소만 열면 설치 없이 실행돼요. |
 | [v0.1.0](#v010--first-meet-2026-11-04) | 2026-11-04 | First Meet | 첫 공개 버전. 다이코쿠 JCT·PA와 다이코쿠 부두 일대를 3D로 구현했습니다. |
+
+---
+
+## v2.13.1 — Way Out (2026-11-18)
+
+> 버그 수정: 대흑 PA 주차장에서 자율주행이 보이지 않는 벽에 막히거나 옆 칸 주차 차량을 길막으로 오인해 멈추던 문제를 고쳤습니다.
+> Bug fixes: the autopilot no longer stops at an invisible wall in the Daikoku PA car park or mistakes cars in the neighbouring bays for obstacles.
+
+**🔧 변경 · Changed**
+
+- 점검: 사이트 6개 페이지(PC·휴대폰), 메뉴·지도·차고·날씨·계절·용어집, 스폰 15곳, 플레이 가능 차량 전부(실제 모델·바퀴 4개), 2분 자율주행, 하차·탑승에서 오류 없음 확인<br><sub>Checked: 6 site pages (desktop and phone), menus, map, garage, weather, season, glossary, all 15 spawns, every playable car (real model, 4 wheels), a 2-minute autopilot drive, getting out and back in — no errors</sub>
+
+**🐞 수정 · Fixed**
+
+- PA 주차장 경계와 출구 차선 사이에 폭 1칸의 “보이지 않는 벽”이 있던 문제(실제 펜스는 그대로 막힘)<br><sub>A one-cell “invisible wall” between the PA car park edge and the exit lane is gone (the real fence still blocks)</sub>
+- 자율주행: 주차칸에서 나올 때 통로 건너편·옆 칸 차량을 길막으로 오인하던 문제, 통로에 다 나온 뒤 회전하도록 수정, 붐비는 주차장에서 세 번 막히면 출구 차선에서 이어가기 — 탈출 성공률 2/4 → 4/4<br><sub>Autopilot: no longer mistakes cars across the aisle or in the next bay for obstacles, turns only once fully in the aisle, and in a packed car park continues from the exit lane after three tries — escape rate 2/4 → 4/4</sub>
 
 ---
 

@@ -1344,7 +1344,7 @@ export class World {
       const m = h.road.kind === 'local' ? (h.road.sidewalk || 3) + (walk ? 2 : 1.2) : (walk ? 2.6 : 1.4);
       if (h.lat <= h.road.edgeL + m && h.lat >= h.road.edgeR - m) return true;
     }
-    if (PA.inLot(x, z, walk ? 1.5 : 0.3)) return true;
+    if (PA.inLot(x, z, walk ? 2.5 : 2.5)) return true; // v2.13.1: 0.3 m left a one-cell 'invisible wall' strip between the lot and the exit lane (autopilot got stuck); the real fence has its own colliders
     if (walk && this.walkRects.some(r => { let px = x, pz = z; if (r.f) [px, pz] = r.f.local(x, z); return px > r.x0 && px < r.x1 && pz > r.z0 && pz < r.z1; })) return true;
     if (this.lotPolys) { const B = this._lotBB || (this._lotBB = this.lotPolys.map(bbox)); // v2.13: bbox first (this ran thousands of times a frame)
       for (let i = 0; i < this.lotPolys.length; i++) { const bb = B[i]; if (x < bb.x0 || x > bb.x1 || z < bb.z0 || z > bb.z1) continue; if (inPoly(x, z, this.lotPolys[i])) return true; } }

@@ -1,8 +1,17 @@
 // Shared game metadata: version, changelog, regions. Update VERSION + CHANGELOG on every release.
-export const GAME = { title: 'MIDNIGHT JAPAN', titleJa: 'ミッドナイト・ジャパン', version: '2.13.0', build: '2026.11.18' };
+export const GAME = { title: 'MIDNIGHT JAPAN', titleJa: 'ミッドナイト・ジャパン', version: '2.13.1', build: '2026.11.18' };
 
 // Newest first. type: new | change | fix | known
 export const CHANGELOG = [
+  {
+    version: '2.13.1', date: '2026-11-18', codename: 'Way Out',
+    summary: { ko: '버그 수정: 대흑 PA 주차장에서 자율주행이 보이지 않는 벽에 막히거나 옆 칸 주차 차량을 길막으로 오인해 멈추던 문제를 고쳤습니다.', ja: '不具合修正：大黒PAの駐車場で自動運転が見えない壁に止まったり、隣の駐車車両を障害物と誤認して止まる問題を修正しました。', en: 'Bug fixes: the autopilot no longer stops at an invisible wall in the Daikoku PA car park or mistakes cars in the neighbouring bays for obstacles.' },
+    items: [
+      { type: 'fix', ko: 'PA 주차장 경계와 출구 차선 사이에 폭 1칸의 “보이지 않는 벽”이 있던 문제(실제 펜스는 그대로 막힘)', ja: 'PA駐車場の縁と出口レーンの間にあった幅1マスの「見えない壁」を解消（実際のフェンスはそのまま）', en: 'A one-cell “invisible wall” between the PA car park edge and the exit lane is gone (the real fence still blocks)' },
+      { type: 'fix', ko: '자율주행: 주차칸에서 나올 때 통로 건너편·옆 칸 차량을 길막으로 오인하던 문제, 통로에 다 나온 뒤 회전하도록 수정, 붐비는 주차장에서 세 번 막히면 출구 차선에서 이어가기 — 탈출 성공률 2/4 → 4/4', ja: '自動運転：駐車枠から出るとき通路の向かいや隣の車を障害物と誤認する問題を修正、通路に出てから曲がるように、混雑時は3回詰まると出口レーンから再開 — 脱出成功率 2/4 → 4/4', en: 'Autopilot: no longer mistakes cars across the aisle or in the next bay for obstacles, turns only once fully in the aisle, and in a packed car park continues from the exit lane after three tries — escape rate 2/4 → 4/4' },
+      { type: 'change', ko: '점검: 사이트 6개 페이지(PC·휴대폰), 메뉴·지도·차고·날씨·계절·용어집, 스폰 15곳, 플레이 가능 차량 전부(실제 모델·바퀴 4개), 2분 자율주행, 하차·탑승에서 오류 없음 확인', ja: '点検：サイト6ページ（PC・スマホ）、メニュー・地図・ガレージ・天気・季節・用語集、スポーン15か所、全プレイアブル車両（実車モデル・タイヤ4本）、2分間の自動運転、降車・乗車でエラーなしを確認', en: 'Checked: 6 site pages (desktop and phone), menus, map, garage, weather, season, glossary, all 15 spawns, every playable car (real model, 4 wheels), a 2-minute autopilot drive, getting out and back in — no errors' },
+    ],
+  },
   {
     version: '2.13.0', date: '2026-11-18', codename: 'Garage 43',
     summary: { ko: '실제 차량 모델 14종 추가(총 43종) — S13 실비아, S2000, 로드스터 ND, RX-8, RX-7 FC, 인테그라 타입R, LFA, 왜건R, 허슬러, 엑스트레일, 어코드, 하이젯, 액티, 엘프. NPC용 저폴리곤 모델과 격자 컬링으로 저화질 60fps, 일본 지도에 47개 도도부현, 스폰 지역 지도 미리보기.', ja: '実車モデルを14車種追加（計43車種）— S13シルビア、S2000、ロードスターND、RX-8、RX-7 FC、インテグラ タイプR、LFA、ワゴンR、ハスラー、エクストレイル、アコード、ハイゼット、アクティ、エルフ。NPC用の軽量モデルとセル単位のカリングで低画質60fps、日本地図に47都道府県、スポーン地点の地図プレビュー。', en: '14 more real car models (43 in all) — S13 Silvia, S2000, Roadster ND, RX-8, RX-7 FC, Integra Type R, LFA, Wagon R, Hustler, X-Trail, Accord, Hijet, Acty, Elf. Low-poly NPC models and cell culling give 60 fps on Low, 47 prefectures on the Japan map, and a map preview of your spawn.' },

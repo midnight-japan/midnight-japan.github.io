@@ -5,7 +5,7 @@
 // a clear gap, signals, and at every junction prefers the roads it hasn't driven yet so it tours the whole map.
 // Any steering / pedal input from the player hands control straight back.
 import * as THREE from 'three';
-import { t } from '../i18n.js';
+import { t, getLang } from '../i18n.js';
 
 const clamp = (x, a, b) => Math.max(a, Math.min(b, x));
 const angle = a => { while (a > Math.PI) a -= Math.PI * 2; while (a < -Math.PI) a += Math.PI * 2; return a; };
@@ -84,15 +84,18 @@ export class Autopilot {
   fastLane(road, dir) { const ls = road.lanes.filter(l => l.dir === dir); return ls.reduce((a, b) => (b.lat * dir < a.lat * dir ? b : a)); }
 
   // obstacles in front: AI cars (any mode) and walkers/NPCs inside a corridor along our heading
-  leader(range, half) {
-    const g = this.g, v = g.vehicle, f = v.forward, l = v.left;
+  leader(range, half, toward = null) {
+    const g = this.g, v = g.vehicle; let f = v.forward, l = v.left;
+    // v2.13.1: in the car park look along the line to the next waypoint, not along the bonnet — backing out of a bay
+    // the nose points at the opposite row of parked cars, which are not in the way
+    if (toward) { const dx = toward.x - v.pos.x, dz = toward.z - v.pos.z, L = Math.hypot(dx, dz) || 1; f = { x: dx / L, z: dz / L }; l = { x: dz / L, z: -dx / L }; }
     let gap = 1e9, vl = 0; this.blk = null;
     const test = (p, sp, len = 2.3, kind = 'car') => {
       const dx = p.x - v.pos.x, dz = p.z - v.pos.z, dy = Math.abs(p.y - v.pos.y); if (dy > 3) return;
       const ah = dx * f.x + dz * f.z, la = dx * l.x + dz * l.z;
       if (ah <= 0 || ah > range) return;
       // look along the curve: widen nothing, but bend the corridor with the current steering (yaw rate)
-      const bend = (v.yawRate || 0) / Math.max(4, v.vx) * ah * ah / 2;
+      const bend = this.path ? 0 : (v.yawRate || 0) / Math.max(4, v.vx) * ah * ah / 2; // v2.13.1: not in the car park (tight turns swung the corridor onto parked cars 2–5 m to the side)
       if (Math.abs(la - bend) > half) return;
       const d = ah - len - 2.3; if (d < gap) { gap = d; vl = sp; this.blk = kind; this.blkP = p; this.blkLa = la; }
     };
@@ -144,7 +147,7 @@ export class Autopilot {
     if (this.path) {
       // ── PA lot: waypoints at walking pace
       let p = this.path[0];
-      while (p && Math.hypot(p.x - v.pos.x, p.z - v.pos.z) < 4) { this.path.shift(); p = this.path[0]; }
+      while (p && Math.hypot(p.x - v.pos.x, p.z - v.pos.z) < (p.r || 4)) { this.path.shift(); p = this.path[0]; }
       if (!p && this.join) { const J = this.join; this.join = null; this.path = null; this.setRoad(J.road, J.lane, J.s); return this.update(dt); }
       if (!p) { this.path = null; const r = this.net.byId.pa_out; if (r) this.setRoad(r, r.lanes[0], 0); else { this.toggle(false); return null; } return this.update(dt); }
       target = p; vDes = this.path.length === 1 ? 7 : 5.5; half = 1.2; // v2.7: 1.5 → 1.2 m — cars in their bays poke into a wider corridor
@@ -180,7 +183,7 @@ export class Autopilot {
     // follow the leader (IDM), anything in our corridor
     // v2.7.1: in the lot only what lies before the next turn matters (the car parked across the aisle we turn into is not a leader)
     const range = this.path ? Math.min(clamp(20 + speed * 2.5, 18, 140), Math.hypot(target.x - v.pos.x, target.z - v.pos.z) + 1.5) : clamp(20 + speed * 2.5, 18, 140);
-    const { gap, vl } = this.leader(range, half);
+    const { gap, vl } = this.leader(range, half, this.path ? target : null);
     const a = 2.0, b = 3.0, s0 = this.path ? 2.5 : 5, T = 1.4;
     const sStar = s0 + Math.max(0, speed * T + speed * (speed - vl) / (2 * Math.sqrt(a * b)));
     let acc = a * (1 - Math.pow(speed / Math.max(1, vDes), 4)) - (gap < 1e8 ? a * Math.pow(sStar / Math.max(0.3, gap), 2) : 0);
@@ -203,6 +206,9 @@ export class Autopilot {
         if (!g.world.access || g.world.access(q.x, q.z, v.pos.y, false)) { this.path.unshift(q); this.detourT = 6; break; } }
     }
     if (this.detourT > 0) this.detourT -= dt;
+    // v2.13.1: a packed car park can box the autopilot in — after three back-and-forths, continue from the exit lane
+    if (this.path && (this.revN || 0) >= 3 && !(this.rev > 0)) { const r = this.net.byId.pa_out; if (r) { const ln = r.lanes[0], q = r.at(2, ln.lat, new THREE.Vector3()), d = r.dirAt(2);
+      v.place(q.setY(q.y + 0.3), Math.atan2(d.x, d.z)); g.camSnap = true; this.path = null; this.join = null; this.revN = 0; this.setRoad(r, ln, 2); g.ui.toast(({ ko: '주차장이 붐벼서 출구 차선에서 이어갑니다', ja: '駐車場が混雑のため出口レーンから再開' })[getLang?.()] || 'Car park busy — continuing from the exit lane', 'info', 3); return null; } }
     if (this.stuck > 12) { this.revN = 0; this.stuck = 0; if (this.path) { const ex = this.path[this.path.length - 1]; this.path = g.traffic.lotPath(v.pos.clone(), ex) || this.path; } } // long stall: replan
     if (this.path && this.stuck > (this.blk === 'npc' ? 6 : 2.5) && (this.revN || 0) < 4) { this.rev = 3.2; this.revN = (this.revN || 0) + 1; this.stuck = 0; this.revSteer = la > 0 ? -0.8 : 0.8; }
     const L = g.model?.lights; if (L && !this.path) { L.left = this.signal === 1; L.right = this.signal === -1; }
