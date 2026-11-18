@@ -1,9 +1,10 @@
 # 📜 MIDNIGHT JAPAN 업데이트 기록 · Changelog
 
-현재 버전 · Current: **v2.6.1** · [▶ 웹에서 플레이](https://midnight-japan.github.io/) · [🌐 업데이트 페이지](https://midnight-japan.github.io/changelog.html)
+현재 버전 · Current: **v2.7.0** · [▶ 웹에서 플레이](https://midnight-japan.github.io/) · [🌐 업데이트 페이지](https://midnight-japan.github.io/changelog.html)
 
 | 버전 | 날짜 | 이름 | 요약 |
 |---|---|---|---|
+| [v2.7.0](#v270--real-cars-2026-11-18) | 2026-11-18 | Real Cars | 애매한 차량 모델 12종을 정리해 실제 모델이 있는 차만 남기고, 차가 노면에 붙어 달리도록 수직 물리와 노면별 접지력을 새로 만들었습니다. |
 | [v2.6.1](#v261--clear-road-2026-11-18) | 2026-11-18 | Clear Road | 도로망 전수 점검: 데크가 서로 뚫고 지나가던 15곳, 접속부 단차, 지상 도로를 가로막던 램프 방호벽을 모두 수정하고 램프의 급경사·덜컹임을 완화했습니다. |
 | [v2.6.0](#v260--skyline-2026-11-14) | 2026-11-14 | Skyline | 후지산처럼 도쿄 랜드마크가 멀리서도 선명하게: 도쿄도청·신주쿠 초고층군·롯폰기힐스·미드타운·아자부다이힐스·도라노몬힐스·요코하마 랜드마크타워 추가, 야간 조명과 30km 밖에서도 보이는 항공장애등, 덜 뿌연 공기·밝아진 밤, 창고 외벽 디테일, 무게감 있는 차체 움직임과 수도고 이음매 진동. |
 | [v2.5.4](#v254--no-dead-ends-2026-11-14) | 2026-11-14 | No Dead Ends | 맵 전체 도로 끝 자동 점검으로 끊긴 곳 모두 연결(나마무기 K1 5.6m 절벽, 다이코쿠 JCT 만안선→다이코쿠 램프, 하네다 만안선 단차, 공중에서 끝나던 츠루미·시바우라 램프), 텔레포트는 도로와 진행 방향을 골라서. |
@@ -46,6 +47,26 @@
 | [v0.2.0](#v020--bayshore-2026-11-05) | 2026-11-05 | Bayshore | 수도고속 완간선을 따라 하네다까지, 도쿄만 아쿠아라인 해저터널을 지나 우미호타루 PA까지. 실제 3D 차량 모델과 열리는 보닛도 들어왔어요. |
 | [v0.1.1](#v011--one-click-2026-11-04) | 2026-11-04 | One Click | 링크 하나로 바로 플레이. 크롬에서 공식 사이트 주소만 열면 설치 없이 실행돼요. |
 | [v0.1.0](#v010--first-meet-2026-11-04) | 2026-11-04 | First Meet | 첫 공개 버전. 다이코쿠 JCT·PA와 다이코쿠 부두 일대를 3D로 구현했습니다. |
+
+---
+
+## v2.7.0 — Real Cars (2026-11-18)
+
+> 애매한 차량 모델 12종을 정리해 실제 모델이 있는 차만 남기고, 차가 노면에 붙어 달리도록 수직 물리와 노면별 접지력을 새로 만들었습니다.
+> Twelve vague car models retired so only cars with real models remain, and new vertical physics and per-surface grip keep the car planted on the road.
+
+**✨ 추가 · New**
+
+- 수직 물리: 고속으로 언덕 정점을 넘으면 차가 가벼워지고, 움푹한 곳에선 눌리며, 그 하중이 타이어 접지력에 반영. 노면별 접지(고속도로·일반도로·산길·비포장), 빗길 고속 수막현상, 노면별 진동<br><sub>Vertical physics: crests taken fast make the car light, dips press it down, and that load sets tyre grip. Per-surface grip (expressway, street, mountain, off-tarmac), aquaplaning at speed in the rain, per-surface vibration</sub>
+
+**🔧 변경 · Changed**
+
+- 절차 생성·카툰풍·로우폴리 차량 정리(로드스터, S2000, 코펜, S660, N-BOX, 사쿠라, 프리우스, 에브리, 알토웍스, 짐니, LFA, 하이에이스) — 실제 모델이 있는 29대만 남김<br><sub>Procedural, cartoon and low-poly cars retired (Roadster, S2000, Copen, S660, N-BOX, Sakura, Prius, Every, Alto Works, Jimny, LFA, HiAce) — 29 cars with real models remain</sub>
+
+**🐞 수정 · Fixed**
+
+- 공장 기본 도색: R33 형광 휠 → 순정 실버, JZA80 초록 데칼 제거<br><sub>Factory finish: R33 lime rims → stock silver, JZA80 green livery removed</sub>
+- 자율주행: 주차된 차가 막으면 옆으로 돌아가고, 오래 막히면 경로 재계산(이전엔 주차장에서 영구 정지)<br><sub>Autopilot: steers round a parked car blocking the lot route and replans when stuck (it used to stop for good in the car park)</sub>
 
 ---
 

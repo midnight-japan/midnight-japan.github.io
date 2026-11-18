@@ -54,6 +54,12 @@ function splitLivery(scene, info) {
 // at some angles — the "broken" models)
 function fixMaterials(scene, info) {
   const glass = new Set(info.glass || []), done = new Set();
+  // v2.7: factory look — manifest `recolor` {material: hex} (R33's lime rims) and `stripMap` [material] (aftermarket
+  // livery baked into the JZA80's body texture → plain paint)
+  if (info.recolor || info.stripMap) { const strip = new Set(info.stripMap || []);
+    scene.traverse(o => { if (!o.isMesh) return; for (const m of Array.isArray(o.material) ? o.material : [o.material]) {
+      if (info.recolor?.[m.name]) { m.color.set(info.recolor[m.name]); m.map = null; m.needsUpdate = true; }
+      if (strip.has(m.name) && m.map) { m.map = null; m.color.set(0xffffff); m.needsUpdate = true; } } }); }
   scene.traverse(o => {
     if (!o.isMesh) return;
     for (const m of Array.isArray(o.material) ? o.material : [o.material]) {

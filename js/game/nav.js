@@ -58,7 +58,7 @@ export class Nav {
   plan(p) {
     const v = this.g.vehicle, T = this.target;
     const onExpress = this.g.mode === 'drive' && v?.road && v.road.kind !== 'local' && v.onRoad;
-    this.route = onExpress ? (this.planExpress(p, v) || this.planCity(p)) : this.planCity(p);
+    this.route = onExpress ? (this.planExpress(p, v) || this.planCity(p)) : (this.planCity(p) || (this.g.mode === 'drive' && v ? this.planExpress(p, v) : null));
     if (this.route) this.route.push([T.x, T.z]);
   }
 
@@ -93,7 +93,11 @@ export class Nav {
     const idxAt = (r, s) => { let i = 0; const S = r.samples; while (i < S.length - 1 && S[i + 1].s < s) i++; return Math.round(i / STEP) * STEP; };
     const clampI = (r, i) => Math.max(0, Math.min(r.samples.length - 1, i));
     // which way am I driving on this road?
-    const h0 = v.surface?.hit; const r0 = v.road; if (!r0 || !h0) return null;
+    let h0 = v.surface?.hit, r0 = v.road;
+    // v2.7: not on an expressway (PA lot, street, lot exit): start from the nearest carriageway running our way
+    if (!r0 || !h0 || r0.kind === 'local') { let b = null; const fx = Math.sin(v.yaw), fz = Math.cos(v.yaw);
+      for (const r of net.roads) { if (r.kind === 'local') continue; for (let i = 0; i < r.samples.length; i += 3) { const q = r.samples[i]; const d2 = (q.p.x - p.x) ** 2 + (q.p.z - p.z) ** 2; if (d2 > 600 * 600 || (b && d2 >= b.d2)) continue; if (!r.lanesB && q.t.x * fx + q.t.z * fz < -0.3 && d2 > 80 * 80) continue; b = { d2, r, s: q.s }; } }
+      if (!b) return null; r0 = b.r; h0 = { s: b.s }; }
     const t0 = r0.dirAt(h0.s); const dirNow = (t0.x * Math.sin(v.yaw) + t0.z * Math.cos(v.yaw)) >= 0 ? 1 : -1;
     const start = id(r0, clampI(r0, idxAt(r0, h0.s))) + '|' + dirNow;
     // goal (v2.5.2): every road sample within ~400 m of the closest one is a candidate, each costing the straight walk

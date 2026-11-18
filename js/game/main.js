@@ -67,6 +67,7 @@ class Game {
     if (!this.settings.v22) { this.settings.resScale = 1; this.settings.v22 = 1; } // v2.2: full resolution by default (phones were at 75 %)
     if (!this.settings.v111) { this.settings.dj = false; this.settings.voice = false; this.settings.v111 = 1; } // v1.1.1: robotic text-to-speech voices off by default // v0.3.3: FPS + version shown by default
     this.garage = load(GARAGE_KEY, { car: 'r34', cars: {} });
+    if (!CAR_BY_ID[this.garage.car]) this.garage.car = 'r34'; // v2.7: a retired car in an old save
     if (!this.garage.v24) { for (const c of Object.values(this.garage.cars || {})) if (!c.camberF && !c.camberR && !c.ride && !c.track) { delete c.camberF; delete c.camberR; delete c.ride; delete c.track; } this.garage.v24 = 1; } // v2.4: per-car default stances
     this.quality = this.settings.quality;
     this.mode = 'loading'; this.frame = 0; this.money = 500000; // enough for tolls, fuel, konbini and the odd fine — the game is about driving, not budgeting

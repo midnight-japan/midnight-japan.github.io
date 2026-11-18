@@ -88,6 +88,11 @@
    "tail": [
     "Rcklichter"
    ]
+  },
+  "recolor": {
+   "Rim_Color": "#b9bcc0",
+   "Spring": "#3a3c40",
+   "Breakmaterial": "#2b2d30"
   }
  },
  "r35": {
@@ -268,7 +273,10 @@
    "tail": [
     "GlowBack"
    ]
-  }
+  },
+  "stripMap": [
+   "Material_0"
+  ]
  },
  "a90": {
   "file": "a90.glb",

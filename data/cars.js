@@ -8,7 +8,7 @@
 // plate: private | kei | commercial | keiCommercial | police
 // playable: false = AI traffic only
 
-export const CARS = [
+const ALL_CARS = [
   // ───────── JDM legends ─────────
   { id: 'r32', maker: 'Nissan', name: 'Skyline GT-R', chassis: 'BNR32', year: 1989, cat: 'jdm', playable: true,
     engine: { type: 'I6', code: 'RB26DETT', disp: 2568, hp: 280, nm: 353, redline: 8000, idle: 850, turbo: true },
@@ -268,5 +268,10 @@ export const CARS = [
     desc: { ko: '송영·관광에 쓰이는 마이크로버스.', ja: '送迎や観光で走るマイクロバス。', en: 'Microbus on shuttle and tour runs.' } },
 ];
 
+// v2.7: only cars with a real, recognisable manufacturer-accurate 3D model remain. Retired: procedural stand-ins
+// (Roadster, S2000, Copen, S660, N-BOX, Sakura, Prius, Every), stylised/low-poly models (Alto Works, Jimny, LFA) and
+// the untextured HiAce.
+export const RETIRED = new Set(['nd', 'ap1', 'copen', 's660', 'nbox', 'sakura', 'prius', 'every', 'altow', 'jimny', 'lfa', 'hiace']);
+export const CARS = ALL_CARS.filter(c => !RETIRED.has(c.id));
 export const CAR_BY_ID = Object.fromEntries(CARS.map(c => [c.id, c]));
-export const CATEGORIES = ['jdm', 'kei', 'ev', 'euro', 'us', 'police', 'traffic'];
+export const CATEGORIES = ['jdm', 'ev', 'euro', 'us', 'police', 'traffic'];

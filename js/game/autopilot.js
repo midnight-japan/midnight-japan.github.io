@@ -94,7 +94,7 @@ export class Autopilot {
       // look along the curve: widen nothing, but bend the corridor with the current steering (yaw rate)
       const bend = (v.yawRate || 0) / Math.max(4, v.vx) * ah * ah / 2;
       if (Math.abs(la - bend) > half) return;
-      const d = ah - len - 2.3; if (d < gap) { gap = d; vl = sp; this.blk = kind; }
+      const d = ah - len - 2.3; if (d < gap) { gap = d; vl = sp; this.blk = kind; this.blkP = p; this.blkLa = la; }
     };
     for (const ai of g.traffic?.cars || []) {
       const sp = ai.mode === 'parked' ? 0 : (ai.v || 0) * Math.max(0, Math.cos(ai.yaw - v.yaw));
@@ -147,7 +147,7 @@ export class Autopilot {
       while (p && Math.hypot(p.x - v.pos.x, p.z - v.pos.z) < 4) { this.path.shift(); p = this.path[0]; }
       if (!p && this.join) { const J = this.join; this.join = null; this.path = null; this.setRoad(J.road, J.lane, J.s); return this.update(dt); }
       if (!p) { this.path = null; const r = this.net.byId.pa_out; if (r) this.setRoad(r, r.lanes[0], 0); else { this.toggle(false); return null; } return this.update(dt); }
-      target = p; vDes = this.path.length === 1 ? 7 : 5.5; half = 1.5;
+      target = p; vDes = this.path.length === 1 ? 7 : 5.5; half = 1.2; // v2.7: 1.5 → 1.2 m — cars in their bays poke into a wider corridor
       const nxt = this.path[1]; if (nxt) { const a1 = Math.atan2(p.x - v.pos.x, p.z - v.pos.z), a2 = Math.atan2(nxt.x - p.x, nxt.z - p.z); if (Math.abs(angle(a2 - a1)) > 0.8 && Math.hypot(p.x - v.pos.x, p.z - v.pos.z) < 14) vDes = 3.5; }
     } else {
       if (!this.road && !this.attach()) { this.toggle(false); return null; }
@@ -192,6 +192,15 @@ export class Autopilot {
     this.stuck = speed < 0.5 && acc < 0 ? this.stuck + dt : 0;
     this.wedged = speed < 0.6 && acc > 0.2 ? (this.wedged || 0) + dt : 0; // pushing but not moving: against a kerb / wall
     if (this.wedged > 2.5 && (this.revN || 0) < 6) { this.rev = 2.2; this.revN = (this.revN || 0) + 1; this.wedged = 0; this.revSteer = la > 0 ? -0.8 : 0.8; }
+    // v2.7: a parked car (or a van sticking out of its bay) on the lot route: steer around it on the free side instead
+    // of backing up forever — a detour waypoint beside it, then back on the route
+    if (this.path && this.blk === 'parked' && gap < 7 && speed < 1.5 && !(this.detourT > 0) && this.blkP) {
+      const side = (this.blkLa || 0) > 0 ? -1 : 1, P = this.blkP;
+      for (const k of [side, -side]) { const q = { x: P.x + l.x * k * 3.4 + f.x * 1.5, y: v.pos.y, z: P.z + l.z * k * 3.4 + f.z * 1.5 };
+        if (!g.world.access || g.world.access(q.x, q.z, v.pos.y, false)) { this.path.unshift(q); this.detourT = 6; break; } }
+    }
+    if (this.detourT > 0) this.detourT -= dt;
+    if (this.stuck > 12) { this.revN = 0; this.stuck = 0; if (this.path) { const ex = this.path[this.path.length - 1]; this.path = g.traffic.lotPath(v.pos.clone(), ex) || this.path; } } // long stall: replan
     if (this.path && this.stuck > (this.blk === 'npc' ? 4 : 1.5) && (this.revN || 0) < 4) { this.rev = 3.2; this.revN = (this.revN || 0) + 1; this.stuck = 0; this.revSteer = la > 0 ? -0.8 : 0.8; }
     const L = g.model?.lights; if (L && !this.path) { L.left = this.signal === 1; L.right = this.signal === -1; }
     return { throttle: acc > 0.05 ? clamp(acc / a, 0, 1) * (speed < 2 ? 0.55 : 1) : 0, brake: acc < -0.3 ? clamp(-acc / 8, 0, 1) : (vDes < 0.5 && speed < 1 ? 0.4 : 0), steer };
@@ -205,12 +214,14 @@ export class Autopilot {
     for (let d = -8; d <= 30; d += 1) { const s = clamp(this.s + d * dir, 0, r.length); r.at(s, this.lane.lat, _q); const e = (v.pos.x - _q.x) ** 2 + (v.pos.z - _q.z) ** 2; if (e < bd) { bd = e; best = s; } }
     const prev = this.s; this.s = best;
     // junction ahead: decide early (≥ 450 m) so there is time to move across to its side
-    const dvs = (this.net.diverges?.get(r) || []).filter(d => d.dir === dir && d.to !== r && !AVOID.test(d.to.id) && !/^x_/.test(d.to.id));
+    // v2.7: with a GPS destination set, the junction choice follows the route (exits included) instead of the tour
+    const navOn = !!(this.g.nav?.target && this.g.nav.route?.length > 1);
+    const dvs = (this.net.diverges?.get(r) || []).filter(d => d.dir === dir && d.to !== r && (navOn ? true : !AVOID.test(d.to.id) && !/^x_/.test(d.to.id)));
     if (!this.plan) for (const d of dvs) {
       const ahead = (d.s - this.s) * dir; if (ahead < 120 || ahead > 450) continue;
       if (this.decided?.has(d)) continue; (this.decided ||= new Set()).add(d);
       const nTo = this.visits.get(d.to.id) || 0, nHere = this.visits.get(r.id) || 0;
-      const take = nTo === 0 ? Math.random() < 0.85 : Math.random() < 0.2 / (1 + nTo - Math.min(nTo, nHere));
+      const take = navOn ? this.onRoute(d.to) : nTo === 0 ? Math.random() < 0.85 : Math.random() < 0.2 / (1 + nTo - Math.min(nTo, nHere));
       if (!take) continue;
       const lat0 = this.latOf(r, d.s, d.to.at(0, 0, _q));
       this.plan = { d, lane: this.net.laneNear(r, dir, lat0) }; break;
@@ -253,6 +264,12 @@ export class Autopilot {
     this.setRoad(o, lane, s); this.decided = null;
     return true;
   }
+  // is road `to` (its first ~80 m) part of the current GPS route?
+  onRoute(to) {
+    const R = this.g.nav?.route; if (!R) return false;
+    for (let s = 20; s <= Math.min(80, to.length); s += 20) { const q = to.at(s, 0, _q); let ok = false; for (let i = 0; i < R.length; i++) if ((R[i][0] - q.x) ** 2 + (R[i][1] - q.z) ** 2 < 15 * 15) { ok = true; break; } if (!ok) return false; }
+    return true;
+  }
   // lateral offset of point p from road r at s (left positive)
   latOf(r, s, p) { const a = r.at(s, 0, new THREE.Vector3()), b = r.at(s, 1, new THREE.Vector3()); return (p.x - a.x) * (b.x - a.x) + (p.z - a.z) * (b.z - a.z); }
   nextAtEnd() {
@@ -262,6 +279,7 @@ export class Autopilot {
     const cont = (net.diverges?.get(r) || []).filter(d => d.dir === dir && (dir === 1 ? d.s >= r.length - 60 : d.s <= 60) && d.to !== r && !AVOID.test(d.to.id) && !/^x_/.test(d.to.id));
     if (!cont.length) return null;
     cont.sort((a, b) => (this.visits.get(a.to.id) || 0) - (this.visits.get(b.to.id) || 0));
+    if (this.g.nav?.route?.length > 1) cont.sort((a, b) => this.onRoute(b.to) - this.onRoute(a.to)); // GPS route first
     const to = cont[0].to; const lane = to.lanes.find(l => l.dir === 1) || to.lanes[0];
     const v = this.g.vehicle; const h = net.hits(v.pos.x, v.pos.z).find(h => h.road === to);
     return { road: to, lane, s: h ? Math.max(0, h.s) : 0 };

@@ -527,22 +527,44 @@ export class Vehicle {
   contact(dt, net, world) {
     const q = net.query(this.pos.x, this.pos.z, this.pos.y + 0.5, (x, z) => world.ground(x, z));
     const target = q.y;
-    if (target < this.pos.y - 0.6) { // falling
-      this.vy -= G * dt; this.pos.y += this.vy * dt; this.airborne += dt;
-      if (this.pos.y <= target) { this.pos.y = target; if (this.vy < -6) this.events.push('crash'); this.vy = 0; }
-    } else { this.pos.y = this.pos.y < target ? target : lerp(this.pos.y, target, 1 - Math.exp(-dt * 40)); this.vy = 0; this.airborne = 0; } // never sink below the surface
+    // v2.7 — real vertical dynamics: while the tyres touch, the body moves with the surface (its vertical speed is
+    // remembered); over a crest taken fast the road falls away quicker than gravity pulls the car down → it goes light
+    // and can leave the ground, in a dip it is pressed into the springs. Tyre grip follows that vertical load.
+    const dtS = Math.max(dt, 1e-3), vMax = Math.abs(this.vx) * 0.3 + 0.5;
+    if (this._tgtY === undefined || Math.abs(target - this._tgtY) > 3) { this._tgtY = target; this.vy = 0; }
+    // surface vertical speed from the road's slope under the car (not the frame-to-frame height, whose small steps
+    // where one deck hands over to another would launch the car)
+    const vsRaw = clamp((this.grade || 0) * this.vx, -vMax, vMax); this._tgtY = target;
+    const fly = this.pos.y + (this.vy || 0) * dt - 0.5 * G * dt * dt; // where the car goes next step if the road fell away
+    if (this.airborne > 0 || fly > target + 0.04) { // in the air (crest taken fast, kerb drop, falling off a step)
+      if (!(this.airborne > 0)) this.pos.y = fly; else { this.vy -= G * dt; this.pos.y += this.vy * dt; }
+      if (!(this.airborne > 0)) this.vy -= G * dt;
+      this.airborne += dt; this._loadF = 0;
+      if (this.pos.y <= target) { this.pos.y = target; if (this.vy < -6) this.events.push('crash'); if (this.vy < -2.5) this.events.push('land'); this.vy = vsRaw; this.airborne = 0; }
+    } else {
+      this.pos.y = target;
+      const aV = (vsRaw - (this.vy || 0)) / dtS; this.vy = vsRaw;
+      this._loadF = lerp(this._loadF ?? 1, clamp(1 + aV / G, 0, 2), 1 - Math.exp(-dt * 12));
+      this.airborne = 0;
+    }
     this.onRoad = q.onRoad; this.road = q.road; this.surface = q;
     // grade along heading (from two-point sample)
     const f = this.forward;
     const qa = net.query(this.pos.x + f.x * 1.3, this.pos.z + f.z * 1.3, this.pos.y + 0.6, (x, z) => world.ground(x, z)).y;
     const qb = net.query(this.pos.x - f.x * 1.3, this.pos.z - f.z * 1.3, this.pos.y + 0.6, (x, z) => world.ground(x, z)).y;
-    this.grade = clamp((qa - qb) / 2.6, -0.15, 0.15);
+    this.grade = lerp(this.grade || 0, clamp((qa - qb) / 2.6, -0.15, 0.15), 1 - Math.exp(-dt * 20)); // smoothed: no jitter on joins
     // cross-slope (camber / banked ramps): sample the body's left and right edge
     const lx = Math.cos(this.yaw), lz = -Math.sin(this.yaw), hw = 0.8;
     const ql = net.query(this.pos.x + lx * hw, this.pos.z + lz * hw, this.pos.y + 0.6, (x, z) => world.ground(x, z)).y;
     const qr = net.query(this.pos.x - lx * hw, this.pos.z - lz * hw, this.pos.y + 0.6, (x, z) => world.ground(x, z)).y;
     this.bank = clamp((ql - qr) / (hw * 2), -0.12, 0.12);
-    this.surfaceMu = (q.onRoad || world.isLand(this.pos.x, this.pos.z) ? 1 : 0.6) * (world.wetGrip ?? 1);
+    // surface grip: smooth expressway asphalt 1.0, older street / car-park asphalt 0.95, mountain road 0.97, off the
+    // tarmac (yards, verges) 0.6; rain: wet grip, worse with speed (standing water → aquaplaning above ~100 km/h);
+    // vertical load (crest light / dip heavy) scales what the tyres can hold; nothing in the air
+    const kind = q.road?.kind, base = !q.onRoad ? (world.isLand(this.pos.x, this.pos.z) ? 0.93 : 0.6) : kind === 'local' ? 0.95 : kind === 'mountain' ? 0.97 : 1;
+    const wet = world.wetGrip ?? 1, aqua = wet < 1 ? clamp(1 - (Math.abs(this.vx) - 27) / 60, 0.72, 1) : 1;
+    this.surfaceMu = this.airborne > 0 ? 0.02 : base * wet * aqua * clamp(0.35 + 0.65 * (this._loadF ?? 1), 0.3, 1.45);
+    this.roughness = !q.onRoad ? 0.011 : kind === 'local' ? 0.0065 : kind === 'mountain' ? 0.0055 : 0.003;
     // barriers on elevated / ramp roads, and tunnel walls below ground (without them a car leaving the carriageway in a
     // tunnel lost the road and popped up to the surface)
     if (q.hit && q.road.kind !== 'local' && (q.y > 0.5 || q.y < -0.5)) {
@@ -677,13 +699,13 @@ export class Vehicle {
     // streets / lots) plus load transfer — front dips under braking, outer side compresses in corners
     if (!this.suspV) { this.suspV = [0, 0, 0, 0]; this.suspD = 0; }
     this.suspD += Math.abs(this.vx) * dt;
-    const rough = this.road?.kind === 'local' || !this.onRoad ? 0.007 : 0.0035, sp = Math.min(1, Math.abs(this.vx) / 15);
+    const rough = this.roughness ?? 0.0035, sp = Math.min(1, Math.abs(this.vx) / 15), heave = this.airborne > 0 ? 0.045 : -clamp(((this._loadF ?? 1) - 1) * 0.035, -0.035, 0.035);
     const joints = !!this.road && this.road.kind !== 'local' && this.onRoad && this.pos.y > 4 && Math.abs(this.vx) > 4; this._jph = this._jph || [];
     for (let i = 0; i < 4; i++) {
       const d = this.suspD + (i >= 2 ? 2.6 : 0) + (i % 2) * 0.37;
       const road = rough * sp * (Math.sin(d * 2.1 + i) * 0.6 + Math.sin(d * 5.3 + i * 1.7) * 0.3 + Math.sin(d * 13.7) * 0.1);
       const load = (i < 2 ? 1 : -1) * clamp(-this.ax * 0.0035, -0.03, 0.03) + ((i % 2) ? 1 : -1) * clamp(this.ay * 0.003, -0.03, 0.03);
-      const tgt = road + load, k = 180, c = 2 * Math.sqrt(k) * 0.55;
+      const tgt = road + load + heave, k = 180, c = 2 * Math.sqrt(k) * 0.55;
       // v2.6: Shutokō viaduct expansion joints every ~38 m — the "ta-tonk" front then rear axle
       if (joints) { const ph = (this.suspD - (i >= 2 ? 2.6 : 0)) % 38; if (ph < (this._jph[i] ?? ph)) { this.suspV[i] -= 0.22 * sp; } this._jph[i] = ph; }
       this.suspV[i] += (k * (tgt - this.susp[i]) - c * this.suspV[i]) * dt;

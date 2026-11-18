@@ -61,7 +61,7 @@ const MORE = [
 ];
 
 // ── Showcase strip (ids from data/cars.js; unknown ids are skipped)
-const FEATURED = ['r34', 'jza80', 'fd3s', 'ae86', 's15', 'na1', 'r35', 'gr86', 'evo9', 'crown', 'jimny', 'lfa'];
+const FEATURED = ['r34', 'jza80', 'fd3s', 'ae86', 's15', 'na1', 'r35', 'gr86', 'evo9', 'crown', 'a90', 'fl5'];
 
 // ── Gallery: 9 shots fill the grid exactly on desktop (first one large). Caption: i18n site.shot.<first 2 chars>.
 const SHOTS = ['29-hakone_dusk', '33-rainbow', '42-tokyo-night', '17-city-night', '24-rain', '22-haneda', '16-tsubasa', '28-c1tunnel', '23-foodcourt'];

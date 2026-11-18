@@ -1,8 +1,18 @@
 // Shared game metadata: version, changelog, regions. Update VERSION + CHANGELOG on every release.
-export const GAME = { title: 'MIDNIGHT JAPAN', titleJa: 'ミッドナイト・ジャパン', version: '2.6.1', build: '2026.11.18' };
+export const GAME = { title: 'MIDNIGHT JAPAN', titleJa: 'ミッドナイト・ジャパン', version: '2.7.0', build: '2026.11.18' };
 
 // Newest first. type: new | change | fix | known
 export const CHANGELOG = [
+  {
+    version: '2.7.0', date: '2026-11-18', codename: 'Real Cars',
+    summary: { ko: '애매한 차량 모델 12종을 정리해 실제 모델이 있는 차만 남기고, 차가 노면에 붙어 달리도록 수직 물리와 노면별 접지력을 새로 만들었습니다.', ja: '曖昧な車両モデル12車種を整理して実在のモデルがある車だけを残し、車が路面に張り付いて走るよう上下方向の物理と路面ごとのグリップを作り直しました。', en: 'Twelve vague car models retired so only cars with real models remain, and new vertical physics and per-surface grip keep the car planted on the road.' },
+    items: [
+      { type: 'change', ko: '절차 생성·카툰풍·로우폴리 차량 정리(로드스터, S2000, 코펜, S660, N-BOX, 사쿠라, 프리우스, 에브리, 알토웍스, 짐니, LFA, 하이에이스) — 실제 모델이 있는 29대만 남김', ja: '手続き生成・トゥーン調・ローポリの車両を整理（ロードスター、S2000、コペン、S660、N-BOX、サクラ、プリウス、エブリイ、アルトワークス、ジムニー、LFA、ハイエース）— 実在モデルのある29台だけに', en: 'Procedural, cartoon and low-poly cars retired (Roadster, S2000, Copen, S660, N-BOX, Sakura, Prius, Every, Alto Works, Jimny, LFA, HiAce) — 29 cars with real models remain' },
+      { type: 'fix', ko: '공장 기본 도색: R33 형광 휠 → 순정 실버, JZA80 초록 데칼 제거', ja: 'メーカー標準塗装：R33の蛍光ホイール→純正シルバー、JZA80の緑デカールを除去', en: 'Factory finish: R33 lime rims → stock silver, JZA80 green livery removed' },
+      { type: 'new', ko: '수직 물리: 고속으로 언덕 정점을 넘으면 차가 가벼워지고, 움푹한 곳에선 눌리며, 그 하중이 타이어 접지력에 반영. 노면별 접지(고속도로·일반도로·산길·비포장), 빗길 고속 수막현상, 노면별 진동', ja: '上下方向の物理：高速で頂点を越えると車が軽くなり、くぼみでは沈み込み、その荷重がタイヤのグリップに反映。路面ごとのグリップ（高速・一般道・山道・未舗装）、雨天高速でのハイドロプレーニング、路面ごとの振動', en: 'Vertical physics: crests taken fast make the car light, dips press it down, and that load sets tyre grip. Per-surface grip (expressway, street, mountain, off-tarmac), aquaplaning at speed in the rain, per-surface vibration' },
+      { type: 'fix', ko: '자율주행: 주차된 차가 막으면 옆으로 돌아가고, 오래 막히면 경로 재계산(이전엔 주차장에서 영구 정지)', ja: '自動運転：駐車車両にふさがれたら横を回り込み、長く止まったら経路を再計算（以前は駐車場で永久停止）', en: 'Autopilot: steers round a parked car blocking the lot route and replans when stuck (it used to stop for good in the car park)' },
+    ],
+  },
   {
     version: '2.6.1', date: '2026-11-18', codename: 'Clear Road',
     summary: { ko: '도로망 전수 점검: 데크가 서로 뚫고 지나가던 15곳, 접속부 단차, 지상 도로를 가로막던 램프 방호벽을 모두 수정하고 램프의 급경사·덜컹임을 완화했습니다.', ja: '道路網を全数点検：デッキ同士がめり込んでいた15か所、接続部の段差、地上の道路をふさいでいたランプの防護壁をすべて修正し、ランプの急勾配とガタつきを緩和しました。', en: 'Full road-network audit: 15 places where decks cut through each other, a junction step and a ramp wall blocking a street are fixed, and steep, jolting ramps are smoothed.' },
