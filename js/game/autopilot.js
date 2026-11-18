@@ -26,10 +26,11 @@ export class Autopilot {
       this.prevMode = v.mode; if (!v.ev) v.mode = 'auto';
       if (!v.engine.running && !v.engine.cranking) v.startEngine();
       v.handbrakeOn = false; v.setSel('D');
-      this.road = null; this.path = null; this.join = null; this.stuck = 0; this.rev = 0; this.revN = 0; this.laneT = 0; this.plan = null;
+      this.road = null; this.path = null; this.join = null; this.city = false; this.stuck = 0; this.rev = 0; this.revN = 0; this.laneT = 0; this.plan = null;
       if (!this.attach()) { // still in the lot: drive out through the PA
         const ex = g.traffic.lotExit();
         if (Math.hypot(ex.x - v.pos.x, ex.z - v.pos.z) > 450 && this.joinNearest()) { g.ui.setAuto?.(true); return; } // v2.4: any other lot (Umihotaru, Daikoku-futō …): drive to the nearest road
+        if (Math.hypot(ex.x - v.pos.x, ex.z - v.pos.z) > 450 && this.cityToRamp()) { g.ui.setAuto?.(true); return; } // v2.13.4: in town — follow the streets to the nearest on-ramp
         if (Math.hypot(ex.x - v.pos.x, ex.z - v.pos.z) > 450) { this.on = false; if (this.prevMode && !v.ev) v.mode = this.prevMode; g.ui.toast(t('game.auto.noroad'), 'warn', 4); g.ui.setAuto?.(false); return; }
         this.path = g.traffic.lotPath(v.pos.clone(), ex);
         this.path.shift();
@@ -62,6 +63,30 @@ export class Autopilot {
     return true;
   }
 
+  // v2.13.4 — started on a city street (Haneda, Minato Mirai …): route along the streamed street graph (nav.planCity)
+  // to the nearest expressway on-ramp start, drive it as waypoints at town speed, then join the ramp
+  cityToRamp() {
+    const g = this.g, v = g.vehicle, nav = g.nav; if (!nav || !g.world.city?.net) return false;
+    let best = null;
+    for (const r of this.net.roads) { if (r.kind !== 'ramp' || r.lanesB) continue; const q = r.samples[0]; if (q.p.y > 1.5) continue; // on-ramps start at street level
+      const d = Math.hypot(q.p.x - v.pos.x, q.p.z - v.pos.z); if (d < 3500 && (!best || d < best.d)) best = { d, r, q }; }
+    if (!best) return false;
+    // only the streets streamed in so far are known: aim for the reachable corner nearest the ramp, re-plan on arrival
+    const N = g.world.city.net, P = k => { const [a, b] = k.split(','); return [a / 2, b / 2]; };
+    let s0 = null, sd = 1e18; for (const [k, list] of N.nodes) { if (!list.length) continue; const [x, z] = P(k), d = (x - v.pos.x) ** 2 + (z - v.pos.z) ** 2; if (d < sd) { sd = d; s0 = k; } }
+    if (!s0) return false;
+    const seen = new Set([s0]), q = [s0]; let goal = s0, gd = 1e18;
+    while (q.length) { const k = q.shift(); const [x, z] = P(k), d = (x - best.q.p.x) ** 2 + (z - best.q.p.z) ** 2; if (d < gd) { gd = d; goal = k; }
+      for (const [c, i] of N.nodes.get(k) || []) { if (c.dead) continue; for (const j of [i - 1, i + 1]) { if (j < 0 || j >= c.keys.length) continue; const k2 = c.keys[j]; if (!seen.has(k2)) { seen.add(k2); q.push(k2); } } } }
+    const [gx, gz] = P(goal), final = Math.sqrt(gd) < 70;
+    const keep = nav.target; nav.target = { x: gx, z: gz };
+    let route = null; try { route = nav.planCity(v.pos, 9); } catch {} nav.target = keep; // service / airport roads too
+    if (!route || route.length < 2) return false;
+    const pts = []; for (let i = 0; i < route.length; i++) { const [x, z] = route[i]; if (!pts.length || Math.hypot(x - pts.at(-1).x, z - pts.at(-1).z) > 8) pts.push(new THREE.Vector3(x, 0, z)); }
+    if (final) { pts.push(best.r.at(6, best.r.lanes[0].lat, new THREE.Vector3())); this.join = { road: best.r, lane: best.r.lanes[0], s: 8 }; } else this.join = null;
+    this.path = pts; this.city = true; this.cityAgain = !final; this.cityRamp = best.r;
+    return true;
+  }
   // snap onto the expressway lane under the car (same level, travelling our way)
   attach() {
     const v = this.g.vehicle; const f = v.forward;
@@ -147,10 +172,12 @@ export class Autopilot {
     if (this.path) {
       // ── PA lot: waypoints at walking pace
       let p = this.path[0];
-      while (p && Math.hypot(p.x - v.pos.x, p.z - v.pos.z) < (p.r || 4)) { this.path.shift(); p = this.path[0]; }
-      if (!p && this.join) { const J = this.join; this.join = null; this.path = null; this.setRoad(J.road, J.lane, J.s); return this.update(dt); }
+      const behind = q => { const dx = q.x - v.pos.x, dz = q.z - v.pos.z; return dx * v.forward.x + dz * v.forward.z < 0 && Math.hypot(dx, dz) < 14; };
+      while (p && (Math.hypot(p.x - v.pos.x, p.z - v.pos.z) < (p.r || 4) || (this.city && this.path.length > 1 && behind(p)))) { this.path.shift(); p = this.path[0]; } // v2.13.4: in town, a corner point already passed is skipped (it made the car circle)
+      if (!p && this.cityAgain) { this.cityAgain = false; this.path = null; if (this.cityToRamp()) return this.update(dt); }
+      if (!p && this.join) { const J = this.join; this.join = null; this.path = null; this.city = false; this.setRoad(J.road, J.lane, J.s); return this.update(dt); }
       if (!p) { this.path = null; const r = this.net.byId.pa_out; if (r) this.setRoad(r, r.lanes[0], 0); else { this.toggle(false); return null; } return this.update(dt); }
-      target = p; vDes = this.path.length === 1 ? 7 : 5.5; half = 1.2; // v2.7: 1.5 → 1.2 m — cars in their bays poke into a wider corridor
+      target = p; vDes = this.city ? 11 : this.path.length === 1 ? 7 : 5.5; half = this.city ? 1.4 : 1.2; // v2.7: 1.5 → 1.2 m — cars in their bays poke into a wider corridor
       const nxt = this.path[1]; if (nxt) { const a1 = Math.atan2(p.x - v.pos.x, p.z - v.pos.z), a2 = Math.atan2(nxt.x - p.x, nxt.z - p.z); if (Math.abs(angle(a2 - a1)) > 0.8 && Math.hypot(p.x - v.pos.x, p.z - v.pos.z) < 14) vDes = 3.5; }
     } else {
       if (!this.road && !this.attach()) { this.toggle(false); return null; }
@@ -210,7 +237,10 @@ export class Autopilot {
     }
     if (this.detourT > 0) this.detourT -= dt;
     // v2.13.1: a packed car park can box the autopilot in — after three back-and-forths, continue from the exit lane
-    if (this.path && (this.revN || 0) >= 3 && !(this.rev > 0)) { const r = this.net.byId.pa_out; if (r) { const ln = r.lanes[0], q = r.at(2, ln.lat, new THREE.Vector3()), d = r.dirAt(2);
+    if (this.path && this.city && (this.revN || 0) >= 3 && !(this.rev > 0) && this.cityRamp) { const r = this.cityRamp, ln = r.lanes[0], q = r.at(8, ln.lat, new THREE.Vector3()), d = r.dirAt(8); // v2.13.4: boxed in on a narrow street — continue from the on-ramp
+      v.place(q.setY(q.y + 0.3), Math.atan2(d.x, d.z)); g.camSnap = true; this.path = null; this.join = null; this.city = false; this.cityAgain = false; this.revN = 0; this.setRoad(r, ln, 8);
+      g.ui.toast(({ ko: '길이 막혀 고속도로 진입로에서 이어갑니다', ja: '道が狭いため入口ランプから再開' })[getLang?.()] || 'Street blocked — continuing from the on-ramp', 'info', 3); return null; }
+    if (this.path && !this.city && (this.revN || 0) >= 3 && !(this.rev > 0)) { const r = this.net.byId.pa_out; if (r) { const ln = r.lanes[0], q = r.at(2, ln.lat, new THREE.Vector3()), d = r.dirAt(2);
       v.place(q.setY(q.y + 0.3), Math.atan2(d.x, d.z)); g.camSnap = true; this.path = null; this.join = null; this.revN = 0; this.setRoad(r, ln, 2); g.ui.toast(({ ko: '주차장이 붐벼서 출구 차선에서 이어갑니다', ja: '駐車場が混雑のため出口レーンから再開' })[getLang?.()] || 'Car park busy — continuing from the exit lane', 'info', 3); return null; } }
     if (this.stuck > 12) { this.revN = 0; this.stuck = 0; if (this.path) { const ex = this.path[this.path.length - 1]; this.path = g.traffic.lotPath(v.pos.clone(), ex) || this.path; } } // long stall: replan
     if (this.path && this.stuck > (this.blk === 'npc' ? 6 : 2.5) && (this.revN || 0) < 4) { this.rev = 3.2; this.revN = (this.revN || 0) + 1; this.stuck = 0; this.revSteer = la > 0 ? -0.8 : 0.8; }

@@ -190,7 +190,8 @@ function buildTile(T, lod, opts) {
   const road = new Flat(), walk = new Flat(), paint = new Flat();
   const ground = {};             // land use class → Flat
   const wires = new Buf(3);
-  const trees = new Buf(5);      // x, z, scale, rot, variant
+  const trees = new Buf(5);
+  const fuels = [], forecourts = [];               // x, z, tx, tz, brand per pump island      // x, z, scale, rot, variant
   const cols = [];               // [x, z, hx, hz, ry, y0, y1]
   const DEC = new Buf(6);        // v2.1 road text + traffic signs: position, atlas uv, back-plate flag
   const lamps = [];              // [x, y, z]
@@ -331,9 +332,11 @@ function buildTile(T, lod, opts) {
 
   // fuel station (ガソリンスタンド): open forecourt under a lit canopy on pillars, pump islands with dispensers, a brand
   // fascia that glows at night and a tall price pole — drivable in, only the pillars / pumps / pole collide
-  function gasStation(cx, cz, tx, tz, hl, hw, seed) {
+  function gasStation(cx, cz, tx, tz, hl, hw, seed, toStreet = 0) {
     const H = 5.4, nx = -tz, nz = tx;
     const at = (a, b) => [cx + tx * a + nx * b, cz + tz * a + nz * b];
+    // v2.13.4: the forecourt (and its driveway to the street) is drivable in the access mask — cars pull up to the pumps
+    { const b0 = Math.min(-hw - 2, toStreet), b1 = Math.max(hw + 2, toStreet); forecourts.push([at(-hl - 3, b0), at(hl + 3, b0), at(hl + 3, b1), at(-hl - 3, b1)]); }
     const BR = [[0.92, 0.32, 0.08], [0.1, 0.35, 0.75], [0.85, 0.1, 0.12], [0.1, 0.55, 0.3]][seed % 4];
     bm.box(cx, H + 0.45, cz, tx, tz, hl, hw, 0.45, [0.94, 0.94, 0.92], [PLAIN, 0, 0, 0]);          // canopy
     gm.box(cx, H + 0.42, cz, tx, tz, hl + 0.03, hw + 0.03, 0.2, BR, [1, 0, 0, 0]);               // brand fascia band
@@ -345,6 +348,7 @@ function buildTile(T, lod, opts) {
       pm.box(x, 0.1, z, tx, tz, 1.5, 0.45, 0.1, [0.78, 0.78, 0.76], [PLAIN, 0, 0, 0]);                 // island kerb
       for (const d of [-0.75, 0.75]) { const px = x + tx * d, pz = z + tz * d; pm.box(px, 0.95, pz, tx, tz, 0.35, 0.28, 0.75, [0.95, 0.95, 0.95], [PLAIN, 0, 0, 0]); gm.box(px + nx * 0.29, 1.15, pz + nz * 0.29, tx, tz, 0.22, 0.01, 0.16, [0.6, 0.9, 1], [1, 0, 0, 0]); gm.box(px, 1.72, pz, tx, tz, 0.36, 0.29, 0.06, BR, [1, 0, 0, 0]); }
       cols.push([x, z, 1.55, 0.5, Math.atan2(-tz, tx), -1, 1.8]);
+      fuels.push(x, z, tx, tz, seed % 4); // v2.13.4: pump island for the full-service sequence (fuelstation.js)
     }
     // price pole at the street-side corner: brand panel + three lit price rows (レギュラー / ハイオク / 軽油)
     { const [x, z] = at(hl + 1.6, -hw + 0.6); pm.cyl(x, z, 0, 7.2, 0.14, 8, [0.6, 0.62, 0.64], [PLAIN, 0, 0, 0]); cols.push([x, z, 0.2, 0.2, 0, -1, 7.2]);
@@ -361,7 +365,7 @@ function buildTile(T, lod, opts) {
       if (best && best.d < 60) {
         const hl = 8, hw = 5.5; let nx = (x - best.px) / (best.d || 1), nz = (z - best.pz) / (best.d || 1); if (!best.d) { nx = -best.tz; nz = best.tx; }
         const set = Math.max(best.d, best.w / 2 + 3.5 + hw); // keep the canopy off the carriageway and the pavement
-        gasStation(best.px + nx * set, best.pz + nz * set, best.tx, best.tz, hl, hw, Math.floor(Math.abs(x * 7 + z * 13)));
+        gasStation(best.px + nx * set, best.pz + nz * set, best.tx, best.tz, hl, hw, Math.floor(Math.abs(x * 7 + z * 13)), -set * Math.sign(nx * -best.tz + nz * best.tx || 1));
       }
       continue;
     }
@@ -945,9 +949,9 @@ function buildTile(T, lod, opts) {
     for (let k = lamps.length - 1; k >= 0; k--) { const [x, y, z] = lamps[k]; if (deckIn(OX + x, OZ + z, 0.3, y + 1.5, 1) !== null) lamps.splice(k, 1); }
     { let w = 0; const A = trees.a, st = trees.stride; for (let k = 0; k < trees.n; k++) { const x = A[k * st], z = A[k * st + 1]; if (deckIn(OX + x, OZ + z, 0.3, 12, 1.5) !== null) continue; if (w !== k) A.copyWithin(w * st, k * st, k * st + st); w++; } trees.n = w; }
   }
-  const mask = mid ? buildMask(T, streets) : null;
+  const mask = mid ? buildMask(T, streets, forecourts) : null;
   const landR = buildLand(T, streets, OX, OZ, landF);
-  const out = { dec: DEC.out(), mask, landR, runways, gates, rails, stations, net, sigs, land: landF.out(), bm: bm.out(), pm: pm.out(), gm: gm.out(), sg: sg.out(), road: road.out(), walk: walk.out(), paint: paint.out(), wires: wires.out(), trees: trees.out(), cols, lamps, water, bridges, ground: {} };
+  const out = { dec: DEC.out(), mask, landR, runways, gates, rails, stations, fuels, net, sigs, land: landF.out(), bm: bm.out(), pm: pm.out(), gm: gm.out(), sg: sg.out(), road: road.out(), walk: walk.out(), paint: paint.out(), wires: wires.out(), trees: trees.out(), cols, lamps, water, bridges, ground: {} };
   for (const c in ground) out.ground[c] = ground[c].out();
   return out;
 }
@@ -955,7 +959,7 @@ function buildTile(T, lod, opts) {
 // ── where a car / a person may be (v2.0): 1 m raster over the tile, 0 = off limits (fields, yards, gardens, water),
 // 1 = on foot only (sidewalks, footpaths, squares), 2 = driveable (streets + shoulders, car parks, fuel forecourts,
 // konbini lots). The game keeps cars and walkers inside it everywhere in the city.
-function buildMask(T, streets) {
+function buildMask(T, streets, forecourts = []) {
   // the raster reaches MG metres past each tile edge: a street segment belongs to the tile of its midpoint, so its
   // overhang into the neighbouring tile used to be missing there (a wall across the street at tile borders)
   const MG = 80, N = 1000 + 2 * MG, M = new Uint8Array(N * N), D = 0.1;
@@ -989,6 +993,7 @@ function buildMask(T, streets) {
     const pts = []; for (let k = 5; k < a.length; k += 2) pts.push([a[k] * D, a[k + 1] * D]); if (pts.length < 3) continue;
     poly(pts, 2, a[0] === B.KONBINI ? 12 : a[0] === B.GAS ? 6 : 3); // the building itself stays solid (its collider)
   }
+  for (const q of forecourts) poly(q, 2, 0);
   for (const st of streets) {
     if (st.cls === S.PED) continue;
     const hw = st.w / 2 + 1.2; // carriageway + kerb / shoulder

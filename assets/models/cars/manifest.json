@@ -928,7 +928,9 @@
    "mat": "mat_23",
    "cab": 2,
    "low": 0.8
-  }
+  },
+  "lo": "truck_lo.glb",
+  "loTris": 50873
  },
  "bus": {
   "file": "bus.glb",
@@ -1126,7 +1128,9 @@
    "van": true,
    "belt": 0.55,
    "low": 0.55
-  }
+  },
+  "lo": "hiace_lo.glb",
+  "loTris": 18004
  },
  "leaf": {
   "file": "leaf.glb",
@@ -2032,5 +2036,215 @@
   "notes": "v2.13: Sketchfab download, normalised with tools/car-normalize.mjs",
   "lo": "hustler_lo.glb",
   "loTris": 189098
+ },
+ "laurel": {
+  "file": "laurel.glb",
+  "title": "Nissan Laurel c33",
+  "author": "Fastomas (Fastomas)",
+  "source": "https://sketchfab.com/3d-models/766d3b36953c4a79a7f2453d1031d9e3",
+  "license": "CC-BY-4.0",
+  "substitute": null,
+  "stylized": false,
+  "tris": 103597,
+  "bytes": 917516,
+  "forward": "+z",
+  "up": "+y",
+  "paint": [
+   "Body"
+  ],
+  "glass": [
+   "Glass"
+  ],
+  "lamps": {
+   "head": [
+    "frontlights"
+   ],
+   "tail": [
+    "backlights"
+   ]
+  },
+  "wheels": {
+   "fl": "wheel_fl",
+   "fr": "wheel_fr",
+   "rl": "wheel_rl",
+   "rr": "wheel_rr"
+  },
+  "hood": null,
+  "doors": null,
+  "trunk": null,
+  "engine": null,
+  "bbox": [
+   -1.039,
+   0,
+   -2.345,
+   1.039,
+   1.312,
+   2.345
+  ],
+  "notes": "v2.13: Sketchfab download, normalised with tools/car-normalize.mjs",
+  "lo": "laurel_lo.glb",
+  "loTris": 25324
+ },
+ "odyssey": {
+  "file": "odyssey.glb",
+  "title": "2001 Honda Odyssey",
+  "author": "5spokehubcap (5spokehubcap)",
+  "source": "https://sketchfab.com/3d-models/9dbd5b0109a946ad83a067dd25d833fe",
+  "license": "CC-BY-4.0",
+  "substitute": null,
+  "stylized": false,
+  "tris": 183846,
+  "bytes": 4858020,
+  "forward": "+z",
+  "up": "+y",
+  "paint": [
+   "odyssey02_spadie_black"
+  ],
+  "glass": [],
+  "wheels": {
+   "fl": "wheel_fl",
+   "fr": "wheel_fr",
+   "rl": "wheel_rl",
+   "rr": "wheel_rr"
+  },
+  "hood": null,
+  "doors": null,
+  "trunk": null,
+  "engine": null,
+  "bbox": [
+   -1.034,
+   0,
+   -2.415,
+   1.034,
+   1.635,
+   2.414
+  ],
+  "notes": "v2.13: Sketchfab download, normalised with tools/car-normalize.mjs",
+  "lo": "odyssey_lo.glb",
+  "loTris": 67447
+ },
+ "cube": {
+  "file": "cube.glb",
+  "title": "Nissan Cube",
+  "author": "hpgod_3dhub14 (zxgod118)",
+  "source": "https://sketchfab.com/3d-models/9009a272166a4c829e944c398358e838",
+  "license": "CC-BY-4.0",
+  "substitute": null,
+  "stylized": false,
+  "tris": 35519,
+  "bytes": 304880,
+  "forward": "+z",
+  "up": "+y",
+  "paint": [
+   "ncube_paint0_new0",
+   "ncube_paint1"
+  ],
+  "glass": [
+   "ncube_window0"
+  ],
+  "wheels": {
+   "fl": "wheel_fl",
+   "fr": "wheel_fr",
+   "rl": "wheel_rl",
+   "rr": "wheel_rr"
+  },
+  "hood": null,
+  "doors": null,
+  "trunk": null,
+  "engine": null,
+  "bbox": [
+   -1.045,
+   0,
+   -1.865,
+   1.045,
+   1.972,
+   1.865
+  ],
+  "notes": "v2.13: Sketchfab download, normalised with tools/car-normalize.mjs",
+  "lo": "cube_lo.glb",
+  "loTris": 19859
+ },
+ "evo6": {
+  "file": "evo6.glb",
+  "title": "LANCER EVO6",
+  "author": "WolfGames36 (WolfGames36)",
+  "source": "https://sketchfab.com/3d-models/a6113d9a557e488b9b8b7036ee2fc697",
+  "license": "CC-BY-4.0",
+  "substitute": null,
+  "stylized": false,
+  "tris": 27156,
+  "bytes": 1409604,
+  "forward": "+z",
+  "up": "+y",
+  "paint": [
+   "material_2"
+  ],
+  "glass": [
+   "material",
+   "black_glass",
+   "window",
+   "glass",
+   "material_3",
+   "black_glass_1"
+  ],
+  "wheels": {
+   "fl": "wheel_fl",
+   "fr": "wheel_fr",
+   "rl": "wheel_rl",
+   "rr": "wheel_rr"
+  },
+  "hood": null,
+  "doors": null,
+  "trunk": null,
+  "engine": null,
+  "bbox": [
+   -0.929,
+   0,
+   -2.175,
+   0.929,
+   1.34,
+   2.175
+  ],
+  "notes": "v2.13: Sketchfab download, normalised with tools/car-normalize.mjs"
+ },
+ "gto": {
+  "file": "gto.glb",
+  "title": "Mitsubish GTO",
+  "author": "jeevanpattar (jeevanpattar)",
+  "source": "https://sketchfab.com/3d-models/d6e7bdf4f3234fba8c1f131ac276557a",
+  "license": "CC-BY-4.0",
+  "substitute": null,
+  "stylized": false,
+  "tris": 75822,
+  "bytes": 1244580,
+  "forward": "+z",
+  "up": "+y",
+  "paint": [
+   "01_-_Default"
+  ],
+  "glass": [
+   "03_-_Default"
+  ],
+  "wheels": {
+   "fl": "wheel_fl",
+   "fr": "wheel_fr",
+   "rl": "wheel_rl",
+   "rr": "wheel_rr"
+  },
+  "hood": null,
+  "doors": null,
+  "trunk": null,
+  "engine": null,
+  "bbox": [
+   -0.985,
+   0,
+   -2.28,
+   0.985,
+   1.338,
+   2.28
+  ],
+  "notes": "v2.13: Sketchfab download, normalised with tools/car-normalize.mjs",
+  "lo": "gto_lo.glb",
+  "loTris": 19735
  }
 }

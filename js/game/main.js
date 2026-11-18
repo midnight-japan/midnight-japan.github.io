@@ -21,6 +21,7 @@ import { Nav } from './nav.js';
 import { Autopilot } from './autopilot.js';
 import { SeasonFX } from './seasonfx.js';
 import { Roadworks } from './roadworks.js';
+import { FuelStation } from './fuelstation.js';
 import { Dialog } from './dialog.js';
 import { World } from './world.js';
 import { TimeOfDay } from './sky.js';
@@ -198,6 +199,7 @@ class Game {
     this.weather = new Weather(this);
     try { this.seasonFx = new SeasonFX(this); } catch (e) { console.warn('season', e); }
     this.roadworks = new Roadworks(this);
+    this.fuel = new FuelStation(this);
     this.fx = new Fx(this);
     this.nav = new Nav(this);
     this.autopilot = new Autopilot(this);
@@ -523,7 +525,8 @@ class Game {
     if (I.act('radio')) { if (this.radio) { if (!this.radio.on) this.radio.power(true); else this.radio.power(false); this.ui.radioBanner(); } }
     if (I.act('radioNext')) { if (this.radio) { if (!this.radio.on) this.radio.power(true); else this.radio.next(); this.ui.radioBanner(); } }
     if (I.act('carMenu')) this.ui.toggleCarMenu();
-    if (I.act('interact')) { this.exitCar(); return; }
+    const fuelBusy = this.fuel ? this.fuel.update(dt) : false; // v2.13.4: full-service fuel stop (F at a pump island)
+    if (!fuelBusy && I.act('interact')) { this.exitCar(); return; }
     // reverse light / brake light
     L.brake = brake > 0.1 || (v.regenActive && v.regenLevel === 3);
     L.reverse = v.gear === -1 || v.atSel === 'R';

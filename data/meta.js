@@ -1,8 +1,18 @@
 // Shared game metadata: version, changelog, regions. Update VERSION + CHANGELOG on every release.
-export const GAME = { title: 'MIDNIGHT JAPAN', titleJa: 'ミッドナイト・ジャパン', version: '2.13.3', build: '2026.11.18' };
+export const GAME = { title: 'MIDNIGHT JAPAN', titleJa: 'ミッドナイト・ジャパン', version: '2.13.4', build: '2026.11.18' };
 
 // Newest first. type: new | change | fix | known
 export const CHANGELOG = [
+  {
+    version: '2.13.4', date: '2026-11-18', codename: 'Full Service',
+    summary: { ko: '주유소 풀서비스(직원이 나와 유종 추천·주유·창 닦기·결제·출차 유도), 도심 어디서든 자율주행 시작, 실제 차량 5대 추가(48대).', ja: 'ガソリンスタンドのフルサービス（店員が出てきて油種のおすすめ・給油・窓拭き・会計・出庫誘導）、街中どこからでも自動運転、実車5台追加（48台）。', en: 'Full-service fuel stations (an attendant recommends the fuel, fills up, wipes the glass, takes payment and waves you out), autopilot from any city street, 5 more real cars (48).' },
+    items: [
+      { type: 'new', ko: '주유소 풀서비스: 펌프 옆에 서서 E — 직원이 사무실에서 걸어 나와 「いらっしゃいませ！」, 차에 맞는 유종 추천(하이옥/레귤러/경유, 잘못된 유종은 거절), 가득·¥3,000·20L 선택, 걸레를 대고 주유, 창 닦기, 결제 후 「어느 쪽으로 나가세요?」 묻고 도로까지 유도', ja: 'ガソリンスタンドのフルサービス：給油機の横で止まってE — 店員が事務所から歩いて来て「いらっしゃいませ！」、車に合った油種をおすすめ（ハイオク/レギュラー/軽油、違う油種はお断り）、満タン・¥3,000・20Lを選択、ウエスを当てて給油、窓拭き、会計後「どちらへ出られますか？」と聞いて道路まで誘導', en: 'Full-service fuel: stop by a pump and press E — the attendant walks out of the office (“いらっしゃいませ！”), recommends the right fuel (high-octane / regular / diesel, refuses the wrong one), full / ¥3,000 / 20 L, fills up with a cloth at the filler, wipes the glass, takes payment, asks which way you are heading and guides you out onto the road' },
+      { type: 'fix', ko: '주유소 바닥과 진입로가 주행 가능 영역에서 빠져 있어 펌프 옆에 세우면 차가 밀려나던 문제', ja: 'ガソリンスタンドの敷地と出入口が走行可能エリアから抜けていて、給油機の横に止めると車が押し出された問題', en: 'Fuel-station forecourts and driveways were missing from the drivable area (a car stopped at a pump was pushed away)' },
+      { type: 'new', ko: '자율주행을 도심 도로에서도 시작: 가장 가까운 고속도로 진입로까지 도시 도로망으로 경로를 짜고(지나친 모서리는 건너뜀), 막히면 진입로로 이동', ja: '自動運転を街中の道路からも開始：最寄りの高速入口まで街路網でルートを組み（通り過ぎた角は飛ばす）、詰まったら入口へ移動', en: 'Autopilot now starts from city streets: routes the street network to the nearest expressway on-ramp (skips passed corners), with an on-ramp fallback when stuck' },
+      { type: 'new', ko: '실제 차량 5대(CC-BY, 순정에 가까운 모델): 닛산 로렐 C33, 혼다 라그레이트, 닛산 큐브 Z11, 미쓰비시 랜서 에볼루션 VI, 미쓰비시 GTO — 큐브·라그레이트·로렐은 도심 교통에도 등장 (총 48대). 바퀴가 차체와 붙어 굴러가지 않는 프렐류드·시빅 모델은 제외', ja: '実車5台（CC-BY、純正に近いモデル）：日産ローレルC33、ホンダ・ラグレイト、日産キューブZ11、三菱ランサーエボリューションVI、三菱GTO — キューブ・ラグレイト・ローレルは街の交通にも登場（計48台）。タイヤが車体と一体で回らないプレリュード・シビックのモデルは不採用', en: '5 real cars (CC-BY, close to stock): Nissan Laurel C33, Honda LaGreat, Nissan Cube Z11, Mitsubishi Lancer Evolution VI, Mitsubishi GTO — Cube, LaGreat and Laurel also drive in city traffic (48 total). Prelude and Civic models with wheels fused to the body were not used' },
+    ],
+  },
   {
     version: '2.13.3', date: '2026-11-18', codename: 'Smooth Ride',
     summary: { ko: '60fps 우선 기본값(내장 GPU는 낮음, 그 외 중간), 프레임에 따라 그리는 거리까지 줄이는 자동 조절, 자율주행 커브 감속과 내비 경로 엄수, NPC 역주행처럼 보이던 문제, 흰 덩어리 트럭·버스 교체, 더 자연스러운 나무, 아주 작게까지 줄어드는 볼륨, 설정 중에도 게임 계속, 로딩 화면 사진, 새 사이트 로고.', ja: '60fps優先の初期設定（内蔵GPUは低、それ以外は中）、フレームに応じて描画距離まで下げる自動調整、自動運転のカーブ減速とナビ経路の厳守、NPCが逆走して見えた問題、白い塊のトラック・バスを交換、より自然な木、ごく小さくまで下がる音量、設定中もゲーム継続、ロード画面の写真、新しいサイトロゴ。', en: '60-fps-first defaults (Low on integrated GPUs, Medium otherwise), an auto-governor that also cuts draw distance, autopilot slows for bends and sticks to the GPS route, NPC cars no longer look like they drive the wrong way, the white clay truck and bus replaced, more natural trees, volume that goes really quiet, settings without pausing, a loading-screen photo and the new site logo.' },

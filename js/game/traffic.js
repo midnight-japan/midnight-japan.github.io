@@ -10,11 +10,11 @@ import { STANCE_PRESETS, defaultStance } from './carmodel.js';
 const _pa = new THREE.Vector3(), _pb = new THREE.Vector3();
 const clamp = (x, a, b) => Math.max(a, Math.min(b, x));
 const lerp = (a, b, t) => a + (b - a) * t;
-const MEET_POOL = ['s13', 'ap1', 'nd', 'rx8', 'fc3s', 'dc2', 'lfa', 'r34', 'r32', 'r33', 'r35', 's15', 'rps13', 'z33', 'gr86', 'ae86', 'jza80', 'a90', 'jzx100', 'fd3s', 'na1', 'ek9', 'fl5', 'evo9', 'gdb', 'p911', 'e46', 'mustang', 'model3', 'r34', 'jza80', 'fd3s'];
-const CITY_POOL = ['xtrail', 'accord', 'hijet', 'acty', 'elf', 'wagonr', 'wagonr', 'nd', 'taxi', 'taxi', 'taxi', 'crown', 'crown', 'model3', 'elf', 'elf', 'fl5', 'r35', 'gr86', 'ek9', 'jzx100', 'e46', 'z33'];
+const MEET_POOL = ['evo6', 'gto', 'laurel', 's13', 'ap1', 'nd', 'rx8', 'fc3s', 'dc2', 'lfa', 'r34', 'r32', 'r33', 'r35', 's15', 'rps13', 'z33', 'gr86', 'ae86', 'jza80', 'a90', 'jzx100', 'fd3s', 'na1', 'ek9', 'fl5', 'evo9', 'gdb', 'p911', 'e46', 'mustang', 'model3', 'r34', 'jza80', 'fd3s'];
+const CITY_POOL = ['cube', 'cube', 'odyssey', 'odyssey', 'laurel', 'xtrail', 'accord', 'hijet', 'acty', 'elf', 'wagonr', 'wagonr', 'nd', 'taxi', 'taxi', 'taxi', 'crown', 'crown', 'model3', 'elf', 'elf', 'fl5', 'r35', 'gr86', 'ek9', 'jzx100', 'e46', 'z33'];
 // NPC traffic uses cars that have real 3D models (the procedural-only kei/hybrid models stay player-selectable)
 // v2.3: everyday Japanese traffic first (taxis, Crowns, vans, trucks, kei cars, Leafs, buses); sports cars are rare on the road
-const TRAFFIC_POOL = ['xtrail', 'accord', 'elf', 'elf', 'hijet', 'acty', 'wagonr', 'taxi', 'taxi', 'taxi', 'crown', 'crown', 'crown', 'elf', 'elf', 'elf', 'elf', 'model3', 'model3', 'crown', 'a90', 'jzx100', 'e46', 'gr86', 'fl5'];
+const TRAFFIC_POOL = ['cube', 'odyssey', 'odyssey', 'laurel', 'xtrail', 'accord', 'elf', 'elf', 'hijet', 'acty', 'wagonr', 'taxi', 'taxi', 'taxi', 'crown', 'crown', 'crown', 'elf', 'elf', 'elf', 'elf', 'model3', 'model3', 'crown', 'a90', 'jzx100', 'e46', 'gr86', 'fl5'];
 
 // Merge all static meshes of a car model by material (keeps wheels, doors, lights animatable).
 export function mergeModel(model) {

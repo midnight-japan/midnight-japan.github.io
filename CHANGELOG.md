@@ -1,9 +1,10 @@
 # 📜 MIDNIGHT JAPAN 업데이트 기록 · Changelog
 
-현재 버전 · Current: **v2.13.3** · [▶ 웹에서 플레이](https://midnight-japan.github.io/) · [🌐 업데이트 페이지](https://midnight-japan.github.io/changelog.html)
+현재 버전 · Current: **v2.13.4** · [▶ 웹에서 플레이](https://midnight-japan.github.io/) · [🌐 업데이트 페이지](https://midnight-japan.github.io/changelog.html)
 
 | 버전 | 날짜 | 이름 | 요약 |
 |---|---|---|---|
+| [v2.13.4](#v2134--full-service-2026-11-18) | 2026-11-18 | Full Service | 주유소 풀서비스(직원이 나와 유종 추천·주유·창 닦기·결제·출차 유도), 도심 어디서든 자율주행 시작, 실제 차량 5대 추가(48대). |
 | [v2.13.3](#v2133--smooth-ride-2026-11-18) | 2026-11-18 | Smooth Ride | 60fps 우선 기본값(내장 GPU는 낮음, 그 외 중간), 프레임에 따라 그리는 거리까지 줄이는 자동 조절, 자율주행 커브 감속과 내비 경로 엄수, NPC 역주행처럼 보이던 문제, 흰 덩어리 트럭·버스 교체, 더 자연스러운 나무, 아주 작게까지 줄어드는 볼륨, 설정 중에도 게임 계속, 로딩 화면 사진, 새 사이트 로고. |
 | [v2.13.2](#v2132--lighter-2026-11-18) | 2026-11-18 | Lighter | 메모리 절약: 같은 지면·벽 텍스처를 재질마다 따로 올리던 문제를 고쳐 그래픽 메모리를 약 0.6GB 줄였습니다. C1·하코네·K1·완간선 장거리 자율주행 점검 완료. |
 | [v2.13.1](#v2131--way-out-2026-11-18) | 2026-11-18 | Way Out | 버그 수정: 대흑 PA 주차장에서 자율주행이 보이지 않는 벽에 막히거나 옆 칸 주차 차량을 길막으로 오인해 멈추던 문제를 고쳤습니다. |
@@ -58,6 +59,23 @@
 | [v0.2.0](#v020--bayshore-2026-11-05) | 2026-11-05 | Bayshore | 수도고속 완간선을 따라 하네다까지, 도쿄만 아쿠아라인 해저터널을 지나 우미호타루 PA까지. 실제 3D 차량 모델과 열리는 보닛도 들어왔어요. |
 | [v0.1.1](#v011--one-click-2026-11-04) | 2026-11-04 | One Click | 링크 하나로 바로 플레이. 크롬에서 공식 사이트 주소만 열면 설치 없이 실행돼요. |
 | [v0.1.0](#v010--first-meet-2026-11-04) | 2026-11-04 | First Meet | 첫 공개 버전. 다이코쿠 JCT·PA와 다이코쿠 부두 일대를 3D로 구현했습니다. |
+
+---
+
+## v2.13.4 — Full Service (2026-11-18)
+
+> 주유소 풀서비스(직원이 나와 유종 추천·주유·창 닦기·결제·출차 유도), 도심 어디서든 자율주행 시작, 실제 차량 5대 추가(48대).
+> Full-service fuel stations (an attendant recommends the fuel, fills up, wipes the glass, takes payment and waves you out), autopilot from any city street, 5 more real cars (48).
+
+**✨ 추가 · New**
+
+- 주유소 풀서비스: 펌프 옆에 서서 E — 직원이 사무실에서 걸어 나와 「いらっしゃいませ！」, 차에 맞는 유종 추천(하이옥/레귤러/경유, 잘못된 유종은 거절), 가득·¥3,000·20L 선택, 걸레를 대고 주유, 창 닦기, 결제 후 「어느 쪽으로 나가세요?」 묻고 도로까지 유도<br><sub>Full-service fuel: stop by a pump and press E — the attendant walks out of the office (“いらっしゃいませ！”), recommends the right fuel (high-octane / regular / diesel, refuses the wrong one), full / ¥3,000 / 20 L, fills up with a cloth at the filler, wipes the glass, takes payment, asks which way you are heading and guides you out onto the road</sub>
+- 자율주행을 도심 도로에서도 시작: 가장 가까운 고속도로 진입로까지 도시 도로망으로 경로를 짜고(지나친 모서리는 건너뜀), 막히면 진입로로 이동<br><sub>Autopilot now starts from city streets: routes the street network to the nearest expressway on-ramp (skips passed corners), with an on-ramp fallback when stuck</sub>
+- 실제 차량 5대(CC-BY, 순정에 가까운 모델): 닛산 로렐 C33, 혼다 라그레이트, 닛산 큐브 Z11, 미쓰비시 랜서 에볼루션 VI, 미쓰비시 GTO — 큐브·라그레이트·로렐은 도심 교통에도 등장 (총 48대). 바퀴가 차체와 붙어 굴러가지 않는 프렐류드·시빅 모델은 제외<br><sub>5 real cars (CC-BY, close to stock): Nissan Laurel C33, Honda LaGreat, Nissan Cube Z11, Mitsubishi Lancer Evolution VI, Mitsubishi GTO — Cube, LaGreat and Laurel also drive in city traffic (48 total). Prelude and Civic models with wheels fused to the body were not used</sub>
+
+**🐞 수정 · Fixed**
+
+- 주유소 바닥과 진입로가 주행 가능 영역에서 빠져 있어 펌프 옆에 세우면 차가 밀려나던 문제<br><sub>Fuel-station forecourts and driveways were missing from the drivable area (a car stopped at a pump was pushed away)</sub>
 
 ---
 

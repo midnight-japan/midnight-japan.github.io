@@ -439,3 +439,8 @@ body.photo .online-pill,body.photo .chat{display:none}
 #loading .load-box{position:relative;z-index:1;margin-top:auto;margin-bottom:9vh}
 @keyframes load-drift{from{transform:scale(1.02) translate(0,0)}to{transform:scale(1.1) translate(-2%,-1%)}}
 @media (prefers-reduced-motion:reduce){#loading .load-photo{animation:none}}
+/* v2.13.4 full-service fuel menu */
+.fuelmenu{position:absolute;left:50%;bottom:150px;transform:translateX(-50%);width:min(560px,92vw);z-index:30;pointer-events:auto}
+.fuelmenu .fm-q{margin:6px 0;font-size:14px}.fuelmenu .fm-q small{color:var(--muted);margin-left:6px}
+.fuelmenu .fm-row{display:flex;gap:8px;flex-wrap:wrap;margin:6px 0 10px}.fuelmenu .btn{min-width:0;flex:1}
+.fuelmenu .btn small{opacity:.75;margin-left:6px}.fuelmenu .btn em{font-style:normal;font-size:11px;margin-left:6px;padding:1px 6px;background:rgba(0,0,0,.35)}

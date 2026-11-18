@@ -63,18 +63,18 @@ export class Nav {
   }
 
   // ── city streets (loaded tiles) ──
-  planCity(p) {
+  planCity(p, maxCls = 6) {
     const N = this.g.world.city?.net; if (!N || !N.nodes.size) return null;
     const T = this.target;
     const P = k => { const [a, b] = k.split(','); return [a / 2, b / 2]; };
     // nearest vertices: start near the player, goal near the target (or the loaded vertex closest to it)
     let s = null, sd = 1e18, gl = null, gd = 1e18;
-    for (const [k, list] of N.nodes) { if (!list.length || list[0][0].cls > 6) continue; const [x, z] = P(k); const a = (x - p.x) ** 2 + (z - p.z) ** 2, b = (x - T.x) ** 2 + (z - T.z) ** 2; if (a < sd) { sd = a; s = k; } if (b < gd) { gd = b; gl = k; } }
+    for (const [k, list] of N.nodes) { if (!list.length || list[0][0].cls > maxCls) continue; const [x, z] = P(k); const a = (x - p.x) ** 2 + (z - p.z) ** 2, b = (x - T.x) ** 2 + (z - T.z) ** 2; if (a < sd) { sd = a; s = k; } if (b < gd) { gd = b; gl = k; } }
     if (!s || !gl) return null;
     const nbrs = k => {
       const out = [];
       for (const [c, i] of N.nodes.get(k) || []) {
-        if (c.dead || c.cls > 6) continue;
+        if (c.dead || c.cls > maxCls) continue;
         if (i + 1 < c.pts.length) out.push([c.keys[i + 1], c.cum[i + 1] - c.cum[i]]);
         if (i > 0 && !c.oneway) out.push([c.keys[i - 1], c.cum[i] - c.cum[i - 1]]);
       }

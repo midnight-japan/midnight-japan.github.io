@@ -363,6 +363,8 @@ export class City {
     return true;
   }
 
+  // v2.13.4: nearest fuel pump island (fuelstation.js) within r metres
+  fuelNear(x, z, r = 8) { let best = null; for (const t of this.tiles.values()) for (const f of t.fuels || []) { const d = Math.hypot(f.x - x, f.z - z); if (d < r && (!best || d < best.d)) best = { ...f, d }; } return best; }
   // open-cut road sections (below ground, on land, roof not yet closed): [ax, az, bx, bz, halfWidth] …
   trenchCaps() {
     if (this._tc) return this._tc; const out = [], W = this.world;
@@ -463,6 +465,7 @@ export class City {
     this.group.add(grp);
     // colliders → grid (world coords)
     t.cols = o.cols.map(([x, z, hx, hz, ry, y0, y1]) => ({ x: x + ox, z: z + oz, hx, hz, c: Math.cos(ry), s: Math.sin(ry), y0, y1, kind: 'city' }));
+    t.fuels = []; for (let k = 0; k < (o.fuels?.length || 0); k += 5) t.fuels.push({ x: o.fuels[k] + ox, z: o.fuels[k + 1] + oz, tx: o.fuels[k + 2], tz: o.fuels[k + 3], brand: o.fuels[k + 4] });
     for (const c of t.cols) { const r = Math.max(c.hx, c.hz); for (let i = Math.floor((c.x - r) / this.CG); i <= Math.floor((c.x + r) / this.CG); i++) for (let j = Math.floor((c.z - r) / this.CG); j <= Math.floor((c.z + r) / this.CG); j++) { const kk = i * 100003 + j; let a = this.cgrid.get(kk); if (!a) this.cgrid.set(kk, a = []); a.push(c); } }
     t.runways = o.runways.map(([ax, az, bx, bz, w]) => [ax + ox, az + oz, bx + ox, bz + oz, w]);
     t.gates = []; for (let q = 0; q < o.gates.length; q += 3) t.gates.push([o.gates[q] + ox, o.gates[q + 1] + oz, o.gates[q + 2]]);
