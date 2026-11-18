@@ -1,9 +1,10 @@
 # 📜 MIDNIGHT JAPAN 업데이트 기록 · Changelog
 
-현재 버전 · Current: **v2.13.6** · [▶ 웹에서 플레이](https://midnight-japan.github.io/) · [🌐 업데이트 페이지](https://midnight-japan.github.io/changelog.html)
+현재 버전 · Current: **v2.13.7** · [▶ 웹에서 플레이](https://midnight-japan.github.io/) · [🌐 업데이트 페이지](https://midnight-japan.github.io/changelog.html)
 
 | 버전 | 날짜 | 이름 | 요약 |
 |---|---|---|---|
+| [v2.13.7](#v2137--irasshaimase-2026-11-18) | 2026-11-18 | Irasshaimase | 다이코쿠 PA 편의점에 직원: 계산대 점원(들어오면 돌아보며 인사, 계산할 때 응대)과 진열대를 정리하는 아르바이트생. 진열대 상품이 선반 안에 묻혀 안 보이던 문제 수정. |
 | [v2.13.6](#v2136--fill-up-2026-11-18) | 2026-11-18 | Fill Up | 주유소 대폭 추가: 간선도로를 따라 약 1km마다 빈 땅에 주유소(캐노피·펌프·가격 간판·사무실)를 배치 — 모든 주유소에서 풀서비스. |
 | [v2.13.5](#v2135--garage-52-2026-11-18) | 2026-11-18 | Garage 52 | 실제 차량 4대 추가로 총 52대 — 프렐류드 BB6·BB1, 시빅 EG 해치백, 레거시 B4 tS. 바퀴가 차체와 한 덩어리인 모델도 바퀴만 떼어 내 굴러가게 처리. |
 | [v2.13.4](#v2134--full-service-2026-11-18) | 2026-11-18 | Full Service | 주유소 풀서비스(직원이 나와 유종 추천·주유·창 닦기·결제·출차 유도), 도심 어디서든 자율주행 시작, 실제 차량 5대 추가(48대). |
@@ -61,6 +62,22 @@
 | [v0.2.0](#v020--bayshore-2026-11-05) | 2026-11-05 | Bayshore | 수도고속 완간선을 따라 하네다까지, 도쿄만 아쿠아라인 해저터널을 지나 우미호타루 PA까지. 실제 3D 차량 모델과 열리는 보닛도 들어왔어요. |
 | [v0.1.1](#v011--one-click-2026-11-04) | 2026-11-04 | One Click | 링크 하나로 바로 플레이. 크롬에서 공식 사이트 주소만 열면 설치 없이 실행돼요. |
 | [v0.1.0](#v010--first-meet-2026-11-04) | 2026-11-04 | First Meet | 첫 공개 버전. 다이코쿠 JCT·PA와 다이코쿠 부두 일대를 3D로 구현했습니다. |
+
+---
+
+## v2.13.7 — Irasshaimase (2026-11-18)
+
+> 다이코쿠 PA 편의점에 직원: 계산대 점원(들어오면 돌아보며 인사, 계산할 때 응대)과 진열대를 정리하는 아르바이트생. 진열대 상품이 선반 안에 묻혀 안 보이던 문제 수정.
+> Staff in the Daikoku PA konbini: a clerk at the register (turns and greets you as you come in, serves you at checkout) and a part-timer restocking the aisles. Fixed products buried inside the shelves.
+
+**✨ 추가 · New**
+
+- 편의점 점원: 유니폼 차림으로 계산대 뒤에 서서 손님 쪽을 보고, 들어오면 인사, 구매하면 응대<br><sub>Konbini clerk in uniform behind the register — greets you on entry and serves you when you buy</sub>
+- 품출 아르바이트생: 통로를 걸어 다니며 선반 앞에 쪼그려 앉아 상품을 정리<br><sub>A part-timer walks the aisles and crouches at the shelves restocking</sub>
+
+**🐞 수정 · Fixed**
+
+- 진열대가 통째 상자라 상품이 안에 묻혀 보이지 않던 문제 — 뒤판과 선반으로 교체<br><sub>Shelves were solid blocks hiding the products inside — now a back panel with boards</sub>
 
 ---
 

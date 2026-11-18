@@ -22,6 +22,7 @@ import { Autopilot } from './autopilot.js';
 import { SeasonFX } from './seasonfx.js';
 import { Roadworks } from './roadworks.js';
 import { FuelStation } from './fuelstation.js';
+import { KonbiniStaff } from './konbini-staff.js';
 import { Dialog } from './dialog.js';
 import { World } from './world.js';
 import { TimeOfDay } from './sky.js';
@@ -199,7 +200,7 @@ class Game {
     this.weather = new Weather(this);
     try { this.seasonFx = new SeasonFX(this); } catch (e) { console.warn('season', e); }
     this.roadworks = new Roadworks(this);
-    this.fuel = new FuelStation(this);
+    this.fuel = new FuelStation(this); this.konbiniStaff = new KonbiniStaff(this);
     this.fx = new Fx(this);
     this.nav = new Nav(this);
     this.autopilot = new Autopilot(this);
@@ -829,6 +830,7 @@ class Game {
     if (this.roadworks && !paused) { try { this.roadworks.update(dt); } catch (e) { console.warn('roadworks', e); this.roadworks = null; } }
     this.world.update(dt, this.env);
     this.world.updateDynamicLights(dt, this.focus, this.env.night);
+    try { this.konbiniStaff?.update(dt, this.focus); } catch (e) { console.warn('konbini staff', e); }
     this.world.city?.update(dt, this.focus, this.env.night);
     this.plateau?.update(this.focus);
     if ((this._rlT = (this._rlT || 0) - dt) <= 0) { this._rlT = 2; try { this.world.updateRampLinks(); } catch (e) { console.warn('ramp links', e); } }

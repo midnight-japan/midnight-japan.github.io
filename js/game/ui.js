@@ -481,7 +481,7 @@ export class UI {
       const x = list.find(i => i.id === b.dataset.buy);
       if (g.money < x.price) { this.toast(t('game.shop.nomoney'), 'warn'); return; }
       g.money -= x.price; g.audio.sfx(it.type === 'vending' ? 'vending' : 'coin');
-      if (it.type === 'shop') g.audio.speak('ありがとうございましたー。', 'ja-JP', { role: 'female', seed: 5 });
+      if (it.type === 'shop') { g.audio.speak('ありがとうございましたー。', 'ja-JP', { role: 'female', seed: 5 }); g.konbiniStaff?.served(); }
       this.toast(t('game.shop.bought', { item: x.ja }), 'info');
       if (g.player) { g.player.hold = 'drink'; clearTimeout(this._holdT); this._holdT = setTimeout(() => { if (g.player) g.player.hold = null; }, 9000); }
       $('#shop').classList.remove('show');

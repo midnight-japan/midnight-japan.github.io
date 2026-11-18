@@ -479,7 +479,9 @@ export class World {
     const stripGeo = new THREE.PlaneGeometry(9, 0.05);
     for (let i = 0; i < 4; i++) {
       const sx = KX0 + 5 + i * 5, sz = -74;
-      B.add(boxGeo(1.2, 1.5, 9), shelfMat, sx, 0.9, sz); B.col(sx, sz, 0.7, 4.6, 0, -1, 2);
+      B.add(boxGeo(0.6, 1.65, 9), shelfMat, sx, 0.98, sz); B.col(sx, sz, 0.7, 4.6, 0, -1, 2); // v2.13.7: back panel + boards (the old 1.2 m block hid the products inside it)
+      for (let lvl = 0; lvl < 5; lvl++) B.add(boxGeo(1.24, 0.03, 9), shelfMat, sx, 0.285 + lvl * 0.36, sz);
+      B.add(boxGeo(1.24, 0.25, 9), shelfMat, sx, 0.125, sz);
       for (let lvl = 0; lvl < 4; lvl++) for (let k = 0; k < 28; k++) for (const side of [-1, 1]) B.add(prodGeo, prodMats[(Math.floor(k / 3) + lvl * 3 + i * 2) % prodMats.length], sx + side * 0.5, 0.4 + lvl * 0.36, sz - 4.2 + k * 0.31); // facings of 3, like a real shelf
       for (let lvl = 0; lvl < 4; lvl++) for (const side of [-1, 1]) B.add(stripGeo, new THREE.MeshStandardMaterial({ map: priceStripTexture(lvl * 3 + i), roughness: 0.6 }), sx + side * 0.611, 0.27 + lvl * 0.36, sz, side * Math.PI / 2);
     }
@@ -503,6 +505,9 @@ export class World {
     B.sign('store_front', { width: 26, branch: '大黒PA店' }, 19, H + 0.6, z1 + 7.4, 0, 1);
     for (const [v, x] of [['onigiri', 9], ['coffee', 12], ['karaage', 26], ['new', 29]]) B.sign('store_poster', { variant: v }, x, 1.4, z1 + 0.06, 0, 1);
     this.interact.push({ pos: B.v(KX1 - 5.5, 0, -63.5), r: 2.2, type: 'shop' });
+    // v2.13.7: konbini staff (konbini-staff.js) — the clerk behind the register, a part-timer restocking the aisles
+    this.konbiniStaff = { counter: B.v(KX1 - 5.5, 0, -65.4), customer: B.v(KX1 - 5.5, 0, -63.5), front: B.v(KX0 + 14, 0, -67.6),
+      aisles: [0, 1, 2, 3, 4].map(i => ({ a: B.v(KX0 + 2.5 + i * 5, 0, -69.2), b: B.v(KX0 + 2.5 + i * 5, 0, -78.2), shelfL: B.v(KX0 + i * 5, 0, -74), shelfR: B.v(KX0 + 5 + i * 5, 0, -74) })) };
     this.interact.push({ pos: B.v(KX0 + 1.2, 0, -61.2), r: 1.6, type: 'coffee' });
     // food court: tables + chairs
     const tableMat = new THREE.MeshStandardMaterial({ color: 0xc9b08a, roughness: 0.6 });

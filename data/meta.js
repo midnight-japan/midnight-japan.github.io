@@ -1,8 +1,17 @@
 // Shared game metadata: version, changelog, regions. Update VERSION + CHANGELOG on every release.
-export const GAME = { title: 'MIDNIGHT JAPAN', titleJa: 'ミッドナイト・ジャパン', version: '2.13.6', build: '2026.11.18' };
+export const GAME = { title: 'MIDNIGHT JAPAN', titleJa: 'ミッドナイト・ジャパン', version: '2.13.7', build: '2026.11.18' };
 
 // Newest first. type: new | change | fix | known
 export const CHANGELOG = [
+  {
+    version: '2.13.7', date: '2026-11-18', codename: 'Irasshaimase',
+    summary: { ko: '다이코쿠 PA 편의점에 직원: 계산대 점원(들어오면 돌아보며 인사, 계산할 때 응대)과 진열대를 정리하는 아르바이트생. 진열대 상품이 선반 안에 묻혀 안 보이던 문제 수정.', ja: '大黒PAのコンビニに店員：レジの店員（入店時に振り向いてあいさつ、会計で応対）と棚を整える品出しのアルバイト。棚の商品が棚の中に埋まって見えなかった問題を修正。', en: 'Staff in the Daikoku PA konbini: a clerk at the register (turns and greets you as you come in, serves you at checkout) and a part-timer restocking the aisles. Fixed products buried inside the shelves.' },
+    items: [
+      { type: 'new', ko: '편의점 점원: 유니폼 차림으로 계산대 뒤에 서서 손님 쪽을 보고, 들어오면 인사, 구매하면 응대', ja: 'コンビニ店員：制服でレジの後ろに立ち、入店であいさつ、購入で応対', en: 'Konbini clerk in uniform behind the register — greets you on entry and serves you when you buy' },
+      { type: 'new', ko: '품출 아르바이트생: 통로를 걸어 다니며 선반 앞에 쪼그려 앉아 상품을 정리', ja: '品出しのアルバイト：通路を歩き、棚の前にしゃがんで商品を整える', en: 'A part-timer walks the aisles and crouches at the shelves restocking' },
+      { type: 'fix', ko: '진열대가 통째 상자라 상품이 안에 묻혀 보이지 않던 문제 — 뒤판과 선반으로 교체', ja: '陳列棚が箱のままで商品が中に埋まって見えなかった問題 — 背板と棚板に', en: 'Shelves were solid blocks hiding the products inside — now a back panel with boards' },
+    ],
+  },
   {
     version: '2.13.6', date: '2026-11-18', codename: 'Fill Up',
     summary: { ko: '주유소 대폭 추가: 간선도로를 따라 약 1km마다 빈 땅에 주유소(캐노피·펌프·가격 간판·사무실)를 배치 — 모든 주유소에서 풀서비스.', ja: 'ガソリンスタンドを大幅追加：幹線道路沿いに約1kmごと、空き地にスタンド（キャノピー・給油機・価格看板・事務所）を配置 — 全店でフルサービス。', en: 'Many more fuel stations: one about every kilometre along main roads on free lots (canopy, pumps, price pole, office) — full service at every one.' },
