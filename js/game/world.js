@@ -377,6 +377,17 @@ export class World {
     decal('小型', -35, -40, Math.PI / 2, 2, 3.5); decal('小型', -35, 40, -Math.PI / 2, 2, 3.5);
     for (const ax of L.carAisles) decal('↑', ax, 36, Math.PI, 2, 5);
     decal('徐行', -73, 20, 0, 2.6, 4.5); decal('↑', -73, -30, Math.PI, 2, 5); decal('↑', -10, -46.5, Math.PI / 2, 2, 5);
+    // v2.13.9: 段差あり — the rubber speed humps across the entry and exit lanes, yellow/black, with the warning painted before them
+    const hump = (x, z, ry, w = 6.5) => {
+      const c = document.createElement('canvas'); c.width = 512; c.height = 64; const g = c.getContext('2d');
+      for (let i = 0; i < 16; i++) { g.fillStyle = i % 2 ? '#141414' : '#f2c200'; g.fillRect(i * 32, 0, 32, 64); }
+      const t = new THREE.CanvasTexture(c); t.colorSpace = THREE.SRGBColorSpace; t.anisotropy = 4;
+      const geo = new THREE.CylinderGeometry(0.35, 0.35, w, 12, 1, false, 0, Math.PI); geo.rotateZ(Math.PI / 2); geo.rotateY(Math.PI / 2); geo.scale(1, 0.12, 1); // low half-round hump, across the lane
+      const m = new THREE.Mesh(geo, new THREE.MeshStandardMaterial({ map: t, roughness: 0.8 })); m.receiveShadow = true;
+      P.place(m, x, 0.0, z, ry);
+    };
+    decal('段差あり', ex - 32, 46.5, -Math.PI / 2, 2.8, 7, '#f2c200'); hump(ex - 41, 46.5, -Math.PI / 2);
+    decal('段差あり', L.exit[0] - 18, L.exit[1], Math.PI / 2, 2.8, 7, '#f2c200'); hump(L.exit[0] - 10, L.exit[1], Math.PI / 2);
     // zebra crossing from the building across the front lane (bars run with the traffic, i.e. along Z)
     for (let i = 0; i < 13; i++) P.add(planeGeo(0.5, 7.5), white, -79.2 + i * 1.0, 0.012, 7);
     // yellow kerb paint at the exit

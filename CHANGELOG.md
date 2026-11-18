@@ -1,9 +1,10 @@
 # 📜 MIDNIGHT JAPAN 업데이트 기록 · Changelog
 
-현재 버전 · Current: **v2.13.8** · [▶ 웹에서 플레이](https://midnight-japan.github.io/) · [🌐 업데이트 페이지](https://midnight-japan.github.io/changelog.html)
+현재 버전 · Current: **v2.13.9** · [▶ 웹에서 플레이](https://midnight-japan.github.io/) · [🌐 업데이트 페이지](https://midnight-japan.github.io/changelog.html)
 
 | 버전 | 날짜 | 이름 | 요약 |
 |---|---|---|---|
+| [v2.13.9](#v2139--all-japan-2026-11-18) | 2026-11-18 | All Japan | 사이트 지역 페이지를 일본 전체 지도로(도도부현·주요 도시·오키나와 인셋, 플레이 가능 지역과 오사카 예정 표시), 지역마다 명소 일러스트와 「여기서 달리기」 버튼. 다이코쿠 PA 입구·출구에 段差あり 표시와 과속방지턱. |
 | [v2.13.8](#v2138--living-streets-2026-11-18) | 2026-11-18 | Living Streets | 거리에 사람과 동물: 시간대별 보행자(등하교 학생, 출퇴근 직장인, 장보는 사람), 비둘기 무리와 까마귀, 하코네 산길의 사슴. |
 | [v2.13.7](#v2137--irasshaimase-2026-11-18) | 2026-11-18 | Irasshaimase | 다이코쿠 PA 편의점에 직원: 계산대 점원(들어오면 돌아보며 인사, 계산할 때 응대)과 진열대를 정리하는 아르바이트생. 진열대 상품이 선반 안에 묻혀 안 보이던 문제 수정. |
 | [v2.13.6](#v2136--fill-up-2026-11-18) | 2026-11-18 | Fill Up | 주유소 대폭 추가: 간선도로를 따라 약 1km마다 빈 땅에 주유소(캐노피·펌프·가격 간판·사무실)를 배치 — 모든 주유소에서 풀서비스. |
@@ -63,6 +64,18 @@
 | [v0.2.0](#v020--bayshore-2026-11-05) | 2026-11-05 | Bayshore | 수도고속 완간선을 따라 하네다까지, 도쿄만 아쿠아라인 해저터널을 지나 우미호타루 PA까지. 실제 3D 차량 모델과 열리는 보닛도 들어왔어요. |
 | [v0.1.1](#v011--one-click-2026-11-04) | 2026-11-04 | One Click | 링크 하나로 바로 플레이. 크롬에서 공식 사이트 주소만 열면 설치 없이 실행돼요. |
 | [v0.1.0](#v010--first-meet-2026-11-04) | 2026-11-04 | First Meet | 첫 공개 버전. 다이코쿠 JCT·PA와 다이코쿠 부두 일대를 3D로 구현했습니다. |
+
+---
+
+## v2.13.9 — All Japan (2026-11-18)
+
+> 사이트 지역 페이지를 일본 전체 지도로(도도부현·주요 도시·오키나와 인셋, 플레이 가능 지역과 오사카 예정 표시), 지역마다 명소 일러스트와 「여기서 달리기」 버튼. 다이코쿠 PA 입구·출구에 段差あり 표시와 과속방지턱.
+> The site regions page is now a map of all Japan (prefectures, major cities, Okinawa inset, drivable area and planned Osaka) with a landmark illustration and a “Drive here” button per region. 段差あり markings and speed humps at the Daikoku PA entry and exit.
+
+**✨ 추가 · New**
+
+- 지역 페이지: 일본 전체 도도부현 지도 + 도쿄만·하코네 확대 지도(지역 마커), 각 지역 카드에 명소 일러스트(PA·JCT·부두·사장교·도시·공장·공항·도쿄타워·산길·해안·우미호타루)와 바로 그 장소에서 시작하는 버튼<br><sub>Regions page: a prefecture map of all Japan plus a Tokyo Bay & Hakone close-up with region markers; each region card has a landmark illustration (PA, JCT, port, cable-stayed bridge, city, factories, airport, Tokyo Tower, mountain road, coast, Umihotaru) and a button that starts the game right there</sub>
+- 다이코쿠 PA: 입구와 출구 차로에 노란 「段差あり」 노면 표시와 노랑·검정 과속방지턱<br><sub>Daikoku PA: yellow 段差あり road markings and yellow-black speed humps on the entry and exit lanes</sub>
 
 ---
 

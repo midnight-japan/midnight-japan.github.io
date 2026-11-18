@@ -1,8 +1,16 @@
 // Shared game metadata: version, changelog, regions. Update VERSION + CHANGELOG on every release.
-export const GAME = { title: 'MIDNIGHT JAPAN', titleJa: 'ミッドナイト・ジャパン', version: '2.13.8', build: '2026.11.18' };
+export const GAME = { title: 'MIDNIGHT JAPAN', titleJa: 'ミッドナイト・ジャパン', version: '2.13.9', build: '2026.11.18' };
 
 // Newest first. type: new | change | fix | known
 export const CHANGELOG = [
+  {
+    version: '2.13.9', date: '2026-11-18', codename: 'All Japan',
+    summary: { ko: '사이트 지역 페이지를 일본 전체 지도로(도도부현·주요 도시·오키나와 인셋, 플레이 가능 지역과 오사카 예정 표시), 지역마다 명소 일러스트와 「여기서 달리기」 버튼. 다이코쿠 PA 입구·출구에 段差あり 표시와 과속방지턱.', ja: 'サイトの地域ページを日本全図に（都道府県・主要都市・沖縄の差し込み、プレイ可能エリアと大阪予定を表示）、地域ごとに名所のイラストと「ここから走る」ボタン。大黒PAの入口・出口に段差ありの表示とハンプ。', en: 'The site regions page is now a map of all Japan (prefectures, major cities, Okinawa inset, drivable area and planned Osaka) with a landmark illustration and a “Drive here” button per region. 段差あり markings and speed humps at the Daikoku PA entry and exit.' },
+    items: [
+      { type: 'new', ko: '지역 페이지: 일본 전체 도도부현 지도 + 도쿄만·하코네 확대 지도(지역 마커), 각 지역 카드에 명소 일러스트(PA·JCT·부두·사장교·도시·공장·공항·도쿄타워·산길·해안·우미호타루)와 바로 그 장소에서 시작하는 버튼', ja: '地域ページ：日本全国の都道府県地図＋東京湾・箱根の拡大地図（地域マーカー）、各地域カードに名所のイラスト（PA・JCT・埠頭・斜張橋・街・工場・空港・東京タワー・山道・海岸・海ほたる）と、その場所から始めるボタン', en: 'Regions page: a prefecture map of all Japan plus a Tokyo Bay & Hakone close-up with region markers; each region card has a landmark illustration (PA, JCT, port, cable-stayed bridge, city, factories, airport, Tokyo Tower, mountain road, coast, Umihotaru) and a button that starts the game right there' },
+      { type: 'new', ko: '다이코쿠 PA: 입구와 출구 차로에 노란 「段差あり」 노면 표시와 노랑·검정 과속방지턱', ja: '大黒PA：入口と出口の車線に黄色の「段差あり」路面標示と黄黒のハンプ', en: 'Daikoku PA: yellow 段差あり road markings and yellow-black speed humps on the entry and exit lanes' },
+    ],
+  },
   {
     version: '2.13.8', date: '2026-11-18', codename: 'Living Streets',
     summary: { ko: '거리에 사람과 동물: 시간대별 보행자(등하교 학생, 출퇴근 직장인, 장보는 사람), 비둘기 무리와 까마귀, 하코네 산길의 사슴.', ja: '街に人と動物：時間帯ごとの歩行者（登下校の学生、通勤の会社員、買い物客）、ハトの群れとカラス、箱根の山道のシカ。', en: 'People and animals on the streets: pedestrians by the hour (students going to school, commuters, shoppers), pigeon flocks and crows, deer on the Hakone mountain roads.' },
