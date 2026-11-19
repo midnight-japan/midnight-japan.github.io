@@ -1,9 +1,10 @@
 # 📜 MIDNIGHT JAPAN 업데이트 기록 · Changelog
 
-현재 버전 · Current: **v2.14.1** · [▶ 웹에서 플레이](https://midnight-japan.github.io/) · [🌐 업데이트 페이지](https://midnight-japan.github.io/changelog.html)
+현재 버전 · Current: **v2.14.2** · [▶ 웹에서 플레이](https://midnight-japan.github.io/) · [🌐 업데이트 페이지](https://midnight-japan.github.io/changelog.html)
 
 | 버전 | 날짜 | 이름 | 요약 |
 |---|---|---|---|
+| [v2.14.2](#v2142--straight-lines-2026-11-20) | 2026-11-20 | Straight Lines | 꼬부랑 차선 수정(차선이 도로 곡선을 정확히 따라감, 도로 중심선의 잔떨림 제거), 고가도로 벽을 뚫고 옆 고가로 넘어가던 문제 수정. |
 | [v2.14.1](#v2141--whole-japan-map-2026-11-20) | 2026-11-20 | Whole Japan Map | 인게임 지도가 일본 전체로 열린 뒤 내 위치로 확대, 모든 확대 단계에서 일본 땅·도도부현 경계 표시, 추가된 모든 지역에 핀, 자마 지역 도로까지 지도에, 지도 그리기 10배 빠르게. |
 | [v2.14.0](#v2140--open-road-2026-11-20) | 2026-11-20 | Open Road | 투명벽 제거(보이는 벽·건물·물·고가/터널 벽에서만 막힘), 주유소 직원 상주, NPC 트럭 실제 크기, 해바라기 밭을 멀리서도 보이게. |
 | [v2.13.11](#v21311--himawari-2026-11-18) | 2026-11-18 | Himawari | 새 지역: 자마 해바라기 밭(가나가와현 자마시, 사가미강) — 실제 밭 모양에 약 2m 해바라기가 줄지어 동쪽을 향하고, 계절 따라 새싹·만개·마른 씨앗·맨흙으로. 주변 7km 마을 도로·건물도 실제 지도로. 보행자가 편의점에 들어가고 나옴. |
@@ -68,6 +69,19 @@
 | [v0.2.0](#v020--bayshore-2026-11-05) | 2026-11-05 | Bayshore | 수도고속 완간선을 따라 하네다까지, 도쿄만 아쿠아라인 해저터널을 지나 우미호타루 PA까지. 실제 3D 차량 모델과 열리는 보닛도 들어왔어요. |
 | [v0.1.1](#v011--one-click-2026-11-04) | 2026-11-04 | One Click | 링크 하나로 바로 플레이. 크롬에서 공식 사이트 주소만 열면 설치 없이 실행돼요. |
 | [v0.1.0](#v010--first-meet-2026-11-04) | 2026-11-04 | First Meet | 첫 공개 버전. 다이코쿠 JCT·PA와 다이코쿠 부두 일대를 3D로 구현했습니다. |
+
+---
+
+## v2.14.2 — Straight Lines (2026-11-20)
+
+> 꼬부랑 차선 수정(차선이 도로 곡선을 정확히 따라감, 도로 중심선의 잔떨림 제거), 고가도로 벽을 뚫고 옆 고가로 넘어가던 문제 수정.
+> Wavy lane lines fixed (markings follow the road curve exactly, the jitter in road centrelines is smoothed out); cars no longer slip through a viaduct wall onto the neighbouring deck.
+
+**🐞 수정 · Fixed**
+
+- 도심 차선: 실선이 도로 처음부터 끝까지 직선 하나로 그려져 커브를 가로지르던 문제, 점선이 꺾이는 곳마다 옆으로 밀리던 문제, 교차로 근처면 실선 전체가 사라지던 문제 — 도로와 같은 꼭짓점·4m 간격으로 분할해 정확히 따라감<br><sub>City lane lines: solid lines were one straight quad from end to end (cutting across curves), dashes stepped sideways at every bend, and solid lines vanished entirely near junctions — now split at the road’s own vertices every 4 m and follow it exactly</sub>
+- 고속도로·일반도로 중심선의 작은 지그재그를 다듬어 차선 점선과 가장자리가 흔들리지 않음(교차점 연결부는 그대로)<br><sub>Small zigzags in expressway and road centrelines are smoothed so lane dashes and edges no longer ripple (junction joins untouched)</sub>
+- 고가도로: 옆에 붙은 다른 고가로 벽을 뚫고 넘어가던 문제 — 실제로 합류·분기하는 구간에서만 건너갈 수 있음<br><sub>Viaducts: you could slip through the wall onto an adjacent deck — now only possible where the roads really merge or diverge</sub>
 
 ---
 

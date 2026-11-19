@@ -571,7 +571,15 @@ export class Vehicle {
       const hRoad = q.hit; const edge = hRoad.lat > 0 ? hRoad.road.edgeL - 0.95 : hRoad.road.edgeR + 0.95;
       if (Math.abs(hRoad.lat) > Math.abs(edge)) {
         // is there another surface here (junction)?
-        const others = net.hits(this.pos.x, this.pos.z).filter(h => h.road !== hRoad.road && h.inside && Math.abs(h.y - q.y) < 1.2 && Math.abs(h.lat) < Math.abs(h.lat > 0 ? h.road.edgeL : h.road.edgeR) - 0.9);
+        // v2.14: only a road that really joins this one here (merge / diverge zone) lets you through — a parallel viaduct
+        // next to it is behind its wall (cars used to slip through the parapet onto the neighbouring deck)
+        const joined = (a, sa, b, sb) => { const M = 320;
+          for (const d of net.diverges.get(b) || []) if (d.to === a && sa < M) return true;            // a is a ramp leaving b
+          for (const d of net.diverges.get(a) || []) if (d.to === b && Math.abs(sa - d.s) < M && sb < M) return true; // b leaves a here
+          const la = net.links.get(a); if (la && la.to === b && sa > a.length - M) return true;      // a merges into b
+          const lb = net.links.get(b); if (lb && lb.to === a && Math.abs(sa - lb.s) < M && sb > b.length - M) return true; // b merges into a
+          return false; };
+        const others = net.hits(this.pos.x, this.pos.z).filter(h => h.road !== hRoad.road && h.inside && Math.abs(h.y - q.y) < 1.2 && Math.abs(h.lat) < Math.abs(h.lat > 0 ? h.road.edgeL : h.road.edgeR) - 0.9 && joined(hRoad.road, hRoad.s, h.road, h.s));
         if (!others.length) {
           const seg = hRoad.road.samples[hRoad.i]; const left = seg.left;
           const push = hRoad.lat - edge;

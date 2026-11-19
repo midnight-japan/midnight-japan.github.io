@@ -248,13 +248,22 @@ function buildTile(T, lod, opts) {
     // lane paint: centre line + edge lines (cut at junctions)
     const L = []; let acc = 0; for (let k = 0; k < pts.length - 1; k++) { const l = Math.hypot(pts[k + 1][0] - pts[k][0], pts[k + 1][1] - pts[k][1]); L.push([acc, l]); acc += l; }
     const at = (s, off) => { let k = 0; while (k < L.length - 1 && s > L[k][0] + L[k][1]) k++; const [s0, l] = L[k]; const t = l ? (s - s0) / l : 0; const a = pts[k], b = pts[k + 1]; const tx = (b[0] - a[0]) / (l || 1), tz = (b[1] - a[1]) / (l || 1); return [a[0] + (b[0] - a[0]) * t - tz * off, a[1] + (b[1] - a[1]) * t + tx * off, tx, tz]; };
+    // v2.14: paint follows the road exactly — same mitred vertex offsets as the carriageway, split at every vertex and
+    // every 4 m (solid lines used to be ONE straight quad from end to end, cutting across curves; dashes took each
+    // segment's own normal and stepped sideways at bends → wavy, kinked lane lines). Only the pieces at junctions drop.
+    const segOf = u => { let k = 0; while (k < L.length - 1 && u > L[k][0] + L[k][1]) k++; return k; };
+    const OP = (k, u, off) => { const [s0, l] = L[k], t = l ? Math.max(0, Math.min(1, (u - s0) / l)) : 0, a = pts[k], b = pts[k + 1], na = N[k], nb = N[k + 1];
+      const ax = a[0] + na[0] * off, az = a[1] + na[1] * off, bx = b[0] + nb[0] * off, bz = b[1] + nb[1] * off; return [ax + (bx - ax) * t, az + (bz - az) * t]; };
     const line = (off, wid, dash, gap, col) => {
       for (let s = 0; s < acc; s += dash + gap) {
         const s1 = Math.min(acc, s + dash); if (s1 - s < 0.5) continue;
-        const p = at(s, off), q2 = at(s1, off);
-        if (nearJunction(p[0], p[1], hw + 3) || nearJunction(q2[0], q2[1], hw + 3)) continue;
-        const nx = -p[3] * wid / 2, nz = p[2] * wid / 2, mx = -q2[3] * wid / 2, mz = q2[2] * wid / 2;
-        paint.quad([p[0] + nx, y + 0.012, p[1] + nz], [q2[0] + mx, y + 0.012, q2[1] + mz], [q2[0] - mx, y + 0.012, q2[1] - mz], [p[0] - nx, y + 0.012, p[1] - nz], col);
+        for (let u = s; u < s1 - 0.05;) {
+          const k = segOf(u + 0.01), v = Math.min(s1, L[k][0] + L[k][1], u + 4);
+          if (v - u > 0.05) { const p = OP(k, u, off), q2 = OP(k, v, off);
+            if (!nearJunction((p[0] + q2[0]) / 2, (p[1] + q2[1]) / 2, hw + 3)) { const dx = q2[0] - p[0], dz = q2[1] - p[1], dl = Math.hypot(dx, dz) || 1, nx = -dz / dl * wid / 2, nz = dx / dl * wid / 2;
+              paint.quad([p[0] + nx, y + 0.012, p[1] + nz], [q2[0] + nx, y + 0.012, q2[1] + nz], [q2[0] - nx, y + 0.012, q2[1] - nz], [p[0] - nx, y + 0.012, p[1] - nz], col); } }
+          u = v > u ? v : u + 0.5;
+        }
       }
     };
     if (cls <= S.TERTIARY || (cls === S.MINOR && w >= 5.5)) {

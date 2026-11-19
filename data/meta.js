@@ -1,8 +1,17 @@
 // Shared game metadata: version, changelog, regions. Update VERSION + CHANGELOG on every release.
-export const GAME = { title: 'MIDNIGHT JAPAN', titleJa: 'ミッドナイト・ジャパン', version: '2.14.1', build: '2026.11.18' };
+export const GAME = { title: 'MIDNIGHT JAPAN', titleJa: 'ミッドナイト・ジャパン', version: '2.14.2', build: '2026.11.18' };
 
 // Newest first. type: new | change | fix | known
 export const CHANGELOG = [
+  {
+    version: '2.14.2', date: '2026-11-20', codename: 'Straight Lines',
+    summary: { ko: '꼬부랑 차선 수정(차선이 도로 곡선을 정확히 따라감, 도로 중심선의 잔떨림 제거), 고가도로 벽을 뚫고 옆 고가로 넘어가던 문제 수정.', ja: 'くねくねした車線を修正（車線が道路のカーブに正確に沿う、道路中心線の細かな揺れを除去）、高架の壁を抜けて隣の高架へ移れた問題を修正。', en: 'Wavy lane lines fixed (markings follow the road curve exactly, the jitter in road centrelines is smoothed out); cars no longer slip through a viaduct wall onto the neighbouring deck.' },
+    items: [
+      { type: 'fix', ko: '도심 차선: 실선이 도로 처음부터 끝까지 직선 하나로 그려져 커브를 가로지르던 문제, 점선이 꺾이는 곳마다 옆으로 밀리던 문제, 교차로 근처면 실선 전체가 사라지던 문제 — 도로와 같은 꼭짓점·4m 간격으로 분할해 정확히 따라감', ja: '街の車線：実線が道路の端から端まで1本の直線で描かれカーブを横切っていた問題、破線が折れ目ごとに横へずれた問題、交差点近くだと実線ごと消えた問題 — 道路と同じ頂点・4m刻みで分割して正確に沿う', en: 'City lane lines: solid lines were one straight quad from end to end (cutting across curves), dashes stepped sideways at every bend, and solid lines vanished entirely near junctions — now split at the road’s own vertices every 4 m and follow it exactly' },
+      { type: 'fix', ko: '고속도로·일반도로 중심선의 작은 지그재그를 다듬어 차선 점선과 가장자리가 흔들리지 않음(교차점 연결부는 그대로)', ja: '高速道路・一般道の中心線の小さなジグザグを整え、車線の破線と路肩が揺れない（接続部はそのまま）', en: 'Small zigzags in expressway and road centrelines are smoothed so lane dashes and edges no longer ripple (junction joins untouched)' },
+      { type: 'fix', ko: '고가도로: 옆에 붙은 다른 고가로 벽을 뚫고 넘어가던 문제 — 실제로 합류·분기하는 구간에서만 건너갈 수 있음', ja: '高架：隣接する別の高架へ壁を抜けて移れた問題 — 実際に合流・分岐する区間でのみ渡れる', en: 'Viaducts: you could slip through the wall onto an adjacent deck — now only possible where the roads really merge or diverge' },
+    ],
+  },
   {
     version: '2.14.1', date: '2026-11-20', codename: 'Whole Japan Map',
     summary: { ko: '인게임 지도가 일본 전체로 열린 뒤 내 위치로 확대, 모든 확대 단계에서 일본 땅·도도부현 경계 표시, 추가된 모든 지역에 핀, 자마 지역 도로까지 지도에, 지도 그리기 10배 빠르게.', ja: 'ゲーム内マップが日本全体で開いてから現在地へズーム、どの縮尺でも日本の陸地・都道府県境を表示、追加した全エリアにピン、座間の道路も地図に、マップ描画を10倍高速化。', en: 'The in-game map opens on all of Japan and flies in to you, shows Japan’s land and prefecture borders at every zoom, pins every added region, includes the Zama streets, and draws 10× faster.' },

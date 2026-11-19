@@ -106,6 +106,18 @@ export class Road {
       this.samples.push({ p, t, left: new THREE.Vector3(t.z, 0, -t.x), s, grade });
     }
     this.length = s;
+    // v2.14: straighten the small zigzags of the source polyline (they made lane dashes step left and right every few
+    // metres and the edges ripple): light ±3-sample smoothing of the centreline, 3 passes, faded out over the last 30 m at
+    // both ends so junctions still meet; then directions from ±2 samples
+    if (n > 12) {
+      const S = this.samples;
+      for (let pass = 0; pass < 3; pass++) {
+        const xs = S.map(q => q.p.x), zs = S.map(q => q.p.z);
+        for (let i = 3; i <= n - 3; i++) { const w = Math.min(1, Math.min(S[i].s, s - S[i].s) / 30) * 0.85; if (w <= 0) continue;
+          let ax = 0, az = 0; for (let k = i - 3; k <= i + 3; k++) { ax += xs[k]; az += zs[k]; } S[i].p.x += (ax / 7 - xs[i]) * w; S[i].p.z += (az / 7 - zs[i]) * w; }
+      }
+      for (let i = 0; i <= n; i++) { const a = S[Math.max(0, i - 2)].p, b = S[Math.min(n, i + 2)].p; S[i].t.set(b.x - a.x, 0, b.z - a.z).normalize(); S[i].left.set(S[i].t.z, 0, -S[i].t.x); }
+    }
     // OSM bridge/viaduct heights come in steps (per way / layer), which left a ±5 m sawtooth on the long decks (the Bay
     // Bridge rose and dipped every 100 m). Smooth elevated stretches with a ±100 m window (3 passes), leaving the road ends alone so
     // junctions still meet.
