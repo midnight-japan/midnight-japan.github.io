@@ -76,13 +76,14 @@ class Router {
 class Flat {
   constructor() { this.v = new Buf(8); }
   tri(a, b, c, col, uv, d = 0) { // always facing up
-    if (this.clip && TRENCH && d < 18) { // ground over an open cutting: split the triangle down and drop the pieces over the road
+    const TG = this.shallow ? SHALLOW : TRENCH, inT = this.shallow ? inShallow : inTrench; // v2.14: pavements / paint only cut where the cutting is shallow (bridges stay whole)
+    if (this.clip && TG && d < 18) { // ground over an open cutting: split the triangle down and drop the pieces over the road
       const ox = this.clip[0], oz = this.clip[1];
       const x0 = Math.min(a[0], b[0], c[0]) + ox, x1 = Math.max(a[0], b[0], c[0]) + ox, z0 = Math.min(a[2], b[2], c[2]) + oz, z1 = Math.max(a[2], b[2], c[2]) + oz;
-      let near = false; for (let i = Math.floor(x0 / 20) - 1; i <= Math.floor(x1 / 20) + 1 && !near; i++) for (let j = Math.floor(z0 / 20) - 1; j <= Math.floor(z1 / 20) + 1 && !near; j++) if (TRENCH.g.has(i * 4099 + j)) near = true;
+      let near = false; for (let i = Math.floor(x0 / 20) - 1; i <= Math.floor(x1 / 20) + 1 && !near; i++) for (let j = Math.floor(z0 / 20) - 1; j <= Math.floor(z1 / 20) + 1 && !near; j++) if (TG.g.has(i * 4099 + j)) near = true;
       if (near) {
         const cx = (a[0] + b[0] + c[0]) / 3 + ox, cz = (a[2] + b[2] + c[2]) / 3 + oz, big = Math.max(x1 - x0, z1 - z0);
-        if (big < 1.5 || d >= 17) { if (inTrench(cx, cz)) return; }
+        if (big < 1.5 || d >= 17) { if (inT(cx, cz)) return; }
         else { const e = [[a, b, Math.hypot(a[0] - b[0], a[2] - b[2])], [b, c, Math.hypot(b[0] - c[0], b[2] - c[2])], [c, a, Math.hypot(c[0] - a[0], c[2] - a[2])]].sort((p, q) => q[2] - p[2])[0];
           const m = [(e[0][0] + e[1][0]) / 2, (e[0][1] + e[1][1]) / 2, (e[0][2] + e[1][2]) / 2], o = [a, b, c].find(p => p !== e[0] && p !== e[1]);
           this.tri(e[0], m, o, col, uv, d + 1); this.tri(m, e[1], o, col, uv, d + 1); return; }
@@ -147,7 +148,8 @@ const SGN = { stop: 0, s30: 1, s40: 2, s50: 3, s60: 4, cross: 5, nopark: 6, scho
 const txtUV = i => [i * 128 / 2048, (i + 1) * 128 / 2048, 0.5, 1];               // u0 u1 v0 v1
 const sgnUV = i => { const c = i % 8, r = Math.floor(i / 8); return [c * 256 / 2048, (c + 1) * 256 / 2048, 1 - (512 + (r + 1) * 256) / 1024, 1 - (512 + r * 256) / 1024]; };
 // ── PLATEAU coverage (100 m cells → dataset index) and the datasets streaming fine in this session ──
-let PLAT = null, MAINLAND = null, TRENCH = null;
+let PLAT = null, MAINLAND = null, TRENCH = null, SHALLOW = null;
+function inShallow(x, z) { if (!SHALLOW) return false; for (const s of SHALLOW.near(x, z)) { const dx = s.bx - s.ax, dz = s.bz - s.az, L2 = dx * dx + dz * dz || 1e-9, t = Math.max(0, Math.min(1, ((x - s.ax) * dx + (z - s.az) * dz) / L2)); if (Math.hypot(x - s.ax - dx * t, z - s.az - dz * t) < s.w) return true; } return false; }
 function inTrench(x, z) { if (!TRENCH) return false; for (const s of TRENCH.near(x, z)) { const dx = s.bx - s.ax, dz = s.bz - s.az, L2 = dx * dx + dz * dz || 1e-9, t = Math.max(0, Math.min(1, ((x - s.ax) * dx + (z - s.az) * dz) / L2)); if (Math.hypot(x - s.ax - dx * t, z - s.az - dz * t) < s.w) return true; } return false; }
 function plateauAt(x, z) {
   if (!PLAT) return false;
@@ -188,6 +190,7 @@ function buildTile(T, lod, opts) {
   const sg = new Router(split);  // shop signs (atlas UV)
   const C = (x, z) => { bm.at(x, z); pm.at(x, z); gm.at(x, z); sg.at(x, z); };
   const road = new Flat(), walk = new Flat(), paint = new Flat();
+  walk.clip = paint.clip = [T.i * 1000, T.j * 1000]; walk.shallow = paint.shallow = true; // v2.14
   const ground = {};             // land use class → Flat
   const wires = new Buf(3);
   const trees = new Buf(5);
@@ -219,6 +222,9 @@ function buildTile(T, lod, opts) {
   for (const st of streets) for (let k = 0; k < st.pts.length - 1; k++) { const [ax, az] = st.pts[k], [bx, bz] = st.pts[k + 1]; segs.add({ ax, az, bx, bz, w: st.w, cls: st.cls, st }); if (st.flags & 1) bridges.push([ax, az, bx, bz, st.w / 2 + 0.5]); }
   // v2.2: nothing may stand on a carriageway (poles, trees, lamps, vending machines, signal poles, bus stops)
   const onCarriage = (x, z, pad = 0.2) => { const d = segs.dist(x, z, sg => sg.cls <= S.SERVICE); return !!d && d.d < d.s.w / 2 + pad; };
+  // v2.14: the expressway near street level (open cuttings, tunnel mouths, ramp ends) is kept as 'ghost' streets (flag 16):
+  // a city street / pavement / paint over one is a flat slab the car drove straight through before tunnels → left out
+  const overGhost = (x, z, pad = 0) => { const d = segs.dist(x, z, sg => !!(sg.st.flags & 16)); return !!d && d.d < d.s.w / 2 + pad * 0.5; };
 
   const asphaltCol = c => c <= S.PRIMARY ? [0.5, 0.5, 0.52] : c <= S.TERTIARY ? [0.55, 0.55, 0.56] : c === S.PED ? [0.95, 0.9, 0.85] : [0.6, 0.6, 0.6];
   const WHITE = [0.92, 0.92, 0.9], YEL = [0.95, 0.68, 0.12];
@@ -240,6 +246,7 @@ function buildTile(T, lod, opts) {
     });
     for (let k = 0; k < pts.length - 1; k++) {
       const a = pts[k], b = pts[k + 1], na = N[k], nb = N[k + 1];
+      { const mx = (a[0] + b[0]) / 2, mz = (a[1] + b[1]) / 2; if (inShallow(mx + OX, mz + OZ) || (!(st.flags & 1) && overGhost(mx, mz, hw))) continue; } // v2.14: no street / bridge deck lying on an expressway (bridges stay where the cutting is deep enough): never pave over an expressway cutting / tunnel mouth
       const A = (p, n, o, yy) => [p[0] + n[0] * o, yy, p[1] + n[1] * o];
       road.quad(A(a, na, hw, y), A(b, nb, hw, y), A(b, nb, -hw, y), A(a, na, -hw, y), asphaltCol(cls));
       if (swW && mid) for (const sd of [1, -1]) walk.quad(A(a, na, sd * hw, 0.03), A(b, nb, sd * hw, 0.03), A(b, nb, sd * (hw + swW), 0.03), A(a, na, sd * (hw + swW), 0.03), wc);
@@ -260,7 +267,7 @@ function buildTile(T, lod, opts) {
         for (let u = s; u < s1 - 0.05;) {
           const k = segOf(u + 0.01), v = Math.min(s1, L[k][0] + L[k][1], u + 4);
           if (v - u > 0.05) { const p = OP(k, u, off), q2 = OP(k, v, off);
-            if (!nearJunction((p[0] + q2[0]) / 2, (p[1] + q2[1]) / 2, hw + 3)) { const dx = q2[0] - p[0], dz = q2[1] - p[1], dl = Math.hypot(dx, dz) || 1, nx = -dz / dl * wid / 2, nz = dx / dl * wid / 2;
+            if (!nearJunction((p[0] + q2[0]) / 2, (p[1] + q2[1]) / 2, hw + 3) && !overGhost((p[0] + q2[0]) / 2, (p[1] + q2[1]) / 2)) { const dx = q2[0] - p[0], dz = q2[1] - p[1], dl = Math.hypot(dx, dz) || 1, nx = -dz / dl * wid / 2, nz = dx / dl * wid / 2;
               paint.quad([p[0] + nx, y + 0.012, p[1] + nz], [q2[0] + nx, y + 0.012, q2[1] + nz], [q2[0] - nx, y + 0.012, q2[1] - nz], [p[0] - nx, y + 0.012, p[1] - nz], col); } }
           u = v > u ? v : u + 0.5;
         }
@@ -1127,7 +1134,7 @@ function buildLand(T, streets, OX, OZ, landF) {
 
 self.onmessage = async ev => {
   if (ev.data.decks) { const a = ev.data.decks; DECKS = new SegGrid(); for (let k = 0; k < a.length; k += 7) DECKS.add({ ax: a[k], ay: a[k + 1], az: a[k + 2], bx: a[k + 3], by: a[k + 4], bz: a[k + 5], w: a[k + 6] * 2 }); return; }
-  if (ev.data.trench) { const a = ev.data.trench; TRENCH = new SegGrid(); for (let k = 0; k < a.length; k += 5) TRENCH.add({ ax: a[k], az: a[k + 1], bx: a[k + 2], bz: a[k + 3], w: a[k + 4] }); return; }
+  if (ev.data.trench) { const a = ev.data.trench; TRENCH = new SegGrid(); for (let k = 0; k < a.length; k += 5) TRENCH.add({ ax: a[k], az: a[k + 1], bx: a[k + 2], bz: a[k + 3], w: a[k + 4] }); const b = ev.data.shallow || []; SHALLOW = new SegGrid(); for (let k = 0; k < b.length; k += 5) SHALLOW.add({ ax: b[k], az: b[k + 1], bx: b[k + 2], bz: b[k + 3], w: b[k + 4] }); return; }
   if (ev.data.plateau) { const q = ev.data.plateau; PLAT = { cell: q.cell, rows: q.cov, active: new Set(q.active) }; return; }
   if (ev.data.mainLand) { const pts = ev.data.mainLand; let x0 = 1e9, x1 = -1e9, z0 = 1e9, z1 = -1e9; for (const [x, z] of pts) { x0 = Math.min(x0, x); x1 = Math.max(x1, x); z0 = Math.min(z0, z); z1 = Math.max(z1, z); } MAINLAND = { pts, x0, x1, z0, z1 }; return; }
   if (ev.data.land) { LAND = ev.data.land.map(pts => { let x0 = 1e9, x1 = -1e9, z0 = 1e9, z1 = -1e9; for (const [x, z] of pts) { x0 = Math.min(x0, x); x1 = Math.max(x1, x); z0 = Math.min(z0, z); z1 = Math.max(z1, z); } return { pts, x0, x1, z0, z1 }; }); return; }

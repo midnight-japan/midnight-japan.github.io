@@ -49,8 +49,32 @@ let _caps = null;
 function trenchCapsOf(net, isLand) {
   if (_caps) return _caps; const out = [];
   for (const r of net.roads) { if (r.kind === 'local') continue; const S = r.samples, hw = (r.edgeL - r.edgeR) / 2 + 1.6, c = (r.edgeL + r.edgeR) / 2;
-    for (let i = 0; i < S.length - 1; i++) { const op = q => q.p.y < -0.3 && q.p.y > -6.2 && isLand(q.p.x, q.p.z); if (!op(S[i]) && !op(S[i + 1])) continue; out.push([S[i].p.x + S[i].left.x * c, S[i].p.z + S[i].left.z * c, S[i + 1].p.x + S[i + 1].left.x * c, S[i + 1].p.z + S[i + 1].left.z * c, hw]); } }
+    // v2.14: a sample is 'open' in a real cutting (−0.3…−6.2 m) and also in the shallow 60 m leading into one (−0.3…0.3 m):
+    // the ground lay over the road there — but NOT along every ground-level expressway (that froze the load)
+    const deep = S.map(q => q.p.y < -0.3 && q.p.y > -6.2), near = S.map(() => false);
+    for (let i = 0; i < S.length; i++) if (deep[i]) { for (let k = i; k >= 0 && S[i].s - S[k].s < 60; k--) near[k] = true; for (let k = i; k < S.length && S[k].s - S[i].s < 60; k++) near[k] = true; }
+    for (let i = 0; i < S.length - 1; i++) { const op = k => (deep[k] || (near[k] && S[k].p.y < 0.3)) && isLand(S[k].p.x, S[k].p.z); if (!op(i) && !op(i + 1)) continue; out.push([S[i].p.x + S[i].left.x * c, S[i].p.z + S[i].left.z * c, S[i + 1].p.x + S[i + 1].left.x * c, S[i + 1].p.z + S[i + 1].left.z * c, hw]); } }
   return (_caps = out);
+}
+// v2.14: a big ground area as 1 km cells (polygon clipped per cell, Sutherland–Hodgman); only the cells a cutting
+// crosses are cut (cutting one 140 km plane took minutes) — the ground no longer lies over tunnel mouths
+function clipPolyRect(P, x0, z0, x1, z1) {
+  let out = P; const edge = (inside, cut) => { const res = []; for (let i = 0; i < out.length; i++) { const a = out[i], b = out[(i + 1) % out.length], ia = inside(a), ib = inside(b); if (ia) res.push(a); if (ia !== ib) res.push(cut(a, b)); } out = res; };
+  const lerpX = (a, b, x) => [x, a[1] + (b[1] - a[1]) * (x - a[0]) / (b[0] - a[0])], lerpZ = (a, b, z) => [a[0] + (b[0] - a[0]) * (z - a[1]) / (b[1] - a[1]), z];
+  edge(p => p[0] >= x0, (a, b) => lerpX(a, b, x0)); if (out.length) edge(p => p[0] <= x1, (a, b) => lerpX(a, b, x1));
+  if (out.length) edge(p => p[1] >= z0, (a, b) => lerpZ(a, b, z0)); if (out.length) edge(p => p[1] <= z1, (a, b) => lerpZ(a, b, z1));
+  return out;
+}
+function tiledGround(ring, y, net, isLand, C = 1000) {
+  let x0 = 1e9, z0 = 1e9, x1 = -1e9, z1 = -1e9; for (const [x, z] of ring) { x0 = Math.min(x0, x); x1 = Math.max(x1, x); z0 = Math.min(z0, z); z1 = Math.max(z1, z); }
+  const caps = trenchCapsOf(net, isLand), hot = new Set();
+  for (const c of caps) for (let i = Math.floor((Math.min(c[0], c[2]) - c[4]) / C); i <= Math.floor((Math.max(c[0], c[2]) + c[4]) / C); i++) for (let j = Math.floor((Math.min(c[1], c[3]) - c[4]) / C); j <= Math.floor((Math.max(c[1], c[3]) + c[4]) / C); j++) hot.add(i + ',' + j);
+  const parts = [];
+  for (let i = Math.floor(x0 / C); i * C < x1; i++) for (let j = Math.floor(z0 / C); j * C < z1; j++) {
+    const cell = clipPolyRect(ring, i * C, j * C, (i + 1) * C, (j + 1) * C); if (cell.length < 3) continue;
+    let g = polyGeo(cell, y); if (hot.has(i + ',' + j)) g = cutTrenches(g, net, isLand); parts.push(g.index ? g.toNonIndexed() : g);
+  }
+  const m = mergeGeometries(parts); parts.forEach(g => g.dispose()); return m;
 }
 function cutTrenches(geo, net, isLand) {
   const caps = trenchCapsOf(net, isLand); if (!caps.length) return geo;
@@ -299,12 +323,13 @@ export class World {
     }
     // far shores beyond the imported coastline (a ring of dark ground)
     for (const [x0, z0, x1, z1] of [[-70000, -70000, 70000, CR[1]], [CR[2], CR[1], 70000, 70000]]) {
-      const m = new THREE.Mesh(planeGeo(x1 - x0, z1 - z0), land); m.position.set((x0 + x1) / 2, 0, (z0 + z1) / 2); m.receiveShadow = false; this.group.add(m);
+      // v2.14: 1 km cells, the ones with a cutting (C1, Route 1 …) cut out — the plane lay over every tunnel mouth up there
+      const m = new THREE.Mesh(tiledGround([[x0, z0], [x1, z0], [x1, z1], [x0, z1]], 0, this.net, (x, z) => this.isLand(x, z), 2000), land); m.receiveShadow = false; this.group.add(m);
     }
     // western Kanagawa: land down to the Sagami Bay shore (sea beyond it), with a sand beach strip along the water
     { const ring = [[-70000, CR[1]], [CR[0], CR[1]]]; for (let k = COAST_W.length - 1; k >= 0; k--) { const [x, z] = COAST_W[k]; if (x <= CR[0]) ring.push([x, z]); } ring.push([-70000, COAST_W[0][1]]);
       const fields = surface('grass', { tile: 9, tint: 0x8a9a62 }); // farmland / green outside the towns
-      const m = new THREE.Mesh(polyGeo(ring, -0.04), fields); m.receiveShadow = false; this.group.add(m);
+      const m = new THREE.Mesh(tiledGround(ring, -0.04, this.net, (x, z) => this.isLand(x, z)), fields); m.receiveShadow = false; this.group.add(m);
       const sand = surface('sand', { tile: 6, tint: 0xc9b48a }); const bp = [];
       for (const [x, z] of COAST_W) if (x <= CR[0]) bp.push([x, z]);
       const beach = []; for (const p of bp) beach.push([p[0], p[1] - 35]); for (let k = bp.length - 1; k >= 0; k--) beach.push([bp[k][0], bp[k][1] + 4]);

@@ -1,9 +1,10 @@
 # 📜 MIDNIGHT JAPAN 업데이트 기록 · Changelog
 
-현재 버전 · Current: **v2.14.3** · [▶ 웹에서 플레이](https://midnight-japan.github.io/) · [🌐 업데이트 페이지](https://midnight-japan.github.io/changelog.html)
+현재 버전 · Current: **v2.14.4** · [▶ 웹에서 플레이](https://midnight-japan.github.io/) · [🌐 업데이트 페이지](https://midnight-japan.github.io/changelog.html)
 
 | 버전 | 날짜 | 이름 | 요약 |
 |---|---|---|---|
+| [v2.14.4](#v2144--clear-portals-2026-11-20) | 2026-11-20 | Clear Portals | 터널 입구 정리: 지하로 내려가기 직전 도로 위에 깔려 있던 땅·도시 도로·보도·주차장 판을 걷어 내 차가 판을 뚫고 들어가는 것처럼 보이던 문제 수정(38곳 전수 점검). |
 | [v2.14.3](#v2143--signposted-2026-11-20) | 2026-11-20 | Signposted | 도심 교차로 표지가 반대 차선에 있던 큰 버그 수정(정지선·止まれ·신호등·횡단보도·속도·일방통행 표지가 이제 내 차선 왼쪽에), 국도·현도에 파란 방면 안내 표지판과 교차로 이름판 추가. |
 | [v2.14.2](#v2142--straight-lines-2026-11-20) | 2026-11-20 | Straight Lines | 꼬부랑 차선 수정(차선이 도로 곡선을 정확히 따라감, 도로 중심선의 잔떨림 제거), 고가도로 벽을 뚫고 옆 고가로 넘어가던 문제 수정. |
 | [v2.14.1](#v2141--whole-japan-map-2026-11-20) | 2026-11-20 | Whole Japan Map | 인게임 지도가 일본 전체로 열린 뒤 내 위치로 확대, 모든 확대 단계에서 일본 땅·도도부현 경계 표시, 추가된 모든 지역에 핀, 자마 지역 도로까지 지도에, 지도 그리기 10배 빠르게. |
@@ -70,6 +71,18 @@
 | [v0.2.0](#v020--bayshore-2026-11-05) | 2026-11-05 | Bayshore | 수도고속 완간선을 따라 하네다까지, 도쿄만 아쿠아라인 해저터널을 지나 우미호타루 PA까지. 실제 3D 차량 모델과 열리는 보닛도 들어왔어요. |
 | [v0.1.1](#v011--one-click-2026-11-04) | 2026-11-04 | One Click | 링크 하나로 바로 플레이. 크롬에서 공식 사이트 주소만 열면 설치 없이 실행돼요. |
 | [v0.1.0](#v010--first-meet-2026-11-04) | 2026-11-04 | First Meet | 첫 공개 버전. 다이코쿠 JCT·PA와 다이코쿠 부두 일대를 3D로 구현했습니다. |
+
+---
+
+## v2.14.4 — Clear Portals (2026-11-20)
+
+> 터널 입구 정리: 지하로 내려가기 직전 도로 위에 깔려 있던 땅·도시 도로·보도·주차장 판을 걷어 내 차가 판을 뚫고 들어가는 것처럼 보이던 문제 수정(38곳 전수 점검).
+> Tunnel mouths cleaned up: the ground, city streets, pavements and car parks that lay over the road just before it dips underground are cut away — cars no longer appear to drive through a slab (all 38 portals checked).
+
+**🐞 수정 · Fixed**
+
+- 터널 입구 앞 얕은 구간(지면 −0.3~+0.3m, 입구 60m 앞까지)의 땅을 잘라 냄 — 도쿄 C1·1호선 쪽 큰 땅판과 가나가와 서부 땅판에도 적용(1km 조각으로 나눠 로딩 속도 유지)<br><sub>The ground over the shallow lead-in to tunnel mouths (−0.3…+0.3 m, up to 60 m before) is cut away — also on the big ground planes around the C1 / Route 1 and in western Kanagawa (split into 1 km cells so loading stays fast)</sub>
+- 도시 도로·보도·노면 표시·주차장 선이 고속도로 지하 진입부 위에 겹쳐 있던 문제(깊은 구간 위 다리는 그대로)<br><sub>City streets, pavements, road paint and car-park lines no longer lie across expressway cuttings (street bridges over the deep parts stay)</sub>
 
 ---
 

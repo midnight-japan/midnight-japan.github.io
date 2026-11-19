@@ -336,7 +336,7 @@ export class City {
       { const dk = []; for (const r of this.world.net?.roads || []) { if (r.kind === 'local' || r.kind === 'mountain') continue; const hw = (r.edgeL - r.edgeR) / 2; const S = r.samples; for (let i = 0; i < S.length - 1; i += 2) { const a = S[i].p, b = S[Math.min(S.length - 1, i + 2)].p; dk.push(a.x, a.y, a.z, b.x, b.y, b.z, hw); } }
         w.postMessage({ decks: new Float32Array(dk) }); }
       // v2.2: open cuttings before tunnel mouths — city ground is cut away there (it used to lid the road over)
-      w.postMessage({ trench: this.trenchCaps() });
+      w.postMessage({ trench: this.trenchCaps(), shallow: new Float32Array(this._sh || []) }); // v2.14: shallow = < 4.5 m deep (no street bridge fits over it)
       this.workers.push(w);
     }
     // materials
@@ -377,9 +377,12 @@ export class City {
   // open-cut road sections (below ground, on land, roof not yet closed): [ax, az, bx, bz, halfWidth] …
   trenchCaps() {
     if (this._tc) return this._tc; const out = [], W = this.world;
-    const open = q => q.p.y < -0.3 && q.p.y > -6.2 && W.isLand(q.p.x, q.p.z);
     for (const r of W.net?.roads || []) { if (r.kind === 'local') continue; const S = r.samples, hw = (r.edgeL - r.edgeR) / 2 + 1.6, c = (r.edgeL + r.edgeR) / 2;
-      for (let i = 0; i < S.length - 1; i++) { if (!open(S[i]) && !open(S[i + 1])) continue; const a = S[i], b = S[i + 1]; out.push(a.p.x + a.left.x * c, a.p.z + a.left.z * c, b.p.x + b.left.x * c, b.p.z + b.left.z * c, hw); } }
+      // v2.14: real cuttings (−0.3…−6.2 m) plus the shallow 60 m leading into them (the ground lay over the road there)
+      const deep = S.map(q => q.p.y < -0.3 && q.p.y > -6.2), near = S.map(() => false);
+      for (let i = 0; i < S.length; i++) if (deep[i]) { for (let k = i; k >= 0 && S[i].s - S[k].s < 60; k--) near[k] = true; for (let k = i; k < S.length && S[k].s - S[i].s < 60; k++) near[k] = true; }
+      const open = k => (deep[k] || (near[k] && S[k].p.y < 0.3)) && W.isLand(S[k].p.x, S[k].p.z);
+      for (let i = 0; i < S.length - 1; i++) { if (!open(i) && !open(i + 1)) continue; const a = S[i], b = S[i + 1]; out.push(a.p.x + a.left.x * c, a.p.z + a.left.z * c, b.p.x + b.left.x * c, b.p.z + b.left.z * c, hw); if (a.p.y > -4.5 && b.p.y > -4.5) (this._sh ||= []).push(a.p.x + a.left.x * c, a.p.z + a.left.z * c, b.p.x + b.left.x * c, b.p.z + b.left.z * c, hw); } }
     return (this._tc = new Float32Array(out));
   }
   inTrench(x, z) {

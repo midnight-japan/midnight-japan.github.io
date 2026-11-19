@@ -1,8 +1,16 @@
 // Shared game metadata: version, changelog, regions. Update VERSION + CHANGELOG on every release.
-export const GAME = { title: 'MIDNIGHT JAPAN', titleJa: 'ミッドナイト・ジャパン', version: '2.14.3', build: '2026.11.18' };
+export const GAME = { title: 'MIDNIGHT JAPAN', titleJa: 'ミッドナイト・ジャパン', version: '2.14.4', build: '2026.11.18' };
 
 // Newest first. type: new | change | fix | known
 export const CHANGELOG = [
+  {
+    version: '2.14.4', date: '2026-11-20', codename: 'Clear Portals',
+    summary: { ko: '터널 입구 정리: 지하로 내려가기 직전 도로 위에 깔려 있던 땅·도시 도로·보도·주차장 판을 걷어 내 차가 판을 뚫고 들어가는 것처럼 보이던 문제 수정(38곳 전수 점검).', ja: 'トンネル入口の整理：地下へ下りる直前の道路の上に敷かれていた地面・街の道路・歩道・駐車場の板を取り除き、車が板を突き抜けて入るように見えた問題を修正（38か所すべて点検）。', en: 'Tunnel mouths cleaned up: the ground, city streets, pavements and car parks that lay over the road just before it dips underground are cut away — cars no longer appear to drive through a slab (all 38 portals checked).' },
+    items: [
+      { type: 'fix', ko: '터널 입구 앞 얕은 구간(지면 −0.3~+0.3m, 입구 60m 앞까지)의 땅을 잘라 냄 — 도쿄 C1·1호선 쪽 큰 땅판과 가나가와 서부 땅판에도 적용(1km 조각으로 나눠 로딩 속도 유지)', ja: 'トンネル入口手前の浅い区間（地面−0.3～+0.3m、入口の60m手前まで）の地面を切り取り — 東京C1・1号線側の大きな地面と神奈川西部にも適用（1km単位に分けてロード時間を維持）', en: 'The ground over the shallow lead-in to tunnel mouths (−0.3…+0.3 m, up to 60 m before) is cut away — also on the big ground planes around the C1 / Route 1 and in western Kanagawa (split into 1 km cells so loading stays fast)' },
+      { type: 'fix', ko: '도시 도로·보도·노면 표시·주차장 선이 고속도로 지하 진입부 위에 겹쳐 있던 문제(깊은 구간 위 다리는 그대로)', ja: '街の道路・歩道・路面標示・駐車場の線が高速の地下進入部の上に重なっていた問題（深い区間の上の橋はそのまま）', en: 'City streets, pavements, road paint and car-park lines no longer lie across expressway cuttings (street bridges over the deep parts stay)' },
+    ],
+  },
   {
     version: '2.14.3', date: '2026-11-20', codename: 'Signposted',
     summary: { ko: '도심 교차로 표지가 반대 차선에 있던 큰 버그 수정(정지선·止まれ·신호등·횡단보도·속도·일방통행 표지가 이제 내 차선 왼쪽에), 국도·현도에 파란 방면 안내 표지판과 교차로 이름판 추가.', ja: '街の交差点の標示が対向車線にあった大きなバグを修正（停止線・止まれ・信号・横断歩道・速度・一方通行の標識が自分の車線の左側に）、国道・県道に青い方面看板と交差点名標識を追加。', en: 'Fixed a big bug that put city junction markings in the oncoming lane (stop lines, 止まれ, signals, crossing / speed / one-way signs now on your own, left-hand side); blue overhead direction boards and intersection name plates on main roads.' },
