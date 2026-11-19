@@ -1,8 +1,18 @@
 // Shared game metadata: version, changelog, regions. Update VERSION + CHANGELOG on every release.
-export const GAME = { title: 'MIDNIGHT JAPAN', titleJa: 'ミッドナイト・ジャパン', version: '2.14.0', build: '2026.11.18' };
+export const GAME = { title: 'MIDNIGHT JAPAN', titleJa: 'ミッドナイト・ジャパン', version: '2.14.1', build: '2026.11.18' };
 
 // Newest first. type: new | change | fix | known
 export const CHANGELOG = [
+  {
+    version: '2.14.1', date: '2026-11-20', codename: 'Whole Japan Map',
+    summary: { ko: '인게임 지도가 일본 전체로 열린 뒤 내 위치로 확대, 모든 확대 단계에서 일본 땅·도도부현 경계 표시, 추가된 모든 지역에 핀, 자마 지역 도로까지 지도에, 지도 그리기 10배 빠르게.', ja: 'ゲーム内マップが日本全体で開いてから現在地へズーム、どの縮尺でも日本の陸地・都道府県境を表示、追加した全エリアにピン、座間の道路も地図に、マップ描画を10倍高速化。', en: 'The in-game map opens on all of Japan and flies in to you, shows Japan’s land and prefecture borders at every zoom, pins every added region, includes the Zama streets, and draws 10× faster.' },
+    items: [
+      { type: 'change', ko: '지도(M): 일본 전체가 보이는 상태로 열리고 1.6초 동안 내 위치로 확대(휠·터치하면 멈춤)', ja: 'マップ（M）：日本全体が見える状態で開き、1.6秒かけて現在地へズーム（ホイール・タッチで止まる）', en: 'Map (M): opens on all of Japan and zooms in to you over 1.6 s (wheel / touch stops it)' },
+      { type: 'fix', ko: '지도에서 고속도로 데이터 밖 지역(자마·하코네 가는 길 등)이 바다처럼 보이던 문제 — 모든 확대 단계에서 일본 땅과 도도부현 경계, 땅·바다 대비 강화', ja: 'マップで高速道路データ外のエリア（座間・箱根への道など）が海のように見えた問題 — どの縮尺でも日本の陸地と都道府県境、陸と海のコントラストを強化', en: 'Areas beyond the expressway data (Zama, the road to Hakone …) looked like sea on the map — Japan’s land and prefecture borders now show at every zoom, with clearer land / sea contrast' },
+      { type: 'new', ko: '지도에 모든 지역 핀(다이코쿠 PA·하코네·자마 해바라기 밭·우미호타루 등)과 자마 지역 도로·건물', ja: 'マップに全エリアのピン（大黒PA・箱根・座間ひまわり畑・海ほたるなど）と座間の道路・建物', en: 'Pins for every region on the map (Daikoku PA, Hakone, Zama sunflower fields, Umihotaru …) and the Zama streets and buildings' },
+      { type: 'change', ko: '성능: 지도 그리기 11ms → 1ms (화면 밖 도로 생략, 경로 캐시) — 지도를 열어도 프레임 유지', ja: '性能：マップ描画 11ms → 1ms（画面外の道路を省略、パスをキャッシュ） — マップを開いてもフレーム維持', en: 'Performance: map drawing 11 ms → 1 ms (off-screen roads skipped, cached paths) — the frame rate holds with the map open' },
+    ],
+  },
   {
     version: '2.14.0', date: '2026-11-20', codename: 'Open Road',
     summary: { ko: '투명벽 제거(보이는 벽·건물·물·고가/터널 벽에서만 막힘), 주유소 직원 상주, NPC 트럭 실제 크기, 해바라기 밭을 멀리서도 보이게.', ja: '見えない壁を撤去（見える壁・建物・水・高架/トンネルの壁でのみ止まる）、ガソリンスタンドに店員が常駐、NPCトラックを実寸に、ひまわり畑を遠くからも見えるように。', en: 'No more invisible walls (only visible walls, buildings, water and viaduct / tunnel sides stop you), attendants always on duty at fuel stations, NPC trucks at real size, sunflower fields visible from afar.' },

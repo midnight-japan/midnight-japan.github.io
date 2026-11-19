@@ -524,9 +524,13 @@ export class UI {
     const cv = $('#bigmap'), dpr = Math.min(2, devicePixelRatio || 1); const rb = cv.getBoundingClientRect(); cv.width = (rb.width || innerWidth) * dpr; cv.height = (rb.height || innerHeight) * dpr;
     if (!this.mv) { this.mv = { x: 0, z: 0, k: 0.35 * dpr }; this.wireMap(cv); }
     // v2.2: open on your own position (≈ 2.5 km across) and keep following you; driving / autopilot carry on underneath
-    this.mv.k = Math.min(cv.width, cv.height) / 2500; this.mapFollow = true; this.mapCenterMe();
+    // v2.14: opens on ALL of Japan, then flies in to where you are (≈ 2.5 km across) — touch / wheel stops the flight
+    { const kEnd = Math.min(cv.width, cv.height) / 2500, p = this.mapPos() || { x: 0, z: 0 }; this.mapJapan(); const k0 = this.mv.k, x0 = this.mv.x, z0 = this.mv.z, t0 = performance.now() + 700, D = 1600;
+      this._fly = true; const step = () => { if (!this._fly || !this.mapOpen) return; const u = Math.min(1, Math.max(0, (performance.now() - t0) / D)), e = u * u * (3 - 2 * u);
+        this.mv.k = Math.exp(Math.log(k0) + (Math.log(kEnd) - Math.log(k0)) * e); const w = Math.min(1, e * 1.6); this.mv.x = x0 + (p.x - x0) * w; this.mv.z = z0 + (p.z - z0) * w; this.drawBigMap();
+        if (u < 1) requestAnimationFrame(step); else { this._fly = false; this.mapFollow = true; } }; requestAnimationFrame(step); }
     this.buildQuickTravel();
-    clearInterval(this._mapLive); this._mapLive = setInterval(() => { if (!this.mapOpen) { clearInterval(this._mapLive); return; } if (this.mapFollow) { const p = this.mapPos(); if (p) { this.mv.x = p.x; this.mv.z = p.z; } } this.drawBigMap(); }, 150);
+    clearInterval(this._mapLive); this._mapLive = setInterval(() => { if (!this.mapOpen) { clearInterval(this._mapLive); return; } if (this._fly) return; if (this.mapFollow) { const p = this.mapPos(); if (p) { this.mv.x = p.x; this.mv.z = p.z; } } this.drawBigMap(); }, 150);
   }
   // v2.7.1 — quick travel: every destination with its photo, which way it lies from you (arrow turned to your heading,
   // compass point) and how far; picking one centres the map there and offers the carriageway + direction buttons
@@ -545,7 +549,7 @@ export class UI {
     }).join('');
   }
   mapPos() { return this.g.mode === 'walk' ? this.g.player?.pos : this.g.vehicle?.pos; }
-  mapZoom(f, cx, cy) { const cv = $('#bigmap'), m = this.mv; cx ??= cv.width / 2; cy ??= cv.height / 2; const wx = m.x + (cx - cv.width / 2) / m.k, wz = m.z + (cy - cv.height / 2) / m.k; m.k = Math.max(0.00012, Math.min(12, m.k * f)); m.x = wx - (cx - cv.width / 2) / m.k; m.z = wz - (cy - cv.height / 2) / m.k; this.drawBigMap(); }
+  mapZoom(f, cx, cy) { this._fly = false; const cv = $('#bigmap'), m = this.mv; cx ??= cv.width / 2; cy ??= cv.height / 2; const wx = m.x + (cx - cv.width / 2) / m.k, wz = m.z + (cy - cv.height / 2) / m.k; m.k = Math.max(0.00012, Math.min(12, m.k * f)); m.x = wx - (cx - cv.width / 2) / m.k; m.z = wz - (cy - cv.height / 2) / m.k; this.drawBigMap(); }
   mapJapan() { const cv = $('#bigmap'); this.mapFollow = false; this.mv.x = 300000; this.mv.z = -100000; this.mv.k = 0.95 * Math.min(cv.width / 2400000, cv.height / 2700000); this.drawBigMap(); } // v2.7.1: all of Japan
   mapCenterMe() { this.mapFollow = true; const p = this.mapPos(); if (p) { this.mv.x = p.x; this.mv.z = p.z; } this.drawBigMap(); }
   mapFitAll() { const cv = $('#bigmap'); let a = [1e9, 1e9, -1e9, -1e9]; for (const r of this.g.net.roads) for (const q of r.samples) { a[0] = Math.min(a[0], q.p.x); a[1] = Math.min(a[1], q.p.z); a[2] = Math.max(a[2], q.p.x); a[3] = Math.max(a[3], q.p.z); } this.mv.x = (a[0] + a[2]) / 2; this.mv.z = (a[1] + a[3]) / 2; this.mv.k = 0.9 * Math.min(cv.width / (a[2] - a[0]), cv.height / (a[3] - a[1])); this.drawBigMap(); }
@@ -866,14 +870,15 @@ export class UI {
     const cv = $('#bigmap'), c = cv.getContext('2d'), W = cv.width, H = cv.height, m = this.mv, k = m.k;
     const P = (x, z) => [(x - m.x) * k + W / 2, (z - m.z) * k + H / 2];
     const dpr = W / (cv.getBoundingClientRect().width || innerWidth);
-    c.clearRect(0, 0, W, H); c.fillStyle = 'rgba(10,26,51,.78)'; c.fillRect(0, 0, W, H); // sea (translucent: the drive goes on underneath)
+    c.clearRect(0, 0, W, H); c.fillStyle = 'rgba(8,20,41,.9)'; c.fillRect(0, 0, W, H); // sea (translucent: the drive goes on underneath)
     const poly = (pts, fill) => { c.beginPath(); pts.forEach(([x, z], i) => { const [a, b] = P(x, z); i ? c.lineTo(a, b) : c.moveTo(a, b); }); c.closePath(); c.fillStyle = fill; c.fill(); };
     // v2.7.1: all of Japan underneath (Natural Earth coastline), cities when zoomed out, the drivable area glowing
-    if (k < 0.02) { c.fillStyle = '#1d2633'; c.strokeStyle = 'rgba(140,170,210,.45)'; c.lineWidth = 1 * dpr;
-      for (const R of JAPAN_LAND) { c.beginPath(); for (let i = 0; i < R.length; i += 2) { const [a, b] = P(R[i], R[i + 1]); i ? c.lineTo(a, b) : c.moveTo(a, b); } c.closePath(); c.fill(); c.stroke(); }
-      // v2.13: the 47 prefectures — thin borders, names when zoomed out to region level
-      c.strokeStyle = 'rgba(160,190,230,.28)'; c.lineWidth = 0.8 * dpr;
-      for (const pf of JAPAN_PREFS) for (const R of pf.r) { c.beginPath(); for (let i = 0; i < R.length; i += 2) { const [a, b] = P(R[i], R[i + 1]); i ? c.lineTo(a, b) : c.moveTo(a, b); } c.closePath(); c.stroke(); }
+    { // v2.14: Japan's land + prefecture borders at every zoom, as cached world-space Path2Ds (one transform, no per-point maths)
+      const JP = this._jpPath || (this._jpPath = (() => { const land = new Path2D(), pref = new Path2D(); for (const R of JAPAN_LAND) { for (let i = 0; i < R.length; i += 2) i ? land.lineTo(R[i], R[i + 1]) : land.moveTo(R[i], R[i + 1]); land.closePath(); }
+        for (const pf of JAPAN_PREFS) for (const R of pf.r) { for (let i = 0; i < R.length; i += 2) i ? pref.lineTo(R[i], R[i + 1]) : pref.moveTo(R[i], R[i + 1]); pref.closePath(); } return { land, pref }; })());
+      c.save(); c.setTransform(k, 0, 0, k, W / 2 - m.x * k, H / 2 - m.z * k);
+      c.fillStyle = '#2b3546'; c.fill(JP.land); c.strokeStyle = 'rgba(150,180,220,.55)'; c.lineWidth = 1 * dpr / k; c.stroke(JP.land);
+      c.strokeStyle = 'rgba(160,190,230,.3)'; c.lineWidth = 0.8 * dpr / k; c.stroke(JP.pref); c.restore();
       if (k > 0.0004) { c.textAlign = 'center'; c.textBaseline = 'middle'; for (const pf of JAPAN_PREFS) { if (!pf.c) continue; const [a, b] = P(pf.c[0], pf.c[1]); if (a < -50 || b < -50 || a > W + 50 || b > H + 50) continue;
         c.font = `600 ${10 * dpr}px "Hiragino Sans","Noto Sans JP",system-ui`; c.fillStyle = 'rgba(200,215,235,.55)'; c.fillText(pf.n, a, b + 12 * dpr); if (getLang() !== 'ja' && k > 0.0012) { c.font = `500 ${8.5 * dpr}px system-ui`; c.fillText(pf.en, a, b + 23 * dpr); } } } }
     for (const l of MAP.land || []) if (l.pts?.length > 2) poly(l.pts, l.main ? '#1d2633' : '#222c3a');
@@ -881,17 +886,21 @@ export class UI {
     this.drawMapRaster(c, W, H, m, k, dpr);
     { const [x0, z0] = P(PA_RECT.x0, PA_RECT.z0), [x1, z1] = P(PA_RECT.x1, PA_RECT.z1); c.fillStyle = '#44587a'; c.fillRect(Math.min(x0, x1), Math.min(z0, z1), Math.abs(x1 - x0), Math.abs(z1 - z0)); }
     const roads = this.g.net.roads;
-    for (const pass of [0, 1]) for (const r of roads) {
+    const vx0 = m.x - W / 2 / k - 50, vx1 = m.x + W / 2 / k + 50, vz0 = m.z - H / 2 / k - 50, vz1 = m.z + H / 2 / k + 50; // v2.14: skip roads off screen
+    const onScr = r => { const b = r._mbb || (r._mbb = r.samples.reduce((a, q) => [Math.min(a[0], q.p.x), Math.min(a[1], q.p.z), Math.max(a[2], q.p.x), Math.max(a[3], q.p.z)], [1e9, 1e9, -1e9, -1e9])); return !(b[2] < vx0 || b[0] > vx1 || b[3] < vz0 || b[1] > vz1); };
+    for (const pass of [0, 1]) for (const r of roads) { if (!onScr(r)) continue;
       const col = r.kind === 'expressway' ? '#2fbf74' : r.kind === 'ramp' ? '#8fe0b2' : '#c4ccd8';
       c.strokeStyle = pass ? col : 'rgba(0,0,0,.55)'; c.lineCap = c.lineJoin = 'round';
       c.lineWidth = Math.max(pass ? 1.5 * dpr : 3 * dpr, (r.edgeL - r.edgeR) * k + (pass ? 0 : 2 * dpr));
-      c.globalAlpha = r.samples.some(q => q.p.y < -0.6) && pass ? 0.75 : 1;
+      if (r._tun === undefined) r._tun = r.samples.some(q => q.p.y < -0.6); c.globalAlpha = r._tun && pass ? 0.75 : 1;
       const step = k < 0.002 ? 60 : k < 0.05 ? 8 : k < 0.3 ? 3 : 1;
-      c.beginPath(); r.samples.forEach((q, i) => { if (i % step && i !== r.samples.length - 1) return; const [a, b] = P(q.p.x, q.p.z); i ? c.lineTo(a, b) : c.moveTo(a, b); }); c.stroke();
+      // v2.14: each road's polyline cached as a world-space Path2D per detail step (map draw 11 ms → ~2 ms)
+      const mp = r._mp || (r._mp = {}); let path = mp[step]; if (!path) { path = mp[step] = new Path2D(); r.samples.forEach((q, i) => { if (i % step && i !== r.samples.length - 1) return; i ? path.lineTo(q.p.x, q.p.z) : path.moveTo(q.p.x, q.p.z); }); }
+      const lw = c.lineWidth; c.save(); c.setTransform(k, 0, 0, k, W / 2 - m.x * k, H / 2 - m.z * k); c.lineWidth = lw / k; c.stroke(path); c.restore();
     }
     c.globalAlpha = 1;
     // lane markings when zoomed right in
-    if (k > 3) { c.strokeStyle = 'rgba(255,255,255,.6)'; c.lineWidth = dpr; c.setLineDash([6 * dpr, 8 * dpr]); for (const r of roads) for (const L of r.lanes) { c.beginPath(); r.samples.forEach((q, i) => { const [a, b] = P(q.p.x + q.left.x * L.lat, q.p.z + q.left.z * L.lat); i ? c.lineTo(a, b) : c.moveTo(a, b); }); c.stroke(); } c.setLineDash([]); }
+    if (k > 3) { c.strokeStyle = 'rgba(255,255,255,.6)'; c.lineWidth = dpr; c.setLineDash([6 * dpr, 8 * dpr]); for (const r of roads) if (onScr(r)) for (const L of r.lanes) { c.beginPath(); r.samples.forEach((q, i) => { const [a, b] = P(q.p.x + q.left.x * L.lat, q.p.z + q.left.z * L.lat); i ? c.lineTo(a, b) : c.moveTo(a, b); }); c.stroke(); } c.setLineDash([]); }
     // route / destination / police last seen, and the picked point
     c.save(); c.translate(W / 2, H / 2); c.scale(k, k); c.translate(-m.x, -m.z); this.drawNav(c, 1 / k * dpr); c.restore();
     if (this.mapSel) { const [a, b] = P(this.mapSel.x, this.mapSel.z); c.strokeStyle = '#ffb347'; c.lineWidth = 3 * dpr; c.beginPath(); c.arc(a, b, 10 * dpr, 0, Math.PI * 2); c.stroke(); c.beginPath(); c.moveTo(a, b - 18 * dpr); c.lineTo(a, b + 18 * dpr); c.moveTo(a - 18 * dpr, b); c.lineTo(a + 18 * dpr, b); c.stroke(); }
@@ -900,6 +909,13 @@ export class UI {
       for (const [n, x, z, pop] of JAPAN_CITIES) { if (pop < (k < 0.0006 ? 1500000 : 300000)) continue; const [a, b] = P(x, z); c.fillStyle = '#ffd38a'; c.beginPath(); c.arc(a, b, 2.5 * dpr, 0, 7); c.fill(); c.font = `700 ${11 * dpr}px "Hiragino Sans","Noto Sans JP",system-ui`; c.lineWidth = 3 * dpr; c.strokeStyle = 'rgba(0,0,0,.8)'; c.strokeText(n, a, b - 10 * dpr); c.fillStyle = '#fff'; c.fillText(n, a, b - 10 * dpr); }
       const g0 = P(-20000, 0), rad = Math.max(10 * dpr, 70000 * k); c.strokeStyle = 'rgba(47,191,116,.9)'; c.lineWidth = 2 * dpr; c.setLineDash([5 * dpr, 4 * dpr]); c.beginPath(); c.arc(g0[0], g0[1], rad, 0, 7); c.stroke(); c.setLineDash([]);
       c.font = `800 ${12 * dpr}px system-ui`; c.fillStyle = '#7ff0b0'; c.fillText('MIDNIGHT JAPAN', g0[0], g0[1] + rad + 14 * dpr); }
+    // v2.14: every region you can drive (quick-travel destinations) marked at every zoom — pin + name
+    c.textAlign = 'center'; c.textBaseline = 'middle';
+    for (const d of DESTS) { const [a, b] = P(d.x, d.z); if (a < -60 || b < -60 || a > W + 60 || b > H + 60) continue;
+      c.fillStyle = '#ff3d6e'; c.strokeStyle = '#fff'; c.lineWidth = 1.5 * dpr; c.beginPath(); c.arc(a, b - 9 * dpr, 6 * dpr, Math.PI * 0.85, Math.PI * 0.15); c.lineTo(a, b); c.closePath(); c.fill(); c.stroke();
+      c.fillStyle = '#fff'; c.beginPath(); c.arc(a, b - 9 * dpr, 2.2 * dpr, 0, 7); c.fill();
+      if (k < 0.004 && k < 0.0012 && !['daikoku', 'hakone', 'zama', 'umihotaru', 'c1'].includes(d.id)) continue; // zoomed right out: only the big names
+      c.font = `700 ${11 * dpr}px "Hiragino Sans","Noto Sans JP",system-ui`; c.lineWidth = 3 * dpr; c.strokeStyle = 'rgba(0,0,0,.85)'; c.strokeText(d.name, a, b - 22 * dpr); c.fillStyle = '#ffd1dc'; c.fillText(d.name, a, b - 22 * dpr); }
     // traffic
     for (const ai of this.g.traffic?.cars || []) { const [a, b] = P(ai.pos.x, ai.pos.z); if (a < 0 || b < 0 || a > W || b > H || (ai.mode === 'parked' && !ai.police)) continue;
       const q = 3.2 * dpr, sn = Math.sin(ai.yaw), cs = Math.cos(ai.yaw); c.fillStyle = ai.police ? '#4a8cff' : '#e9edf3'; c.strokeStyle = 'rgba(0,0,0,.75)'; c.lineWidth = dpr;

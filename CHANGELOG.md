@@ -1,9 +1,10 @@
 # 📜 MIDNIGHT JAPAN 업데이트 기록 · Changelog
 
-현재 버전 · Current: **v2.14.0** · [▶ 웹에서 플레이](https://midnight-japan.github.io/) · [🌐 업데이트 페이지](https://midnight-japan.github.io/changelog.html)
+현재 버전 · Current: **v2.14.1** · [▶ 웹에서 플레이](https://midnight-japan.github.io/) · [🌐 업데이트 페이지](https://midnight-japan.github.io/changelog.html)
 
 | 버전 | 날짜 | 이름 | 요약 |
 |---|---|---|---|
+| [v2.14.1](#v2141--whole-japan-map-2026-11-20) | 2026-11-20 | Whole Japan Map | 인게임 지도가 일본 전체로 열린 뒤 내 위치로 확대, 모든 확대 단계에서 일본 땅·도도부현 경계 표시, 추가된 모든 지역에 핀, 자마 지역 도로까지 지도에, 지도 그리기 10배 빠르게. |
 | [v2.14.0](#v2140--open-road-2026-11-20) | 2026-11-20 | Open Road | 투명벽 제거(보이는 벽·건물·물·고가/터널 벽에서만 막힘), 주유소 직원 상주, NPC 트럭 실제 크기, 해바라기 밭을 멀리서도 보이게. |
 | [v2.13.11](#v21311--himawari-2026-11-18) | 2026-11-18 | Himawari | 새 지역: 자마 해바라기 밭(가나가와현 자마시, 사가미강) — 실제 밭 모양에 약 2m 해바라기가 줄지어 동쪽을 향하고, 계절 따라 새싹·만개·마른 씨앗·맨흙으로. 주변 7km 마을 도로·건물도 실제 지도로. 보행자가 편의점에 들어가고 나옴. |
 | [v2.13.10](#v21310--next-stop-2026-11-18) | 2026-11-18 | Next Stop | 전철에 승객: 창문이 뚫린 차체와 투명 유리, 형광등이 켜진 실내, 파란 롱시트와 손잡이 봉, 앉고 서 있는 승객 — 출퇴근 시간엔 만원, 심야엔 한산. |
@@ -67,6 +68,26 @@
 | [v0.2.0](#v020--bayshore-2026-11-05) | 2026-11-05 | Bayshore | 수도고속 완간선을 따라 하네다까지, 도쿄만 아쿠아라인 해저터널을 지나 우미호타루 PA까지. 실제 3D 차량 모델과 열리는 보닛도 들어왔어요. |
 | [v0.1.1](#v011--one-click-2026-11-04) | 2026-11-04 | One Click | 링크 하나로 바로 플레이. 크롬에서 공식 사이트 주소만 열면 설치 없이 실행돼요. |
 | [v0.1.0](#v010--first-meet-2026-11-04) | 2026-11-04 | First Meet | 첫 공개 버전. 다이코쿠 JCT·PA와 다이코쿠 부두 일대를 3D로 구현했습니다. |
+
+---
+
+## v2.14.1 — Whole Japan Map (2026-11-20)
+
+> 인게임 지도가 일본 전체로 열린 뒤 내 위치로 확대, 모든 확대 단계에서 일본 땅·도도부현 경계 표시, 추가된 모든 지역에 핀, 자마 지역 도로까지 지도에, 지도 그리기 10배 빠르게.
+> The in-game map opens on all of Japan and flies in to you, shows Japan’s land and prefecture borders at every zoom, pins every added region, includes the Zama streets, and draws 10× faster.
+
+**✨ 추가 · New**
+
+- 지도에 모든 지역 핀(다이코쿠 PA·하코네·자마 해바라기 밭·우미호타루 등)과 자마 지역 도로·건물<br><sub>Pins for every region on the map (Daikoku PA, Hakone, Zama sunflower fields, Umihotaru …) and the Zama streets and buildings</sub>
+
+**🔧 변경 · Changed**
+
+- 지도(M): 일본 전체가 보이는 상태로 열리고 1.6초 동안 내 위치로 확대(휠·터치하면 멈춤)<br><sub>Map (M): opens on all of Japan and zooms in to you over 1.6 s (wheel / touch stops it)</sub>
+- 성능: 지도 그리기 11ms → 1ms (화면 밖 도로 생략, 경로 캐시) — 지도를 열어도 프레임 유지<br><sub>Performance: map drawing 11 ms → 1 ms (off-screen roads skipped, cached paths) — the frame rate holds with the map open</sub>
+
+**🐞 수정 · Fixed**
+
+- 지도에서 고속도로 데이터 밖 지역(자마·하코네 가는 길 등)이 바다처럼 보이던 문제 — 모든 확대 단계에서 일본 땅과 도도부현 경계, 땅·바다 대비 강화<br><sub>Areas beyond the expressway data (Zama, the road to Hakone …) looked like sea on the map — Japan’s land and prefecture borders now show at every zoom, with clearer land / sea contrast</sub>
 
 ---
 
