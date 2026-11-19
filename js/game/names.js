@@ -44,3 +44,6 @@ export function reading(ja) {
 }
 /** 「鶴見区 · 쓰루미구」 style label: Japanese first, then the reading */
 export function bilingual(ja) { const r = reading(ja); return r ? `${ja}  ${r}` : ja; }
+
+/** v2.14: the romaji / English on real road signs (guide boards, intersection plates) — '' when unknown */
+export function romaji(ja) { return (N[ja]?.[1] || one(ja, 1) || '').replace(/ (Ward|Station)$/, m => m); }

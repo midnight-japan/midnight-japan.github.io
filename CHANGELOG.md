@@ -1,9 +1,10 @@
 # 📜 MIDNIGHT JAPAN 업데이트 기록 · Changelog
 
-현재 버전 · Current: **v2.14.2** · [▶ 웹에서 플레이](https://midnight-japan.github.io/) · [🌐 업데이트 페이지](https://midnight-japan.github.io/changelog.html)
+현재 버전 · Current: **v2.14.3** · [▶ 웹에서 플레이](https://midnight-japan.github.io/) · [🌐 업데이트 페이지](https://midnight-japan.github.io/changelog.html)
 
 | 버전 | 날짜 | 이름 | 요약 |
 |---|---|---|---|
+| [v2.14.3](#v2143--signposted-2026-11-20) | 2026-11-20 | Signposted | 도심 교차로 표지가 반대 차선에 있던 큰 버그 수정(정지선·止まれ·신호등·횡단보도·속도·일방통행 표지가 이제 내 차선 왼쪽에), 국도·현도에 파란 방면 안내 표지판과 교차로 이름판 추가. |
 | [v2.14.2](#v2142--straight-lines-2026-11-20) | 2026-11-20 | Straight Lines | 꼬부랑 차선 수정(차선이 도로 곡선을 정확히 따라감, 도로 중심선의 잔떨림 제거), 고가도로 벽을 뚫고 옆 고가로 넘어가던 문제 수정. |
 | [v2.14.1](#v2141--whole-japan-map-2026-11-20) | 2026-11-20 | Whole Japan Map | 인게임 지도가 일본 전체로 열린 뒤 내 위치로 확대, 모든 확대 단계에서 일본 땅·도도부현 경계 표시, 추가된 모든 지역에 핀, 자마 지역 도로까지 지도에, 지도 그리기 10배 빠르게. |
 | [v2.14.0](#v2140--open-road-2026-11-20) | 2026-11-20 | Open Road | 투명벽 제거(보이는 벽·건물·물·고가/터널 벽에서만 막힘), 주유소 직원 상주, NPC 트럭 실제 크기, 해바라기 밭을 멀리서도 보이게. |
@@ -69,6 +70,22 @@
 | [v0.2.0](#v020--bayshore-2026-11-05) | 2026-11-05 | Bayshore | 수도고속 완간선을 따라 하네다까지, 도쿄만 아쿠아라인 해저터널을 지나 우미호타루 PA까지. 실제 3D 차량 모델과 열리는 보닛도 들어왔어요. |
 | [v0.1.1](#v011--one-click-2026-11-04) | 2026-11-04 | One Click | 링크 하나로 바로 플레이. 크롬에서 공식 사이트 주소만 열면 설치 없이 실행돼요. |
 | [v0.1.0](#v010--first-meet-2026-11-04) | 2026-11-04 | First Meet | 첫 공개 버전. 다이코쿠 JCT·PA와 다이코쿠 부두 일대를 3D로 구현했습니다. |
+
+---
+
+## v2.14.3 — Signposted (2026-11-20)
+
+> 도심 교차로 표지가 반대 차선에 있던 큰 버그 수정(정지선·止まれ·신호등·횡단보도·속도·일방통행 표지가 이제 내 차선 왼쪽에), 국도·현도에 파란 방면 안내 표지판과 교차로 이름판 추가.
+> Fixed a big bug that put city junction markings in the oncoming lane (stop lines, 止まれ, signals, crossing / speed / one-way signs now on your own, left-hand side); blue overhead direction boards and intersection name plates on main roads.
+
+**✨ 추가 · New**
+
+- 방면 안내 표지판(方面看板): 국도·현도의 신호 교차로 약 45m 앞, 왼쪽 기둥에서 차로 위로 뻗은 파란 표지 — 직진·좌·우 화살표와 그 방향의 실제 지명(한자 + 로마자)<br><sub>Direction boards (方面看板): ~45 m before signalled junctions on main roads, a blue board cantilevered over the lanes from the left kerb — straight / left / right arrows with the real place names in each direction (kanji + romaji)</sub>
+- 교차로 이름판(交差点名): 신호 교차로 모서리 기둥에 파란 이름판(동네 이름 + 로마자)<br><sub>Intersection name plates: a blue plate with the district name (and romaji) on a pole at the corner of signalled junctions</sub>
+
+**🐞 수정 · Fixed**
+
+- 도심 교차로: 정지선·「止まれ」·일시정지 표지·신호등 기둥·횡단보도 표지·차선 화살표·◇ 표시·속도 표지·일방통행·통학로 표지가 모두 반대(오른쪽) 차선에 그려지던 문제 → 일본처럼 진행 방향 왼쪽에<br><sub>City junctions: stop lines, 止まれ, stop signs, signal poles, crossing signs, lane arrows, ◇ markings, speed / one-way / school-route signs were all drawn on the opposite (right) side → now on the left of your direction of travel, as in Japan</sub>
 
 ---
 

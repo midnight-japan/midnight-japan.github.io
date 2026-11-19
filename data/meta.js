@@ -1,8 +1,17 @@
 // Shared game metadata: version, changelog, regions. Update VERSION + CHANGELOG on every release.
-export const GAME = { title: 'MIDNIGHT JAPAN', titleJa: 'ミッドナイト・ジャパン', version: '2.14.2', build: '2026.11.18' };
+export const GAME = { title: 'MIDNIGHT JAPAN', titleJa: 'ミッドナイト・ジャパン', version: '2.14.3', build: '2026.11.18' };
 
 // Newest first. type: new | change | fix | known
 export const CHANGELOG = [
+  {
+    version: '2.14.3', date: '2026-11-20', codename: 'Signposted',
+    summary: { ko: '도심 교차로 표지가 반대 차선에 있던 큰 버그 수정(정지선·止まれ·신호등·횡단보도·속도·일방통행 표지가 이제 내 차선 왼쪽에), 국도·현도에 파란 방면 안내 표지판과 교차로 이름판 추가.', ja: '街の交差点の標示が対向車線にあった大きなバグを修正（停止線・止まれ・信号・横断歩道・速度・一方通行の標識が自分の車線の左側に）、国道・県道に青い方面看板と交差点名標識を追加。', en: 'Fixed a big bug that put city junction markings in the oncoming lane (stop lines, 止まれ, signals, crossing / speed / one-way signs now on your own, left-hand side); blue overhead direction boards and intersection name plates on main roads.' },
+    items: [
+      { type: 'fix', ko: '도심 교차로: 정지선·「止まれ」·일시정지 표지·신호등 기둥·횡단보도 표지·차선 화살표·◇ 표시·속도 표지·일방통행·통학로 표지가 모두 반대(오른쪽) 차선에 그려지던 문제 → 일본처럼 진행 방향 왼쪽에', ja: '街の交差点：停止線・「止まれ」・一時停止標識・信号柱・横断歩道標識・車線の矢印・◇・速度標識・一方通行・通学路標識がすべて反対（右）車線に描かれていた問題 → 日本どおり進行方向の左側に', en: 'City junctions: stop lines, 止まれ, stop signs, signal poles, crossing signs, lane arrows, ◇ markings, speed / one-way / school-route signs were all drawn on the opposite (right) side → now on the left of your direction of travel, as in Japan' },
+      { type: 'new', ko: '방면 안내 표지판(方面看板): 국도·현도의 신호 교차로 약 45m 앞, 왼쪽 기둥에서 차로 위로 뻗은 파란 표지 — 직진·좌·우 화살표와 그 방향의 실제 지명(한자 + 로마자)', ja: '方面看板：国道・県道の信号交差点の約45m手前、左の柱から車線上へ張り出す青い標識 — 直進・左・右の矢印とその方向の実在の地名（漢字＋ローマ字）', en: 'Direction boards (方面看板): ~45 m before signalled junctions on main roads, a blue board cantilevered over the lanes from the left kerb — straight / left / right arrows with the real place names in each direction (kanji + romaji)' },
+      { type: 'new', ko: '교차로 이름판(交差点名): 신호 교차로 모서리 기둥에 파란 이름판(동네 이름 + 로마자)', ja: '交差点名標識：信号交差点の角の柱に青い名称板（町名＋ローマ字）', en: 'Intersection name plates: a blue plate with the district name (and romaji) on a pole at the corner of signalled junctions' },
+    ],
+  },
   {
     version: '2.14.2', date: '2026-11-20', codename: 'Straight Lines',
     summary: { ko: '꼬부랑 차선 수정(차선이 도로 곡선을 정확히 따라감, 도로 중심선의 잔떨림 제거), 고가도로 벽을 뚫고 옆 고가로 넘어가던 문제 수정.', ja: 'くねくねした車線を修正（車線が道路のカーブに正確に沿う、道路中心線の細かな揺れを除去）、高架の壁を抜けて隣の高架へ移れた問題を修正。', en: 'Wavy lane lines fixed (markings follow the road curve exactly, the jitter in road centrelines is smoothed out); cars no longer slip through a viaduct wall onto the neighbouring deck.' },

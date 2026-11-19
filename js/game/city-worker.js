@@ -191,7 +191,7 @@ function buildTile(T, lod, opts) {
   const ground = {};             // land use class → Flat
   const wires = new Buf(3);
   const trees = new Buf(5);
-  const fuels = [], forecourts = [], synFuel = [], shops = []; // shops: konbini doors x, z, nx, nz (walkers go in / come out)               // x, z, tx, tz, brand per pump island      // x, z, scale, rot, variant
+  const fuels = [], forecourts = [], synFuel = [], shops = [], boards = []; // boards: [type, x, z, nx, nz, w, nArms, (dx, dz)…] blue guide boards (0) / intersection name plates (1) // shops: konbini doors x, z, nx, nz (walkers go in / come out)               // x, z, tx, tz, brand per pump island      // x, z, scale, rot, variant
   const cols = [];               // [x, z, hx, hz, ry, y0, y1]
   const DEC = new Buf(6);        // v2.1 road text + traffic signs: position, atlas uv, back-plate flag
   const lamps = [];              // [x, y, z]
@@ -446,10 +446,10 @@ function buildTile(T, lod, opts) {
       if (dirs.length < 2) continue; // a signal tag with no street through it (meaningless spot): leave it out
       const ph = hash2(Math.round(x * 10), Math.round(z * 10)) * 60; sigs.push(x, z, ph);
       for (const [dx, dz, hw] of dirs.slice(0, 4)) {
-        { const lx0 = dz, lz0 = -dx, qx = x + dx * (hw + 3) + lx0 * (hw + 1), qz = z + dz * (hw + 3) + lz0 * (hw + 1); if (onCarriage(qx, qz, 0.1)) continue; }
+        { const lx0 = -dz, lz0 = dx, qx = x + dx * (hw + 3) + lx0 * (hw + 1), qz = z + dz * (hw + 3) + lz0 * (hw + 1); if (onCarriage(qx, qz, 0.1)) continue; }
         const axis = Math.abs(dx) > Math.abs(dz) ? 0 : 1;
         // approaching traffic moves along −d and keeps left; pole on its left kerb, arm over the lanes
-        const lx = dz, lz = -dx; // left of a car travelling −d … (−d rotated) → pick the kerb on that side
+        const lx = -dz, lz = dx; // v2.14: the REAL left of a car travelling −d (x east, z south) — signals were on the right kerb
         const px = x + dx * (hw + 3) + lx * (hw + 1), pz = z + dz * (hw + 3) + lz * (hw + 1);
         const GREY = [0.55, 0.57, 0.58];
         pm.cyl(px, pz, 0, 6.2, 0.13, 6, GREY, [PLAIN, 0, 0, 0]);
@@ -526,8 +526,27 @@ function buildTile(T, lod, opts) {
       }
       if (ap.length < 3) continue;
       const signal = sigAt(jx, jz), minCls = Math.min(...ap.map(a => a.st.cls)), maxHw = Math.max(...ap.map(a => a.st.w / 2));
+      // v2.14: 方面看板 — the blue overhead direction board ~45 m before a signalled junction on main roads (国道・県道),
+      // on a cantilever pole at the left kerb; and the blue 交差点名 name plate on the signal pole at the corner
+      if (signal && near) {
+        let plate = false;
+        for (const a of ap) { const st = a.st, hw = st.w / 2; if (st.cls > S.SECONDARY || st.cls === S.PED || hw < 3 || (st.flags & 21)) continue;
+          const lx = -a.dz, lz = a.dx;
+          if (!plate) { const px = jx + a.dx * (hw + 2.2) + lx * (hw + 0.9), pz = jz + a.dz * (hw + 2.2) + lz * (hw + 0.9);
+            if (!onCarriage(px, pz, 0.2)) { plate = true; pm.cyl(px, pz, 0, 5.2, 0.09, 8, [0.72, 0.74, 0.76], [PLAIN, 0, 0, 0]); cols.push([px, pz, 0.15, 0.15, 0, -1, 5.2]); boards.push(1, +px.toFixed(1), +pz.toFixed(1), a.dx, a.dz, 1.7, 0); } }
+          if (a.len < 55) continue;
+          const back = Math.min(a.len - 8, 45), bx0 = jx + a.dx * (hw + back), bz0 = jz + a.dz * (hw + back);
+          const px = bx0 + lx * (hw + 1.1), pz = bz0 + lz * (hw + 1.1); if (onCarriage(px, pz, 0.3) || nearJunction(bx0, bz0, hw + 8)) continue;
+          const bw = Math.min(4.6, Math.max(3.2, hw + 0.4)), cx = bx0 + lx * (hw - bw / 2 + 0.4), cz = bz0 + lz * (hw - bw / 2 + 0.4);
+          const arms = ap.filter(o => o !== a && o.st.cls !== S.PED); if (arms.length < 1) continue;
+          pm.cyl(px, pz, 0, 7.3, 0.17, 10, [0.74, 0.76, 0.78], [PLAIN, 0, 0, 0]); cols.push([px, pz, 0.3, 0.3, 0, -1, 7.3]);
+          { const ex = cx - lx * (bw / 2 - 0.3), ez = cz - lz * (bw / 2 - 0.3), L = Math.hypot(ex - px, ez - pz) || 1; for (const yy of [6.35, 7.05]) pm.box((px + ex) / 2 - a.dx * 0.22, yy, (pz + ez) / 2 - a.dz * 0.22, (ex - px) / L, (ez - pz) / L, L / 2, 0.07, 0.07, [0.74, 0.76, 0.78], [PLAIN, 0, 0, 0]); } // arms run behind the board
+          pm.box(cx - a.dx * 0.06, 6.7, cz - a.dz * 0.06, lx, lz, bw / 2 + 0.05, 0.04, bw * 0.27 + 0.05, [0.62, 0.64, 0.66], [PLAIN, 0, 0, 0]); // back plate
+          boards.push(0, +cx.toFixed(1), +cz.toFixed(1), a.dx, a.dz, +bw.toFixed(2), arms.length, ...arms.flatMap(o => [+o.dx.toFixed(3), +o.dz.toFixed(3)]));
+        }
+      }
       for (const a of ap) {
-        const st = a.st, hw = st.w / 2, lx = a.dz, lz = -a.dx; // left of a car travelling −d (towards the junction)
+        const st = a.st, hw = st.w / 2, lx = -a.dz, lz = a.dx; // v2.14: the real left of a car travelling −d (stop lines, 止まれ, signs were in the oncoming lane)
         if (st.cls === S.PED || hw < 1.6) continue;
         if (signal) {
           // 横断歩道 sign beside the crossing, and straight-ahead lane arrows before the stop line (wide approaches)
@@ -574,18 +593,18 @@ function buildTile(T, lod, opts) {
         const laneLat = st.flags & 2 ? 0 : hw / 2; // to the left of travel
         // painted speed number + a speed-limit sign
         if (speed) for (let s = 45 + seed * 60; s < acc - 30; s += st.cls <= S.SECONDARY ? 320 : 400) {
-          const ss = dir > 0 ? s : acc - s, [x, z, tx, tz] = at(ss), fx = tx * dir, fz = tz * dir, lx = -fz, lz = fx;
+          const ss = dir > 0 ? s : acc - s, [x, z, tx, tz] = at(ss), fx = tx * dir, fz = tz * dir, lx = fz, lz = -fx;
           const cx = x + lx * laneLat, cz = z + lz * laneLat; if (!onStreet(cx, cz, st)) continue;
           decal(cx, cz, -fx, -fz, Math.min(1.6, st.w / 2 - 0.3), 3.6, txtUV(TXT[speed]));
           const px = x + lx * (hw + (st.flags & 8 ? 2.2 : 0.6)), pz = z + lz * (hw + (st.flags & 8 ? 2.2 : 0.6));
           const sd = segs.dist(px, pz); if (!sd || sd.d > sd.s.w / 2 + 0.3) signPost(px, pz, -fx, -fz, SGN['s' + speed] ?? SGN.s40, 0.6, 2.5);
         }
         // 駐車禁止 signs along arterials, 一方通行 at the start of one-way streets
-        if (st.cls <= S.SECONDARY) for (let s = 120 + seed * 80; s < acc - 60; s += 260) { const ss = dir > 0 ? s : acc - s, [x, z, tx, tz] = at(ss), fx = tx * dir, fz = tz * dir, lx = -fz, lz = fx, o = hw + (st.flags & 8 ? 2.4 : 0.7); const px = x + lx * o, pz = z + lz * o; if (!onCarriage(px, pz, 0.2)) signPost(px, pz, -fx, -fz, SGN.nopark, 0.6, 2.6); }
-        if (st.flags & 2 && dir > 0 && acc > 30) { const [x, z, tx, tz] = at(6), lx = -tz, lz = tx, px = x + lx * (hw + 0.7), pz = z + lz * (hw + 0.7); if (!onCarriage(px, pz, 0.2)) signPost(px, pz, tz, -tx, SGN.oneway, 0.7, 2.6); } // parallel to the street, arrow along the travel direction
+        if (st.cls <= S.SECONDARY) for (let s = 120 + seed * 80; s < acc - 60; s += 260) { const ss = dir > 0 ? s : acc - s, [x, z, tx, tz] = at(ss), fx = tx * dir, fz = tz * dir, lx = fz, lz = -fx, o = hw + (st.flags & 8 ? 2.4 : 0.7); const px = x + lx * o, pz = z + lz * o; if (!onCarriage(px, pz, 0.2)) signPost(px, pz, -fx, -fz, SGN.nopark, 0.6, 2.6); }
+        if (st.flags & 2 && dir > 0 && acc > 30) { const [x, z, tx, tz] = at(6), lx = tz, lz = -tx, px = x + lx * (hw + 0.7), pz = z + lz * (hw + 0.7); if (!onCarriage(px, pz, 0.2)) signPost(px, pz, tz, -tx, SGN.oneway, 0.7, 2.6); } // parallel to the street, arrow along the travel direction
         // blue bicycle arrows (自転車ナビマーク) along the left edge of arterials
         if (st.cls <= S.TERTIARY && st.w >= 9) for (let s = 12; s < acc - 12; s += 22) {
-          const ss = dir > 0 ? s : acc - s, [x, z, tx, tz] = at(ss), fx = tx * dir, fz = tz * dir, lx = -fz, lz = fx, o = hw - 0.75;
+          const ss = dir > 0 ? s : acc - s, [x, z, tx, tz] = at(ss), fx = tx * dir, fz = tz * dir, lx = fz, lz = -fx, o = hw - 0.75;
           const cx = x + lx * o, cz = z + lz * o, BLUE = [0.1, 0.34, 0.8];
           bar(cx - fx * 0.9, cz - fz * 0.9, cx + fx * 0.3, cz + fz * 0.3, 0.22, BLUE, yCol + 0.004);
           bar(cx + fx * 0.75 + lx * 0.02, cz + fz * 0.75 + lz * 0.02, cx + fx * 0.2 + lx * 0.38, cz + fz * 0.2 + lz * 0.38, 0.18, BLUE, yCol + 0.004);
@@ -599,7 +618,7 @@ function buildTile(T, lod, opts) {
           paint.quad([ax + nx * o0, yCol, az + nz * o0], [bx + nx * o0, yCol, bz + nz * o0], [bx + nx * o1, yCol, bz + nz * o1], [ax + nx * o1, yCol, az + nz * o1], [0.24, 0.6, 0.34]);
         }
         if (nearSchool) for (const dir of dirs) { const ss = dir > 0 ? acc * 0.35 : acc * 0.65, [x, z, tx, tz] = at(ss); decal(x, z, -tx * dir, -tz * dir, Math.min(2, st.w - 2.4), 5.2, txtUV(TXT['通学路'])); }
-        if (nearSchool) { const [x, z, tx, tz] = at(Math.min(acc - 5, 20)); signPost(x - tz * (hw + 0.5), z + tx * (hw + 0.5), -tx, -tz, SGN.school, 0.8, 2.6); }
+        if (nearSchool) { const [x, z, tx, tz] = at(Math.min(acc - 5, 20)); signPost(x + tz * (hw + 0.5), z - tx * (hw + 0.5), -tx, -tz, SGN.school, 0.8, 2.6); }
       }
     }
   }
@@ -1014,7 +1033,7 @@ function buildTile(T, lod, opts) {
   }
   const mask = mid ? buildMask(T, streets, forecourts) : null;
   const landR = buildLand(T, streets, OX, OZ, landF);
-  const out = { dec: DEC.out(), mask, landR, runways, gates, rails, stations, fuels, synFuel, shops, fuelWhy: self.__fuelWhy, net, sigs, land: landF.out(), bm: bm.out(), pm: pm.out(), gm: gm.out(), sg: sg.out(), road: road.out(), walk: walk.out(), paint: paint.out(), wires: wires.out(), trees: trees.out(), cols, lamps, water, bridges, ground: {} };
+  const out = { dec: DEC.out(), mask, landR, runways, gates, rails, stations, fuels, synFuel, shops, boards, fuelWhy: self.__fuelWhy, net, sigs, land: landF.out(), bm: bm.out(), pm: pm.out(), gm: gm.out(), sg: sg.out(), road: road.out(), walk: walk.out(), paint: paint.out(), wires: wires.out(), trees: trees.out(), cols, lamps, water, bridges, ground: {} };
   for (const c in ground) out.ground[c] = ground[c].out();
   return out;
 }

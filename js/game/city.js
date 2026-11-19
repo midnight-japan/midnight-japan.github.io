@@ -5,6 +5,7 @@
 // handful of draw calls. Map data © OpenStreetMap contributors (ODbL 1.0).
 import * as THREE from 'three';
 import { SUNFLOWER_FIELDS } from '../../data/sunflowers.js';
+import { RoadBoards } from './roadboards.js';
 import { speciesGeos, floraMaterial, speciesAt, speciesColor, registerTrees, forgetTrees } from './flora.js';
 import { surface, weather } from './textures.js';
 import { MAP } from './roads.js';
@@ -342,6 +343,7 @@ export class City {
     const U = this.uniforms;
     this.mBld = buildingMaterial(U);
     this.mProp = new THREE.MeshStandardMaterial({ vertexColors: true, roughness: 0.6, metalness: 0.25 });
+    this.boards = new RoadBoards(); // v2.14: blue direction boards + intersection name plates
     this.mGlow = glowMaterial(U);
     this.atlas = makeAtlas();
     { const rt = makeRoadAtlas(); this.mDecal = new THREE.MeshStandardMaterial({ map: rt, emissive: 0xffffff, emissiveMap: rt, emissiveIntensity: 0.06, roughness: 0.7, alphaTest: 0.45, side: THREE.DoubleSide, polygonOffset: true, polygonOffsetFactor: -6, polygonOffsetUnits: -6 });
@@ -465,7 +467,9 @@ export class City {
         im.castShadow = shadows && sp !== 'far'; im.receiveShadow = false; im.computeBoundingSphere(); grp.add(im);
       }
     }
+    let bKeys = null; if (o.boards?.length) { try { const r = this.boards.build(o.boards, ox, oz); bKeys = r.keys; if (r.mesh) { r.mesh.position.set(-ox, 0, -oz); r.mesh.receiveShadow = true; grp.add(r.mesh); } } catch (e) { console.warn('boards', e); } }
     // swap in
+    this.boards.release(t.bKeys); t.bKeys = bKeys;
     if (t.group) { forgetTrees(t.group); this.group.remove(t.group); disposeGroup(t.group); }
     this.unindex(t);
     t.group = grp; t.lod = lod; t.pending = undefined; t.mask = o.mask || null; t.landR = o.landR || null;
@@ -493,6 +497,7 @@ export class City {
   }
   unload(k) {
     const t = this.tiles.get(k); if (!t) return;
+    this.boards.release(t.bKeys); t.bKeys = null;
     if (t.group) { forgetTrees(t.group); this.group.remove(t.group); disposeGroup(t.group); }
     this.unindex(t); this.tiles.delete(k); this.net?.remove(k); this.rail.remove(k);
     this.queue = this.queue.filter(e => e.k !== k);
