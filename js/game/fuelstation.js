@@ -15,7 +15,36 @@ const L3 = (ko, ja, en) => ({ ko, ja })[getLang()] || en;
 const FUEL_NAME = { regular: () => L3('레귤러', 'レギュラー', 'Regular'), high: () => L3('하이옥', 'ハイオク', 'High-octane'), diesel: () => L3('경유', '軽油', 'Diesel') };
 
 export class FuelStation {
-  constructor(game) { this.g = game; this.job = null; this.el = null; }
+  constructor(game) { this.g = game; this.job = null; this.el = null; this.res = new Map(); this.resT = 0; }
+  // v2.14: attendants are ALWAYS at the station (常駐) — one or two per station near you, standing at the office door
+  // or on the forecourt, looking out for customers, greeting cars that pull in; the full-service job uses one of them
+  outfit(brand, seed) { let r = seed; const rnd = () => ((r = (r * 16807) % 2147483647) / 2147483647); const o = randomOutfit(rnd); o.top = 'racing_jacket'; o.hair = 'cap'; o.topColor = ['#d4421a', '#1d5fbf', '#c81e2a', '#1d8a4a'][brand % 4]; o.accentColor = '#f2f2ee'; o.bottom = 'chinos'; o.bottomColor = '#1b1f26'; o.accessory = 'none'; return o; }
+  tick(dt, focus) {
+    const g = this.g, C = g.world.city; if (!C || !focus) return;
+    if ((this.resT -= dt) <= 0) { this.resT = 1;
+      const want = new Map(); for (const t of C.tiles.values()) for (const f of t.fuels || []) { if (f.ox === undefined || Math.hypot(f.x - focus.x, f.z - focus.z) > 230) continue; const k = Math.round(f.ox) + ',' + Math.round(f.oz); if (!want.has(k)) want.set(k, f); }
+      for (const [k, r] of this.res) if (!want.has(k) && !r.busy) { g.scene.remove(r.h.object); try { r.h.dispose(); } catch {} this.res.delete(k); }
+      for (const [k, f] of want) if (!this.res.has(k)) { const seed = Math.abs(Math.round(f.ox * 7 + f.oz * 13)) + 1;
+        let h; try { h = createHuman(this.outfit(f.brand, seed)); } catch { continue; }
+        // stands just outside the office door, a little towards the pumps
+        const dx = f.x - f.ox, dz = f.z - f.oz, L = Math.hypot(dx, dz) || 1, home = new THREE.Vector3(f.ox + dx / L * 1.2, 0.05, f.oz + dz / L * 1.2);
+        const r = { h, f, home, pos: home.clone(), yaw: Math.atan2(dx, dz), act: 'idle', actT: 0, target: null, wait: 3 + (seed % 5), seed };
+        h.object.position.copy(home); g.scene.add(h.object); this.res.set(k, r); }
+    }
+    const v = g.vehicle;
+    for (const r of this.res.values()) { if (r.busy) continue;
+      let speed = 0, act = 'idle';
+      // a car rolling onto the forecourt: turn to it and wave it in (「いらっしゃいませー！」 once)
+      if (v && g.mode === 'drive') { const d = Math.hypot(v.pos.x - r.f.x, v.pos.z - r.f.z); if (d < 16 && Math.abs(v.kmh) < 25) { r.yaw = Math.atan2(v.pos.x - r.pos.x, v.pos.z - r.pos.z); if (!r.greeted) { r.greeted = true; r.actT = 2.2; } } else if (d > 40) r.greeted = false; }
+      if (r.actT > 0) { r.actT -= dt; act = 'wave'; }
+      else if (r.target) { const d = r.target.clone().sub(r.pos); d.y = 0; const L = d.length(); if (L < 0.2) { r.target = null; r.wait = 4 + Math.random() * 8; } else { r.pos.addScaledVector(d, Math.min(1, 1.1 * dt / L)); r.yaw = Math.atan2(d.x, d.z); speed = 1.1; act = 'walk'; } }
+      else if ((r.wait -= dt) <= 0) { // tidy the forecourt: walk to an island and back to the door
+        const f = r.f; r.target = Math.random() < 0.5 ? r.home.clone() : new THREE.Vector3(f.x + (Math.random() - 0.5) * 3 * f.tx - f.tz * 1.6, 0.05, f.z + (Math.random() - 0.5) * 3 * f.tz + f.tx * 1.6); }
+      const d2 = (r.pos.x - focus.x) ** 2 + (r.pos.z - focus.z) ** 2; r.h.object.visible = d2 < 200 * 200;
+      r.h.object.position.copy(r.pos); r.h.object.rotation.y = r.yaw; if (r.h.object.visible) { try { r.h.update(dt, { speed, action: act }); } catch {} }
+    }
+  }
+  resident(f) { let best = null, bd = 40; for (const r of this.res.values()) { if (r.busy) continue; const d = Math.hypot(r.pos.x - f.x, r.pos.z - f.z); if (d < bd) { bd = d; best = r; } } return best; }
   // the fuel a car takes: diesel engines (codes with a 'D'/'4M41'/'4JJ1' etc.), premium for sports engines, else regular
   fuelFor(car) {
     const c = car.engine?.code || '';
@@ -33,14 +62,15 @@ export class FuelStation {
     const g = this.g, v = g.vehicle, car = v.car, want = this.fuelFor(car);
     if (!want) { g.ui.toast(L3('전기차는 충전소를 이용하세요', '電気自動車は充電スタンドへ', 'EVs charge at a charging station'), 'info', 3); return; }
     v.handbrakeOn = true;
-    const o = randomOutfit(); o.top = 'racing_jacket'; o.hair = 'cap'; o.topColor = ['#d4421a', '#1d5fbf', '#c81e2a', '#1d8a4a'][f.brand % 4]; // station uniform + cap
-    let h; try { h = createHuman(o); } catch { h = null; }
+    const R = this.resident(f); let h = R?.h || null; if (R) R.busy = true; // the attendant who is already on duty
+    if (!h) { try { h = createHuman(this.outfit(f.brand, 1 + Math.floor(Math.random() * 9999))); } catch { h = null; } }
     const nx = -f.tz, nz = f.tx; // office side
     const office = f.ox !== undefined ? new THREE.Vector3(f.ox, v.pos.y, f.oz) : new THREE.Vector3(f.x + nx * 7 + f.tx * 6, v.pos.y, f.z + nz * 7 + f.tz * 6);
     // the filler is on the car's left rear on most JDM cars (the attendant stands there)
     const yw = v.yaw, side = 1, fill = new THREE.Vector3(v.pos.x + Math.cos(yw) * 1.25 * side - Math.sin(yw) * (car.L / 2000 - 0.9), v.pos.y, v.pos.z - Math.sin(yw) * 1.25 * side - Math.cos(yw) * (car.L / 2000 - 0.9));
-    if (h) { h.object.position.copy(office); g.scene.add(h.object); }
-    this.job = { f, h, stage: 'come', t: 0, want, fill, office, pos: office.clone(), litres: 0, target: 0, yaw: 0 };
+    const p0 = R ? R.pos.clone() : office.clone();
+    if (h && !R) { h.object.position.copy(office); g.scene.add(h.object); }
+    this.job = { f, h, R, stage: 'come', t: 0, want, fill, office, pos: p0, litres: 0, target: 0, yaw: 0 };
     g.audio?.speak?.('いらっしゃいませー！', 'ja-JP', { role: 'male' });
     g.ui.toast('「いらっしゃいませー！」', 'info', 2.5);
   }
@@ -68,7 +98,8 @@ export class FuelStation {
   }
   finish(cancel = false) {
     const g = this.g, j = this.job; if (!j) return; this.el?.remove(); this.el = null;
-    if (j.h) { g.scene.remove(j.h.object); try { j.h.dispose(); } catch {} }
+    if (j.R) { j.R.busy = false; j.R.pos.copy(j.pos); j.R.target = j.R.home.clone(); j.R.greeted = true; } // back to the office door
+    else if (j.h) { g.scene.remove(j.h.object); try { j.h.dispose(); } catch {} }
     if (g.vehicle) g.vehicle.handbrakeOn = false;
     this.job = null; if (cancel) g.ui.toast(L3('주유를 취소했어요', '給油をやめました', 'Refuelling cancelled'), 'info', 2);
   }

@@ -1,8 +1,18 @@
 // Shared game metadata: version, changelog, regions. Update VERSION + CHANGELOG on every release.
-export const GAME = { title: 'MIDNIGHT JAPAN', titleJa: 'ミッドナイト・ジャパン', version: '2.13.11', build: '2026.11.18' };
+export const GAME = { title: 'MIDNIGHT JAPAN', titleJa: 'ミッドナイト・ジャパン', version: '2.14.0', build: '2026.11.18' };
 
 // Newest first. type: new | change | fix | known
 export const CHANGELOG = [
+  {
+    version: '2.14.0', date: '2026-11-20', codename: 'Open Road',
+    summary: { ko: '투명벽 제거(보이는 벽·건물·물·고가/터널 벽에서만 막힘), 주유소 직원 상주, NPC 트럭 실제 크기, 해바라기 밭을 멀리서도 보이게.', ja: '見えない壁を撤去（見える壁・建物・水・高架/トンネルの壁でのみ止まる）、ガソリンスタンドに店員が常駐、NPCトラックを実寸に、ひまわり畑を遠くからも見えるように。', en: 'No more invisible walls (only visible walls, buildings, water and viaduct / tunnel sides stop you), attendants always on duty at fuel stations, NPC trucks at real size, sunflower fields visible from afar.' },
+    items: [
+      { type: 'fix', ko: '투명벽 제거: 지도상 도로·주차장 밖이라도 빈 땅이면 들어갈 수 있음 — 건물·펜스·기둥(충돌체), 바다·강, 고가 위(난간)와 터널 안(벽)에서만 막힘', ja: '見えない壁を撤去：地図の道路・駐車場の外でも空き地なら入れる — 建物・フェンス・柱（当たり判定）、海・川、高架の上（欄干）とトンネル内（壁）でのみ止まる', en: 'Invisible walls removed: open ground off the mapped streets and car parks is now drivable — only buildings, fences and poles (their colliders), the sea and rivers, viaduct parapets and tunnel walls stop you' },
+      { type: 'new', ko: '주유소 직원 상주: 주변 주유소마다 직원이 항상 사무실 앞에 서 있고, 주유 공간을 오가며, 차가 들어오면 돌아보고 손짓 — 주유하면 그 직원이 응대하고 끝나면 사무실 앞으로 돌아감', ja: 'ガソリンスタンドに店員が常駐：事務所の前に立ち、給油スペースを行き来し、車が入ると振り向いて手招き — 給油はその店員が対応し、終わると事務所前へ戻る', en: 'Fuel-station attendants are always on duty: standing at the office door, walking the forecourt, turning and waving cars in — the same attendant serves you and walks back to the door afterwards' },
+      { type: 'fix', ko: 'NPC 트럭(이스즈 엘프 탑차)이 4.7m로 줄어 있던 문제 → 실제 3톤 탑차 크기(길이 6.6m·높이 2.35m)', ja: 'NPCトラック（いすゞエルフ箱車）が4.7mに縮んでいた問題 → 実際の3トン箱車サイズ（全長6.6m・全高2.35m）', en: 'NPC trucks (Isuzu Elf box truck) were shrunk to 4.7 m → real 3-tonne box-truck size (6.6 m long, 2.35 m tall)' },
+      { type: 'change', ko: '해바라기 밭: 밭 가장자리를 따라 해바라기 띠, 꽃밭 면 양면 표시, 6km 밖에서도 표시', ja: 'ひまわり畑：畑の縁に沿ってひまわりの帯、花畑の面を両面表示、6km先からも表示', en: 'Sunflower fields: a band of sunflowers along the field edges, the flower surface shown from both sides, drawn from 6 km away' },
+    ],
+  },
   {
     version: '2.13.11', date: '2026-11-18', codename: 'Himawari',
     summary: { ko: '새 지역: 자마 해바라기 밭(가나가와현 자마시, 사가미강) — 실제 밭 모양에 약 2m 해바라기가 줄지어 동쪽을 향하고, 계절 따라 새싹·만개·마른 씨앗·맨흙으로. 주변 7km 마을 도로·건물도 실제 지도로. 보행자가 편의점에 들어가고 나옴.', ja: '新エリア：座間ひまわり畑（神奈川県座間市・相模川） — 実際の畑の形に約2mのひまわりが列になって東を向き、季節で芽・満開・枯れた種・裸の土に。周り7kmの町の道路・建物も実在の地図で。歩行者がコンビニに出入り。', en: 'New area: the Zama sunflower fields (Zama, Kanagawa, on the Sagami River) — ~2 m sunflowers in rows facing east on the real plots, changing with the season (young plants, full bloom, dry seed heads, bare soil), plus 7 km of the surrounding town from the real map. Pedestrians now go in and out of konbini.' },

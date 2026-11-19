@@ -359,7 +359,7 @@ const ALL_CARS = [
   { id: 'elf', maker: 'Isuzu', name: 'Elf', chassis: 'NPR', year: 2015, cat: 'traffic', playable: false,
     engine: { type: 'I4', code: '4JJ1', disp: 2999, hp: 150, nm: 375, redline: 3600, idle: 650, turbo: true },
     trans: { type: 'MT', gears: [3.321, 1.902, 1.308, 1.0, 0.759], final: 4.1, rev: 3.38 }, drive: 'FR',
-    mass: 2600, L: 4690, W: 1695, H: 2250, wb: 2490, plate: 'commercial',
+    mass: 2600, L: 6600, W: 2000, H: 2350, wb: 2490, plate: 'commercial',
     colors: ['#f1f1ee', '#2e5a8a', '#4a8a4a'],
     desc: { ko: '일본 도로의 소형 트럭.', ja: '日本の道の小型トラック。', en: 'The small truck on every Japanese road.' } },
   { id: 'nsx2', maker: 'Honda', name: 'NSX', chassis: 'NC1', year: 2017, cat: 'jdm', playable: true,

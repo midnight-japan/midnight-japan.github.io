@@ -1412,7 +1412,7 @@
    1.728,
    1.648
   ],
-  "notes": "v2.12: normalised by tools (metres, +z forward, wheels split into wheel_* nodes, simplified 304k→133k tris, WebP textures, meshopt). Right-hand drive with full cabin (steering wheel, speedometer, seats).",
+  "notes": "v2.12: normalised by tools (metres, +z forward, wheels split into wheel_* nodes, simplified 304k\u2192133k tris, WebP textures, meshopt). Right-hand drive with full cabin (steering wheel, speedometer, seats).",
   "cockpit": "glb",
   "eye": [
    -0.343,
@@ -1892,14 +1892,14 @@
   "trunk": null,
   "engine": null,
   "bbox": [
-   -0.71,
+   -0.999,
    0,
-   -2.345,
-   0.71,
-   1.667,
-   2.345
+   -3.299,
+   0.999,
+   2.346,
+   3.299
   ],
-  "notes": "v2.13: Sketchfab download, normalised with tools/car-normalize.mjs",
+  "notes": "v2.13: Sketchfab download, normalised with tools/car-normalize.mjs | v2.14: rescaled \u00d71.407 to a 6.6 m 3-tonne box truck (was squashed to 4.69 m)",
   "lo": "elf_lo.glb",
   "loTris": 55924
  },

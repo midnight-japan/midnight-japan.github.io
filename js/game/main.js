@@ -833,6 +833,7 @@ class Game {
     this.world.update(dt, this.env);
     this.world.updateDynamicLights(dt, this.focus, this.env.night);
     try { this.konbiniStaff?.update(dt, this.focus); } catch (e) { console.warn('konbini staff', e); }
+    try { this.fuel?.tick(dt, this.focus); } catch (e) { if (!this._fsWarn) { this._fsWarn = 1; console.warn('fuel staff', e); } }
     try { this.sunflowers?.update(dt, this.camera); } catch (e) { if (!this._sfWarn) { this._sfWarn = 1; console.warn('sunflowers', e); } }
     try { this.wildlife?.update(dt, this.focus, this.env.night ?? 0); } catch (e) { if (!this._wlWarn) { this._wlWarn = 1; console.warn('wildlife', e); } }
     this.world.city?.update(dt, this.focus, this.env.night);

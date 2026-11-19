@@ -1,9 +1,10 @@
 # 📜 MIDNIGHT JAPAN 업데이트 기록 · Changelog
 
-현재 버전 · Current: **v2.13.11** · [▶ 웹에서 플레이](https://midnight-japan.github.io/) · [🌐 업데이트 페이지](https://midnight-japan.github.io/changelog.html)
+현재 버전 · Current: **v2.14.0** · [▶ 웹에서 플레이](https://midnight-japan.github.io/) · [🌐 업데이트 페이지](https://midnight-japan.github.io/changelog.html)
 
 | 버전 | 날짜 | 이름 | 요약 |
 |---|---|---|---|
+| [v2.14.0](#v2140--open-road-2026-11-20) | 2026-11-20 | Open Road | 투명벽 제거(보이는 벽·건물·물·고가/터널 벽에서만 막힘), 주유소 직원 상주, NPC 트럭 실제 크기, 해바라기 밭을 멀리서도 보이게. |
 | [v2.13.11](#v21311--himawari-2026-11-18) | 2026-11-18 | Himawari | 새 지역: 자마 해바라기 밭(가나가와현 자마시, 사가미강) — 실제 밭 모양에 약 2m 해바라기가 줄지어 동쪽을 향하고, 계절 따라 새싹·만개·마른 씨앗·맨흙으로. 주변 7km 마을 도로·건물도 실제 지도로. 보행자가 편의점에 들어가고 나옴. |
 | [v2.13.10](#v21310--next-stop-2026-11-18) | 2026-11-18 | Next Stop | 전철에 승객: 창문이 뚫린 차체와 투명 유리, 형광등이 켜진 실내, 파란 롱시트와 손잡이 봉, 앉고 서 있는 승객 — 출퇴근 시간엔 만원, 심야엔 한산. |
 | [v2.13.9](#v2139--all-japan-2026-11-18) | 2026-11-18 | All Japan | 사이트 지역 페이지를 일본 전체 지도로(도도부현·주요 도시·오키나와 인셋, 플레이 가능 지역과 오사카 예정 표시), 지역마다 명소 일러스트와 「여기서 달리기」 버튼. 다이코쿠 PA 입구·출구에 段差あり 표시와 과속방지턱. |
@@ -66,6 +67,26 @@
 | [v0.2.0](#v020--bayshore-2026-11-05) | 2026-11-05 | Bayshore | 수도고속 완간선을 따라 하네다까지, 도쿄만 아쿠아라인 해저터널을 지나 우미호타루 PA까지. 실제 3D 차량 모델과 열리는 보닛도 들어왔어요. |
 | [v0.1.1](#v011--one-click-2026-11-04) | 2026-11-04 | One Click | 링크 하나로 바로 플레이. 크롬에서 공식 사이트 주소만 열면 설치 없이 실행돼요. |
 | [v0.1.0](#v010--first-meet-2026-11-04) | 2026-11-04 | First Meet | 첫 공개 버전. 다이코쿠 JCT·PA와 다이코쿠 부두 일대를 3D로 구현했습니다. |
+
+---
+
+## v2.14.0 — Open Road (2026-11-20)
+
+> 투명벽 제거(보이는 벽·건물·물·고가/터널 벽에서만 막힘), 주유소 직원 상주, NPC 트럭 실제 크기, 해바라기 밭을 멀리서도 보이게.
+> No more invisible walls (only visible walls, buildings, water and viaduct / tunnel sides stop you), attendants always on duty at fuel stations, NPC trucks at real size, sunflower fields visible from afar.
+
+**✨ 추가 · New**
+
+- 주유소 직원 상주: 주변 주유소마다 직원이 항상 사무실 앞에 서 있고, 주유 공간을 오가며, 차가 들어오면 돌아보고 손짓 — 주유하면 그 직원이 응대하고 끝나면 사무실 앞으로 돌아감<br><sub>Fuel-station attendants are always on duty: standing at the office door, walking the forecourt, turning and waving cars in — the same attendant serves you and walks back to the door afterwards</sub>
+
+**🔧 변경 · Changed**
+
+- 해바라기 밭: 밭 가장자리를 따라 해바라기 띠, 꽃밭 면 양면 표시, 6km 밖에서도 표시<br><sub>Sunflower fields: a band of sunflowers along the field edges, the flower surface shown from both sides, drawn from 6 km away</sub>
+
+**🐞 수정 · Fixed**
+
+- 투명벽 제거: 지도상 도로·주차장 밖이라도 빈 땅이면 들어갈 수 있음 — 건물·펜스·기둥(충돌체), 바다·강, 고가 위(난간)와 터널 안(벽)에서만 막힘<br><sub>Invisible walls removed: open ground off the mapped streets and car parks is now drivable — only buildings, fences and poles (their colliders), the sea and rivers, viaduct parapets and tunnel walls stop you</sub>
+- NPC 트럭(이스즈 엘프 탑차)이 4.7m로 줄어 있던 문제 → 실제 3톤 탑차 크기(길이 6.6m·높이 2.35m)<br><sub>NPC trucks (Isuzu Elf box truck) were shrunk to 4.7 m → real 3-tonne box-truck size (6.6 m long, 2.35 m tall)</sub>
 
 ---
 

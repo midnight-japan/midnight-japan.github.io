@@ -1373,7 +1373,15 @@ export class World {
     if (inHakone(x, z)) { const L = this.hakone?.lotAt(x, z); if (L) return true; }
     const m = this.city ? this.city.maskAt(x, z) : -2;
     if (m === -1) return true; // not streamed in yet: never trap the player
-    return m >= (walk ? 1 : 2);
+    if (m >= (walk ? 1 : 2)) return true;
+    // v2.14: NO invisible walls — off the mapped streets you may go anywhere on open ground; only things you can see stop
+    // you: buildings / fences / poles (their colliders), water, the parapet of a viaduct (you're up on a deck) and the
+    // walls of a tunnel (you're below ground)
+    const gy = this.ground(x, z);
+    if (y > gy + 2.2 || y < gy - 2.2) return false;      // on a deck or in a tunnel: its side walls
+    if (!this.isLand(x, z) || gy < -1) return false;      // the sea
+    if (this.city?.inWater?.(x, z)) return false;         // rivers, canals, ponds
+    return true;
   }
   // nearest allowed point (spiral search, 1 m steps) — for spawns, teleports and getting out of the car
   nearestAccess(x, z, y, walk = false, R = 80) {

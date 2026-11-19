@@ -38,6 +38,13 @@ export class Sunflowers {
     this.canMat.onBeforeCompile = sh => { Object.assign(sh.uniforms, this.canU); sh.vertexShader = sh.vertexShader.replace('#include <common>', '#include <common>\nvarying vec3 vWp;').replace('#include <worldpos_vertex>', '#include <worldpos_vertex>\nvWp = (modelMatrix * vec4(transformed, 1.0)).xyz;');
       sh.fragmentShader = sh.fragmentShader.replace('#include <common>', '#include <common>\nuniform vec3 uCam; uniform float uR; varying vec3 vWp;').replace('#include <clipping_planes_fragment>', '#include <clipping_planes_fragment>\nif (distance(vWp.xz, uCam.xz) < uR) discard;'); };
     this.soilMat = new THREE.MeshStandardMaterial({ color: 0x5a4632, roughness: 1 });
+    this.canMat.side = THREE.DoubleSide;
+    this.edgeMat = new THREE.MeshStandardMaterial({ map: (() => { const c = document.createElement('canvas'); c.width = 256; c.height = 128; const x = c.getContext('2d'); x.clearRect(0, 0, 256, 128);
+      let r = 11; const rnd = () => ((r = (r * 16807) % 2147483647) / 2147483647);
+      for (let i = 0; i < 26; i++) { const px = (i + 0.5) * 256 / 26 + (rnd() - 0.5) * 6, top = 8 + rnd() * 18; x.strokeStyle = '#3c6a22'; x.lineWidth = 3; x.beginPath(); x.moveTo(px, 128); x.lineTo(px, top + 8); x.stroke(); x.fillStyle = '#4c7a2a'; x.beginPath(); x.ellipse(px + 6, 70 + rnd() * 30, 9, 4, -0.5, 0, Math.PI * 2); x.fill(); x.beginPath(); x.ellipse(px - 6, 60 + rnd() * 30, 9, 4, 0.5, 0, Math.PI * 2); x.fill();
+        x.fillStyle = '#f2b90f'; x.beginPath(); x.arc(px, top, 9, 0, Math.PI * 2); x.fill(); x.fillStyle = '#4a2a0e'; x.beginPath(); x.arc(px, top, 4, 0, Math.PI * 2); x.fill(); }
+      const t = new THREE.CanvasTexture(c); t.wrapS = THREE.RepeatWrapping; t.colorSpace = THREE.SRGBColorSpace; t.anisotropy = 4; return t; })(), alphaTest: 0.4, side: THREE.DoubleSide, roughness: 0.85 });
+    this.edgeMat.onBeforeCompile = this.canMat.onBeforeCompile;
     this.canopy = [];
     for (const f of this.fields) {
       const shape = new THREE.Shape(); for (let i = 0; i < f.pts.length; i += 2) (i ? shape.lineTo(f.pts[i], -f.pts[i + 1]) : shape.moveTo(f.pts[i], -f.pts[i + 1]));
@@ -45,6 +52,12 @@ export class Sunflowers {
       const uv = sg.attributes.uv; for (let i = 0; i < uv.count; i++) uv.setXY(i, uv.getX(i) / 5, uv.getY(i) / 5);
       const soil = new THREE.Mesh(sg, this.soilMat); soil.position.y = 0.06; soil.receiveShadow = true; this.group.add(soil);
       const can = new THREE.Mesh(sg, this.canMat); can.position.y = 1.7; this.group.add(can); this.canopy.push(can);
+      // v2.14: the field's edge as a band of sunflowers (side view) so it reads from far away, at road level
+      const pos = [], uvs = []; let run = 0;
+      for (let i = 0; i < f.pts.length; i += 2) { const j = (i + 2) % f.pts.length, ax = f.pts[i], az = f.pts[i + 1], bx = f.pts[j], bz = f.pts[j + 1], L = Math.hypot(bx - ax, bz - az);
+        pos.push(ax, 0.05, az, bx, 0.05, bz, bx, 1.95, bz, ax, 0.05, az, bx, 1.95, bz, ax, 1.95, az); const u0 = run / 3, u1 = (run + L) / 3; uvs.push(u0, 0, u1, 0, u1, 1, u0, 0, u1, 1, u0, 1); run += L; }
+      const eg = new THREE.BufferGeometry(); eg.setAttribute('position', new THREE.Float32BufferAttribute(pos, 3)); eg.setAttribute('uv', new THREE.Float32BufferAttribute(uvs, 2)); eg.computeVertexNormals();
+      const edge = new THREE.Mesh(eg, this.edgeMat); this.group.add(edge); this.canopy.push(edge);
     }
     this.N = Math.ceil(Math.PI * this.R * this.R / (SP * SP)) + 50;
     this.plants = new THREE.InstancedMesh(plantGeo(), new THREE.MeshStandardMaterial({ vertexColors: true, roughness: 0.75, side: THREE.DoubleSide }), this.N);
@@ -70,12 +83,13 @@ export class Sunflowers {
     this.plants.count = n; this.plants.instanceMatrix.needsUpdate = true;
   }
   update(dt, cam) {
-    const p = cam.position, near = Math.hypot(p.x - this.c[0], p.z - this.c[1]) < 2600;
+    const p = cam.position, near = Math.hypot(p.x - this.c[0], p.z - this.c[1]) < 6000; // v2.14: visible from far away
     this.group.visible = near; if (!near) return;
     const s = seasonOf(this.g.settings?.season);
     if (s !== this.season) { this.season = s; this.last.set(1e9, 0, 1e9);
       const bloom = s === 'summer', bare = s === 'winter';
-      for (const c of this.canopy) c.visible = !bare; this.plants.visible = !bare;
+      for (const c of this.canopy) c.visible = !bare;
+      this.edgeMat.color.set(bloom ? 0xffffff : s === 'spring' ? 0x6f9a4a : 0x8a6a3a); this.plants.visible = !bare;
       this.canMat.color.set(bloom ? 0xffffff : s === 'spring' ? 0x6f9a4a : 0x8a6a3a); this.canMat.map = bloom ? this.canMat.map : this.canMat.map; this.canMat.needsUpdate = true;
       this.plants.material.color.set(bloom ? 0xffffff : s === 'spring' ? 0x9fd07a : 0x9a7a4a); }
     this.canU.uCam.value.copy(p); this.canU.uR.value = this.R - 4;
