@@ -215,3 +215,15 @@ Rigged / animated people and vehicles from Sketchfab, all [CC BY 4.0](https://cr
 | `ambulance` | Japanese Ambulance Van | Pavel Gorbachev (paul_sawyer_11) | https://sketchfab.com/3d-models/8785bdc40ea64f19907bcefe86aabb11 | CC BY 4.0 — modified: optimized |
 | `stretcher` | Hospital Stretcher | Gunnar Correa (gunnarcorrea) | https://sketchfab.com/3d-models/a74239ec0dfe454a906c339071855d87 | CC BY 4.0 — modified: optimized |
 | `bicycle` | Old red bicycle | patrakeevasveta | https://sketchfab.com/3d-models/577376dfd2f142359dbac143a49a2489 | CC BY 4.0 — modified: optimized |
+
+### Uniformed people (v2.16.1)
+
+Also [CC BY 4.0](https://creativecommons.org/licenses/by/4.0/), in `assets/models/people/`, baked with `tools/people-bake.mjs` (same optimisation as above; colour edits noted). Caps / the 救急 helmet are simple meshes made in code (`js/game/people.js`).
+
+| file | title | author | source | license |
+|---|---|---|---|---|
+| `officer` | Police | Alihan (BenAlihan) | https://sketchfab.com/3d-models/8f939bfdf22f476d91f480f4d6f5d72a | CC BY 4.0 — modified: optimized, sunglasses removed |
+| `medic` | Ambulance driver EHBO Netherlands | ustoopia | https://sketchfab.com/3d-models/3bef070e2d144a30987c96830039cfe7 | CC BY 4.0 — modified: optimized, one of two copies kept, jacket recoloured teal → Japanese pale blue-grey |
+| `attendant` | car mechanic | BELAZ (asset_for_games) | https://sketchfab.com/3d-models/0728feefdd174869ac7d22017cb5a077 | CC BY 4.0 — modified: optimized, glasses removed, printed lettering / logo painted out |
+| `shun_clerk` | Walk-japanese-man | ddd (endonoriko) | https://sketchfab.com/3d-models/76b94edd6770459b8ae144ba11135775 | CC BY 4.0 — modified: optimized, shirt recoloured (store uniform) |
+| `kana_clerk` | Free 018 Kana Walk | ddd (endonoriko) | https://sketchfab.com/3d-models/f465652729944a66aed790cd88fa0b0f | CC BY 4.0 — modified: optimized, blouse recoloured (store uniform) |

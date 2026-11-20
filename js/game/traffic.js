@@ -3,7 +3,7 @@
 import * as THREE from 'three';
 import { mergeGeometries } from 'three/addons/utils/BufferGeometryUtils.js';
 import { CARS, CAR_BY_ID } from '../../data/cars.js';
-import { buildCarAuto, requestGlb, glbEntry } from './carfactory.js';
+import { buildCarAuto, requestGlb, glbEntry, lampAnchors } from './carfactory.js';
 import { PA_RECT, PA, PA_LAYOUT } from './roads.js';
 import { STANCE_PRESETS, defaultStance } from './carmodel.js';
 import { createDriver, peopleReady, loadPeople } from './people.js';
@@ -63,13 +63,37 @@ export class Traffic {
     this.headPool = this.makeHeadPool();
     this.cityMax = { low: 10, medium: 22, high: 36, ultra: 50 }[game.quality] ?? 22;
   }
+  // v2.17: the NPC headlight pool on the road — a fan that starts AT the car's real headlamps (lampAnchors of its model:
+  // between the lamps, as wide as they are apart) and spreads ahead; brightest a few metres out, fading with distance.
+  // Before, one fixed 3.2 x 14 m plane from 1.8 m ahead of the car's centre — under the bonnet on long cars, metres
+  // short of the nose on a bus, and drawn back to front (the faint wide end at the car, the bright narrow end far away).
   makeHeadPool() {
-    const c = document.createElement('canvas'); c.width = 64; c.height = 128; const g = c.getContext('2d');
-    const gr = g.createLinearGradient(0, 128, 0, 0); gr.addColorStop(0, 'rgba(255,240,215,.9)'); gr.addColorStop(1, 'rgba(255,240,215,0)');
-    g.fillStyle = gr; g.beginPath(); g.moveTo(22, 128); g.lineTo(42, 128); g.lineTo(64, 0); g.lineTo(0, 0); g.fill();
-    const t = new THREE.CanvasTexture(c);
-    const geo = new THREE.PlaneGeometry(3.2, 14); geo.rotateX(-Math.PI / 2); geo.translate(0, 0.04, 7.6 + 1.2);
+    const c = document.createElement('canvas'); c.width = 32; c.height = 128; const g = c.getContext('2d');
+    const gr = g.createLinearGradient(0, 128, 0, 0); // canvas bottom = v 0 = at the lamps
+    gr.addColorStop(0, 'rgba(255,240,215,0)'); gr.addColorStop(0.06, 'rgba(255,240,215,.55)'); gr.addColorStop(0.22, 'rgba(255,240,215,1)');
+    gr.addColorStop(0.45, 'rgba(255,240,215,.7)'); gr.addColorStop(1, 'rgba(255,240,215,0)');
+    g.fillStyle = gr; g.fillRect(0, 0, 32, 128);
+    const sg = g.createLinearGradient(0, 0, 32, 0); sg.addColorStop(0, 'rgba(0,0,0,1)'); sg.addColorStop(0.3, 'rgba(0,0,0,0)'); sg.addColorStop(0.7, 'rgba(0,0,0,0)'); sg.addColorStop(1, 'rgba(0,0,0,1)');
+    g.globalCompositeOperation = 'destination-out'; g.fillStyle = sg; g.fillRect(0, 0, 32, 128); // soft sides
+    const t = new THREE.CanvasTexture(c); t.colorSpace = THREE.SRGBColorSpace;
+    // unit fan: 1 m wide at the lamps (scaled per car to the lamp spacing), 3.6 m wide 15 m ahead
+    // (in 12 strips: one trapezoid's two triangles would skew the texture)
+    const W0 = 1, W1 = 3.6, LB = 15, N = 12, P = [], U = [], I = [], geo = new THREE.BufferGeometry();
+    for (let i = 0; i <= N; i++) { const t = i / N, w = W0 + (W1 - W0) * t; P.push(-w / 2, 0, LB * t, w / 2, 0, LB * t); U.push(0, t, 1, t); if (i < N) { const k = i * 2; I.push(k, k + 2, k + 1, k + 1, k + 2, k + 3); } }
+    geo.setAttribute('position', new THREE.Float32BufferAttribute(P, 3)); geo.setAttribute('uv', new THREE.Float32BufferAttribute(U, 2)); geo.setIndex(I);
+    geo.computeBoundingSphere();
     return { geo, mat: new THREE.MeshBasicMaterial({ map: t, transparent: true, opacity: 0, blending: THREE.AdditiveBlending, depthWrite: false }) };
+  }
+  // the pool under a car's headlamps: centre between them, width = their spacing; procedural stand-ins: the nose
+  placeBeam(ai) {
+    const m = ai.model, b = ai.beam; let x = 0, z = ai.halfL + 0.05, w = Math.max(1, ai.radius * 2 - 0.5);
+    const e = m.isGlb && glbEntry(ai.car.id, 'lo'), vis = e && m.root.getObjectByName('glb');
+    if (e && vis) {
+      const hs = lampAnchors(e).head; m.root.updateMatrixWorld(true);
+      const pts = hs.map(a => m.root.worldToLocal(new THREE.Vector3(a.p[0], a.p[1], a.p[2]).applyMatrix4(vis.matrixWorld)));
+      if (pts.length) { x = pts.reduce((s, p) => s + p.x, 0) / pts.length; z = Math.max(...pts.map(p => p.z)) + 0.05; if (pts.length > 1) w = Math.max(0.8, Math.abs(pts[0].x - pts[1].x) + 0.25); }
+    }
+    b.position.set(x, 0.04, z); b.scale.set(w, 1, 1);
   }
   // load every traffic model up front; swap procedural stand-ins for the real model as soon as it is in
   // v2.5.1: two at a time, the cars actually on screen first (was: every model at once, before the game started —
@@ -108,7 +132,7 @@ export class Traffic {
       const old = ai.model, L = { ...old.lights };
       const model = buildCarAuto(ai.car, { lod: 'low', color: ai.color, glb: true, realLights: false }); if (!model.isGlb) continue;
       old.root.remove(ai.beam); this.scene.remove(old.root); old.dispose?.();
-      model.root.add(ai.beam); model.root.position.copy(old.root.position); model.root.rotation.copy(old.root.rotation); Object.assign(model.lights, L);
+      model.root.add(ai.beam); model.root.position.copy(old.root.position); model.root.rotation.copy(old.root.rotation); Object.assign(model.lights, L); this.placeBeam(ai);
       this.scene.add(model.root); ai.model = model; n++; if (ai.seatD) { model.root.add(ai.seatD); }
     }
   }
@@ -124,6 +148,7 @@ export class Traffic {
     this.scene.add(model.root);
     const ai = { car, model, beam, road: null, lane: null, s: 0, dir: 1, v: 0, vDes: 0, mode: 'road', t: 0, id: Math.random(), color, pos: new THREE.Vector3(), yaw: 0, radius: car.W / 2000, halfL: car.L / 2000, ...opts };
     ai.spin = 0;
+    this.placeBeam(ai);
     this.seatDriver(ai);
     this.cars.push(ai);
     return ai;

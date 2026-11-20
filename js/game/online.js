@@ -1,7 +1,7 @@
 // Online meets (beta) — serverless peer-to-peer via WebRTC (Trystero, Nostr relays for signalling).
 // fixed set of large, long-lived public Nostr relays (Trystero's default pool includes small relays that go offline)
 // v2.15.1: relay.damus.io rate-limits/bans busy apps and relay.nostr.band is often down — swapped for steadier relays
-const RELAYS = ['wss://nos.lol', 'wss://relay.primal.net', 'wss://nostr.mom', 'wss://relay.nostr.net', 'wss://relay.snort.social'];
+const RELAYS = ['wss://nos.lol', 'wss://relay.primal.net', 'wss://nostr.mom', 'wss://relay.snort.social'];
 // several STUN servers so players behind home routers / mobile networks find a direct path to each other
 const RTC = { iceServers: [{ urls: ['stun:stun.l.google.com:19302', 'stun:stun1.l.google.com:19302'] }, { urls: 'stun:stun.cloudflare.com:3478' }, { urls: 'stun:global.stun.twilio.com:3478' }] };
 // No game server: players in the same room see each other's cars, name tags, lights and engine sound,

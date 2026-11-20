@@ -1,8 +1,18 @@
 // Shared game metadata: version, changelog, regions. Update VERSION + CHANGELOG on every release.
-export const GAME = { title: 'MIDNIGHT JAPAN', titleJa: 'ミッドナイト・ジャパン', version: '2.16.0', build: '2026.11.20' };
+export const GAME = { title: 'MIDNIGHT JAPAN', titleJa: 'ミッドナイト・ジャパン', version: '2.16.1', build: '2026.11.21' };
 
 // Newest first. type: new | change | fix | known
 export const CHANGELOG = [
+  {
+    version: '2.16.1', date: '2026-11-21', codename: 'Full Circle',
+    summary: { ko: '하코네 나나마가리를 유모토·국도1호로 이어 턴파이크까지 22km 순환, 에노시마 134호 실제 고도, 새 코스 자율주행 수정, 제복 입은 경찰·구급대·점원, 도로를 따라 달리는 구급차, 페달 밟는 자전거, 번호판·램프 추가 정렬, AE86 팝업 라이트.', ja: '箱根七曲りを湯本・国道1号でターンパイクまで22kmの周回に、江の島134号に実際の標高、新コースの自動運転を修正、制服の警察・救急隊・店員、道路に沿って走る救急車、ペダルをこぐ自転車、ナンバー・ランプの追加調整、AE86リトラクタブル。', en: 'Hakone Nanamagari now loops via Yumoto and Route 1 back to the Turnpike (22 km), real elevation on Enoshima Route 134, autopilot fixes on new courses, uniformed police / paramedics / clerks, ambulances that follow roads, pedalling cyclists, more plate and lamp fixes, AE86 pop-up headlights.' },
+    items: [
+      { type: 'new', ko: '箱根七曲り → 箱根湯本 → 国道1号 → 턴파이크 22km 순환 코스', ja: '箱根七曲り → 箱根湯本 → 国道1号 → ターンパイクの22km周回', en: 'Nanamagari → Hakone-Yumoto → Route 1 → Turnpike 22 km loop' },
+      { type: 'new', ko: '경찰·구급대원·편의점·주유소 직원 제복, 구급차가 도로·차선을 따라 이동하고 앞차가 비켜 줌, 자전거 바퀴·페달 회전', ja: '警察・救急隊・コンビニ・GSスタッフの制服、救急車が道路・車線に沿って走り前の車が道を譲る、自転車の車輪・ペダル回転', en: 'Uniforms for police, paramedics, konbini and fuel staff; ambulances drive along roads and lanes with traffic yielding; spinning bike wheels and pedals' },
+      { type: 'fix', ko: '번호판 18곳 재정렬, 포르쉐 911·캔터·버스·오디세이·GTO·시빅EG·EK9 램프, 시빅EG 앞뒤 반전, 오디세이 도색, AE86 팝업 라이트 개폐, NPC 전조등 노면 빛', ja: 'ナンバー18か所を再調整、911・キャンター・バス・オデッセイ・GTO・シビックEG・EK9のランプ、シビックEGの前後反転、オデッセイの塗装、AE86リトラの開閉、NPCヘッドライトの路面光', en: '18 plates refitted; lamps for 911, Canter, bus, Odyssey, GTO, Civic EG, EK9; Civic EG front/back and Odyssey paint fixed; AE86 pop-ups open and close; NPC headlight road beams' },
+      { type: 'fix', ko: '에노시마 134호 실제 고도와 제방, 새 코스 분기·합류·기둥 때문에 자율주행이 멈추던 문제, 오디오 준비 전 출발 시 멈춤', ja: '江の島134号の実標高と土手、新コースの分岐・合流・柱で自動運転が止まる問題、オーディオ準備前の出発で止まる問題', en: 'Enoshima Route 134 real elevation with banks; autopilot stalls on new-course junctions/merges/pillars; crash when starting before audio was ready' },
+    ],
+  },
   {
     version: '2.16.0', date: '2026-11-20', codename: 'Living Japan',
     summary: { ko: '새 코스 4곳(하코네 나나마가리·후지 스카이라인·에노시마·비너스 라인), 실사 사람 9명과 사고 후 구급차·뺨 때리기, NPC 차만 부서지는 사고, 실제 렌즈 모양대로 켜지는 램프와 번호판 정렬, 실사 해바라기·주유기·가드레일, 실제 녹음 효과음.', ja: '新コース4つ（箱根七曲り・富士山スカイライン・江の島・ビーナスライン）、実写の人9人と事故後の救急車・ビンタ、NPCの車だけ壊れる事故、実際のレンズ形状で光るランプとナンバー位置、実写のひまわり・給油機・ガードレール、実録の効果音。', en: 'Four new real courses (Hakone Nanamagari, Fuji Skyline, Enoshima, Venus Line), realistic people with ambulance and slap after crashes, NPC-only crash damage, lamps lit by real lens shapes and fitted plates, real sunflowers / fuel pumps / guard rails, recorded sound effects.' },

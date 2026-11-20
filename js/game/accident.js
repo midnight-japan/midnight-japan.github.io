@@ -308,7 +308,7 @@ export class Accidents {
   }
   makeHuman(outfit, pos, yaw, id) {
     let h;
-    if (outfit) { try { h = createHuman(outfit); } catch { h = createHuman(defaultOutfit()); } } // police (uniform)
+    if (outfit) { try { h = createPerson({ type: 'police', outfit, mirror: false }); } catch { h = createHuman(defaultOutfit()); } } // v2.16.1: 警察官 in navy uniform + cap (procedural only while loading)
     else { try { h = createPerson({ id, type: 'driver', outfit: randomOutfit() }); } catch { h = createHuman(defaultOutfit()); } }
     h.object.position.copy(pos); this.g.scene.add(h.object);
     return { h, pos: h.object.position, yaw, speed: 0, action: 'idle' };

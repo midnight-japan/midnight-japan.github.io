@@ -1,8 +1,8 @@
 // Car model factory: a real glTF model (assets/models/cars/manifest.json, see carglb.js) when one exists for the car,
 // otherwise the procedural model. Same CarModel API either way.
 import { buildCar } from './carmodel.js';
-import { buildGlbCar, glbEntry, requestGlb, loadManifest, hasGlb } from './carglb.js';
-export { requestGlb, loadManifest, hasGlb, glbEntry };
+import { buildGlbCar, glbEntry, requestGlb, loadManifest, hasGlb, lampAnchors } from './carglb.js';
+export { requestGlb, loadManifest, hasGlb, glbEntry, lampAnchors };
 
 /** Synchronous: uses the real model if it is already loaded (and starts loading it otherwise). */
 export function buildCarAuto(car, opts = {}) {

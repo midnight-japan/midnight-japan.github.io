@@ -7,7 +7,8 @@
 //   4. he takes the money, walks out to the kerb, asks which way you're going (← / →), stops the traffic and waves you
 //      out with 「オーライ、オーライ！ ありがとうございましたー！」
 import * as THREE from 'three';
-import { createHuman, randomOutfit } from './humans.js';
+import { randomOutfit } from './humans.js';
+import { createPerson, uniformReady, loadPeople } from './people.js';
 import { getLang } from '../i18n.js';
 
 const PRICE = { regular: 174, high: 185, diesel: 154 }; // ¥ / litre (2025-ish Kanagawa)
@@ -19,13 +20,22 @@ export class FuelStation {
   // v2.14: attendants are ALWAYS at the station (常駐) — one or two per station near you, standing at the office door
   // or on the forecourt, looking out for customers, greeting cars that pull in; the full-service job uses one of them
   outfit(brand, seed) { let r = seed; const rnd = () => ((r = (r * 16807) % 2147483647) / 2147483647); const o = randomOutfit(rnd); o.top = 'racing_jacket'; o.hair = 'cap'; o.topColor = ['#d4421a', '#1d5fbf', '#c81e2a', '#1d8a4a'][brand % 4]; o.accentColor = '#f2f2ee'; o.bottom = 'chinos'; o.bottomColor = '#1b1f26'; o.accessory = 'none'; return o; }
+  // v2.16.1: a realistic attendant in the station's work suit (cap in the brand colour); the procedural one only while
+  // the people models are still loading (swapped as soon as they are in)
+  staff(brand, seed) {
+    const o = this.outfit(brand, seed);
+    return createPerson({ type: 'attendant', outfit: o, hatColor: new THREE.Color(o.topColor).getHex() });
+  }
   tick(dt, focus) {
     const g = this.g, C = g.world.city; if (!C || !focus) return;
+    if (!this._lp) { this._lp = true; loadPeople(); }
+    // stand-ins (procedural, made before the models loaded) → realistic attendants
+    if (uniformReady('attendant')) for (const r of this.res.values()) if (!r.busy && !r.h.realistic) { const h = this.staff(r.f.brand, r.seed); if (!h.realistic) break; g.scene.remove(r.h.object); try { r.h.dispose(); } catch {} r.h = h; h.object.position.copy(r.pos); g.scene.add(h.object); }
     if ((this.resT -= dt) <= 0) { this.resT = 1;
       const want = new Map(); for (const t of C.tiles.values()) for (const f of t.fuels || []) { if (f.ox === undefined || Math.hypot(f.x - focus.x, f.z - focus.z) > 230) continue; const k = Math.round(f.ox) + ',' + Math.round(f.oz); if (!want.has(k)) want.set(k, f); }
       for (const [k, r] of this.res) if (!want.has(k) && !r.busy) { g.scene.remove(r.h.object); try { r.h.dispose(); } catch {} this.res.delete(k); }
       for (const [k, f] of want) if (!this.res.has(k)) { const seed = Math.abs(Math.round(f.ox * 7 + f.oz * 13)) + 1;
-        let h; try { h = createHuman(this.outfit(f.brand, seed)); } catch { continue; }
+        let h; try { h = this.staff(f.brand, seed); } catch { continue; }
         // stands just outside the office door, a little towards the pumps
         const dx = f.x - f.ox, dz = f.z - f.oz, L = Math.hypot(dx, dz) || 1, home = new THREE.Vector3(f.ox + dx / L * 1.2, 0.05, f.oz + dz / L * 1.2);
         const r = { h, f, home, pos: home.clone(), yaw: Math.atan2(dx, dz), act: 'idle', actT: 0, target: null, wait: 3 + (seed % 5), seed };
@@ -63,7 +73,7 @@ export class FuelStation {
     if (!want) { g.ui.toast(L3('전기차는 충전소를 이용하세요', '電気自動車は充電スタンドへ', 'EVs charge at a charging station'), 'info', 3); return; }
     v.handbrakeOn = true;
     const R = this.resident(f); let h = R?.h || null; if (R) R.busy = true; // the attendant who is already on duty
-    if (!h) { try { h = createHuman(this.outfit(f.brand, 1 + Math.floor(Math.random() * 9999))); } catch { h = null; } }
+    if (!h) { try { h = this.staff(f.brand, 1 + Math.floor(Math.random() * 9999)); } catch { h = null; } }
     const nx = -f.tz, nz = f.tx; // office side
     const office = f.ox !== undefined ? new THREE.Vector3(f.ox, v.pos.y, f.oz) : new THREE.Vector3(f.x + nx * 7 + f.tx * 6, v.pos.y, f.z + nz * 7 + f.tz * 6);
     // the filler is on the car's left rear on most JDM cars (the attendant stands there)

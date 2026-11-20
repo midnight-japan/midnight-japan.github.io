@@ -1,9 +1,10 @@
 # 📜 MIDNIGHT JAPAN 업데이트 기록 · Changelog
 
-현재 버전 · Current: **v2.16.0** · [▶ 웹에서 플레이](https://midnight-japan.github.io/) · [🌐 업데이트 페이지](https://midnight-japan.github.io/changelog.html)
+현재 버전 · Current: **v2.16.1** · [▶ 웹에서 플레이](https://midnight-japan.github.io/) · [🌐 업데이트 페이지](https://midnight-japan.github.io/changelog.html)
 
 | 버전 | 날짜 | 이름 | 요약 |
 |---|---|---|---|
+| [v2.16.1](#v2161--full-circle-2026-11-21) | 2026-11-21 | Full Circle | 하코네 나나마가리를 유모토·국도1호로 이어 턴파이크까지 22km 순환, 에노시마 134호 실제 고도, 새 코스 자율주행 수정, 제복 입은 경찰·구급대·점원, 도로를 따라 달리는 구급차, 페달 밟는 자전거, 번호판·램프 추가 정렬, AE86 팝업 라이트. |
 | [v2.16.0](#v2160--living-japan-2026-11-20) | 2026-11-20 | Living Japan | 새 코스 4곳(하코네 나나마가리·후지 스카이라인·에노시마·비너스 라인), 실사 사람 9명과 사고 후 구급차·뺨 때리기, NPC 차만 부서지는 사고, 실제 렌즈 모양대로 켜지는 램프와 번호판 정렬, 실사 해바라기·주유기·가드레일, 실제 녹음 효과음. |
 | [v2.15.7](#v2157--name-tags-2026-11-20) | 2026-11-20 | Name Tags | 다른 플레이어 차 위 이름표가 하늘 높이(약 1.3km)에 떠서 안 보이던 버그 수정 — 이제 차 바로 위에 「닉네임 · 차종」. |
 | [v2.15.6](#v2156--bumper-to-bumper-2026-11-20) | 2026-11-20 | Bumper to Bumper | 멀티플레이 강화: 중계 서버 여러 곳에 동시 접속(서로 다른 서버에 붙어도 만남), 중복 메시지 제거, 플레이어끼리 충돌, 상대 경적 소리. |
@@ -80,6 +81,23 @@
 | [v0.2.0](#v020--bayshore-2026-11-05) | 2026-11-05 | Bayshore | 수도고속 완간선을 따라 하네다까지, 도쿄만 아쿠아라인 해저터널을 지나 우미호타루 PA까지. 실제 3D 차량 모델과 열리는 보닛도 들어왔어요. |
 | [v0.1.1](#v011--one-click-2026-11-04) | 2026-11-04 | One Click | 링크 하나로 바로 플레이. 크롬에서 공식 사이트 주소만 열면 설치 없이 실행돼요. |
 | [v0.1.0](#v010--first-meet-2026-11-04) | 2026-11-04 | First Meet | 첫 공개 버전. 다이코쿠 JCT·PA와 다이코쿠 부두 일대를 3D로 구현했습니다. |
+
+---
+
+## v2.16.1 — Full Circle (2026-11-21)
+
+> 하코네 나나마가리를 유모토·국도1호로 이어 턴파이크까지 22km 순환, 에노시마 134호 실제 고도, 새 코스 자율주행 수정, 제복 입은 경찰·구급대·점원, 도로를 따라 달리는 구급차, 페달 밟는 자전거, 번호판·램프 추가 정렬, AE86 팝업 라이트.
+> Hakone Nanamagari now loops via Yumoto and Route 1 back to the Turnpike (22 km), real elevation on Enoshima Route 134, autopilot fixes on new courses, uniformed police / paramedics / clerks, ambulances that follow roads, pedalling cyclists, more plate and lamp fixes, AE86 pop-up headlights.
+
+**✨ 추가 · New**
+
+- 箱根七曲り → 箱根湯本 → 国道1号 → 턴파이크 22km 순환 코스<br><sub>Nanamagari → Hakone-Yumoto → Route 1 → Turnpike 22 km loop</sub>
+- 경찰·구급대원·편의점·주유소 직원 제복, 구급차가 도로·차선을 따라 이동하고 앞차가 비켜 줌, 자전거 바퀴·페달 회전<br><sub>Uniforms for police, paramedics, konbini and fuel staff; ambulances drive along roads and lanes with traffic yielding; spinning bike wheels and pedals</sub>
+
+**🐞 수정 · Fixed**
+
+- 번호판 18곳 재정렬, 포르쉐 911·캔터·버스·오디세이·GTO·시빅EG·EK9 램프, 시빅EG 앞뒤 반전, 오디세이 도색, AE86 팝업 라이트 개폐, NPC 전조등 노면 빛<br><sub>18 plates refitted; lamps for 911, Canter, bus, Odyssey, GTO, Civic EG, EK9; Civic EG front/back and Odyssey paint fixed; AE86 pop-ups open and close; NPC headlight road beams</sub>
+- 에노시마 134호 실제 고도와 제방, 새 코스 분기·합류·기둥 때문에 자율주행이 멈추던 문제, 오디오 준비 전 출발 시 멈춤<br><sub>Enoshima Route 134 real elevation with banks; autopilot stalls on new-course junctions/merges/pillars; crash when starting before audio was ready</sub>
 
 ---
 

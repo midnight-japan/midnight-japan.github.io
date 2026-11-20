@@ -57,6 +57,57 @@ function giveBag(h, type) {
   if (!k || !h.handL) return; const [g, m] = BAGS()[k]; const b = new THREE.Mesh(g, m); b.rotation.y = Math.PI / 2; h.handL.add(b);
 }
 
+// Split the merged bicycle mesh (one geometry, see assets/CREDITS.md "bicycle") into its moving parts: connected
+// pieces whose every vertex lies within a wheel's radius of its hub (tyre, rim, spokes, hub) → that wheel; pieces
+// within the crank radius of the bottom bracket (chainring, arms) → crank, the two pedal blocks on their own (they stay
+// level while the crank turns); the rest is the frame. Hubs: centres of the two big round pieces (the tyres); bottom
+// bracket: centre of the round piece between them nearest the ground (the chainring).
+function splitBike(scene) {
+  let mesh = null; scene.updateMatrixWorld(true); scene.traverse(o => { if (o.isMesh && !mesh) mesh = o; });
+  const g0 = mesh.geometry, P = g0.attributes.position, n = P.count, M = mesh.matrixWorld, pos = new Float32Array(n * 3), v = new THREE.Vector3();
+  for (let i = 0; i < n; i++) { v.fromBufferAttribute(P, i).applyMatrix4(M); pos[i * 3] = v.x; pos[i * 3 + 1] = v.y; pos[i * 3 + 2] = v.z; }
+  const idx = g0.index ? g0.index.array : Array.from({ length: n }, (_, i) => i);
+  // connected pieces (vertices welded by position)
+  const key = i => Math.round(pos[i * 3] * 2e3) + ',' + Math.round(pos[i * 3 + 1] * 2e3) + ',' + Math.round(pos[i * 3 + 2] * 2e3), rep = new Map(), id = new Int32Array(n);
+  for (let i = 0; i < n; i++) { const k = key(i); if (!rep.has(k)) rep.set(k, i); id[i] = rep.get(k); }
+  const par = Int32Array.from(id), f = x => { while (par[x] !== x) x = par[x] = par[par[x]]; return x; };
+  for (let t = 0; t < idx.length; t += 3) { const a = f(id[idx[t]]); par[f(id[idx[t + 1]])] = a; par[f(id[idx[t + 2]])] = a; }
+  const comp = new Map(); for (let i = 0; i < n; i++) { const r = f(id[i]); let c = comp.get(r); if (!c) comp.set(r, c = { vs: [], min: [1e9, 1e9, 1e9], max: [-1e9, -1e9, -1e9] }); c.vs.push(i); for (let k = 0; k < 3; k++) { c.min[k] = Math.min(c.min[k], pos[i * 3 + k]); c.max[k] = Math.max(c.max[k], pos[i * 3 + k]); } }
+  const C = [...comp.values()]; for (const c of C) { c.cy = (c.min[1] + c.max[1]) / 2; c.cz = (c.min[2] + c.max[2]) / 2; c.cx = (c.min[0] + c.max[0]) / 2; c.ey = c.max[1] - c.min[1]; c.ez = c.max[2] - c.min[2]; }
+  const round = C.filter(c => c.ey > 0.1 && Math.abs(c.ey - c.ez) < 0.12 * c.ey && c.max[0] - c.min[0] < 0.15).sort((a, b) => b.ey - a.ey);
+  const tyres = round.slice(0, 2).sort((a, b) => b.cz - a.cz); // front (+z) first
+  const hubF = new THREE.Vector3(tyres[0].cx, tyres[0].cy, tyres[0].cz), hubR = new THREE.Vector3(tyres[1].cx, tyres[1].cy, tyres[1].cz), rF = tyres[0].ey / 2, rR = tyres[1].ey / 2;
+  const ring = round.filter(c => c.ey < 0.4 && c.cz < hubF.z - rF && c.cz > hubR.z + rR * 0.5).sort((a, b) => a.cy - b.cy)[0] || round.filter(c => !tyres.includes(c)).sort((a, b) => a.cy - b.cy)[0];
+  const bb = new THREE.Vector3(0, ring.cy, ring.cz); const crankR0 = 0.215;
+  const within = (c, h, R, xMax) => c.vs.every(i => Math.hypot(pos[i * 3 + 1] - h.y, pos[i * 3 + 2] - h.z) <= R && Math.abs(pos[i * 3] - h.x) < xMax);
+  const groups = { frame: [], wheelF: [], wheelR: [], crank: [] }, pedals = [];
+  for (const c of C) {
+    if (within(c, hubF, rF * 1.04, 0.1)) groups.wheelF.push(c);
+    else if (within(c, hubR, rR * 1.04, 0.1)) groups.wheelR.push(c);
+    else if (within(c, bb, crankR0, 0.25)) { const dc = Math.hypot(c.cy - bb.y, c.cz - bb.z); if (dc > 0.13 && Math.abs(c.cx) > 0.08 && c.ey < 0.06) pedals.push(c); else groups.crank.push(c); }
+    else groups.frame.push(c);
+  }
+  // geometry of a set of pieces, re-centred on `at`
+  const vOf = new Int32Array(n).fill(-1);
+  const build = (cs, at) => { const set = new Set(); for (const c of cs) for (const i of c.vs) set.add(i);
+    const map = new Map(), P2 = [], N2 = [], U2 = [], I2 = [], nrm = g0.attributes.normal, uv = g0.attributes.uv, nm = new THREE.Matrix3().getNormalMatrix(M), nv = new THREE.Vector3();
+    for (let t = 0; t < idx.length; t += 3) { if (!set.has(idx[t])) continue; for (let q = 0; q < 3; q++) { const i = idx[t + q]; let j = map.get(i); if (j === undefined) { j = map.size; map.set(i, j); P2.push(pos[i * 3] - at.x, pos[i * 3 + 1] - at.y, pos[i * 3 + 2] - at.z); if (nrm) { nv.fromBufferAttribute(nrm, i).applyMatrix3(nm).normalize(); N2.push(nv.x, nv.y, nv.z); } if (uv) U2.push(uv.getX(i), uv.getY(i)); } I2.push(j); } }
+    const g = new THREE.BufferGeometry(); g.setAttribute('position', new THREE.Float32BufferAttribute(P2, 3)); if (N2.length) g.setAttribute('normal', new THREE.Float32BufferAttribute(N2, 3)); else g.computeVertexNormals(); if (U2.length) g.setAttribute('uv', new THREE.Float32BufferAttribute(U2, 2)); g.setIndex(I2); g.computeBoundingSphere(); g.userData.shared = true; return g; };
+  const O = new THREE.Vector3();
+  const out = { mat: mesh.material, frame: build(groups.frame, O), wheelF: build(groups.wheelF, hubF), wheelR: build(groups.wheelR, hubR), crank: build(groups.crank, bb), hubF, hubR, rF, rR, bb, crankR: 0.17,
+    pedals: pedals.slice(0, 2).map(c => { const at = new THREE.Vector3(c.cx, c.cy, c.cz); return { g: build([c], at), c: at, rel: at.clone().sub(bb) }; }) };
+  if (out.pedals.length) out.crankR = Math.hypot(out.pedals[0].rel.y, out.pedals[0].rel.z);
+  // saddle (highest piece behind the bottom bracket) and the grips (ends of the handlebar, the widest piece up front)
+  const sad = C.filter(c => c.cz < bb.z && c.cz > hubR.z).sort((a, b) => b.max[1] - a.max[1])[0];
+  out.saddle = sad ? new THREE.Vector3(0, sad.max[1], sad.cz) : new THREE.Vector3(0, 0.9, -0.3);
+  const bar = C.filter(c => c.cz > bb.z).sort((a, b) => (b.max[0] - b.min[0]) - (a.max[0] - a.min[0]))[0];
+  const barSet = bar ? C.filter(c => Math.abs(c.cy - bar.cy) < 0.06 && Math.abs(c.cz - bar.cz) < 0.1) : [];
+  const gy = bar ? bar.cy : 1.0, gz = bar ? bar.cz : 0.32, gx = barSet.length ? Math.max(...barSet.map(c => Math.max(Math.abs(c.min[0]), Math.abs(c.max[0])))) - 0.06 : 0.2;
+  out.grips = [new THREE.Vector3(gx, gy, gz), new THREE.Vector3(-gx, gy, gz)]; // [character's left (+x), right]
+  console.info('[bike] split', groups.frame.length, groups.wheelF.length, groups.wheelR.length, groups.crank.length, pedals.length, 'r', rF.toFixed(2), 'bb', bb.y.toFixed(2), bb.z.toFixed(2));
+  return out;
+}
+
 export class Walkers {
   constructor(game) {
     this.g = game; this.list = []; this.t = 0; this.manageT = 0;
@@ -93,25 +144,67 @@ export class Walkers {
     const p = h.object.position; w.ox = sh.x + sh.nx * 0.6 - p.x; w.oz = sh.z + sh.nz * 0.6 - p.z; if (Math.hypot(w.ox, w.oz) > 25) { w.ox = w.oz = 0; } else { p.x += w.ox; p.z += w.oz; }
   }
   // ── cyclists ──
+  // v2.16.1: the bicycle model is split once into frame / two wheels / crank / two pedals (splitBike) so the wheels
+  // spin with the road speed and the cranks turn; the rider is a live person whose feet are held on the pedals and
+  // hands on the grips by two-bone IK (people.js) on top of the seated clip, so the legs pedal
   manageBikes(f, night, N, inCity) {
     for (const b of this.bikes.slice()) { const p = b.obj.position; if (!N || b.c.dead || Math.hypot(p.x - f.x, p.z - f.z) > 260) this.dropBike(b); }
-    if (this.maxBikes && !this.bikeReq) { this.bikeReq = true; loadPeopleProp('bicycle').then(sc => { this.bikeSrc = sc; }).catch(() => { this.maxBikes = 0; }); }
+    if (this.maxBikes && !this.bikeReq) { this.bikeReq = true; loadPeopleProp('bicycle').then(sc => { this.bikeSrc = splitBike(sc); }).catch(e => { console.warn('bicycle', e?.message); this.maxBikes = 0; }); }
     const want = Math.round(this.maxBikes * (1 - 0.7 * night));
     if (!N || !inCity || !this.bikeSrc || !peopleReady() || this.bikes.length >= want) return;
     const sp = N.randomNear(f.x, f.z, 40, 170); if (!sp || sp.c.cls > 4 || sp.c.cls < 1) return;
-    const rider = createDriver(); if (!rider) return;
-    const obj = new THREE.Group(), bike = this.bikeSrc.clone(); obj.add(bike);
-    rider.position.set(0, 0.79, -0.3); rider.scale.multiplyScalar(0.96); obj.add(rider);
+    const B = this.bikeSrc, obj = new THREE.Group();
+    const part = (g, at) => { const m = new THREE.Mesh(g, B.mat); m.castShadow = true; if (at) m.position.copy(at); obj.add(m); return m; };
+    part(B.frame); const wF = part(B.wheelF, B.hubF), wR = part(B.wheelR, B.hubR), crank = part(B.crank, B.bb), pedals = B.pedals.map(q => part(q.g, q.c));
+    let rider = null, live = false;
+    try { const p = createPerson({ type: Math.random() < 0.35 ? 'student' : 'casual', mirror: false }); if (p.realistic) { rider = p; live = true; } else p.dispose?.(); } catch {}
+    if (!live) { rider = createDriver(); if (!rider) { return; } rider.position.set(0, 0.79, -0.3); rider.scale.multiplyScalar(0.96); obj.add(rider); }
+    else { obj.add(rider.object); rider.play('sit', 0); this.mountRider(rider, B); }
     this.g.scene.add(obj);
-    const b = { obj, c: sp.c, i: sp.i, d: sp.d, dir: Math.random() < 0.5 ? 1 : -1, v: 3.8 + Math.random() * 1.6, vNow: 3, yaw: 0, t: Math.random() * 9 };
+    const b = { obj, c: sp.c, i: sp.i, d: sp.d, dir: Math.random() < 0.5 ? 1 : -1, v: 3.8 + Math.random() * 1.6, vNow: 3, yaw: 0, t: Math.random() * 9, wF, wR, crank, pedals, rider: live ? rider : null, crankA: Math.random() * 6.28 };
     this.bikes.push(b); this.poseBike(b, true);
   }
-  dropBike(b) { b.obj.removeFromParent(); this.bikes.splice(this.bikes.indexOf(b), 1); }
+  // seat the rider: pelvis over the saddle at a height where the leg just doesn't straighten at the bottom of the stroke
+  mountRider(p, B) {
+    const o = p.object; o.position.set(0, 0, 0); o.updateMatrixWorld(true); p.mixer.update(0.01); o.updateMatrixWorld(true);
+    const hip = p.bone('LeftUpLeg'), knee = p.bone('LeftLeg'), foot = p.bone('LeftFoot'), hips = p.bone('Hips');
+    const v1 = hip.getWorldPosition(new THREE.Vector3()), v2 = knee.getWorldPosition(new THREE.Vector3()), v3 = foot.getWorldPosition(new THREE.Vector3());
+    const L = v1.distanceTo(v2) + v2.distanceTo(v3), h0 = hips.getWorldPosition(new THREE.Vector3()), parentInv = new THREE.Matrix4().copy(o.parent.matrixWorld).invert(); h0.applyMatrix4(parentInv);
+    const low = B.bb.clone().add(new THREE.Vector3(0, -B.crankR + 0.075, -0.07)), seatZ = B.saddle.z + 0.02;
+    const hipY = low.y + Math.sqrt(Math.max(0.1, (0.95 * L) ** 2 - (seatZ - low.z) ** 2)) + 0.03;
+    o.position.set(-h0.x, Math.max(B.saddle.y + 0.04, hipY) - h0.y, seatZ - h0.z);
+    // IK targets (world space, refreshed every frame in updateBikes)
+    const T = () => new THREE.Vector3();
+    p.ik = [
+      { rotate: 'Spine', axis: new THREE.Vector3(1, 0, 0), angle: 0.5 }, // lean forward over the bars (axis refreshed per frame)
+      { chain: ['LeftUpLeg', 'LeftLeg', 'LeftFoot'], target: T(), pole: T() }, { chain: ['RightUpLeg', 'RightLeg', 'RightFoot'], target: T(), pole: T() },
+      { chain: ['LeftArm', 'LeftForeArm', 'LeftHand'], target: T(), pole: T() }, { chain: ['RightArm', 'RightForeArm', 'RightHand'], target: T(), pole: T() },
+    ];
+  }
+  dropBike(b) { b.obj.removeFromParent(); if (b.rider) { try { b.rider.dispose(); } catch {} } this.bikes.splice(this.bikes.indexOf(b), 1); }
   poseBike(b, snap) {
     const S = this.seg(b.c, b.i), hx = S.tx * b.dir, hz = S.tz * b.dir, off = b.c.w / 2 - 0.75; // Japan: keep left
     b.obj.position.set(S.a[0] + S.tx * b.d + hz * off, 0.02, S.a[1] + S.tz * b.d - hx * off);
     const yaw = Math.atan2(hx, hz); if (snap) b.yaw = yaw; else { let dy = yaw - b.yaw; dy = Math.atan2(Math.sin(dy), Math.cos(dy)); b.yaw += dy * 0.12; }
-    b.obj.rotation.set(0, b.yaw, Math.sin(b.t * 1.7) * 0.025); // a little sway as they pedal
+    b.obj.rotation.set(0, b.yaw, Math.sin(b.crankA) * 0.02 * Math.min(1, b.vNow / 2)); // a little sway with each pedal stroke
+  }
+  // wheels / crank / pedals / the rider's legs for this frame
+  spinBike(b, dt) {
+    const B = this.bikeSrc; if (!B) return;
+    b.wF.rotation.x += b.vNow * dt / B.rF; b.wR.rotation.x += b.vNow * dt / B.rR;
+    if (b.vNow > 0.3) b.crankA += b.vNow * dt / B.rR / 2.1; // gear ratio ~2.1 (city bike)
+    b.crank.rotation.x = b.crankA;
+    const ca = Math.cos(b.crankA), sa = Math.sin(b.crankA);
+    b.pedals.forEach((m, i) => { const r = B.pedals[i].rel; m.position.set(B.bb.x + r.x, B.bb.y + r.y * ca - r.z * sa, B.bb.z + r.y * sa + r.z * ca); });
+    const p = b.rider; if (!p || !p.ik) return;
+    b.obj.updateMatrixWorld(true);
+    const W = v => b.obj.localToWorld(v), D = v => v.transformDirection(b.obj.matrixWorld);
+    // feet: the ankle sits a little above and behind the pedal axle; the character's left (+x) foot on the +x pedal
+    p.ik[0].axis.set(1, 0, 0).transformDirection(b.obj.matrixWorld); // bike's right-to-left axis → leaning forward
+    for (let s = 0; s < 2; s++) { const k = p.ik[1 + s], ped = b.pedals[B.pedals.findIndex(q => (q.rel.x > 0) === (s === 0))] || b.pedals[s];
+      k.target.copy(W(ped.position.clone().add(new THREE.Vector3(0, 0.075, -0.06)))); k.pole.copy(D(new THREE.Vector3(0, 0.25, 1))); }
+    for (let s = 0; s < 2; s++) { const k = p.ik[3 + s], g = B.grips[s === 0 ? 0 : 1]; k.target.copy(W(g.clone())); k.pole.copy(D(new THREE.Vector3(s === 0 ? 0.6 : -0.6, -1, -0.5))); }
+    p.update(dt, { speed: 0, action: 'sit' });
   }
   updateBikes(dt, N) {
     const v = this.g.vehicle;
@@ -133,6 +226,9 @@ export class Walkers {
         else { b.dir = -b.dir; }
       }
       this.poseBike(b, false);
+      // close by: spinning wheels + pedalling rider every frame; far: every few frames (they are a few pixels)
+      const cam = this.g.camera?.position, d2 = cam ? (p.x - cam.x) ** 2 + (p.z - cam.z) ** 2 : 0;
+      b.acc = (b.acc || 0) + dt; if (d2 < 70 * 70 || (this.g.frame ?? 0) % 4 === 0) { this.spinBike(b, b.acc); b.acc = 0; }
     }
   }
   remove(w) { for (const m of this.list) if (m.lead === w) m.lead = null; w.umb?.removeFromParent(); this.g.scene.remove(w.h.object); try { w.h.dispose(); } catch {} this.list.splice(this.list.indexOf(w), 1); }

@@ -8,6 +8,9 @@ import * as THREE from 'three';
 import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js';
 import { MeshoptDecoder } from 'three/addons/libs/meshopt_decoder.module.js';
 import { createPerson } from './people.js';
+import { defaultOutfit } from './humans.js';
+// stand-in while the medic model loads (procedural): pale blue-grey jacket and trousers, white helmet-ish cap
+const MEDIC_OUTFIT = () => ({ ...defaultOutfit(), top: 'racing_jacket', topColor: '#a9bccb', accentColor: '#e8eef2', bottom: 'chinos', bottomColor: '#5d6f80', shoes: 'boots', shoeColor: '#15171a', hair: 'cap', hairColor: '#f2f2f2', accessory: 'none' });
 
 const BASE = new URL('../../assets/models/people/', import.meta.url);
 let MODELS = null;
@@ -55,6 +58,45 @@ class PeePo {
 const yawTo = (a, b) => Math.atan2(b.x - a.x, b.z - a.z);
 const angD = d => Math.atan2(Math.sin(d), Math.cos(d));
 
+// ───────────────────────────────────────────────── street graph walking ──
+// (read-only use of the city street graph: chains of [x, z] points joined at shared vertex keys; same conventions as
+// the traffic AI in js/game/traffic.js — heading (hx, hz), left-hand traffic lane offset (hz, −hx) · lat)
+const segOf = (c, i) => { const a = c.pts[i], b = c.pts[i + 1]; const L = Math.hypot(b[0] - a[0], b[1] - a[1]) || 0.01; return { a, b, L, tx: (b[0] - a[0]) / L, tz: (b[1] - a[1]) / L }; };
+const laneLat = c => c.oneway ? (c.w > 7 ? c.w / 4 : 0) : Math.max(1.35, Math.min(c.w / 4, 3.4));
+const smooth = u => u * u * (3 - 2 * u);
+const lanePoint = (q, lat, y) => { const p = new THREE.Vector3(q.x + q.hz * lat, y, q.z - q.hx * lat); if (q.key !== undefined) p.key = q.key; return p; };
+// the street to carry on along at the vertex ahead: straight on first, then the bigger street; no footpaths, no
+// U-turns, one-way streets only the right way (back = walking against the direction of travel)
+function nextStreet(net, cur, back) {
+  const c = cur.c, vi = cur.dir > 0 ? cur.i + 1 : cur.i, k = c.keys?.[vi]; if (k === undefined) return null;
+  const S0 = segOf(c, cur.i), hx = S0.tx * cur.dir, hz = S0.tz * cur.dir, opts = [];
+  for (const [c2, i2] of net.nodes.get(k) || []) {
+    if (c2.dead || c2.cls >= 5) continue;
+    if (i2 < c2.pts.length - 1 && !(c2 === c && i2 === cur.i) && !(back && c2.oneway)) { const S = segOf(c2, i2); opts.push({ c: c2, i: i2, dir: 1, d: 0, dot: S.tx * hx + S.tz * hz }); }
+    if (i2 > 0 && !(c2 === c && i2 - 1 === cur.i) && (back || !c2.oneway)) { const S = segOf(c2, i2 - 1); opts.push({ c: c2, i: i2 - 1, dir: -1, d: S.L, dot: -S.tx * hx - S.tz * hz }); }
+  }
+  let ok = opts.filter(o => o.dot > -0.3); if (!ok.length) ok = opts.filter(o => o.c.cls < 5); if (!ok.length) return null; // a sharp turn rather than none
+  ok.sort((a, b) => (b.dot > 0.85) - (a.dot > 0.85) || a.c.cls - b.c.cls || b.dot - a.dot);
+  return { ...ok[0], key: k };
+}
+// centreline points every `step` m for `dist` m from a cursor { c, i, dir, d } → [{ x, z, hx, hz, lat, w, key? }]
+function walkStreet(net, cur0, dist, step, back) {
+  const cur = { ...cur0 }, out = []; let left = dist, guard = 0;
+  const push = key => { const S = segOf(cur.c, cur.i); out.push({ x: S.a[0] + S.tx * cur.d, z: S.a[1] + S.tz * cur.d, hx: S.tx * cur.dir, hz: S.tz * cur.dir, lat: laneLat(cur.c), w: cur.c.w || 7, key }); };
+  push();
+  while (left > 0 && guard++ < 3000) {
+    const S = segOf(cur.c, cur.i), rem = cur.dir > 0 ? S.L - cur.d : cur.d;
+    if (rem > step) { cur.d += step * cur.dir; left -= step; push(); continue; }
+    cur.d = cur.dir > 0 ? S.L : 0; left -= rem;
+    let n = nextStreet(net, cur, back);
+    // dead end of a two-way street: turn round (as the traffic AI does) — only once per walk
+    if (!n && !back && !cur.c.oneway && !out.uturn) { out.uturn = true; n = { c: cur.c, i: cur.i, dir: -cur.dir, d: cur.d }; }
+    if (!n) { out.end = true; break; }
+    cur.c = n.c; cur.i = n.i; cur.dir = n.dir; cur.d = n.d; push(n.key);
+  }
+  out.cur = cur; return out;
+}
+
 export class Ambulances {
   constructor(game) { this.g = game; this.list = []; }
 
@@ -65,7 +107,7 @@ export class Ambulances {
   dispatch(inc) {
     const g = this.g, ai = inc.ai;
     const route = this.routeTo(ai); if (!route) return null;
-    const job = { inc, route, ri: 1, stage: 'load', t: 0, pos: route[0].clone(), yaw: yawTo(route[0], route[1]), v: 13, crew: [], flash: 0 };
+    const job = { inc, inCl: this.lastIn, route, ri: 1, stage: 'load', t: 0, pos: route[0].clone(), yaw: yawTo(route[0], route[1]), v: 13, crew: [], flash: 0 };
     this.list.push(job);
     loadModels().then(M => {
       if (!this.list.includes(job)) return;
@@ -86,34 +128,90 @@ export class Ambulances {
     return job;
   }
 
-  // points from ~170 m behind the wrecked car to just behind it, on its own lane / street
+  // the way in: ~170 m of the wrecked car's own street / lane, driven in its direction, ending ~10 m behind it.
+  // City streets are walked backwards through the OpenStreetMap graph (js/game/city.js — the same chains the traffic
+  // AI drives, read-only), so the ambulance comes round real corners on the left-hand lane and never through a block.
   routeTo(ai) {
-    const pts = [], W = this.g.world;
+    const W = this.g.world, net = W.city?.net, y = ai.pos.y;
+    let pts = []; this.lastIn = null;
     if (ai.mode === 'road' && ai.road) {
       const r = ai.road, dir = ai.dir || 1, lat = ai.lane?.lat ?? ai.lat ?? 0;
-      for (let k = 170; k >= 11; k -= 8) { const s = THREE.MathUtils.clamp(ai.s - dir * k, 1, r.length - 1); const p = r.at(s, lat); pts.push(new THREE.Vector3(p.x, p.y, p.z)); }
-      this.exitOf = null;
-    } else if (ai.mode === 'city' && ai.c?.pts) {
-      // walk back along the street polyline from the car
-      const c = ai.c; const dir = ai.dir || 1; let i = ai.i, x = ai.pos.x, z = ai.pos.z, left = 175; const back = [[x, z]];
-      let vi = dir > 0 ? i : i + 1;
-      while (left > 0 && vi >= 0 && vi < c.pts.length) { const q = c.pts[vi]; const d = Math.hypot(q[0] - x, q[1] - z); if (d > left) { const k = left / d; back.push([x + (q[0] - x) * k, z + (q[1] - z) * k]); left = 0; break; } back.push([q[0], q[1]]); left -= d; x = q[0]; z = q[1]; vi -= dir; }
+      for (let k = 170; k >= 10; k -= 4) { const s = THREE.MathUtils.clamp(ai.s - dir * k, 1, r.length - 1); const p = r.at(s, lat); pts.push(new THREE.Vector3(p.x, p.y, p.z)); }
+    } else if (ai.mode === 'city' && ai.c?.pts && net) {
+      const back = walkStreet(net, { c: ai.c, i: ai.i, dir: -(ai.dir || 1), d: ai.d }, 175, 3, true);
       back.reverse();
-      // keep to the left of the street (Japan drives on the left): offset the polyline by the lane half-width
-      const off = (c.w || 7) / 4;
-      const y = ai.pos.y;
-      for (let k = 0; k < back.length; k++) { const a = back[Math.max(0, k - 1)], b = back[Math.min(back.length - 1, k + 1)]; const tx = b[0] - a[0], tz = b[1] - a[1], L = Math.hypot(tx, tz) || 1; pts.push(new THREE.Vector3(back[k][0] - tz / L * off * 0, y, back[k][1] + tx / L * off * 0)); }
-      // stop 9 m short of the car
-      const last = pts[pts.length - 1]; const prev = pts[pts.length - 2] || last.clone().add(new THREE.Vector3(Math.sin(ai.yaw), 0, Math.cos(ai.yaw)).multiplyScalar(-10));
-      const dv = last.clone().sub(prev).setY(0).normalize(); pts[pts.length - 1] = ai.pos.clone().addScaledVector(dv, -9); pts[pts.length - 1].y = y;
+      const cl = back.map(q => ({ ...q, hx: -q.hx, hz: -q.hz }));
+      // drop the last 10 m (the ambulance stops short of the wreck); keep the centreline for the way out
+      let acc = 0; for (let k = cl.length - 1; k > 0 && acc < 10; k--) { acc += Math.hypot(cl[k].x - cl[k - 1].x, cl[k].z - cl[k - 1].z); cl.length = k; }
+      this.lastIn = cl;
+      pts = cl.map(q => lanePoint(q, q.lat, y));
     } else {
       // parked / PA: come straight in from behind the car
       const f = new THREE.Vector3(Math.sin(ai.yaw), 0, Math.cos(ai.yaw));
       for (let k = 120; k >= 9; k -= 10) pts.push(ai.pos.clone().addScaledVector(f, -k));
     }
     // drop points closer than 1 m to each other
-    const out = [pts[0]]; for (const p of pts) if (p.distanceTo(out[out.length - 1]) > 1) out.push(p);
+    const out = [pts[0]]; for (const p of pts) if (p && p.distanceTo(out[out.length - 1]) > 1) out.push(p);
     return out.length >= 2 ? out : null;
+  }
+
+  // the way out: pull out to the right (into the oncoming / overtaking lane) round the wreck, back into the left lane
+  // and on along the street graph / expressway; the route is extended as it is driven
+  exitRoute(job) {
+    const g = this.g, ai = job.inc.ai, net = g.world.city?.net, y = job.pos.y, pts = [job.pos.clone()];
+    job.ext = null;
+    if (ai.mode === 'city' && ai.c?.pts && net && !ai.c.dead) {
+      const fwd = walkStreet(net, { c: ai.c, i: ai.i, dir: ai.dir || 1, d: ai.d }, 260, 3, false);
+      const cl = [...(job.inCl || []).slice(-1), ...fwd];
+      // distance of every point from the wreck along the route (−: behind it)
+      let s0 = 0; const sAt = []; for (let k = 0; k < cl.length; k++) { if (k) s0 += Math.hypot(cl[k].x - cl[k - 1].x, cl[k].z - cl[k - 1].z); sAt.push(s0); }
+      const sW = sAt[Math.min(job.inCl?.length ? 1 : 0, sAt.length - 1)];
+      for (let k = 0; k < cl.length; k++) {
+        const q = cl[k], ds = sAt[k] - sW, lane = q.lat, w = q.w || 7;
+        const latO = Math.max(lane - 3.3, -(w / 2) + 1.2); // as far over as the street allows
+        const u = ds < -14 ? 0 : ds < -6 ? (ds + 14) / 8 : ds < 9 ? 1 : ds < 17 ? 1 - (ds - 9) / 8 : 0;
+        const p = lanePoint(q, lane + (latO - lane) * smooth(u), y); if (p.distanceTo(pts[pts.length - 1]) > 1) pts.push(p);
+      }
+      if (!fwd.end) job.ext = { kind: 'city', cur: fwd.cur };
+    } else if (ai.mode === 'road' && ai.road) {
+      const r = ai.road, dir = ai.dir || 1, lat = ai.lane?.lat ?? ai.lat ?? 0, latO = lat - 3.5 * dir;
+      for (let k = -8; k <= 260; k += 4) { const s = ai.s + dir * k; if (s < 1 || s > r.length - 1) break;
+        const u = k < -2 ? (k + 8) / 6 : k < 10 ? 1 : k < 22 ? 1 - (k - 10) / 12 : 0; const p = r.at(s, lat + (latO - lat) * smooth(Math.max(0, u))); pts.push(new THREE.Vector3(p.x, p.y, p.z)); }
+      const sEnd = ai.s + dir * 260; job.ext = { kind: 'road', r, dir, lat, s: THREE.MathUtils.clamp(sEnd, 0, r.length) };
+    } else {
+      // PA lot: out along the lot's own aisles to the exit ramp (traffic.js lot planner, read-only), then down the ramp
+      const tr = g.traffic; try { const ex = tr.lotExit(); for (const p of tr.lotPath(job.pos.clone(), ex)) pts.push(new THREE.Vector3(p.x, y, p.z)); } catch {}
+      const r = g.net?.byId?.pa_out; if (r) { for (let s = 4; s < r.length; s += 6) { const p = r.at(s, r.lanes[0]?.lat ?? 0); pts.push(new THREE.Vector3(p.x, p.y, p.z)); } job.ext = { kind: 'road', r, dir: 1, lat: r.lanes[0]?.lat ?? 0, s: r.length }; }
+      if (pts.length < 3) { const f = new THREE.Vector3(Math.sin(job.yaw), 0, Math.cos(job.yaw)); for (let k = 1; k <= 12; k++) pts.push(job.pos.clone().addScaledVector(f, k * 8)); }
+    }
+    return pts;
+  }
+  // more route ahead (city graph or expressway links) once the ambulance gets near the end of what it has
+  extend(job) {
+    const g = this.g, net = g.world.city?.net, r = job.route;
+    let e = job.ext;
+    // the street ran out (end of the loaded street graph / a dead end): pick up the nearest street segment ahead that
+    // may be driven in our direction and carry on from there
+    if (!e && net && (job.replan = (job.replan || 0) + 1) <= 4) {
+      const x = job.pos.x, z = job.pos.z, hx = Math.sin(job.yaw), hz = Math.cos(job.yaw); let best = null;
+      for (const c of net.chains.values()) { if (c.dead || c.cls >= 5 || c.bb[0] > x + 30 || c.bb[2] < x - 30 || c.bb[1] > z + 30 || c.bb[3] < z - 30) continue;
+        for (let i = 0; i < c.pts.length - 1; i++) { const S = segOf(c, i), t = THREE.MathUtils.clamp((x - S.a[0]) * S.tx + (z - S.a[1]) * S.tz, 0, S.L), d = Math.hypot(S.a[0] + S.tx * t - x, S.a[1] + S.tz * t - z);
+          for (const dir of c.oneway ? [1] : [1, -1]) { const dot = (S.tx * hx + S.tz * hz) * dir; if (dot < 0.2) continue; const sc = d - dot * 4; if (d < 25 && (!best || sc < best.sc)) best = { sc, cur: { c, i, dir, d: THREE.MathUtils.clamp(t + dir * 6, 0, S.L) } }; } } }
+      if (best) e = { kind: 'city', cur: best.cur };
+    }
+    if (!e) return;
+    if (e.kind === 'city' && net) {
+      const fwd = walkStreet(net, e.cur, 200, 3, false); for (const q of fwd.slice(1)) r.push(lanePoint(q, q.lat, job.pos.y));
+      job.ext = fwd.end ? null : { kind: 'city', cur: fwd.cur };
+    } else if (e.kind === 'road') {
+      let { r: road, dir, lat, s } = e;
+      if (dir > 0 ? s >= road.length - 1 : s <= 1) { // end of this road: follow its link onto the next one
+        const L = dir > 0 ? g.net?.links?.get(road) : null; if (!L || L.to === road) { job.ext = null; return; }
+        const lane = g.net.laneNear(L.to, L.dir, L.lat); road = L.to; dir = L.dir; lat = lane?.lat ?? L.lat; s = L.s;
+      }
+      let k = 0; for (; k < 200; k += 4) { const ss = s + dir * k; if (ss < 1 || ss > road.length - 1) break; const p = road.at(ss, lat); r.push(new THREE.Vector3(p.x, p.y, p.z)); }
+      job.ext = { kind: 'road', r: road, dir, lat, s: THREE.MathUtils.clamp(s + dir * k, 0, road.length) };
+    }
   }
 
   update(dt) {
@@ -166,7 +264,9 @@ export class Ambulances {
         }
         break;
       case 'leave': {
-        if (this.follow(job, dt, 16) || job.t > 60 || (me && me.distanceTo(job.pos) > 500)) { job.stage = 'gone'; this.remove(job); }
+        // gone once well away from the player (or out of road and out of sight)
+        const far = me ? me.distanceTo(job.pos) : 999;
+        if (far > 420 || (this.follow(job, dt, 16) && far > 90) || job.t > 150) { job.stage = 'gone'; this.remove(job); }
         break;
       }
     }
@@ -179,28 +279,61 @@ export class Ambulances {
     if (job.root) { job.root.position.copy(job.pos); job.root.rotation.y = job.yaw; }
   }
 
+  // drive along job.route: pure pursuit with a speed plan (corners, the end of the route), keeping a safe gap to the
+  // traffic ahead (same direction: IDM-like; oncoming in the lane we are using: wait), crawling through red lights,
+  // and making the traffic yield to the siren (cars ahead move over / slow, cars behind hold back)
   follow(job, dt, vMax) {
-    const r = job.route; if (job.ri >= r.length) return true;
-    const tgt = r[job.ri], dx = tgt.x - job.pos.x, dz = tgt.z - job.pos.z, d = Math.hypot(dx, dz);
-    // distance left to the end of the route → brake for it
-    let left = d; for (let k = job.ri; k < r.length - 1; k++) left += r[k].distanceTo(r[k + 1]);
-    const want = Math.min(vMax, Math.sqrt(2 * 3.5 * Math.max(0, left - 0.5)) + 0.3);
-    // the player's car (often stopped right behind the wreck) is in the way: pull up behind it instead
-    let want2 = want; const pv = this.g.vehicle?.pos;
-    if (pv && job.stage === 'drive') { const hx = Math.sin(job.yaw), hz = Math.cos(job.yaw), ex = pv.x - job.pos.x, ez = pv.z - job.pos.z, fw = ex * hx + ez * hz, sd = Math.abs(ex * hz - ez * hx);
-      if (fw > 0 && fw < 9 && sd < 2.6) { want2 = 0; if (job.v < 0.3 && left < 30) return true; } }
-    job.v += THREE.MathUtils.clamp(want2 - job.v, -6 * dt, 3 * dt);
-    if (d < Math.max(1.2, job.v * dt * 1.5)) { job.ri++; return job.ri >= r.length && left < 2; }
-    const step = Math.min(d, job.v * dt); job.pos.x += dx / d * step; job.pos.z += dz / d * step; job.pos.y += (tgt.y - job.pos.y) * Math.min(1, dt * 4);
-    job.yaw += angD(Math.atan2(dx, dz) - job.yaw) * Math.min(1, dt * 3);
-    return false;
-  }
-  exitRoute(job) {
-    // pull out to the right (overtaking side), past the wreck, then on along the street / lane
-    const f = new THREE.Vector3(Math.sin(job.yaw), 0, Math.cos(job.yaw)), right = new THREE.Vector3(-f.z, 0, f.x);
-    const pts = [job.pos.clone()];
-    for (let k = 1; k <= 25; k++) { const side = Math.min(1, k / 4) * 3.3; pts.push(job.pos.clone().addScaledVector(f, k * 8).addScaledVector(right, side)); }
-    return pts;
+    const g = this.g, r = job.route;
+    // consume points we have reached (or passed)
+    while (job.ri < r.length) { const q = r[job.ri], dx = q.x - job.pos.x, dz = q.z - job.pos.z, d = Math.hypot(dx, dz);
+      const hx = Math.sin(job.yaw), hz = Math.cos(job.yaw); if (d < Math.max(1.5, job.v * 0.25) || (d < 6 && dx * hx + dz * hz < 0)) job.ri++; else break; }
+    if (job.ri >= r.length - 25 && (job.ext || job.stage === 'leave')) this.extend(job);
+    if (job.ri >= r.length) { job.v = Math.max(0, job.v - 6 * dt); return job.v < 0.3; }
+    // look-ahead point, the sharpest bend in the next ~30 m and the distance left to the end of the route
+    const la = Math.max(4, job.v * 0.75); let look = r[job.ri], bend = 0, acc = Math.hypot(r[job.ri].x - job.pos.x, r[job.ri].z - job.pos.z);
+    for (let k = job.ri; k < r.length - 1; k++) {
+      const sd = Math.hypot(r[k + 1].x - r[k].x, r[k + 1].z - r[k].z);
+      if (acc < la) look = r[k + 1];
+      if (acc < 30 && k > job.ri) { const a1 = Math.atan2(r[k].x - r[k - 1].x, r[k].z - r[k - 1].z), a2 = Math.atan2(r[k + 1].x - r[k].x, r[k + 1].z - r[k].z); bend = Math.max(bend, Math.abs(angD(a2 - a1)) / Math.max(1, sd)); }
+      acc += sd; if (job.ext && acc > 45) break;
+    }
+    const left = job.ext ? 1e9 : acc;
+    let want = Math.min(vMax, Math.sqrt(2 * 3.5 * Math.max(0, left - 0.5)) + 0.3, bend > 0.01 ? Math.max(4, Math.sqrt(2.6 / bend)) : vMax);
+    // traffic around us
+    const hx = Math.sin(job.yaw), hz = Math.cos(job.yaw), wreck = job.inc.ai, tr = g.traffic;
+    let gap = 1e9, vLead = want, blocked = false;
+    for (const o of tr?.cars || []) {
+      if (o === wreck && job.stage === 'leave') continue;
+      const ex = o.pos.x - job.pos.x, ez = o.pos.z - job.pos.z; if (ex * ex + ez * ez > 60 * 60 || Math.abs(o.pos.y - job.pos.y) > 3) continue;
+      const fw = ex * hx + ez * hz, sd = Math.abs(ex * hz - ez * hx), same = Math.sin(o.yaw) * hx + Math.cos(o.yaw) * hz;
+      if (fw > 0 && fw < 45 && sd < 1.6 + (o.radius || 0.9)) {
+        if (same > 0.3) { if (fw - (o.halfL || 2.2) - 3 < gap) { gap = fw - (o.halfL || 2.2) - 3; vLead = o.v || 0; } }
+        else if (same < -0.3 && fw < 35) { gap = Math.min(gap, fw - (o.halfL || 2.2) - 4); vLead = 0; blocked = true; } // oncoming in our lane: let it pass
+        else if (fw < 14) { gap = Math.min(gap, fw - 4); vLead = 0; }
+      }
+      // cars behind us in the same direction hold back (nobody drives into a stopped ambulance)
+      if (fw < 0 && fw > -30 && sd < 2.2 && same > 0.5 && (o.mode === 'city' || o.mode === 'road') && !o.incident) { const room = -fw - (o.halfL || 2.2) - 2.6 - 5; o.v = Math.min(o.v, Math.max(0, job.v + room * 0.6)); }
+    }
+    // the player's car
+    const pv = g.mode === 'drive' ? g.vehicle?.pos : null;
+    if (pv) { const ex = pv.x - job.pos.x, ez = pv.z - job.pos.z, fw = ex * hx + ez * hz, sd = Math.abs(ex * hz - ez * hx);
+      if (fw > 0 && fw < 30 && sd < 2.4 && Math.abs(pv.y - job.pos.y) < 3) { if (fw - 6 < gap) { gap = fw - 6; vLead = 0; } if (job.stage === 'drive' && job.v < 0.3 && fw < 12 && job.ri > r.length - 12) return true; } }
+    // emergency vehicle: siren on → cars ahead move over (traffic.js honk() response) — every half second
+    if ((job.yieldT = (job.yieldT || 0) - dt) <= 0) { job.yieldT = 0.5; try { tr?.honk?.(job.pos, new THREE.Vector3(hx, 0, hz)); } catch {} }
+    // red light at the junction ahead: crawl through it (緊急走行)
+    const net = g.world.city?.net;
+    if (net && job.ri < r.length) for (let k = job.ri; k < Math.min(r.length, job.ri + 6); k++) if (r[k].key !== undefined) { const d = r[k].distanceTo(job.pos); if (d < 16) { let L = 'go'; try { L = net.light(r[k].key, hx, hz, g.world.city.uniforms.uTime.value); } catch {} if (L !== 'go') want = Math.min(want, 3 + d * 0.25); } break; }
+    // stuck behind something for a long time (a queue that never clears): pass through it rather than deadlock
+    job.blockT = gap < 8 && job.v < 0.5 ? (job.blockT || 0) + dt : 0;
+    if (job.blockT > 14) gap = 1e9;
+    if (gap < 1e8) want = Math.min(want, Math.max(0, vLead + (gap - 2) * 0.55), gap < 1 ? 0 : 99);
+    job.v += THREE.MathUtils.clamp(want - job.v, -7 * dt, 2.6 * dt); if (job.v < 0) job.v = 0;
+    // steer towards the look-ahead point, move along the heading
+    const tx = look.x - job.pos.x, tz = look.z - job.pos.z;
+    if (tx * tx + tz * tz > 0.01) { const dy = angD(Math.atan2(tx, tz) - job.yaw); job.yaw += THREE.MathUtils.clamp(dy, -1.6 * dt * Math.max(0.4, job.v / 5), 1.6 * dt * Math.max(0.4, job.v / 5)); }
+    const st = job.v * dt; job.pos.x += Math.sin(job.yaw) * st; job.pos.z += Math.cos(job.yaw) * st;
+    const ty = r[Math.min(job.ri, r.length - 1)].y; job.pos.y += (ty - job.pos.y) * Math.min(1, dt * 4);
+    return job.ri >= r.length - 1 && !job.ext && job.pos.distanceTo(r[r.length - 1]) < 2.5;
   }
   doorOf(ai) {
     const side = new THREE.Vector3(Math.cos(ai.yaw), 0, -Math.sin(ai.yaw)); // driver side (right-hand drive)
@@ -210,7 +343,7 @@ export class Ambulances {
     const g = this.g, f = new THREE.Vector3(Math.sin(job.yaw), 0, Math.cos(job.yaw)), r = new THREE.Vector3(-f.z, 0, f.x);
     const rear = job.pos.clone().addScaledVector(f, -3.2);
     for (const s of [-0.55, 0.55]) {
-      const h = createPerson({ type: 'staff', sex: 'm', mirror: false });
+      const h = createPerson({ type: 'medic', sex: 'm', mirror: false, outfit: MEDIC_OUTFIT() }); // 救急隊員: light-blue / silver jacket, white helmet
       const pos = rear.clone().addScaledVector(r, s); h.object.position.copy(pos); g.scene.add(h.object);
       job.crew.push({ h, pos: h.object.position, yaw: job.yaw + Math.PI, speed: 0, action: 'idle' });
     }

@@ -97,7 +97,7 @@ class Region {
     this.buildRoads(); await idle();
     if (this.G) { this.buildTerrain(); await idle(); }
     if (this.F) { this.buildFar(); await idle(); }
-    if (!data.coast) { this.buildSkirts(); await idle(); }
+    if (!data.coast) { this.buildSkirts(); await idle(); } else { this.buildBanks(); await idle(); }
     this.buildTrees(); await idle();
     this.buildGrass(); await idle();
     this.buildLots(); await idle();
@@ -132,10 +132,14 @@ class Region {
         if (!end) { // r starts here
           if (oEnd && dot > 0.3) { if (!net.links.has(o) && o.lanesB) net.links.set(o, { to: r, s: 0, dir: 1, lat: fwdLat(r) }); else addDv(o, { s: o.length, dir: 1, to: r, lat: fwdLat(r) }); }
           else if (oStart) { addDv(o, { s: 0, dir: -1, to: r, lat: fwdLat(r) }); addDv(r, { s: 0, dir: -1, to: o, lat: fwdLat(o) }); }
-          else { const dir = dot >= 0 ? 1 : -1; if (dir === 1 || o.lanesB) addDv(o, { s: h.s, dir, to: r, lat: fwdLat(r) }); addDv(r, { s: 0, dir: -1, to: o, lat: h.lat }); }
+          else { const dir = dot >= 0 ? 1 : -1; if (dir === 1 || o.lanesB) addDv(o, { s: h.s, dir, to: r, lat: fwdLat(r) }); if (dir === -1 || o.lanesB) addDv(r, { s: 0, dir: -1, to: o, lat: h.lat }); } // v2.16.1: never back onto a one-way road against its traffic
         } else if (!net.links.has(r)) { // r ends here
-          if (oStart && dot > 0.3) net.links.set(r, { to: o, s: 0, dir: 1, lat: fwdLat(o) });
-          else if (!oEnd) net.links.set(r, { to: o, s: h.s, dir: dot >= 0 ? 1 : -1, lat: h.lat });
+          // v2.16.1: a road starting here carries straight on even round a hairpin junction (元箱根: 75 → 732 turns back
+          // ~120°; the old dot > 0.3 test linked it backwards, dir −1, and the autopilot stopped dead)
+          if (oStart && (dot > 0.3 || !o.region || o.region === r.region)) net.links.set(r, { to: o, s: 0, dir: 1, lat: fwdLat(o) });
+          else if (!oEnd) { if (dot < 0 && !o.lanesB) continue; net.links.set(r, { to: o, s: h.s, dir: dot >= 0 ? 1 : -1, lat: h.lat }); }
+          // the game's own roads are re-profiled by RoadNet: ease our last 80 m onto its surface (no step at the merge)
+          const dy = h.y - q.p.y; if (Math.abs(dy) > 0.02) for (const p of S) { const d = r.length - p.s; if (d > 80) continue; const k = 1 - d / 80; p.p.y += dy * k * k * (3 - 2 * k); }
         }
       }
     }
@@ -148,7 +152,17 @@ class Region {
   nearest(x, z) { let best = null; const cx = Math.floor(x / this.CS), cz = Math.floor(z / this.CS);
     for (let a = -1; a <= 1; a++) for (let b = -1; b <= 1; b++) { const l = this.hash.get((cx + a) + ',' + (cz + b)); if (!l) continue; for (let k = 0; k < l.length; k += 2) { const q = this.roads[l[k]].samples[l[k + 1]]; const d = (q.p.x - x) ** 2 + (q.p.z - z) ** 2; if (!best || d < best.d) best = { d, r: l[k], i: l[k + 1] }; } }
     if (best) { best.d = Math.sqrt(best.d); best.road = this.roads[best.r]; best.q = best.road.samples[best.i]; } return best; }
-  isBridge(q) { if (this.data.coast) return q.p.y > 1.2 && !this.islandAt(q.p.x, q.p.z); return q.p.y - this.dem(q.p.x, q.p.z) > 6; }
+  isBridge(q) { if (this.data.coast) return this.overWater(q); return q.p.y - this.dem(q.p.x, q.p.z) > 6; }
+  overWater(q) { return !this.islandAt(q.p.x, q.p.z) && !this.W.isLand(q.p.x, q.p.z); }
+  // v2.16.1 — the coast road runs at its real height (3–10 m, on the dunes / sea wall) while the game's Shōnan ground
+  // lies at 0: an embankment either side meets it (1 : 4, 12–36 m wide), so side streets and the beach ramp up to the road
+  coastBank(x, z) {
+    if (this.islandAt(x, z) || !this.W.isLand(x, z)) return undefined;
+    const n = this.nearest(x, z); if (!n || this.overWater(n.q)) return undefined;
+    const r = n.road, edge = halfW(r) + (r.sidewalk || 0), h = n.q.p.y - 0.15, w = Math.max(12, Math.min(36, h * 4));
+    if (n.d > edge + w) return undefined;
+    return n.d < edge ? h : h * (1 - ss(edge, edge + w, n.d));
+  }
   islandAt(x, z) { return !!(this.G?.island && this.inGrid(x, z, 2) && this.gridAt(this.H, x, z) > 0.3); }
   carve() {
     const G = this.G, H = this.H, coast = this.data.coast;
@@ -169,7 +183,7 @@ class Region {
   // ground near this region's roads / lots (undefined = not ours: the caller falls back to its own ground)
   groundNear(x, z) {
     const L = this.lotAt(x, z); if (L) return L.deck ? L.y - 0.02 : L.y;
-    if (this.data.coast) return undefined;
+    if (this.data.coast) return this.coastBank(x, z);
     const n = this.nearest(x, z);
     if (n && n.d < 34 && !this.isBridge(n.q)) { const hw = halfW(n.road) + 0.6, base = n.q.p.y - 0.35; return n.d < hw ? base : base + (this.dem(x, z) - base) * ss(hw, 30, n.d); }
     for (const L2 of this.lots) { if (L2.bay || L2.deck) continue; const R = Math.max(L2.l, L2.w) / 2, d = Math.hypot(x - L2.x, z - L2.z); if (d < R + 26) return L2.y + (this.dem(x, z) - L2.y) * ss(R, R + 24, d); }
@@ -178,7 +192,7 @@ class Region {
   ground(x, z) {
     if (!this.live || !this.inBox(x, z)) return undefined;
     const g = this.groundNear(x, z); if (g !== undefined) return g;
-    if (this.data.coast) return this.islandAt(x, z) ? this.gridAt(this.H, x, z) : undefined;
+    if (this.data.coast) return this.islandAt(x, z) ? this.gridAt(this.H, x, z) : undefined; // (the road banks: groundNear)
     if (this.inGrid(x, z)) return this.gridAt(this.H, x, z);
     if (this.F) return this.farAt(x, z);
     return undefined;
@@ -262,6 +276,31 @@ class Region {
         }
         const sg = new THREE.BufferGeometry(); sg.setAttribute('position', new THREE.Float32BufferAttribute(sp, 3)); sg.setAttribute('color', new THREE.Float32BufferAttribute(sc, 3)); sg.setAttribute('uv', new THREE.Float32BufferAttribute(uv, 2)); sg.setIndex(si); sg.computeVertexNormals(); sg.computeBoundingSphere();
         const m = new THREE.Mesh(sg, mat); m.receiveShadow = true; this.add(m, 3500);
+      }
+    }
+  }
+  // the coast road's embankments (mesh for coastBank): grass slopes down to the town / the beach, sand towards the sea
+  buildBanks() {
+    const mat = this.terrainMat(), C = new THREE.Color(), fr = [0, 0.12, 0.3, 0.55, 0.8, 1];
+    for (const road of this.roads) {
+      const S = road.samples, edge = halfW(road) + (road.sidewalk || 0), n = Math.ceil(S.length / 2), CHK = 400;
+      for (let c0 = 0; c0 < n - 1; c0 += CHK) {
+        const c1 = Math.min(n - 1, c0 + CHK), sp = [], sc = [], si = [], uv = [];
+        for (const side of [1, -1]) {
+          const base = sp.length / 3, ok = [];
+          for (let a = c0; a <= c1; a++) { const i = Math.min(S.length - 1, a * 2), q = S[i], h = q.p.y - 0.15, w = Math.max(12, Math.min(36, h * 4)); ok.push(!this.overWater(q) && !this.islandAt(q.p.x, q.p.z) && h > 0.6);
+            for (const f of fr) { const d = edge + w * f, x = q.p.x + q.left.x * d * side, z = q.p.z + q.left.z * d * side;
+              const land = this.W.isLand(x, z), nn = this.nearest(x, z), clash = nn && nn.road !== road && nn.d < halfW(nn.road) + (nn.road.sidewalk || 0) + 1;
+              const L = this.lotAt(x, z); let y = L ? L.y - 0.1 : !land ? Math.min(h - 0.4, -1.2) : clash ? Math.min(nn.q.p.y, h) - 0.2 : f === 1 ? -0.25 : h * (1 - ss(0, 1, f)) - 0.05;
+              sp.push(x - this.ox, y, z - this.oz); uv.push(x - this.ox, z - this.oz);
+              if (!land || y < 1.5 && side < 0) C.setRGB(0.86, 0.8, 0.66); else C.setRGB(0.5 + f * 0.08, 0.74, 0.42); sc.push(C.r, C.g, C.b); } }
+          const nr = fr.length;
+          for (let a = 0; a < c1 - c0; a++) { if (!ok[a] || !ok[a + 1]) continue;
+            for (let b = 0; b < nr - 1; b++) { const v = base + a * nr + b; if (side > 0) si.push(v, v + nr, v + 1, v + 1, v + nr, v + nr + 1); else si.push(v, v + 1, v + nr, v + 1, v + nr + 1, v + nr); } }
+        }
+        if (!si.length) continue;
+        const g = new THREE.BufferGeometry(); g.setAttribute('position', new THREE.Float32BufferAttribute(sp, 3)); g.setAttribute('color', new THREE.Float32BufferAttribute(sc, 3)); g.setAttribute('uv', new THREE.Float32BufferAttribute(uv, 2)); g.setIndex(si); g.computeVertexNormals(); g.computeBoundingSphere();
+        const m = new THREE.Mesh(g, mat); m.receiveShadow = true; this.add(m, 3500);
       }
     }
   }
@@ -380,7 +419,7 @@ class Region {
   // ── night lighting: lamp posts at the car parks and along the coast road, lit heads + light pools on the ground ──
   buildLamps() {
     const W = this.W, spots = this.lampSpots || [];
-    for (const r of this.roads) if (r.street) { const S = r.samples, off = halfW(r) + (r.sidewalk || 0) * 0.5; for (let i = 10; i < S.length - 10; i += 20) { const q = S[i], side = (i / 20) % 2 ? 1 : -1; if (q.p.y > 1.5 && !this.islandAt(q.p.x, q.p.z) && i % 40) continue; const x = q.p.x + q.left.x * off * side, z = q.p.z + q.left.z * off * side; if (this.onAnyRoad(x, z, -0.2)) continue; spots.push({ x, z, y: q.p.y, yaw: Math.atan2(q.left.x * -side, q.left.z * -side), h: 9, arm: off - halfW(r) + 2.4 }); } }
+    for (const r of this.roads) if (r.street) { const S = r.samples, off = halfW(r) + (r.sidewalk || 0) * 0.5; for (let i = 10; i < S.length - 10; i += 20) { const q = S[i], side = (i / 20) % 2 ? 1 : -1; if (this.data.coast && this.overWater(q) && i % 40) continue; const x = q.p.x + q.left.x * off * side, z = q.p.z + q.left.z * off * side; if (this.onAnyRoad(x, z, -0.2)) continue; spots.push({ x, z, y: q.p.y, yaw: Math.atan2(q.left.x * -side, q.left.z * -side), h: 9, arm: off - halfW(r) + 2.4 }); } }
     if (!spots.length) return;
     const o = new THREE.Object3D(), pole = new THREE.InstancedMesh(new THREE.CylinderGeometry(0.09, 0.13, 1, 8).translate(0, 0.5, 0), new THREE.MeshStandardMaterial({ color: 0x8c9196, metalness: 0.6, roughness: 0.45 }), spots.length);
     const head = new THREE.InstancedMesh(new THREE.BoxGeometry(0.7, 0.14, 0.32), W.night(new THREE.MeshStandardMaterial({ color: 0xdedcd2, emissive: 0xffe6b8, emissiveIntensity: 0 }), 0, 2.4), spots.length);
@@ -398,7 +437,7 @@ class Region {
     const conc = surface('pier', { tile: 4 }), legs = [], decks = [];
     for (const r of this.roads) { const S = r.samples, hw = halfW(r);
       let run = null; const flush = () => { if (run && run[1] - run[0] > 4) decks.push([r, run[0], run[1]]); run = null; };
-      for (let i = 0; i < S.length; i++) { const q = S[i], gy = this.W.ground(q.p.x, q.p.z), under = this.data.coast ? (this.islandAt(q.p.x, q.p.z) ? this.gridAt(this.H, q.p.x, q.p.z) : this.W.isLand(q.p.x, q.p.z) ? 0 : -12) : this.dem(q.p.x, q.p.z);
+      for (let i = 0; i < S.length; i++) { const q = S[i], gy = this.W.ground(q.p.x, q.p.z), under = this.data.coast ? (this.islandAt(q.p.x, q.p.z) ? this.gridAt(this.H, q.p.x, q.p.z) : this.W.isLand(q.p.x, q.p.z) ? (this.W.city?.inWater?.(q.p.x, q.p.z) ? -2 : q.p.y) : -12) : this.dem(q.p.x, q.p.z);
         const high = q.p.y - under > 3 && (this.data.coast || this.isBridge(q)); void gy;
         if (high) { if (!run) run = [i, i]; run[1] = i; if (i % 15 === 0) legs.push([q.p.x, under - 2, q.p.z, q.p.y - 1.4, Math.atan2(q.t.x, q.t.z), hw]); } else flush(); }
       flush(); }
@@ -461,8 +500,18 @@ export class Regions {
   isLand(x, z) { for (const r of this.list) { if (!r.live || r.data.hakone) continue; const g = r.isLand(x, z); if (g !== undefined) return g; } return undefined; }
   zoneAt(x, z, y) { for (const r of this.list) { if (r.state !== 'ready') continue; const s = r.zoneAt(x, z, y); if (s) return s; } return null; }
   lotAt(x, z) { for (const r of this.list) { if (r.state !== 'ready' || !r.inBox(x, z)) continue; const L = r.lotAt(x, z); if (L) return L; } return null; }
+  // v2.16.1: the streamed town (city.js) plants poles / signs along its own copy of the streets, which knows nothing of the
+  // region roads laid over it later (国道134号 east of Chigasaki: a pole in the outer lane stopped the autopilot) —
+  // city colliders standing on a region road's carriageway are dropped
+  patchCity() {
+    const C = this.w.city; if (!C || C._regionPatched || !C.collidersAt) return; C._regionPatched = true;
+    const orig = C.collidersAt.bind(C), cache = new WeakMap(), net = this.w.net;
+    const onRegionRoad = (x, z) => { for (const h of net.hits(x, z)) if (h.road.region && !h.beyond && h.lat < h.road.edgeL - 0.1 && h.lat > h.road.edgeR + 0.1) return true; return false; };
+    C.collidersAt = (x, z) => { const L = orig(x, z); if (!L.length || !this.list.some(r => r.live && r.inBox(x, z, 60))) return L;
+      let F = cache.get(L); if (!F || F.n !== L.length) { F = L.filter(c => c.kind !== 'city' || !onRegionRoad(c.x, c.z)); F.n = L.length; cache.set(L, F); } return F; };
+  }
   update(env, dt = 0.016) {
-    const cam = this.w.cam; if (!cam) return; this.t -= dt;
+    const cam = this.w.cam; if (!cam) return; this.t -= dt; this.patchCity();
     if (this.t <= 0) { this.t = 0.5;
       for (const r of this.list) { if (r.state === 'idle' && r.inBox(cam.position.x, cam.position.z, 2500)) r.load(); if (r.state === 'ready') r.cull(); } }
     // the distant Mt Fuji backdrop (bay.js buildFuji, scaled for the view from Tokyo Bay) must not stand beside the real

@@ -333,7 +333,7 @@ class Game {
     v.handbrakeOn = true;
     if (this.settings.transmission === 'auto' || v.ev) v.atSel = 'P';
     this.vehicle = v;
-    this.engineSnd = this.audio.createEngine(car, { lod: 'full' });
+    this.engineSnd = this.audio?.createEngine?.(car, { lod: 'full' }) || null; // v2.16.1: audio may not exist yet (start before unlock)
     this.mode = 'drive'; this.camMode = this.camMode === 'orbit' ? 'chase' : this.camMode;
     this.ui.showHUD();
     this.ui.toast(t('game.hint.start'), 'info', 7);

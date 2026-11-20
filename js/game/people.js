@@ -27,7 +27,16 @@ export const CHARS = [
   { id: 'sophia', sex: 'f', h: 1.60, tags: ['casual', 'shopper', 'driver'] },
   { id: 'manuel', sex: 'm', h: 1.70, tags: ['casual', 'shopper', 'driver'] },
   { id: 'yuto', sex: 'm', h: 1.73, w: 2, tags: ['casual', 'student', 'shopper', 'staff', 'driver'] },
+  // v2.16.1 uniforms — only ever used when asked for by type (never in a random crowd): 警察官 (navy uniform + cap),
+  // 救急隊員 (light-blue / silver jacket with reflective bands; a white helmet is added as a mesh), fuel-station
+  // attendant (red / navy work suit; a cap in the brand colour is added) and LAWSON clerks (light-blue shirt)
+  { id: 'officer', sex: 'm', h: 1.75, tags: ['police'], uni: true },
+  { id: 'medic', sex: 'm', h: 1.74, tags: ['medic'], uni: true },
+  { id: 'attendant', sex: 'm', h: 1.72, tags: ['attendant'], uni: true },
+  { id: 'shun_clerk', sex: 'm', h: 1.72, tags: ['clerk'], uni: true },
+  { id: 'kana_clerk', sex: 'f', h: 1.60, tags: ['clerk'], uni: true },
 ];
+const UNI_TYPES = new Set(['police', 'medic', 'attendant', 'clerk']);
 // clip library: file a_<name>.glb, loop?, and which actions use it
 const CLIPS = {
   walk_m: { loop: true }, walk_f: { loop: true }, walk_rp: { loop: true },
@@ -172,7 +181,9 @@ const FPS = { idle_f: 15, idle_m: 20, argue: 15, sit: 12, talk_f: 15, talk_m: 20
 export function loadPeople() {
   if (readyP) return readyP;
   readyP = (async () => {
-    const chars = await Promise.all(CHARS.map(c => load(c.id).then(g => ({ c, g })).catch(e => { console.warn('person', c.id, e.message); return null; })));
+    // uniforms load alongside but don't hold the crowd up (until they are in, a uniform falls back to the procedural one)
+    for (const c of CHARS.filter(c => c.uni)) load(c.id).then(g => { TPL.set(c.id, makeTemplate(c, g)); }).catch(e => console.warn('person', c.id, e.message));
+    const chars = await Promise.all(CHARS.filter(c => !c.uni).map(c => load(c.id).then(g => ({ c, g })).catch(e => { console.warn('person', c.id, e.message); return null; })));
     for (const r of chars) if (r) { try { TPL.set(r.c.id, makeTemplate(r.c, r.g)); } catch (e) { console.warn('person', r.c.id, e.message); } }
     const clips = await Promise.all(Object.keys(CLIPS).map(n => load('a_' + n).then(g => ({ n, g })).catch(e => { console.warn('person clip', n, e.message); return null; })));
     for (const r of clips) if (r && r.g.animations[0]) { try { const rig = makeRig(r.g.scene); poseRest(rig); SRC.set(r.n, { rig, clip: r.g.animations[0], S: null }); } catch (e) { console.warn('person clip', r.n, e.message); } }
@@ -242,6 +253,7 @@ class Person {
       if (o.tint) { m.material = m.material.clone(); m.material.color.multiplyScalar(o.tint); }
     } });
     this.bones = {}; for (const n of ['Hips', 'Head', 'Neck', 'LeftHand', 'RightHand', 'Spine2']) { const b = tpl.rig.node(n); if (b) this.bones[n] = inner.getObjectByName(b.name); }
+    if (o.hat) this.addHat(o.hat);
     this.handL = new THREE.Object3D(); this.handR = new THREE.Object3D(); this.object.add(this.handL, this.handR);
     this.phone = new THREE.Mesh(...PHONE()); this.phone.visible = false; this.phone.position.set(0, 0.03, 0.05); this.phone.rotation.x = -0.9; this.handR.add(this.phone);
     this.mixer = new THREE.AnimationMixer(inner); this.cur = null; this.curName = ''; this.acc = 0; this.seen = frameNo;
@@ -275,11 +287,13 @@ class Person {
     this.acc += dt;
     if (this.seen < frameNo - 2 && dt > 0) { if (this.acc > 4) this.acc = 4; return; }
     this.mixer.update(this.acc); this.acc = 0;
+    // two-bone IK on top of the animation (a cyclist's feet on the pedals, hands on the grips — see walkers.js)
+    if (this.ik) { this.object.updateMatrixWorld(true); for (const k of this.ik) solveIK(this, k); }
     // lying (injured): the clip was recorded on a bed — drop the body so the pelvis rests on the surface below it
     if (this.curName === 'lying' && this.bones.Hips) { this.object.updateMatrixWorld(true); this.bones.Hips.getWorldPosition(_v); this.object.worldToLocal(_v); this.pivot.position.y += (0.11 - _v.y); }
     else if (this.pivot.position.y) this.pivot.position.y = 0;
     // near-only shadows
-    if (viewCam && this.mesh) { const d2 = viewCam.position.distanceToSquared(this.object.position); this.mesh.castShadow = d2 < 45 * 45; this.near = d2 < 25 * 25; }
+    if (viewCam && this.mesh) { const d2 = viewCam.position.distanceToSquared(this.object.parent?.isScene ? this.object.position : this.object.getWorldPosition(_v2)); this.mesh.castShadow = d2 < 45 * 45; this.near = d2 < 25 * 25; }
     const needHands = this.handL.children.length || this.handR.children.length && this.phone.visible || this.handR.children.length > 1;
     if (this.lookTarget || needHands) this.object.updateMatrixWorld(true);
     if (this.lookTarget || this._look) this.applyLook(dt);
@@ -297,6 +311,8 @@ class Person {
     const R = _q.setFromAxisAngle(_v2, this._look * (this.pivot.scale.x < 0 ? 1 : 1));
     h.parent.getWorldQuaternion(_q2); const wq = _q2.clone().multiply(h.quaternion); wq.premultiply(R); h.quaternion.copy(_q2.invert().multiply(wq));
   }
+  /** a bone by its master (Mixamo) name, e.g. 'LeftUpLeg' */
+  bone(n) { if (!(n in this.bones)) { const b = this.tpl.rig.node(n); this.bones[n] = b ? this.inner.getObjectByName(b.name) : null; } return this.bones[n]; }
   playOnce(action, dur) { this.override = { action, t: dur }; }
   /** play a one-shot (hit reaction …); returns its duration */
   oneShot(action) { const a = this.play(action, 0.12, true); return a ? a.getClip().duration : 0; }
@@ -310,8 +326,12 @@ const lastPick = [];
  */
 export function createPerson(opts = {}) {
   if (!ready) { if (!readyP) loadPeople(); return createHuman(opts.outfit); }
-  let pool = [...TPL.values()];
+  let pool = [...TPL.values()].filter(t => !t.c.uni);
+  const uni = UNI_TYPES.has(opts.type);
   if (opts.id && TPL.has(opts.id)) pool = [TPL.get(opts.id)];
+  else if (opts.id && CHARS.some(c => c.id === opts.id && c.uni)) return createHuman(opts.outfit); // uniform still loading
+  else if (uni) { pool = [...TPL.values()].filter(t => t.c.tags.includes(opts.type)); if (!pool.length) return createHuman(opts.outfit);
+    if (opts.sex) { const p = pool.filter(t => t.c.sex === opts.sex); if (p.length) pool = p; } }
   else {
     if (opts.type) { const p = pool.filter(t => t.c.tags.includes(opts.type)); if (p.length) pool = p; }
     if (opts.sex) { const p = pool.filter(t => t.c.sex === opts.sex); if (p.length) pool = p; }
@@ -321,9 +341,81 @@ export function createPerson(opts = {}) {
   // weighted: the Japanese bodies are the most common on these streets
   let sum = 0; for (const t of pool) sum += t.c.w || 1; let r = Math.random() * sum, tpl = pool[0]; for (const t of pool) { r -= t.c.w || 1; if (r <= 0) { tpl = t; break; } }
   lastPick.push(tpl.c.id); if (lastPick.length > 3) lastPick.shift();
-  return new Person(tpl, opts);
+  // the uniform's headwear: a white 救急 helmet for paramedics, a cap in the station's brand colour for attendants
+  const hat = opts.hat !== undefined ? opts.hat : tpl.c.id === 'medic' ? { kind: 'helmet', color: 0xffffff, y: 0.1, z: 0.025, scale: 1.15 }
+    : tpl.c.id === 'attendant' ? { kind: 'cap', color: opts.hatColor ?? 0xd4421a, y: 0.07, z: 0.012, scale: 1.26 } : null;
+  return new Person(tpl, uni || hat ? { mirror: false, ...opts, hat } : opts);
 }
+/** true once the uniform bodies of that type ('police' | 'medic' | 'attendant' | 'clerk') are loaded */
+export const uniformReady = type => ready && [...TPL.values()].some(t => t.c.uni && t.c.tags.includes(type));
 export { Person };
+
+// ──────────────────────────────────────────────────────────── IK ──
+// analytic two-bone IK in world space: k = { chain: [upper, lower, end] (master bone names), target (world Vector3),
+// pole (world direction the middle joint bends towards) }. Rotates the upper and lower bones on top of the pose.
+const _a = new THREE.Vector3(), _b = new THREE.Vector3(), _c = new THREE.Vector3(), _d = new THREE.Vector3(), _n = new THREE.Vector3(), _K = new THREE.Vector3(), _T = new THREE.Vector3(), _qa = new THREE.Quaternion(), _qb = new THREE.Quaternion(), _qc = new THREE.Quaternion();
+function aim(bone, from, to) {
+  if (from.lengthSq() < 1e-10 || to.lengthSq() < 1e-10) return;
+  _qa.setFromUnitVectors(from.normalize(), to.normalize());
+  bone.getWorldQuaternion(_qb); _qb.premultiply(_qa);
+  bone.parent.getWorldQuaternion(_qc); bone.quaternion.copy(_qc.invert().multiply(_qb));
+  bone.updateMatrixWorld(true);
+}
+function solveIK(p, k) {
+  if (k.rotate) { // a plain extra rotation about a world axis (a cyclist leaning forward over the bars)
+    const b = p.bone(k.rotate); if (!b) return; _qa.setFromAxisAngle(k.axis, k.angle); b.getWorldQuaternion(_qb); _qb.premultiply(_qa);
+    b.parent.getWorldQuaternion(_qc); b.quaternion.copy(_qc.invert().multiply(_qb)); b.updateMatrixWorld(true); return;
+  }
+  const U = p.bone(k.chain[0]), M = p.bone(k.chain[1]), E = p.bone(k.chain[2]); if (!U || !M || !E || !k.target) return;
+  U.getWorldPosition(_a); M.getWorldPosition(_b); E.getWorldPosition(_c);
+  const la = _a.distanceTo(_b), lb = _b.distanceTo(_c); if (la < 1e-4 || lb < 1e-4) return;
+  _d.subVectors(k.target, _a); const dist = THREE.MathUtils.clamp(_d.length(), Math.abs(la - lb) + 1e-3, (la + lb) * 0.999); _d.normalize();
+  const cosA = THREE.MathUtils.clamp((la * la + dist * dist - lb * lb) / (2 * la * dist), -1, 1), sinA = Math.sqrt(1 - cosA * cosA);
+  _n.copy(k.pole).addScaledVector(_d, -k.pole.dot(_d)); if (_n.lengthSq() < 1e-8) _n.set(0, 1, 0); _n.normalize();
+  _K.copy(_a).addScaledVector(_d, la * cosA).addScaledVector(_n, la * sinA); // where the knee / elbow goes
+  aim(U, _b.clone().sub(_a), _K.clone().sub(_a));
+  M.getWorldPosition(_b); E.getWorldPosition(_c); _T.copy(_a).addScaledVector(_d, dist);
+  aim(M, _c.clone().sub(_b), _T.sub(_b));
+}
+
+// ─────────────────────────────────────────────────────── headwear ──
+// hats are plain meshes parented to the head bone (they follow every nod and turn of the animation)
+const HATS = new Map();
+function hatMesh(kind, color) {
+  const key = kind + color; let parts = HATS.get(key);
+  if (!parts) {
+    const main = new THREE.MeshStandardMaterial({ color, roughness: kind === 'helmet' ? 0.35 : 0.75, metalness: 0 });
+    const dark = new THREE.MeshStandardMaterial({ color: 0x1a1d22, roughness: 0.5 });
+    parts = [];
+    if (kind === 'helmet') { // 救急隊 helmet: white shell, a coloured band, short peak, chin strap hint
+      const shell = new THREE.SphereGeometry(0.128, 20, 10, 0, Math.PI * 2, 0, Math.PI * 0.55); shell.scale(0.95, 1.02, 1.1);
+      parts.push([shell, main]);
+      const band = new THREE.CylinderGeometry(0.125, 0.127, 0.022, 20, 1, true); band.translate(0, 0.022, 0); band.scale(0.95, 1, 1.1); parts.push([band, new THREE.MeshStandardMaterial({ color: 0x2f6fd0, roughness: 0.5 })]);
+      const peak = new THREE.CylinderGeometry(0.135, 0.135, 0.008, 20, 1, false, -Math.PI * 0.32, Math.PI * 0.64); peak.translate(0, -0.005, 0.03); peak.scale(0.95, 1, 1.1); parts.push([peak, main]);
+    } else { // peaked cap (警察 / fuel-station attendant)
+      const crown = new THREE.SphereGeometry(0.112, 20, 8, 0, Math.PI * 2, 0, Math.PI * 0.5); crown.scale(0.98, 0.72, 1.08); parts.push([crown, main]);
+      const brim = new THREE.CylinderGeometry(0.112, 0.112, 0.008, 20, 1, false, -Math.PI * 0.33, Math.PI * 0.66); brim.scale(0.98, 1, 1.75); brim.translate(0, 0.004, 0); parts.push([brim, kind === 'police' ? dark : main]);
+      if (kind === 'police') { const badge = new THREE.CircleGeometry(0.016, 10); badge.translate(0, 0.035, 0.118); parts.push([badge, new THREE.MeshStandardMaterial({ color: 0xd8b445, metalness: 0.8, roughness: 0.3 })]); }
+    }
+    for (const [g] of parts) g.userData.shared = true;
+    HATS.set(key, parts);
+  }
+  const grp = new THREE.Group(); grp.name = 'hat';
+  for (const [g, m] of parts) { const x = new THREE.Mesh(g, m); x.castShadow = true; grp.add(x); }
+  return grp;
+}
+/** hat: { kind: 'helmet' | 'cap' | 'police', color, y? (offset below the crown, m), z?, scale? } */
+Person.prototype.addHat = function (hat) {
+  const head = this.bones.Head; if (!head) return null;
+  this.object.updateMatrixWorld(true);
+  const headM = new THREE.Matrix4().copy(this.object.matrixWorld).invert().multiply(head.matrixWorld);
+  const hp = new THREE.Vector3().setFromMatrixPosition(headM);
+  const k = (hat.scale || 1) * this.height / 1.74;
+  const at = new THREE.Matrix4().compose(new THREE.Vector3(hp.x, this.height - (hat.y ?? 0.075) * k, hp.z + (hat.z ?? 0) * k), new THREE.Quaternion(), new THREE.Vector3(k, k, k));
+  const m = hatMesh(hat.kind, hat.color ?? 0xffffff);
+  new THREE.Matrix4().copy(headM).invert().multiply(at).decompose(m.position, m.quaternion, m.scale);
+  head.add(m); this.hat = m; return m;
+};
 
 // ───────────────────────────────────────────────────── seated drivers ──
 // Drivers seen through the windows of passing traffic don't need a live skeleton: each body is posed once in the

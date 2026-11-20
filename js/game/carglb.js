@@ -174,8 +174,10 @@ const S2L = c => (c <= 0.04045 ? c / 12.92 : ((c + 0.055) / 1.055) ** 2.4), toS 
 function lampSplit(scene, info) {
   const [bx0 = -0.9, , bz0 = -2.2, bx1 = 0.9, by1 = 1.3, bz1 = 2.2] = info.bbox || [], L = bz1 - bz0, H = by1;
   const zq = Math.min(1.1, Math.max(0.55, L * 0.2)), paint = new Set(info.paint || []), cut = info.lampCut; // lampCut: [[x0,y0,z0,x1,y1,z1]] never a lamp
-  // lamps {role: [name | [name, [x0,y0,z0,x1,y1,z1]]]}: a box limits the forced role to that part of the material
-  const force = new Map(), fbox = new Map(); for (const [r, list] of Object.entries(info.lamps || {})) if (Array.isArray(list) && r !== 'atlas') for (const it of list) { const n = Array.isArray(it) ? it[0] : it; force.set(n, r); if (Array.isArray(it)) fbox.set(n, it[1]); }
+  // lamps {role: [name | [name, [x0,y0,z0,x1,y1,z1]]]}: a box limits the forced role to that part of the material; v2.17:
+  // one material may carry several roles (one box each), and a box on an atlas material only takes the texels of that
+  // lamp's colour (bright neutral → head / rev, red → tail / brake, amber → ind) — the rest of the atlas is read as usual
+  const force = new Map(); for (const [r, list] of Object.entries(info.lamps || {})) if (Array.isArray(list) && r !== 'atlas') for (const it of list) { const n = Array.isArray(it) ? it[0] : it; (force.get(n) || force.set(n, []).get(n)).push({ r, b: Array.isArray(it) ? it[1] : null }); }
   scene.updateMatrixWorld(true); const inv = scene.matrixWorld.clone().invert();
   const P = new THREE.Vector3(), Q = new THREE.Vector3(), R = new THREE.Vector3(), C = new THREE.Vector3(), m4 = new THREE.Matrix4();
   const roleMats = new Map(), mk = (m, role) => { const k = m.uuid + role; let c = roleMats.get(k); if (!c) { c = cloneMat(m); c.name = m.name; c.userData.lampRole = role; roleMats.set(k, c); } return c; };
@@ -191,7 +193,7 @@ function lampSplit(scene, info) {
   const isCand = m => {
     if (!m) return false; const n = m.name || '';
     if (atlas.has(n)) return true;
-    if (force.has(n)) return force.get(n) !== 'none';
+    if (force.has(n)) return force.get(n).some(f => f.r !== 'none');
     if (paint.has(n) || m.userData.mjGlass || LAMP_EXCL_RE.test(n)) return false;
     if (LAMP_NAME_RE.test(n) || m.userData.lamp) return true;
     const emis = m.emissive && (m.emissive.r + m.emissive.g + m.emissive.b > 0.05 || m.emissiveMap);
@@ -201,7 +203,8 @@ function lampSplit(scene, info) {
   const work = [];
   scene.traverse(o => { if (!o.isMesh || o.isSkinnedMesh || o.isInstancedMesh || isWheel(o) || o.geometry.morphAttributes?.position) return;
     const ms = Array.isArray(o.material) ? o.material : [o.material]; if (ms.some(isCand)) work.push(o); });
-  const cls = rgb => { const c = new THREE.Color().setRGB(rgb[0], rgb[1], rgb[2]), h = c.getHSL({}, THREE.SRGBColorSpace); // rgb in sRGB 0..1
+  let clsH = null; // hsl of the last colour classified (forced boxes on atlases test for a bright neutral texel)
+  const cls = rgb => { const c = new THREE.Color().setRGB(rgb[0], rgb[1], rgb[2]), h = clsH = c.getHSL({}, THREE.SRGBColorSpace); // rgb in sRGB 0..1
     if (h.s > 0.4 && h.l > 0.12 && h.l < 0.97 && (h.h < 0.045 || h.h > 0.92)) return 'red';
     if (h.s > 0.45 && h.l > 0.2 && h.h >= 0.045 && h.h < 0.17) return 'amber';
     if (h.l > 0.42 && h.s < 0.4) return h.l > 0.62 ? 'white' : 'clear'; return 'dark'; };
@@ -213,11 +216,11 @@ function lampSplit(scene, info) {
     const groups = Array.isArray(o.material) && g.groups.length ? g.groups : [{ start: 0, count: idx ? idx.count : pos.count, materialIndex: 0 }];
     const buckets = new Map(); // matIndex|role → [indices]
     for (const gr of groups) {
-      const mi = gr.materialIndex ?? 0, m = ms[mi]; if (!m) continue; const cand = isCand(m), n = m.name || '', fr = force.get(n);
+      const mi = gr.materialIndex ?? 0, m = ms[mi]; if (!m) continue; const cand = isCand(m), n = m.name || '', fl = force.get(n), isAt = atlas.has(n);
       const base = m.color ? [m.color.r, m.color.g, m.color.b] : [1, 1, 1];
       const smap = cand && m.map && uv ? texSampler(m.map) : null, semi = cand && m.emissiveMap && uv ? texSampler(m.emissiveMap) : null, vcol = cand && m.vertexColors && vc;
       const ecol = m.emissive ? [m.emissive.r, m.emissive.g, m.emissive.b] : [0, 0, 0], emOn = ecol[0] + ecol[1] + ecol[2] > 0.05;
-      let uniCls = cls(toS(base)); if (emOn && !m.map && uniCls === 'dark') { const ec = cls(toS(ecol)); if (ec === 'red' || ec === 'amber') uniCls = ec; }
+      let uniCls = cls(toS(base)); const uniH = clsH; if (emOn && !m.map && uniCls === 'dark') { const ec = cls(toS(ecol)); if (ec === 'red' || ec === 'amber') uniCls = ec; }
       const lens = !!m.userData.lamp || (m.transparent && !m.map), tex = !!(smap || vcol);
       const end = Math.min(gr.start + gr.count, idx ? idx.count : pos.count);
       for (let t = gr.start; t + 2 < end + 0; t += 3) {
@@ -237,8 +240,12 @@ function lampSplit(scene, info) {
             col = cls(toS(rgb)); }
           const hi = C.y > 0.62 * H, centre = Math.abs(C.x) < 0.3;
           let done = false;
-          const fb = fr && fbox.get(n), inFb = !fb || (C.x > fb[0] && C.y > fb[1] && C.z > fb[2] && C.x < fb[3] && C.y < fb[4] && C.z < fb[5]);
-          if (fr && !inFb) done = true; // outside its box: not a lamp
+          let fr = null; if (fl) { const hh = smap || semi || vcol ? clsH : uniH, nb = hh.s < 0.1 && hh.l > 0.68;
+            for (const f of fl) { const b = f.b; if (b && !(C.x > b[0] && C.y > b[1] && C.z > b[2] && C.x < b[3] && C.y < b[4] && C.z < b[5])) continue;
+              if (isAt && !(f.r === 'head' || f.r === 'rev' ? nb : f.r === 'tail' || f.r === 'brake' ? col === 'red' || (hh.s > 0.12 && (hh.h < 0.045 || hh.h > 0.9)) : f.r === 'ind' ? col === 'amber' || (hh.s > 0.2 && hh.h > 0.03 && hh.h < 0.17) : true)) continue;
+              fr = f.r; break; } }
+          if (fl && !fr && !isAt) done = true; // outside its box: not a lamp
+          else if (fr === 'none') done = true;
           else if (fr) { // forced by the manifest: that role at the end it belongs to (elsewhere: found as usual)
             done = true;
             if (fr === 'head' && front && Math.abs(C.x) > 0.12) role = 'head';
@@ -248,7 +255,8 @@ function lampSplit(scene, info) {
             else if (fr === 'ind' && (front || rear) && side) role = 'ind' + (front ? 'F' : 'R') + side;
             else if (fr === 'fog' && (front || rear)) role = front ? 'ffog' : side === 'R' ? 'rfog' : 'none';
             else done = false;
-          } else if (atlas.has(n)) { // texels only: red → tail, amber → indicator, bright white at the front → headlamp
+          }
+          if (!done && !fr && isAt) { // texels only: red → tail, amber → indicator, bright white at the front → headlamp
             done = true;
             if (C.y < 0.86 * H && (front || rear)) role = col === 'red' && rear ? 'tail' : col === 'amber' && side ? 'ind' + (front ? 'F' : 'R') + side : col === 'white' && front && Math.abs(C.x) > 0.16 && !paint.has(n) ? 'head' : 'none'; // (white texels of a painted atlas are body)
           }
@@ -417,7 +425,8 @@ export function flatClone(e) {
     sc.traverse(o => {
       if (!o.isMesh) return;
       let hidden = false; for (let q = o; q; q = q.parent) if (!q.visible) hidden = true; if (hidden) return;
-      const top = (() => { for (let q = o; q && q !== sc; q = q.parent) if (/^wheel_(fl|fr|rl|rr)$/.test(q.name)) return q; return null; })();
+      const popN = e.info.popup?.node; // v2.17: the pop-up headlamp node stays whole (it turns)
+      const top = (() => { for (let q = o; q && q !== sc; q = q.parent) if (/^wheel_(fl|fr|rl|rr)$/.test(q.name) || (popN && q.name === popN)) return q; return null; })();
       if (top) { if (!keep.includes(top)) keep.push(top); return; }
       const ms = Array.isArray(o.material) ? o.material : [o.material];
       if (Array.isArray(o.material) || o.isSkinnedMesh || o.isInstancedMesh || o.geometry.morphAttributes?.position || PLATE_RE.test(o.name) || PLATE_RE.test(ms[0]?.name || '') || plateShaped(o, inv, e.info.bbox[2], e.info.bbox[5])) { keep.push(o); return; }
@@ -751,6 +760,11 @@ export function buildGlbCar(car, e, opts = {}) {
     parts.real.spot.position.set(0, hy, sz); parts.real.spot.target.position.set(0, hy - 1.3, sz + 18);
     parts.real.glow.position.set(0, avg(LA.tail, 1) + vis.position.y, avg(LA.tail, 2) + vis.position.z - 0.2);
   }
+  // v2.17: pop-up headlamps — manifest popup {node, closed}: the model's own pop-up node (modelled raised) turns on its
+  // authored hinge to the closed local rotation.x by day and comes up with the headlamps (CarModel.popup eases 0 → 1)
+  const pop = info.popup && vis.getObjectByName(info.popup.node), popOpen = pop ? pop.rotation.x : 0, popClosed = info.popup?.closed ?? popOpen;
+  const popAt = k => { if (!pop) return; const q = k * k * (3 - 2 * k); pop.rotation.x = popClosed + (popOpen - popClosed) * q; };
+  popAt(0); model.glbPopup = pop || null;
   const warm = (car.year || 2000) < 2006; // halogen (warm) vs HID / LED (cool white) headlamps
   const setL = (role, hex, I) => { const l = lampM[role]; if (!l) return; for (const m of l) { m.emissive.setHex(hex); m.emissiveIntensity = I; if (m.transparent) m.opacity = I > 0 ? Math.max(m.userData.op0, 0.85) : m.userData.op0; } };
   const base = model.onUpdate;
@@ -759,6 +773,7 @@ export function buildGlbCar(car, e, opts = {}) {
     if (model.cockpitView && model._trimU) model._trimU.uBodyInv.value.copy(bodyG.matrixWorld).invert();
     const L = model.lights; const blink = model.blinkOn;
     const headOn = L.head || L.drl === true, brake = L.brake, pos = !!(L.head || L.pos), fog = !!(L.fog && pos);
+    const popK = pop ? model.popup : 1; if (pop) popAt(popK);
     // head: low beam (high brighter); parking-lamp glow with only the small lamps on
     setL('head', warm ? 0xffe2b8 : 0xeef3ff, headOn ? (L.high ? 3.4 : 2.4) : pos ? 0.3 : 0);
     // tail: dim red with the lights on, bright red only while braking (same lens); high-mount stop lamp only braking
@@ -768,7 +783,7 @@ export function buildGlbCar(car, e, opts = {}) {
     const lOn = !!((L.hazard || L.left) && blink), rOn = !!((L.hazard || L.right) && blink);
     setL('indFL', 0xff7a00, lOn ? 3.4 : 0); setL('indRL', 0xff7a00, lOn ? 3.4 : 0); setL('indFR', 0xff7a00, rOn ? 3.4 : 0); setL('indRR', 0xff7a00, rOn ? 3.4 : 0);
     for (const s2 of glows.ind) { const on = s2.userData.side === 'L' ? lOn : rOn; s2.visible = on; if (on) s2.scale.setScalar(0.26); }
-    for (const s2 of glows.head) { s2.visible = headOn; if (headOn) s2.scale.setScalar(L.high ? 0.6 : 0.36); }
+    for (const s2 of glows.head) { const on = headOn && popK > 0.85; s2.visible = on; if (on) s2.scale.setScalar(L.high ? 0.6 : 0.36); }
     for (const s2 of glows.tail) { const on = brake || pos; s2.visible = on; if (on) s2.scale.setScalar(brake ? 0.36 : 0.16); }
     for (const s2 of glows.brake) { s2.visible = !!brake; if (brake) s2.scale.setScalar(0.2); }
     for (const s2 of glows.rev) { s2.visible = !!L.reverse; if (L.reverse) s2.scale.setScalar(0.26); }
