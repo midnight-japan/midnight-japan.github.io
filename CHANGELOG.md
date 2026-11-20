@@ -1,9 +1,10 @@
 # 📜 MIDNIGHT JAPAN 업데이트 기록 · Changelog
 
-현재 버전 · Current: **v2.14.4** · [▶ 웹에서 플레이](https://midnight-japan.github.io/) · [🌐 업데이트 페이지](https://midnight-japan.github.io/changelog.html)
+현재 버전 · Current: **v2.15.0** · [▶ 웹에서 플레이](https://midnight-japan.github.io/) · [🌐 업데이트 페이지](https://midnight-japan.github.io/changelog.html)
 
 | 버전 | 날짜 | 이름 | 요약 |
 |---|---|---|---|
+| [v2.15.0](#v2150--real-streets-2026-11-20) | 2026-11-20 | Real Streets | 실사 3D 모델: 자판기·전신주·가로수 6종·봄 벚꽃(Sketchfab CC BY), 건물 외벽 그늘 보정, 지도 즉시 열기 + 일본 전역 상세 지도·랜드마크 아이콘 약 150개, 원탭 이동, 로비 시작, UI 전면 리디자인·라디오 개선, 차량 실내·유리 개선. |
 | [v2.14.4](#v2144--clear-portals-2026-11-20) | 2026-11-20 | Clear Portals | 터널 입구 정리: 지하로 내려가기 직전 도로 위에 깔려 있던 땅·도시 도로·보도·주차장 판을 걷어 내 차가 판을 뚫고 들어가는 것처럼 보이던 문제 수정(38곳 전수 점검). |
 | [v2.14.3](#v2143--signposted-2026-11-20) | 2026-11-20 | Signposted | 도심 교차로 표지가 반대 차선에 있던 큰 버그 수정(정지선·止まれ·신호등·횡단보도·속도·일방통행 표지가 이제 내 차선 왼쪽에), 국도·현도에 파란 방면 안내 표지판과 교차로 이름판 추가. |
 | [v2.14.2](#v2142--straight-lines-2026-11-20) | 2026-11-20 | Straight Lines | 꼬부랑 차선 수정(차선이 도로 곡선을 정확히 따라감, 도로 중심선의 잔떨림 제거), 고가도로 벽을 뚫고 옆 고가로 넘어가던 문제 수정. |
@@ -71,6 +72,23 @@
 | [v0.2.0](#v020--bayshore-2026-11-05) | 2026-11-05 | Bayshore | 수도고속 완간선을 따라 하네다까지, 도쿄만 아쿠아라인 해저터널을 지나 우미호타루 PA까지. 실제 3D 차량 모델과 열리는 보닛도 들어왔어요. |
 | [v0.1.1](#v011--one-click-2026-11-04) | 2026-11-04 | One Click | 링크 하나로 바로 플레이. 크롬에서 공식 사이트 주소만 열면 설치 없이 실행돼요. |
 | [v0.1.0](#v010--first-meet-2026-11-04) | 2026-11-04 | First Meet | 첫 공개 버전. 다이코쿠 JCT·PA와 다이코쿠 부두 일대를 3D로 구현했습니다. |
+
+---
+
+## v2.15.0 — Real Streets (2026-11-20)
+
+> 실사 3D 모델: 자판기·전신주·가로수 6종·봄 벚꽃(Sketchfab CC BY), 건물 외벽 그늘 보정, 지도 즉시 열기 + 일본 전역 상세 지도·랜드마크 아이콘 약 150개, 원탭 이동, 로비 시작, UI 전면 리디자인·라디오 개선, 차량 실내·유리 개선.
+> Real 3D models: vending machines, utility poles, six street-tree species and spring cherry trees (Sketchfab CC BY), lifted facade shadows, instant map + detailed all-Japan map with ~150 landmark icons, one-tap travel, lobby on start, full UI redesign and better radio, improved car cabins and glass.
+
+**✨ 추가 · New**
+
+- 실사 3D 자판기·콘크리트 전신주(변압기 포함)·가로수 6종(은행·느티·녹나무·곰솔·삼나무·단풍), 봄에는 실사 벚꽃 — 플레이어 주변은 실사 모델, 멀리는 가벼운 나무<br><sub>Real 3D vending machines, concrete utility poles (some with transformers) and six street-tree species, real cherry blossoms in spring — real models near the player, light trees in the distance</sub>
+- 지도: 열자마자 내 위치, 지리원 타일로 일본 전역 상세 지도, 명소별 아이콘 약 150개, 목적지에서 바로 이동<br><sub>Map: opens on your position, detailed all-Japan GSI tiles, ~150 landmark icons, go-now travel</sub>
+- 시작하면 항상 로비, UI 전면 리디자인, 새 라디오 플레이어와 음질 개선<br><sub>Always starts in the lobby, full UI redesign, new radio player and cleaner radio sound</sub>
+
+**🐞 수정 · Fixed**
+
+- 항공사진 건물 외벽의 새카만 그늘 보정, 메뉴 위로 겹치던 터치 버튼·HUD, 늘 보이던 경로 안내 바, 라디오 주파수 중복 표시, 차량 실내가 비어 보이던 유리<br><sub>Near-black aerial-photo facades lifted; touch buttons/HUD over menus, always-visible route bar, doubled radio frequency, see-through car glass fixed</sub>
 
 ---
 

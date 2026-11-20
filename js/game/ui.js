@@ -15,6 +15,8 @@ import { GOALS } from './goals.js';
 import { PLACES } from '../../data/places.js';
 import { JAPAN_LAND, JAPAN_CITIES, JAPAN_PREFS } from '../../data/japan.js';
 import { DESTS } from '../../data/destinations.js';
+import { JP_LANDMARKS } from '../../data/landmarks-jp.js';
+import { iconAtlas } from './map-icons.js';
 import { GLOSSARY, STANCE_TERM, ROAD_TERM, term } from '../../data/glossary.js';
 import { DEFAULT_SETTINGS } from './main.js';
 import { ASSIST_SETTING_KEYS, assistsFromSettings, applyDifficulty } from './vehicle.js';
@@ -49,13 +51,11 @@ export class UI {
         <div class="lobby-steps"><span data-i18n="game.lobby.s1"></span><i>›</i><span data-i18n="game.lobby.s2"></span><i>›</i><span data-i18n="game.lobby.s3"></span><i>›</i><span data-i18n="game.lobby.s4"></span></div>
         <button class="btn primary big" data-a="play"><span data-i18n="game.title.start"></span><small class="sub" data-i18n="game.title.startSub"></small></button>
         <button class="btn" data-a="quick"><span data-i18n="game.title.quick"></span> <small class="sub" id="quick-car"></small></button>
-        <label class="spawn-sel"><span data-i18n="game.spawn.label"></span> <select id="t-spawn">
-          <option value="pa" data-i18n="game.spawn.pa"></option><option value="bay" data-i18n="game.spawn.bay"></option>
-          <option value="k1" data-i18n="game.spawn.k1"></option><option value="hakone" data-i18n="game.spawn.hakone"></option><option value="c1" data-i18n="game.spawn.c1"></option><option value="daiba" data-i18n="game.spawn.daiba"></option><option value="r1" data-i18n="game.spawn.r1"></option><option value="seisho" data-i18n="game.spawn.seisho"></option><option value="umi" data-i18n="game.spawn.umi"></option><option value="futo" data-i18n="game.spawn.futo"></option>
-          <option value="mm" data-i18n="game.spawn.mm"></option><option value="chinatown" data-i18n="game.spawn.chinatown"></option><option value="tsurumi" data-i18n="game.spawn.tsurumi"></option><option value="kawasaki" data-i18n="game.spawn.kawasaki"></option><option value="haneda" data-i18n="game.spawn.haneda"></option><option value="zama" data-i18n="game.spawn.zama"></option></select></label><canvas id="t-spawnmap" class="spawnmap" width="440" height="250"></canvas>
+        <label class="spawn-sel"><span data-i18n="game.spawn.label"></span> <select id="t-spawn"></select></label><canvas id="t-spawnmap" class="spawnmap" width="440" height="250"></canvas>
         <div class="lobby-online" id="lobby-online"></div>
         <div class="lobby-row"><button class="btn sm" data-a="settings">⚙ <span data-i18n="game.menu.settings"></span></button>
         <button class="btn sm" data-a="controls">🎮 <span data-i18n="game.menu.controls"></span></button>
+        <button class="btn sm" data-a="whatsnew">✨ NEW v${GAME.version}</button>
         <a class="btn sm ghost" href="index.html">🌐 <span data-i18n="game.title.site"></span></a></div>
         <p class="hint" data-i18n="game.title.hint"></p>
         <div class="title-ver">MIDNIGHT JAPAN v${GAME.version} · ${GAME.build} · Map data © <a href="https://www.openstreetmap.org/copyright" target="_blank" rel="noopener">OpenStreetMap</a> contributors · Buildings: <a href="credits.html" target="_blank" rel="noopener">3D都市モデル（PLATEAU）国土交通省</a></div>
@@ -98,15 +98,14 @@ export class UI {
       </div></div>
       <div id="hud" class="hidden">
         <div class="tl"><div class="loc"></div><div class="clock"></div><div class="money"></div><div class="goaltrack" id="goaltrack"></div></div>
-        <canvas id="minimap" width="680" height="500"></canvas><div class="hudbar"><button class="autobtn garbtn" data-a="hudGarage" title="U">🔧</button><button class="autobtn mapbtn" data-a="hudMap" title="M">🗺</button><button id="wxbtn" class="autobtn wxbtn" data-a="weather" title="Weather">🌤</button><button id="seabtn" class="autobtn seabtn" data-a="season" title="Season">🍁</button><button id="autobtn" class="autobtn" data-a="auto" title="J">AUTO</button></div><div id="keyhint" class="keyhint" hidden></div><div id="navhud" class="navhud" hidden><span class="nav-arrow">↑</span><span class="nav-dist"></span><button class="nav-x" data-a="navClear" aria-label="clear">✕</button></div><div id="pursuit" class="pursuithud" hidden></div>
+        <canvas id="minimap" width="680" height="500"></canvas><div class="hudbar"><button class="autobtn hud-menu" data-a="pause" aria-label="menu"><span class="ic">☰</span></button><button class="autobtn garbtn" data-a="hudGarage" title="U">🔧</button><button class="autobtn mapbtn" data-a="hudMap" title="M">🗺</button><button id="wxbtn" class="autobtn wxbtn" data-a="weather" title="Weather">🌤</button><button id="seabtn" class="autobtn seabtn" data-a="season" title="Season">🍁</button><button id="autobtn" class="autobtn" data-a="auto" title="J">AUTO</button></div><div id="keyhint" class="keyhint" hidden></div><div id="navhud" class="navhud" hidden><span class="nav-arrow">↑</span><span class="nav-dist"></span><button class="nav-x" data-a="navClear" aria-label="clear">✕</button></div><div id="pursuit" class="pursuithud" hidden></div>
         <div class="speedo"><canvas id="speedo" width="520" height="520"></canvas><div class="icons"></div></div>
-        <div class="radio-banner"></div><div id="radiopill" class="radiopill" hidden><button class="rp-fold" data-a="radioFold" title="−">📻</button><span class="rp-t"></span><button data-a="radioPrev" title="R">⏮</button><button data-a="radioSkip" title="Y">⏭</button><button data-a="radioNext" title="T">📻</button></div>
+        <div class="radio-banner" aria-live="polite"></div><div id="radiopill" class="radiopill" hidden><button class="rp-fold" data-a="radioFold" aria-label="radio"><i class="rp-eq"><i></i><i></i><i></i><i></i></i></button><div class="rp-body"><div class="rp-st"><b class="rp-freq"></b><span class="rp-name"></span><span class="rp-genre"></span></div><div class="rp-t"></div></div><div class="rp-ctl"><button data-a="radioPrev" title="R" aria-label="previous station">‹</button><button data-a="radioSkip" title="Y" aria-label="skip song">⏭</button><button data-a="radioNext" title="T" aria-label="next station">›</button><button class="rp-off" data-a="radioPower" aria-label="radio off">⏻</button></div></div>
         <div class="prompt"><kbd></kbd><span></span></div>
         <div class="toasts"></div>
         <button class="online-pill" data-a="chat" id="online-pill"></button>
         <div class="chat" id="chat"><div class="log"></div><form><input maxlength="120" autocomplete="off" enterkeyhint="send"><button type="submit">↵</button></form></div>
         <div class="fps"></div>
-        <button class="hud-menu" data-a="pause" aria-label="menu">☰</button>
       </div>
       <div id="tutorial" class="screen"><div class="tut-box">
         <div class="tut-step"></div><div class="tut-icon"></div><h2 class="tut-h"></h2><p class="tut-p"></p>
@@ -155,10 +154,11 @@ export class UI {
       </div>
       <div id="fatal" class="screen"><div class="menu"><h2>⚠</h2><p id="fatal-msg"></p><a class="btn" href="index.html">← Home</a></div></div>`;
     this.relabel();
+    try { if (localStorage.getItem('dn.rpFold')) $('#radiopill').classList.add('folded'); } catch {}
     { // v2.13.3: a moody shot behind the loading bar (slow Ken Burns drift), different each visit
       const P = ['50-touge-sakura', '48-pa-lights', '27-c1night', '33-rainbow', '45-tokyo-tower', '29-hakone_dusk', '31-k1rain', '42-tokyo-night', '51-pa-autumn', '40-real-yokohama'];
       const f = P[Math.floor(Math.random() * P.length)], el = document.getElementById('load-photo'); if (el) el.style.backgroundImage = `url(docs/screenshots/${f}${innerWidth < 900 ? '-800' : ''}.jpg)`; }
-    r.addEventListener('click', e => { const b = e.target.closest('[data-a]'); if (b) { this.g.audio?.sfx('ui_click'); this.action(b.dataset.a, b); } const c = e.target.closest('[data-c]'); if (c) this.carAction(c.dataset.c); });
+    r.addEventListener('click', e => { const b = e.target.closest('[data-a]'); if (b) { this.g.audio?.sfx(b.classList.contains('primary') || b.classList.contains('qt-go') ? 'ui_select' : 'ui_click'); this.action(b.dataset.a, b); } const c = e.target.closest('[data-c]'); if (c) this.carAction(c.dataset.c); });
     this.wireTouch();
     this.speedo = $('#speedo').getContext('2d'); this.mini = $('#minimap').getContext('2d'); $('#minimap').addEventListener('click', () => this.toggleMap(true));
   }
@@ -173,7 +173,13 @@ export class UI {
     $('#whatsnew [data-a=wnDaiba]').textContent = '🌈 ' + t('game.wn.daiba'); $('#whatsnew [data-a=wnSeisho]').textContent = '🗻 ' + t('game.wn.seisho'); $('#whatsnew [data-a=wnClose]').textContent = t('game.wn.close');
     this.screens('whatsnew');
   }
-  showTitle() { let seen = null; try { seen = localStorage.getItem('dn.seenVer'); } catch {} if (seen !== GAME.version && !this._wnShown && !/[?&](auto|go)=/.test(location.search)) { this._wnShown = true; this.showWhatsNew(); return; } this.screens('title'); $('#hud').classList.add('hidden'); $('#title .who').innerHTML = `${esc(t('game.title.hello'))} <b>${esc(displayName())}</b>` + (currentUser() ? '' : ` · <a href="account.html">${esc(t('game.title.login'))}</a>`); this.touchMode(null); const sp = $('#t-spawn'); if (sp) { sp.value = this.g.settings.spawn || 'pa'; sp.onchange = () => { this.g.settings.spawn = sp.value; this.g.saveSettings?.(); this.spawnPreview(sp.value); }; this.spawnPreview(sp.value); } const qc = CAR_BY_ID[this.g.garage.car]; $('#quick-car').textContent = qc ? `${qc.maker} ${qc.name}` : ''; this.updateOnline(); }
+  // v2.15: spawn regions = the built-in list + every quick-travel destination that has a spawn id (new courses appear by themselves)
+  spawnOptions() {
+    const ids = ['pa', 'bay', 'k1', 'hakone', 'c1', 'daiba', 'r1', 'seisho', 'umi', 'futo', 'mm', 'chinatown', 'tsurumi', 'kawasaki', 'haneda', 'zama'];
+    for (const d of DESTS) if (d.spawn && !ids.includes(d.spawn)) ids.push(d.spawn);
+    return ids.map(id => { const k = 'game.spawn.' + id, l = t(k); if (l !== k) return [id, l]; const d = DESTS.find(x => x.spawn === id); const rd = d && getLang() !== 'ja' ? reading(d.name) : ''; return [id, d ? (rd ? `${rd} (${d.name})` : d.name) : id]; });
+  }
+  showTitle() { let seen = null; try { seen = localStorage.getItem('dn.seenVer'); } catch {} this.screens('title'); { const wb = $('#title [data-a=whatsnew]'); if (wb) wb.classList.toggle('primary', seen !== GAME.version); } $('#hud').classList.add('hidden'); $('#title .who').innerHTML = `${esc(t('game.title.hello'))} <b>${esc(displayName())}</b>` + (currentUser() ? '' : ` · <a href="account.html">${esc(t('game.title.login'))}</a>`); this.touchMode(null); const sp = $('#t-spawn'); if (sp) { sp.innerHTML = this.spawnOptions().map(([id, l]) => `<option value="${esc(id)}">${esc(l)}</option>`).join(''); const req = this.g.spawnReq; sp.value = req && [...sp.options].some(o => o.value === req) ? req : (this.g.settings.spawn || 'pa'); sp.onchange = () => { this.g.spawnReq = null; this.g.settings.spawn = sp.value; this.g.saveSettings?.(); this.spawnPreview(sp.value); }; this.spawnPreview(sp.value); } const qc = CAR_BY_ID[this.g.garage.car]; $('#quick-car').textContent = qc ? `${qc.maker} ${qc.name}` : ''; this.updateOnline(); }
   // v2.5.2: icon + word on every quick button (in the play language) — icons alone were guesswork
   labelHUD() {
     const L3 = (ko, ja, en) => ({ ko, ja, en })[getLang()] || en;
@@ -183,7 +189,7 @@ export class UI {
     const wx = { auto: '🌤', clear: '☀️', cloudy: '☁️', rain: '🌧', storm: '⛈', fog: '🌫' }[this.g.settings.weather] || '🌤'; set('#wxbtn', wx, L3('날씨', '天気', 'Weather'));
     { const se = { auto: '🗓', spring: '🌸', summer: '🌿', autumn: '🍁', winter: '❄️' }[this.g.settings.season || 'auto']; set('#seabtn', se, L3('계절', '季節', 'Season')); }
     set('#autobtn', '🚘', L3('자동', '自動', 'Auto'));
-    const m = document.querySelector('#hud .hud-menu'); if (m) m.title = L3('메뉴', 'メニュー', 'Menu');
+    set('#hud .hud-menu', '☰', L3('메뉴', 'メニュー', 'Menu')); { const m = document.querySelector('#hud .hud-menu'); if (m) m.title = L3('메뉴', 'メニュー', 'Menu') + ' (Esc)'; }
   }
   showHUD() { this.labelHUD(); this.screens(null); $('#hud').classList.remove('hidden'); if (!this._khShown && this.g.mode === 'drive') { this._khShown = true; setTimeout(() => this.keyHint(), 1500); } this.touchMode(this.g.mode); this.paused = false; }
   touchMode(mode) {
@@ -213,6 +219,7 @@ export class UI {
         this.paused = false; g.openGarage(); break;
       }
       case 'goals': this.screens('goals'); this.buildGoals(); break;
+      case 'whatsnew': this.showWhatsNew(); break;
       case 'wnClose': try { localStorage.setItem('dn.seenVer', GAME.version); } catch {} this.showTitle(); break;
       case 'wnDaiba': case 'wnSeisho': try { localStorage.setItem('dn.seenVer', GAME.version); } catch {} g.settings.spawn = a === 'wnDaiba' ? 'daiba' : 'seisho'; g.saveSettings?.(); this.screens(null); g.quickStart(); break;
       case 'goalsClose': this.screens('pause'); this.updateGoals(); break;
@@ -235,6 +242,7 @@ export class UI {
       case 'radioFold': { const pl = document.getElementById('radiopill'); pl.classList.toggle('folded'); try { localStorage.setItem('dn.rpFold', pl.classList.contains('folded') ? '1' : ''); } catch {} break; }
       case 'radioSkip': if (g.radio?.on) { g.radio.skip(); this.radioBanner(); } break;
       case 'radioNext': if (g.radio) { if (!g.radio.on) g.radio.power(true); else g.radio.next(); this.radioBanner(); } break;
+      case 'radioPower': if (g.radio?.on) { g.radio.power(false); this.radioBanner(); this._rpT = 0; } break;
       case 'radioPrev': if (g.radio?.on) { g.radio.prev(); this.radioBanner(); } break;
       case 'hudGarage': this.quickGarage(); break;
       case 'season': { // v2.9: auto (real date) → spring → summer → autumn → winter
@@ -247,6 +255,7 @@ export class UI {
         this.toast(t('game.weather.' + M[i]), 'info', 2); break; }
       case 'auto': g.autopilot?.toggle(); if (g.autopilot?.on) this.toast(t('game.auto.on'), 'info', 4); break;
       case 'mapClose': this.toggleMap(false); break;
+      case 'mapGo': { const d = this.mapSel?.dest; if (d) { this.toggleMap(false); g.travelTo(d); } break; }
       case 'mapNav': if (this.mapSel) { g.nav.set(this.mapSel.x, this.mapSel.z); this.toggleMap(false); this.toast(t('game.nav.set'), 'info', 3); } break;
       case 'mapTp': if (this.mapSel) { this.toggleMap(false); g.teleport(this.mapSel.x, this.mapSel.z); } break;
       case 'mapTp0': case 'mapTp1': { const o = this.mapSel?.opts?.[a === 'mapTp1' ? 1 : 0]; if (o) { this.toggleMap(false); g.teleport(this.mapSel.x, this.mapSel.z, o); } break; }
@@ -257,7 +266,8 @@ export class UI {
       case 'mapAll': this.mapFitAll(); break;
       case 'mapJapan': this.mapJapan(); break;
       case 'qtToggle': $('#qt').classList.toggle('open'); break;
-      default: if (a.startsWith('qt:')) { const d = DESTS.find(x => x.id === a.slice(3)); if (d) { this.mapFollow = false; this.mv.x = d.x; this.mv.z = d.z; this.mv.k = Math.max(this.mv.k, 0.25); this.mapSel = { x: d.x, z: d.z }; this.showMapSel(d.x, d.z); this.drawBigMap(); if (innerWidth < 760) $('#qt').classList.remove('open'); } } break;
+      default: if (a.startsWith('qtgo:')) { const d = DESTS.find(x => x.id === a.slice(5)); if (d) { this.toggleMap(false); g.travelTo(d); } break; }
+        if (a.startsWith('qt:')) { const d = DESTS.find(x => x.id === a.slice(3)); if (d) { this.mapFollow = false; this.mv.x = d.x; this.mv.z = d.z; this.mv.k = Math.max(this.mv.k, 0.25); this.mapSel = { x: d.x, z: d.z, dest: d }; this.showMapSel(d.x, d.z); this.drawBigMap(); if (innerWidth < 760) $('#qt').classList.remove('open'); } } break;
       case 'plateRandom': { const cur = g.carSetup(g.previewId).plate; const p = { ...cur, region: PLATE_REGIONS[Math.floor(Math.random() * 8)], kana: PLATE_KANA[Math.floor(Math.random() * 30)], num: 1 + Math.floor(Math.random() * 9999) }; g.applyPreview({ plate: p }); this.fillPlate(); break; }
     }
   }
@@ -514,8 +524,11 @@ export class UI {
     const DIRS = { ko: ['북', '북동', '동', '남동', '남', '남서', '서', '북서'], ja: ['北', '北東', '東', '南東', '南', '南西', '西', '北西'], en: ['N', 'NE', 'E', 'SE', 'S', 'SW', 'W', 'NW'] };
     const comp = yaw => { const a = (Math.atan2(Math.sin(yaw), -Math.cos(yaw)) * 180 / Math.PI + 360) % 360; return (DIRS[getLang()] || DIRS.en)[Math.round(a / 45) % 8]; }; // +x east, +z south
     const opts = g.tpOptions(x, z); this.mapSel.opts = opts;
-    const main = rd && getLang() !== 'ja' ? rd : ja.split(' · ')[0]; box.innerHTML = `<div class="ms-name"><b>${esc(main)}</b>${ja && ja !== main ? `<small>${esc(ja)}</small>` : ''}</div>` +
-      `<button class="btn sm primary" data-a="mapNav">${esc(t('game.map.route'))}</button>` +
+    const dst = this.mapSel.dest, dRd = dst && getLang() !== 'ja' ? reading(dst.name) : '';
+    const main = dst ? (dRd || dst.name) : rd && getLang() !== 'ja' ? rd : ja.split(' · ')[0], sub = dst ? (dRd ? dst.name : ja) : ja;
+    box.innerHTML = `<div class="ms-name"><b>${esc(main)}</b>${sub && sub !== main ? `<small>${esc(sub)}</small>` : ''}</div>` +
+      (dst ? `<button class="btn sm primary ms-go" data-a="mapGo">⚡ ${esc(L3('바로 이동', 'すぐ移動', 'Go now'))}</button>` : '') +
+      `<button class="btn sm${dst ? '' : ' primary'}" data-a="mapNav">${esc(t('game.map.route'))}</button>` +
       (opts.length ? opts.map((o, i) => `<button class="btn sm" data-a="mapTp${i}">➜ ${esc(comp(o.yaw))}${esc(L3('쪽으로 출발', '方面へ', ' bound'))}<small>${esc(o.name)}</small></button>`).join('') : `<button class="btn sm" data-a="mapTp">${esc(t('game.map.tp'))}</button>`);
   }
   toggleMap(force) {
@@ -524,11 +537,9 @@ export class UI {
     const cv = $('#bigmap'), dpr = Math.min(2, devicePixelRatio || 1); const rb = cv.getBoundingClientRect(); cv.width = (rb.width || innerWidth) * dpr; cv.height = (rb.height || innerHeight) * dpr;
     if (!this.mv) { this.mv = { x: 0, z: 0, k: 0.35 * dpr }; this.wireMap(cv); }
     // v2.2: open on your own position (≈ 2.5 km across) and keep following you; driving / autopilot carry on underneath
-    // v2.14: opens on ALL of Japan, then flies in to where you are (≈ 2.5 km across) — touch / wheel stops the flight
-    { const kEnd = Math.min(cv.width, cv.height) / 2500, p = this.mapPos() || { x: 0, z: 0 }; this.mapJapan(); const k0 = this.mv.k, x0 = this.mv.x, z0 = this.mv.z, t0 = performance.now() + 700, D = 1600;
-      this._fly = true; const step = () => { if (!this._fly || !this.mapOpen) return; const u = Math.min(1, Math.max(0, (performance.now() - t0) / D)), e = u * u * (3 - 2 * u);
-        this.mv.k = Math.exp(Math.log(k0) + (Math.log(kEnd) - Math.log(k0)) * e); const w = Math.min(1, e * 1.6); this.mv.x = x0 + (p.x - x0) * w; this.mv.z = z0 + (p.z - z0) * w; this.drawBigMap();
-        if (u < 1) requestAnimationFrame(step); else { this._fly = false; this.mapFollow = true; } }; requestAnimationFrame(step); }
+    // (the v2.14 "all of Japan → fly in" intro was dropped: it redrew the whole canvas every frame for ~2.3 s at a new zoom each
+    // frame — country outline, every road's Path2D rebuilt at each detail step, raster tiles requested at every level — and stuttered)
+    { this._fly = false; const p = this.mapPos(); if (p) { this.mv.x = p.x; this.mv.z = p.z; } this.mv.k = Math.min(cv.width, cv.height) / 2500; this.mapFollow = true; this.drawBigMap(); }
     this.buildQuickTravel();
     clearInterval(this._mapLive); this._mapLive = setInterval(() => { if (!this.mapOpen) { clearInterval(this._mapLive); return; } if (this._fly) return; if (this.mapFollow) { const p = this.mapPos(); if (p) { this.mv.x = p.x; this.mv.z = p.z; } } this.drawBigMap(); }, 150);
   }
@@ -545,7 +556,7 @@ export class UI {
       const comp = DIRS[Math.round(((Math.atan2(dx, -dz) * 180 / Math.PI) + 360) % 360 / 45) % 8];
       const rd = getLang() !== 'ja' ? reading(d.name) : '';
       const km = dist < 1000 ? Math.round(dist) + ' m' : (dist / 1000).toFixed(dist < 10000 ? 1 : 0) + ' km';
-      return `<button class="qt-card" data-a="qt:${d.id}"><img src="assets/tp/${d.id}.webp" alt="" loading="lazy" onerror="this.style.visibility='hidden'"><span class="qt-t"><b>${esc(d.name)}</b>${rd ? `<small>${esc(rd)}</small>` : ''}</span><span class="qt-d"><i style="transform:rotate(${(-rel * 180 / Math.PI).toFixed(0)}deg)">▲</i>${esc(comp)} · ${km}</span></button>`;
+      return `<div class="qt-item"><button class="qt-card" data-a="qt:${d.id}"><img src="assets/tp/${d.id}.webp" alt="" loading="lazy" onerror="this.style.visibility='hidden'"><span class="qt-t"><b>${esc(d.name)}</b>${rd ? `<small>${esc(rd)}</small>` : ''}</span><span class="qt-d"><i style="transform:rotate(${(-rel * 180 / Math.PI).toFixed(0)}deg)">▲</i>${esc(comp)} · ${km}</span></button><button class="qt-go" data-a="qtgo:${d.id}" title="${esc(({ ko: '바로 이동', ja: 'すぐ移動' })[getLang()] || 'Go now')}" aria-label="go">➜</button></div>`;
     }).join('');
   }
   mapPos() { return this.g.mode === 'walk' ? this.g.player?.pos : this.g.vehicle?.pos; }
@@ -561,7 +572,7 @@ export class UI {
     cv.addEventListener('pointerup', e => {
       pts.delete(e.pointerId); pinch = 0;
       // a tap (no drag) picks a point: route there or teleport
-      if (down && Math.hypot(e.clientX - down[0], e.clientY - down[1]) < 6) { const r = cv.getBoundingClientRect(), d = cv.width / r.width; const x = this.mv.x + ((e.clientX - r.left) * d - cv.width / 2) / this.mv.k, z = this.mv.z + ((e.clientY - r.top) * d - cv.height / 2) / this.mv.k; this.mapSel = { x, z }; this.showMapSel(x, z); this.drawBigMap(); }
+      if (down && Math.hypot(e.clientX - down[0], e.clientY - down[1]) < 6) { const r = cv.getBoundingClientRect(), d = cv.width / r.width; const cx = (e.clientX - r.left) * d, cy = (e.clientY - r.top) * d, dh = (this._destHit || []).find(h => cx >= h.ib[0] - 6 && cx <= h.ib[2] + 6 && cy >= h.ib[1] - 6 && cy <= h.ib[3] + 6); const x = dh ? dh.d.x : this.mv.x + (cx - cv.width / 2) / this.mv.k, z = dh ? dh.d.z : this.mv.z + (cy - cv.height / 2) / this.mv.k; this.mapSel = { x, z, dest: dh?.d }; this.showMapSel(x, z); this.drawBigMap(); }
       down = null;
     });
     cv.addEventListener('pointercancel', e => { pts.delete(e.pointerId); pinch = 0; });
@@ -682,13 +693,13 @@ export class UI {
   radioBanner() {
     const r = this.g.radio; const b = $('#hud .radio-banner');
     if (!r) return;
-    if (!r.on) { b.innerHTML = `📻 OFF`; } else { const n = r.nowPlaying(); b.innerHTML = `📻 <b>${esc(n.station)}</b><br><small>${esc(n.title || '')} — ${esc(n.artist || '')}</small>`; }
+    if (!r.on) { b.innerHTML = `<div class="rb-freq">FM</div><div class="rb-name">RADIO OFF</div>`; } else { const n = r.nowPlaying(); b.innerHTML = `<div class="rb-freq">FM <b>${esc(String(n.freq ?? ''))}</b></div><div class="rb-name">${esc(n.name || n.station)}</div><div class="rb-genre">${esc(n.genre || '')}</div>${n.title ? `<div class="rb-song">${esc(n.title)}${n.artist ? ` <span>— ${esc(n.artist)}</span>` : ''}</div>` : ''}`; }
     b.classList.add('show'); clearTimeout(this._rb); this._rb = setTimeout(() => b.classList.remove('show'), 5000);
   }
   update(dt) {
     const g = this.g;
     this._rpT = (this._rpT || 0) - dt;
-    if (this._rpT <= 0) { this._rpT = 0.5; const pill = document.getElementById('radiopill'), r = g.radio; if (pill) { const on = !!(r?.on && g.mode === 'drive'); pill.hidden = !on; if (on) { const n = r.nowPlaying(), txt = `📻 ${n.station} · ${n.title || ''}${n.artist ? ' — ' + n.artist : ''}`; if (txt !== this._rpTxt) { this._rpTxt = txt; pill.querySelector('.rp-t').textContent = txt; } } } }
+    if (this._rpT <= 0) { this._rpT = 0.5; const pill = document.getElementById('radiopill'), r = g.radio; if (pill) { const on = !!(r?.on && g.mode === 'drive'); pill.hidden = !on; if (on) { const n = r.nowPlaying(), txt = `${n.freq}|${n.title}|${n.artist}`; if (txt !== this._rpTxt) { this._rpTxt = txt; pill.querySelector('.rp-freq').textContent = n.freq ?? ''; pill.querySelector('.rp-name').textContent = n.name || n.station; pill.querySelector('.rp-genre').textContent = n.genre || ''; pill.querySelector('.rp-t').textContent = `${n.title || ''}${n.artist ? ' — ' + n.artist : ''}`; pill.title = `${n.station} · ${n.title || ''}`; } } } }
     if (this._promptT !== undefined) { this._promptT -= dt; if (this._promptT <= 0) { $('#hud .prompt').classList.remove('show'); this._promptT = undefined; } }
     if (g.mode !== 'drive' && g.mode !== 'walk') return;
     if (g.mode === 'drive' && g.vehicle) this.drawSpeedo(g.vehicle, dt); // every frame: smooth needle/gear motion
@@ -866,6 +877,93 @@ export class UI {
       }
     }
   }
+  // v2.14.5: detailed map of ALL of Japan under the game's own layers — GSI standard tiles (地理院タイル, cyberjapandata.gsi.go.jp,
+  // free with attribution, CORS-enabled), only the tiles in view at the zoom that matches the screen, LRU-cached, never prefetched.
+  // Each tile is recoloured ONCE when it arrives (lightness inverted, hue kept → a dark map that matches the UI), so a redraw is
+  // plain drawImage calls. Projection: the game is equirectangular about MAP.origin (x = Δlon·111320·cos lat0, z = −Δlat·110574);
+  // a web-Mercator tile is linear in lon and is placed by its corner latitudes, in horizontal strips at low zoom so the
+  // Mercator→equirectangular stretch inside one big tile stays invisible. A missing tile shows its nearest loaded ancestor.
+  drawGsi(c, W, H, m, k) {
+    const G = this._gsi || (this._gsi = { img: new Map(), bad: new Set(), busy: 0 });
+    const o = MAP.origin || { lat: 35.4615, lon: 139.68 }, R2D = 180 / Math.PI, KX = 111320 * Math.cos(o.lat / R2D), KZ = 110574;
+    const x0 = m.x - W / 2 / k, x1 = m.x + W / 2 / k, z0 = m.z - H / 2 / k, z1 = m.z + H / 2 / k;
+    const lonW = o.lon + x0 / KX, lonE = o.lon + x1 / KX, latN = Math.min(85, o.lat - z0 / KZ), latS = Math.max(-85, o.lat - z1 / KZ);
+    if (lonE < 118 || lonW > 160 || latN < 18 || latS > 50) return; // nowhere near Japan
+    const latC = Math.max(-80, Math.min(80, o.lat - m.z / KZ));
+    const z = Math.max(2, Math.min(18, Math.round(Math.log2(k * 156543 * Math.cos(latC / R2D)))));
+    const n = 2 ** z, tyOf = (lat, zz) => { const r = lat / R2D; return (1 - Math.log(Math.tan(r) + 1 / Math.cos(r)) / Math.PI) / 2 * 2 ** zz; };
+    const latOf = (ty, zz) => R2D * Math.atan(Math.sinh(Math.PI * (1 - 2 * ty / 2 ** zz)));
+    const sx = lon => ((lon - o.lon) * KX - m.x) * k + W / 2, sz = lat => (-(lat - o.lat) * KZ - m.z) * k + H / 2;
+    const get = (zz, tx, ty, load) => { const id = zz + '/' + tx + '/' + ty; let e = G.img.get(id); if (e) { G.img.delete(id); G.img.set(id, e); return e.ready ? e : null; }
+      if (!load || G.bad.has(id) || G.busy >= 16) return null;
+      e = { ready: false, cv: null }; G.img.set(id, e); G.busy++;
+      const im = new Image(); im.crossOrigin = 'anonymous'; im.decoding = 'async';
+      im.onload = () => { G.busy--; try { const cv = document.createElement('canvas'); cv.width = cv.height = 256; const x = cv.getContext('2d', { willReadFrequently: true }); x.drawImage(im, 0, 0, 256, 256);
+          const d = x.getImageData(0, 0, 256, 256), a = d.data; for (let i = 0; i < a.length; i += 4) { const r = a[i], g = a[i + 1], b = a[i + 2], off = 255 - Math.max(r, g, b) - Math.min(r, g, b), R = r + off, Gg = g + off, B = b + off, y = 0.3 * R + 0.59 * Gg + 0.11 * B; // invert lightness, keep hue, then mute to ~35 % saturation and tint navy
+          a[i] = (y + 0.35 * (R - y)) * 0.6 + 10; a[i + 1] = (y + 0.35 * (Gg - y)) * 0.66 + 16; a[i + 2] = (y + 0.35 * (B - y)) * 0.76 + 30; }
+          x.putImageData(d, 0, 0); e.cv = cv; e.ready = true; } catch { G.bad.add(id); G.img.delete(id); }
+        if (this.mapOpen) { cancelAnimationFrame(this._mapRaf); this._mapRaf = requestAnimationFrame(() => this.drawBigMap()); } };
+      im.onerror = () => { G.busy--; G.bad.add(id); G.img.delete(id); };
+      im.src = `https://cyberjapandata.gsi.go.jp/xyz/std/${zz}/${tx}/${ty}.png`;
+      while (G.img.size > 180) G.img.delete(G.img.keys().next().value); // LRU: oldest first
+      return null; };
+    // draw rows [sy, sy+sh) of a 256 px source covering tile-x [txL, txR] / tile-y [tyT, tyB] at zoom zz
+    const put = (cv, sx0, sy0, sw, sh, zz, txL, txR, tyT, tyB) => { const N = 2 ** zz, S = zz < 9 ? 6 : 1, ax = sx(txL / N * 360 - 180), bx = sx(txR / N * 360 - 180);
+      for (let i = 0; i < S; i++) { const ya = sz(latOf(tyT + (tyB - tyT) * i / S, zz)), yb = sz(latOf(tyT + (tyB - tyT) * (i + 1) / S, zz));
+        c.drawImage(cv, sx0, sy0 + sh * i / S, sw, sh / S, ax, ya, bx - ax + 0.6, yb - ya + 0.6); } };
+    const ix0 = Math.max(0, Math.floor((lonW + 180) / 360 * n)), ix1 = Math.min(n - 1, Math.floor((lonE + 180) / 360 * n));
+    const iy0 = Math.max(0, Math.floor(tyOf(latN, z))), iy1 = Math.min(n - 1, Math.floor(tyOf(latS, z)));
+    if ((ix1 - ix0 + 1) * (iy1 - iy0 + 1) > 120) return; // safety: never flood the tile server
+    c.save(); c.imageSmoothingEnabled = true;
+    for (let tx = ix0; tx <= ix1; tx++) for (let ty = iy0; ty <= iy1; ty++) {
+      const e = get(z, tx, ty, true); if (e) { put(e.cv, 0, 0, 256, 256, z, tx, tx + 1, ty, ty + 1); continue; }
+      for (let d = 1; d <= 5 && z - d >= 2; d++) { const p = get(z - d, tx >> d, ty >> d, false); if (!p) continue; const f = 2 ** d, w = 256 / f, ox = (tx - ((tx >> d) << d)) * w, oy = (ty - ((ty >> d) << d)) * w;
+        put(p.cv, ox, oy, w, w, z, tx, tx + 1, ty, ty + 1); break; }
+    }
+    c.restore();
+  }
+  // v2.15 map markers. Destinations (DESTS — new courses appear automatically) win over landmarks; within each group
+  // the list is pre-sorted by importance, so when labels would collide the more famous one keeps its name.
+  destIcon(d) { return d.icon || (d.spawn === 'pa' || /PA$|ＰＡ/.test(d.name) ? 'pa' : /JCT/.test(d.name) ? 'jct' : /ブリッジ|橋/.test(d.name) ? 'bridge' : /空港/.test(d.name) ? 'plane' : /中華街|みなとみらい/.test(d.name) ? 'city' : 'circuit'); }
+  markerList() {
+    if (this._mk) return this._mk;
+    const o = MAP.origin || { lat: 35.4615, lon: 139.68 }, KX = 111320 * Math.cos(o.lat * Math.PI / 180), KZ = 110574;
+    const lm = JP_LANDMARKS.map(([ja, ko, en, lat, lon, icon, tier]) => ({ ja, ko, en, icon, tier, x: (lon - o.lon) * KX, z: -(lat - o.lat) * KZ, lm: true }))
+      .sort((a, b) => a.tier - b.tier);
+    return (this._mk = lm);
+  }
+  drawMapMarkers(c, W, H, m, k, dpr, P) {
+    const atlas = this._atlas || (this._atlas = iconAtlas(dpr)), lang = getLang(), kk = k / dpr, occ = (this._occ = []);
+    const hit = (x0, y0, x1, y1) => { for (const r of occ) if (x0 < r[2] && x1 > r[0] && y0 < r[3] && y1 > r[1]) return true; return false; };
+    { const p = this.mapPos(); if (p) { const [a, b] = P(p.x, p.z); occ.push([a - 20 * dpr, b - 74 * dpr, a + 20 * dpr, b + 20 * dpr]); } } // keep clear of "you are here"
+    const font = (w, sz) => `${w} ${sz * dpr}px "Hiragino Sans","Noto Sans JP","Noto Sans KR",system-ui,sans-serif`;
+    const place = (x, z, icon, sz, l1, l2, col, alpha, keepIcon) => {
+      const [a, b] = P(x, z); const h = sz * dpr / 2; if (a < -h - 200 || b < -h - 40 || a > W + h || b > H + h + 40) return null;
+      const ib = [a - h, b - h, a + h, b + h]; if (hit(...ib) && !keepIcon) return null;
+      c.globalAlpha = alpha; const ic = atlas(icon); c.drawImage(ic.img, ic.sx, ic.sy, ic.s, ic.s, ib[0], ib[1], h * 2, h * 2); occ.push(ib);
+      if (!l1) { c.globalAlpha = 1; return ib; }
+      c.font = font(800, 12); const w1 = c.measureText(l1).width; let w2 = 0; if (l2) { c.font = font(600, 9.5); w2 = c.measureText(l2).width; }
+      const tw = Math.max(w1, w2), th = (l2 ? 26 : 15) * dpr;
+      for (const [lx, ly, al] of [[a + h + 4 * dpr, b - th / 2, 'left'], [a - h - 4 * dpr - tw, b - th / 2, 'left'], [a - tw / 2, b + h + 2 * dpr, 'left']]) {
+        const lb = [lx - 2, ly - 2, lx + tw + 2, ly + th + 2]; if (hit(...lb)) continue; occ.push(lb);
+        c.textAlign = al; c.textBaseline = 'top'; c.lineJoin = 'round'; c.lineWidth = 3.2 * dpr; c.strokeStyle = 'rgba(4,8,16,.88)';
+        c.font = font(800, 12); c.strokeText(l1, lx, ly); c.fillStyle = col; c.fillText(l1, lx, ly);
+        if (l2) { c.font = font(600, 9.5); c.strokeText(l2, lx, ly + 14 * dpr); c.fillStyle = 'rgba(220,228,240,.85)'; c.fillText(l2, lx, ly + 14 * dpr); }
+        break;
+      }
+      c.globalAlpha = 1; return ib;
+    };
+    // 1) drivable destinations: always shown; names once zoomed in a little (spawnable ones at every zoom)
+    this._destHit = [];
+    for (const d of DESTS) { const rd = getLang() !== 'ja' ? reading(d.name) : '', named = kk > 0.0012 || d.spawn;
+      const ib = place(d.x, d.z, this.destIcon(d), 26, named ? (rd || d.name) : '', named && rd ? d.name : '', '#ffd38a', 1, true); if (ib) this._destHit.push({ d, ib }); }
+    // 2) landmarks: tier 1 everywhere, tier 2 from regional zoom, tier 3 from city zoom; fade in over each threshold
+    const need = [0, 0, 0.0009, 0.004];
+    for (const L of this.markerList()) { const t0 = need[L.tier]; if (kk < t0) continue; const al = t0 ? Math.min(1, (kk - t0) / (t0 * 0.8)) : 1; if (al < 0.15) continue;
+      const nm = lang === 'ja' ? L.ja : lang === 'ko' ? L.ko : L.en;
+      place(L.x, L.z, L.icon, L.tier === 1 ? 26 : 22, nm, lang === 'ja' ? '' : L.ja, '#ffffff', al, false); }
+    c.textBaseline = 'middle'; c.textAlign = 'center';
+  }
   drawBigMap() {
     const cv = $('#bigmap'), c = cv.getContext('2d'), W = cv.width, H = cv.height, m = this.mv, k = m.k;
     const P = (x, z) => [(x - m.x) * k + W / 2, (z - m.z) * k + H / 2];
@@ -877,13 +975,15 @@ export class UI {
       const JP = this._jpPath || (this._jpPath = (() => { const land = new Path2D(), pref = new Path2D(); for (const R of JAPAN_LAND) { for (let i = 0; i < R.length; i += 2) i ? land.lineTo(R[i], R[i + 1]) : land.moveTo(R[i], R[i + 1]); land.closePath(); }
         for (const pf of JAPAN_PREFS) for (const R of pf.r) { for (let i = 0; i < R.length; i += 2) i ? pref.lineTo(R[i], R[i + 1]) : pref.moveTo(R[i], R[i + 1]); pref.closePath(); } return { land, pref }; })());
       c.save(); c.setTransform(k, 0, 0, k, W / 2 - m.x * k, H / 2 - m.z * k);
-      c.fillStyle = '#2b3546'; c.fill(JP.land); c.strokeStyle = 'rgba(150,180,220,.55)'; c.lineWidth = 1 * dpr / k; c.stroke(JP.land);
+      c.fillStyle = '#2b3546'; c.fill(JP.land); c.restore(); this.drawGsi(c, W, H, m, k); c.save(); c.setTransform(k, 0, 0, k, W / 2 - m.x * k, H / 2 - m.z * k); c.strokeStyle = 'rgba(150,180,220,.55)'; c.lineWidth = 1 * dpr / k; c.stroke(JP.land);
       c.strokeStyle = 'rgba(160,190,230,.3)'; c.lineWidth = 0.8 * dpr / k; c.stroke(JP.pref); c.restore();
       if (k > 0.0004) { c.textAlign = 'center'; c.textBaseline = 'middle'; for (const pf of JAPAN_PREFS) { if (!pf.c) continue; const [a, b] = P(pf.c[0], pf.c[1]); if (a < -50 || b < -50 || a > W + 50 || b > H + 50) continue;
         c.font = `600 ${10 * dpr}px "Hiragino Sans","Noto Sans JP",system-ui`; c.fillStyle = 'rgba(200,215,235,.55)'; c.fillText(pf.n, a, b + 12 * dpr); if (getLang() !== 'ja' && k > 0.0012) { c.font = `500 ${8.5 * dpr}px system-ui`; c.fillText(pf.en, a, b + 23 * dpr); } } } }
-    for (const l of MAP.land || []) if (l.pts?.length > 2) poly(l.pts, l.main ? '#1d2633' : '#222c3a');
-    if (k > 0.25) for (const b of MAP.buildings || []) poly(b.pts, '#3a4658');
-    this.drawMapRaster(c, W, H, m, k, dpr);
+    // the baked local map (game area) only once zoomed in to street level — further out the GSI layer covers it
+    // seamlessly (the opaque baked square used to show as a cut-out box over the rest of Japan)
+    if (k / dpr >= 0.05) { for (const l of MAP.land || []) if (l.pts?.length > 2) poly(l.pts, l.main ? '#1d2633' : '#222c3a');
+      if (k > 0.25) for (const b of MAP.buildings || []) poly(b.pts, '#3a4658');
+      this.drawMapRaster(c, W, H, m, k, dpr); }
     { const [x0, z0] = P(PA_RECT.x0, PA_RECT.z0), [x1, z1] = P(PA_RECT.x1, PA_RECT.z1); c.fillStyle = '#44587a'; c.fillRect(Math.min(x0, x1), Math.min(z0, z1), Math.abs(x1 - x0), Math.abs(z1 - z0)); }
     const roads = this.g.net.roads;
     const vx0 = m.x - W / 2 / k - 50, vx1 = m.x + W / 2 / k + 50, vz0 = m.z - H / 2 / k - 50, vz1 = m.z + H / 2 / k + 50; // v2.14: skip roads off screen
@@ -909,13 +1009,9 @@ export class UI {
       for (const [n, x, z, pop] of JAPAN_CITIES) { if (pop < (k < 0.0006 ? 1500000 : 300000)) continue; const [a, b] = P(x, z); c.fillStyle = '#ffd38a'; c.beginPath(); c.arc(a, b, 2.5 * dpr, 0, 7); c.fill(); c.font = `700 ${11 * dpr}px "Hiragino Sans","Noto Sans JP",system-ui`; c.lineWidth = 3 * dpr; c.strokeStyle = 'rgba(0,0,0,.8)'; c.strokeText(n, a, b - 10 * dpr); c.fillStyle = '#fff'; c.fillText(n, a, b - 10 * dpr); }
       const g0 = P(-20000, 0), rad = Math.max(10 * dpr, 70000 * k); c.strokeStyle = 'rgba(47,191,116,.9)'; c.lineWidth = 2 * dpr; c.setLineDash([5 * dpr, 4 * dpr]); c.beginPath(); c.arc(g0[0], g0[1], rad, 0, 7); c.stroke(); c.setLineDash([]);
       c.font = `800 ${12 * dpr}px system-ui`; c.fillStyle = '#7ff0b0'; c.fillText('MIDNIGHT JAPAN', g0[0], g0[1] + rad + 14 * dpr); }
-    // v2.14: every region you can drive (quick-travel destinations) marked at every zoom — pin + name
-    c.textAlign = 'center'; c.textBaseline = 'middle';
-    for (const d of DESTS) { const [a, b] = P(d.x, d.z); if (a < -60 || b < -60 || a > W + 60 || b > H + 60) continue;
-      c.fillStyle = '#ff3d6e'; c.strokeStyle = '#fff'; c.lineWidth = 1.5 * dpr; c.beginPath(); c.arc(a, b - 9 * dpr, 6 * dpr, Math.PI * 0.85, Math.PI * 0.15); c.lineTo(a, b); c.closePath(); c.fill(); c.stroke();
-      c.fillStyle = '#fff'; c.beginPath(); c.arc(a, b - 9 * dpr, 2.2 * dpr, 0, 7); c.fill();
-      if (k < 0.004 && k < 0.0012 && !['daikoku', 'hakone', 'zama', 'umihotaru', 'c1'].includes(d.id)) continue; // zoomed right out: only the big names
-      c.font = `700 ${11 * dpr}px "Hiragino Sans","Noto Sans JP",system-ui`; c.lineWidth = 3 * dpr; c.strokeStyle = 'rgba(0,0,0,.85)'; c.strokeText(d.name, a, b - 22 * dpr); c.fillStyle = '#ffd1dc'; c.fillText(d.name, a, b - 22 * dpr); }
+    // v2.15: every drivable destination + ~150 famous landmarks across Japan as pictogram badges with names in the
+    // player's language; tiered by zoom, labels collision-avoided (destinations first), only what is in view is drawn
+    this.drawMapMarkers(c, W, H, m, k, dpr, P);
     // traffic
     for (const ai of this.g.traffic?.cars || []) { const [a, b] = P(ai.pos.x, ai.pos.z); if (a < 0 || b < 0 || a > W || b > H || (ai.mode === 'parked' && !ai.police)) continue;
       const q = 3.2 * dpr, sn = Math.sin(ai.yaw), cs = Math.cos(ai.yaw); c.fillStyle = ai.police ? '#4a8cff' : '#e9edf3'; c.strokeStyle = 'rgba(0,0,0,.75)'; c.lineWidth = dpr;
@@ -923,23 +1019,25 @@ export class UI {
     // labels: road names (expressways always, ramps/streets when zoomed), landmarks, places
     c.textAlign = 'center'; c.textBaseline = 'middle';
     // Japanese name + its reading in the player's language on a second, smaller line
-    const lab = (txt, x, z, size, col = '#fff') => { const [a, b] = P(x, z); if (a < -200 || b < -50 || a > W + 200 || b > H + 50) return; const pre = txt.match(/^[⬡◆] /)?.[0] || ''; const ja = txt.slice(pre.length); const rd = reading(ja);
-      c.font = `700 ${size * dpr}px "Hiragino Sans","Noto Sans JP",system-ui,sans-serif`; c.lineWidth = 3 * dpr; c.strokeStyle = 'rgba(0,0,0,.8)'; c.strokeText(txt, a, b); c.fillStyle = col; c.fillText(txt, a, b);
+    const occ = this._occ || [], kk = k / dpr;
+    const lab = (txt, x, z, size, col = '#fff', force) => { const [a, b] = P(x, z); if (a < -200 || b < -50 || a > W + 200 || b > H + 50) return; const pre = txt.match(/^[⬡◆] /)?.[0] || ''; const ja = txt.slice(pre.length); const rd = reading(ja);
+      c.font = `700 ${size * dpr}px "Hiragino Sans","Noto Sans JP",system-ui,sans-serif`; { const w = Math.max(c.measureText(txt).width, rd ? c.measureText(rd).width * 0.8 : 0) / 2 + 3 * dpr, h0 = size * 0.7 * dpr, h1 = (rd ? size * 1.6 : size * 0.7) * dpr, bx = [a - w, b - h0, a + w, b + h1];
+        if (!force && occ.some(r => bx[0] < r[2] && bx[2] > r[0] && bx[1] < r[3] && bx[3] > r[1])) return; occ.push(bx); } c.lineWidth = 3 * dpr; c.strokeStyle = 'rgba(0,0,0,.8)'; c.strokeText(txt, a, b); c.fillStyle = col; c.fillText(txt, a, b);
       if (rd) { c.font = `600 ${size * 0.78 * dpr}px system-ui,sans-serif`; const y2 = b + size * 1.05 * dpr; c.strokeText(rd, a, y2); c.fillStyle = col; c.globalAlpha = 0.85; c.fillText(rd, a, y2); c.globalAlpha = 1; } };
     const seen = new Set();
-    if (k >= 0.004) for (const r of roads) { if (!r.name || seen.has(r.name)) continue; if (r.kind !== 'expressway' && k < (r.kind === 'ramp' ? 0.6 : 1.2)) continue; seen.add(r.name); const q = r.samples[r.samples.length >> 1].p; lab(r.name.replace(/（.*?）/g, ''), q.x, q.z, r.kind === 'expressway' ? 13 : 11, r.kind === 'expressway' ? '#b6f5cf' : '#dde4ee'); }
+    if (kk >= 0.012) for (const r of roads) { if (!r.name || seen.has(r.name)) continue; if (r.kind !== 'expressway' && k < (r.kind === 'ramp' ? 0.6 : 1.2)) continue; seen.add(r.name); const q = r.samples[r.samples.length >> 1].p; lab(r.name.replace(/（.*?）/g, ''), q.x, q.z, r.kind === 'expressway' ? 13 : 11, r.kind === 'expressway' ? '#b6f5cf' : '#dde4ee'); }
     // place names: wards always, towns/wharves from mid zoom, JCTs/spots when zoomed in
-    for (const pl of k < 0.004 ? [] : PLACES) {
+    for (const pl of kk < 0.012 ? [] : PLACES) {
       const need = pl.kind === 'ward' || pl.kind === 'water' ? 0 : pl.kind === 'jct' || pl.kind === 'spot' ? 0.15 * dpr : 0.05 * dpr;
       if (k < need) continue;
       lab(pl.kind === 'jct' ? '⬡ ' + pl.name : pl.name, pl.x, pl.z, pl.kind === 'ward' ? 14 : 11, pl.kind === 'water' ? '#8fc8ff' : pl.kind === 'jct' ? '#b6f5cf' : pl.kind === 'ward' ? '#ffffff' : '#c9d2de');
     }
     // landmarks: bigger than street names; the one by the picked point (or under the cursor) grows and gets a ring
     const sel = this.mapSel, hov = this._mapHover;
-    for (const l of k < 0.004 ? [] : MAP.landmarks || []) { const near = (sel && Math.hypot(sel.x - l.x, sel.z - l.z) < 600 / Math.max(0.2, k)) || (hov && Math.hypot(hov.x - l.x, hov.z - l.z) < 40 / k);
+    for (const l of kk < 0.012 ? [] : MAP.landmarks || []) { const near = (sel && Math.hypot(sel.x - l.x, sel.z - l.z) < 600 / Math.max(0.2, k)) || (hov && Math.hypot(hov.x - l.x, hov.z - l.z) < 40 / k);
       if (near) { const [a, b] = P(l.x, l.z); c.beginPath(); c.arc(a, b, 16 * dpr, 0, 7); c.strokeStyle = '#ffd38a'; c.lineWidth = 2.5 * dpr; c.stroke(); }
-      lab('◆ ' + l.name, l.x, l.z, near ? 21 : 14, near ? '#fff2c8' : '#ffd38a'); }
-    lab('大黒PA', (PA_RECT.x0 + PA_RECT.x1) / 2, (PA_RECT.z0 + PA_RECT.z1) / 2, 15, '#ffb347');
+      lab('◆ ' + l.name, l.x, l.z, near ? 21 : 14, near ? '#fff2c8' : '#ffd38a', near); }
+    if (kk >= 0.012) lab('大黒PA', (PA_RECT.x0 + PA_RECT.x1) / 2, (PA_RECT.z0 + PA_RECT.z1) / 2, 15, '#ffb347');
     // player
     const p = this.mapPos(); if (p) { const [a, b] = P(p.x, p.z); const yaw = this.g.mode === 'walk' ? this.g.player.yaw : this.g.vehicle.yaw; const pr = (performance.now() / 900) % 1; c.beginPath(); c.arc(a, b, (14 + pr * 26) * dpr, 0, 7); c.strokeStyle = `rgba(255,179,71,${1 - pr})`; c.lineWidth = 3 * dpr; c.stroke(); c.beginPath(); c.arc(a, b, 13 * dpr, 0, 7); c.fillStyle = 'rgba(255,179,71,.25)'; c.fill(); c.save(); c.translate(a, b); c.rotate(-yaw + Math.PI); c.fillStyle = '#ffb347'; c.strokeStyle = '#000'; c.lineWidth = 2.5 * dpr; c.beginPath(); c.moveTo(0, -16 * dpr); c.lineTo(12 * dpr, 13 * dpr); c.lineTo(0, 6 * dpr); c.lineTo(-12 * dpr, 13 * dpr); c.closePath(); c.fill(); c.stroke(); c.restore(); c.font = `800 ${13 * dpr}px system-ui,sans-serif`; c.textAlign = 'center'; c.fillStyle = '#fff'; c.strokeStyle = 'rgba(0,0,0,.8)'; c.lineWidth = 4 * dpr; { // v2.5.2: "you are here" card — the place in the play language, with the Japanese name under it
         const here = ({ ko: '현재 위치', ja: '現在地', zh: '当前位置', 'zh-TW': '目前位置', es: 'Estás aquí', fr: 'Vous êtes ici', de: 'Sie sind hier' })[getLang()] || 'You are here';
@@ -955,6 +1053,7 @@ export class UI {
     const nice = [10, 20, 50, 100, 200, 500, 1000, 2000, 5000, 10000]; const len = nice.find(n => n * k > 80 * dpr) || 10000;
     c.fillStyle = '#fff'; c.fillRect(20 * dpr, H - 30 * dpr, len * k, 3 * dpr); c.textAlign = 'left'; c.font = `600 ${12 * dpr}px system-ui`; c.fillText(len >= 1000 ? len / 1000 + ' km' : len + ' m', 20 * dpr, H - 42 * dpr);
     c.textAlign = 'center'; c.font = `800 ${14 * dpr}px system-ui`; c.fillText('N ▲', W - 40 * dpr, 70 * dpr);
+    c.textAlign = 'right'; c.font = `500 ${10 * dpr}px system-ui`; c.fillStyle = 'rgba(255,255,255,.7)'; c.fillText('地理院タイル (GSI Japan) · © OpenStreetMap contributors', W - 12 * dpr, H - 10 * dpr);
   }
 
   // ───── touch controls ─────

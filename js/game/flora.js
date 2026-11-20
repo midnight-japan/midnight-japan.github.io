@@ -55,6 +55,16 @@ export function floraMaterial() {
   return mat;
 }
 
+// v2.15: same leaf-tint / winter-bare logic for the real 3D tree models (js/game/neartrees.js): their own texture atlas,
+// grey leaves flagged by the aLeaf attribute, white vertex colour on everything
+const modelMats = new Map();
+export function floraModelMaterial(src) {
+  let m = modelMats.get(src); if (m) return m;
+  m = new THREE.MeshStandardMaterial({ map: src.map, alphaTest: src.alphaTest || 0.3, side: THREE.DoubleSide, vertexColors: true, roughness: 0.85, metalness: 0 });
+  m.onBeforeCompile = floraMaterial().onBeforeCompile; m.customProgramCacheKey = () => 'mj-flora-model';
+  modelMats.set(src, m); return m;
+}
+
 // ── geometry builder ──
 class G {
   constructor() { this.p = []; this.n = []; this.uv = []; this.c = []; this.leaf = []; this.i = []; }

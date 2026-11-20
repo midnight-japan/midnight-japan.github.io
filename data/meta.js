@@ -1,8 +1,18 @@
 // Shared game metadata: version, changelog, regions. Update VERSION + CHANGELOG on every release.
-export const GAME = { title: 'MIDNIGHT JAPAN', titleJa: 'ミッドナイト・ジャパン', version: '2.14.4', build: '2026.11.18' };
+export const GAME = { title: 'MIDNIGHT JAPAN', titleJa: 'ミッドナイト・ジャパン', version: '2.15.0', build: '2026.11.20' };
 
 // Newest first. type: new | change | fix | known
 export const CHANGELOG = [
+  {
+    version: '2.15.0', date: '2026-11-20', codename: 'Real Streets',
+    summary: { ko: '실사 3D 모델: 자판기·전신주·가로수 6종·봄 벚꽃(Sketchfab CC BY), 건물 외벽 그늘 보정, 지도 즉시 열기 + 일본 전역 상세 지도·랜드마크 아이콘 약 150개, 원탭 이동, 로비 시작, UI 전면 리디자인·라디오 개선, 차량 실내·유리 개선.', ja: '実写3Dモデル：自販機・電柱・街路樹6種・春の桜（Sketchfab CC BY）、建物外壁の陰補正、地図を即表示＋日本全国の詳細地図・ランドマークアイコン約150、ワンタップ移動、ロビーから開始、UI全面リデザイン・ラジオ改善、車内・ガラス改善。', en: 'Real 3D models: vending machines, utility poles, six street-tree species and spring cherry trees (Sketchfab CC BY), lifted facade shadows, instant map + detailed all-Japan map with ~150 landmark icons, one-tap travel, lobby on start, full UI redesign and better radio, improved car cabins and glass.' },
+    items: [
+      { type: 'new', ko: '실사 3D 자판기·콘크리트 전신주(변압기 포함)·가로수 6종(은행·느티·녹나무·곰솔·삼나무·단풍), 봄에는 실사 벚꽃 — 플레이어 주변은 실사 모델, 멀리는 가벼운 나무', ja: '実写3Dの自販機・コンクリート電柱（変圧器付き）・街路樹6種（イチョウ・ケヤキ・クスノキ・クロマツ・スギ・モミジ）、春は実写の桜 — 近くは実写モデル、遠くは軽量の木', en: 'Real 3D vending machines, concrete utility poles (some with transformers) and six street-tree species, real cherry blossoms in spring — real models near the player, light trees in the distance' },
+      { type: 'new', ko: '지도: 열자마자 내 위치, 지리원 타일로 일본 전역 상세 지도, 명소별 아이콘 약 150개, 목적지에서 바로 이동', ja: '地図：開くとすぐ現在地、地理院タイルで日本全国の詳細地図、名所ごとのアイコン約150、目的地へすぐ移動', en: 'Map: opens on your position, detailed all-Japan GSI tiles, ~150 landmark icons, go-now travel' },
+      { type: 'new', ko: '시작하면 항상 로비, UI 전면 리디자인, 새 라디오 플레이어와 음질 개선', ja: '起動時は常にロビー、UI全面リデザイン、新しいラジオプレイヤーと音質改善', en: 'Always starts in the lobby, full UI redesign, new radio player and cleaner radio sound' },
+      { type: 'fix', ko: '항공사진 건물 외벽의 새카만 그늘 보정, 메뉴 위로 겹치던 터치 버튼·HUD, 늘 보이던 경로 안내 바, 라디오 주파수 중복 표시, 차량 실내가 비어 보이던 유리', ja: '航空写真の外壁の真っ黒な陰を補正、メニューに重なるタッチボタン・HUD、常に出ていた経路案内バー、ラジオ周波数の重複表示、車内が空に見えたガラス', en: 'Near-black aerial-photo facades lifted; touch buttons/HUD over menus, always-visible route bar, doubled radio frequency, see-through car glass fixed' },
+    ],
+  },
   {
     version: '2.14.4', date: '2026-11-20', codename: 'Clear Portals',
     summary: { ko: '터널 입구 정리: 지하로 내려가기 직전 도로 위에 깔려 있던 땅·도시 도로·보도·주차장 판을 걷어 내 차가 판을 뚫고 들어가는 것처럼 보이던 문제 수정(38곳 전수 점검).', ja: 'トンネル入口の整理：地下へ下りる直前の道路の上に敷かれていた地面・街の道路・歩道・駐車場の板を取り除き、車が板を突き抜けて入るように見えた問題を修正（38か所すべて点検）。', en: 'Tunnel mouths cleaned up: the ground, city streets, pavements and car parks that lay over the road just before it dips underground are cut away — cars no longer appear to drive through a slab (all 38 portals checked).' },

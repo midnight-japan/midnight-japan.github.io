@@ -61,7 +61,7 @@ kbd{font:700 13px var(--display);background:#fff;color:#111;border-radius:6px;pa
 .popup.show{opacity:1;transform:translate(-50%,-50%);pointer-events:auto!important}.popup h3{margin:0 0 10px}
 .popup .grid{display:grid;grid-template-columns:1fr 1fr;gap:6px;margin-bottom:10px}.popup .grid button{padding:10px;border-radius:10px;border:1px solid var(--line);background:rgba(255,255,255,.04);color:var(--text);font:600 13px var(--font);cursor:pointer}
 #shop-list{display:flex;flex-direction:column;gap:6px;margin-bottom:10px}#shop-list button{display:flex;justify-content:space-between;align-items:center;padding:10px 12px;border-radius:10px;border:1px solid var(--line);background:rgba(255,255,255,.04);color:var(--text);font:600 14px var(--font);cursor:pointer;text-align:left}#shop-list small{display:block;color:var(--muted);font-weight:400;font-size:11px}#shop-list b{color:var(--sodium);font-family:var(--display)}
-#map canvas{width:min(90vmin,900px);height:min(90vmin,900px);border-radius:16px;border:1px solid var(--line)}.mapx{position:absolute;top:16px;right:16px}
+#map.screen{transition:none}#map canvas{width:min(90vmin,900px);height:min(90vmin,900px);border-radius:16px;border:1px solid var(--line)}.mapx{position:absolute;top:16px;right:16px}
 #outfit .olab{font-size:12px;color:var(--muted);margin:8px 0 4px}#o-body label{display:flex;justify-content:space-between;align-items:center;font-size:13px;color:var(--muted);margin:8px 0}
 body.photo #hud,body.photo #touch{display:none!important}
 /* touch */
@@ -444,3 +444,188 @@ body.photo .online-pill,body.photo .chat{display:none}
 .fuelmenu .fm-q{margin:6px 0;font-size:14px}.fuelmenu .fm-q small{color:var(--muted);margin-left:6px}
 .fuelmenu .fm-row{display:flex;gap:8px;flex-wrap:wrap;margin:6px 0 10px}.fuelmenu .btn{min-width:0;flex:1}
 .fuelmenu .btn small{opacity:.75;margin-left:6px}.fuelmenu .btn em{font-style:normal;font-size:11px;margin-left:6px;padding:1px 6px;background:rgba(0,0,0,.35)}
+
+/* ═════════════════════════════════════════════════════════════════════════════════════════════════════════════════
+   v2.15 "NIGHTFALL" UI — one consistent layer over everything above.
+   Dark glass panels (blur only on modal screens, never on the always-on HUD → no per-frame compositing cost),
+   rounded geometry, one accent gradient, tabular numbers, 4 px spacing grid. Fixes: stacking order (screens above the
+   HUD and the touch pad), touch controls no longer sit on top of menus, map card no longer always visible, radio UI.
+   ═════════════════════════════════════════════════════════════════════════════════════════════════════════════════ */
+:root{
+  --n-bg:#07090e; --n-glass:linear-gradient(180deg,rgba(24,27,36,.86),rgba(12,14,20,.92)); --n-hud:rgba(10,12,18,.72);
+  --n-stroke:rgba(255,255,255,.09); --n-stroke2:rgba(255,255,255,.18); --n-txt:#f2f4f8; --n-txt2:#a7aebd; --n-txt3:#737b8c;
+  --n-acc:#ff5a36; --n-acc2:#ffb03a; --n-grad:linear-gradient(100deg,#ff3d6e 0%,#ff5a36 48%,#ffa12e 100%);
+  --n-r:16px; --n-r2:12px; --n-r3:9px; --n-sh:0 30px 70px -24px rgba(0,0,0,.8),inset 0 1px 0 rgba(255,255,255,.06);
+  --n-ui:'Noto Sans JP','Apple SD Gothic Neo','Malgun Gothic','Noto Sans KR',system-ui,-apple-system,'Segoe UI',sans-serif;
+  --n-num:'Chakra Petch','Noto Sans JP',system-ui,sans-serif; --n-ease:cubic-bezier(.2,.9,.25,1);
+  --text:var(--n-txt); --muted:var(--n-txt2); --line:var(--n-stroke); --sodium:var(--n-acc); --fest:var(--n-grad);
+}
+#ui{font-family:var(--n-ui);font-feature-settings:'tnum' 1;-webkit-font-smoothing:antialiased}
+
+/* ── stacking: menus above the HUD; the touch pad never covers a menu (it stays live over the translucent map) ── */
+#hud{z-index:1}#touch{z-index:5}.screen{z-index:10}.popup{z-index:14}#map.screen{z-index:8}#loading{z-index:40}#fatal{z-index:60}#glossary{z-index:30}
+#ui:has(> .screen.show:not(#map):not(#loading)) #touch,#ui:has(> .popup.show) #touch{visibility:hidden}
+#map .mapsel[hidden],.mapsel[hidden]{display:none!important}
+
+/* ── buttons: no more skew (it clipped long Korean / German labels); calm lift on hover, press scale ── */
+#ui .btn{transform:none;border-radius:var(--n-r2)!important;min-height:44px;padding:11px 20px;background:rgba(255,255,255,.055);border:1px solid var(--n-stroke);color:var(--n-txt);font:700 14.5px/1.25 var(--n-ui);letter-spacing:.01em;text-transform:none;box-shadow:inset 0 1px 0 rgba(255,255,255,.05);transition:transform .16s var(--n-ease),background .18s,border-color .18s,box-shadow .2s}
+#ui .btn>*{transform:none}
+#ui .btn:hover{transform:translateY(-1px);background:rgba(255,255,255,.09);border-color:var(--n-stroke2)}
+#ui .btn:active{transform:translateY(0) scale(.975)}
+#ui .btn:focus-visible,#ui button:focus-visible,#ui select:focus-visible,#ui input:focus-visible{outline:2px solid var(--n-acc2);outline-offset:2px}
+#ui .btn.primary,#ui .btn.primary:hover{background:var(--n-grad)!important;color:#fff!important;border:0;text-shadow:0 1px 1px rgba(0,0,0,.25);box-shadow:0 12px 28px -14px rgba(255,80,50,.9),inset 0 1px 0 rgba(255,255,255,.25)}
+#ui .btn.primary:hover{filter:brightness(1.06)}
+#ui .btn.ghost{background:transparent}
+#ui .btn.sm{min-height:36px;padding:7px 14px;font-size:13px;border-radius:var(--n-r3)!important}
+#ui .btn.big{min-height:64px;padding:12px 28px;font-size:19px;letter-spacing:.02em}
+#ui .btn .sub{font-weight:600;opacity:.82}
+
+/* ── panels / menus / popups: glass cards ── */
+#ui .menu,#ui .panel,#ui .popup,#ui .tut-box,.dlg-card,.fuelmenu{clip-path:none!important;border-radius:var(--n-r)!important;background:var(--n-glass)!important;border:1px solid var(--n-stroke)!important;box-shadow:var(--n-sh)}
+#ui .screen.show .menu,#ui .screen.show .tut-box,#ui .popup.show{backdrop-filter:blur(18px) saturate(1.25);-webkit-backdrop-filter:blur(18px) saturate(1.25)}
+#ui .panel{border-radius:var(--n-r) 0 0 var(--n-r)!important;border-right:0!important;backdrop-filter:blur(18px) saturate(1.25);-webkit-backdrop-filter:blur(18px) saturate(1.25)}
+#ui .menu{padding:24px;gap:10px}
+#ui .menu h2,#ui .panel h2,#ui .popup h3{font:800 22px/1.2 var(--n-ui);letter-spacing:-.01em;text-transform:none}
+#ui .menu h2::after,#ui .panel h2::after{width:28px;height:3px;border-radius:3px;margin:8px auto 0;background:var(--n-grad)}
+#ui .panel h2::after{margin-left:0}
+#ui .screen.dim{background:radial-gradient(120% 90% at 50% 40%,rgba(5,7,12,.35),rgba(3,4,8,.72))}
+#ui select,#ui input[type=number],#ui input:not([type]){background:rgba(0,0,0,.35);border:1px solid var(--n-stroke2);border-radius:var(--n-r3);color:var(--n-txt);min-height:38px;padding:7px 10px;font:600 13.5px var(--n-ui)}
+#ui input[type=range]{accent-color:var(--n-acc)}
+#ui .x{width:36px;height:36px;border-radius:50%;background:rgba(255,255,255,.06)!important;display:grid;place-items:center;font-size:16px}
+
+/* pause: a tidy column, secondary rows as segmented pills */
+#pause .menu{width:min(380px,92vw)}
+#pause .row.center{gap:6px}#pause .row.center .btn.sm{flex:1;min-width:0}
+#pause .stats{font:600 12px var(--n-num);color:var(--n-txt3);letter-spacing:.04em}
+
+/* settings */
+.ssec{border-top-color:var(--n-stroke)}.ssec>summary{font:700 15px var(--n-ui);padding:12px 2px}
+.sgrid label{font-weight:600;color:var(--n-txt2)}
+
+/* ── lobby / title ── */
+#title{background:linear-gradient(100deg,rgba(5,6,10,.92) 0%,rgba(5,6,10,.62) 46%,rgba(5,6,10,.18) 82%)}
+#ui .title-box{width:min(540px,94vw);background:var(--n-glass);border:1px solid var(--n-stroke);border-radius:22px;box-shadow:var(--n-sh);padding:30px 32px 22px;gap:12px;backdrop-filter:blur(14px);-webkit-backdrop-filter:blur(14px)}
+#title .logo.big{font-size:clamp(34px,6vw,60px);letter-spacing:-.015em}
+#title .logo small{letter-spacing:.42em;font-size:11px;color:var(--n-txt3)}
+#title .who{font-size:14px}
+.lobby-steps span{border-radius:999px;background:rgba(255,255,255,.04);border-color:var(--n-stroke);color:var(--n-txt2)}
+.lobby-steps span:first-child{border-color:rgba(255,90,54,.7);color:#ffb38f;background:rgba(255,90,54,.1)}
+#title .btn.primary.big{width:100%;animation:ui-rise .5s var(--ease-out) both!important}
+#title [data-a=quick]{width:100%}
+.spawn-sel{width:100%;justify-content:space-between;font-weight:600;color:var(--n-txt2)}.spawn-sel select{flex:1;max-width:72%}
+.spawnmap{width:100%;height:auto;aspect-ratio:440/250;border-radius:var(--n-r2);border:1px solid var(--n-stroke)}
+.lobby-row{gap:6px}.lobby-row .btn.sm{flex:1 1 auto}
+.title-ver{font-size:10.5px;color:var(--n-txt3);line-height:1.6}
+@media (max-width:560px){#ui .title-box{padding:22px 16px 16px;gap:10px}#title .logo.big{font-size:34px}.title-box .hint{display:none}.lobby-steps{display:none}}
+@media (max-height:760px) and (min-width:561px){.spawnmap{max-height:120px}}
+
+/* ── garage ── */
+.tabs button{border-radius:999px;border-color:var(--n-stroke);font-weight:700}.tabs button.on{background:var(--n-grad);color:#fff}
+.carlist{gap:6px}.carlist button{border-radius:var(--n-r3);border-color:var(--n-stroke);background:rgba(255,255,255,.035);padding:9px 11px}
+.carlist button.on{border-color:var(--n-acc);background:rgba(255,90,54,.12);box-shadow:inset 0 0 0 1px rgba(255,90,54,.4)}
+.specs span{border-radius:6px;background:rgba(255,255,255,.07);font-family:var(--n-num)}
+.gsec{border-top-color:var(--n-stroke);padding:14px 0}.gsec h3{color:#ff9a7a;font:800 12px var(--n-ui);letter-spacing:.12em;text-transform:uppercase}
+.gsec.tune .presets button{border-radius:999px}.gsec.tune .presets button.on{background:var(--n-grad)!important;color:#fff!important;border-color:transparent}
+.sl{grid-template-columns:minmax(90px,120px) 1fr 64px}
+@media (max-width:760px){.carlist{max-height:32vh}}
+
+/* ── HUD ── */
+#hud .tl{text-shadow:0 1px 3px rgba(0,0,0,.9),0 0 18px rgba(0,0,0,.5)}
+#hud .loc{font:800 17px/1.25 var(--n-ui);letter-spacing:-.005em}
+#hud .clock{font:700 26px/1.1 var(--n-num);color:#fff;letter-spacing:.02em;margin-top:2px}
+#hud .money{display:inline-block;margin-top:4px;font:700 13px var(--n-num);color:#ffd7a0;background:rgba(0,0,0,.35);border:1px solid var(--n-stroke);border-radius:999px;padding:2px 10px;text-shadow:none}
+.goaltrack{border-radius:var(--n-r3)!important;background:var(--n-hud)!important;border-color:var(--n-stroke)!important}
+#hud .hudbar{gap:6px}
+#hud .hudbar .autobtn{transform:none!important;border-radius:var(--n-r2)!important;height:38px;padding:0 12px;background:var(--n-hud)!important;border:1px solid var(--n-stroke)!important;color:var(--n-txt);font:700 12.5px var(--n-ui);box-shadow:0 6px 18px -10px rgba(0,0,0,.8);transition:background .15s,border-color .15s,transform .15s}
+#hud .hudbar .autobtn>*{transform:none!important}
+#hud .hudbar .autobtn:hover{border-color:var(--n-stroke2)!important;background:rgba(24,28,38,.85)!important}
+#hud .hudbar .autobtn:active{transform:scale(.95)!important}
+#hud .hudbar .autobtn .lb{font-size:12.5px;margin-left:6px}
+#hud .hudbar .autobtn.on,#autobtn.on{background:var(--n-grad)!important;color:#fff!important;border-color:transparent!important;box-shadow:0 8px 20px -10px rgba(255,80,50,.9)}
+#hud .hudbar .hud-menu{position:static!important;width:auto;height:38px;animation:none}
+#minimap{border-radius:18px;border:1px solid var(--n-stroke2);box-shadow:0 18px 40px -18px rgba(0,0,0,.9)}
+.online-pill{background:var(--n-hud);border-color:var(--n-stroke);font:700 12px var(--n-ui);padding:6px 12px}
+.toasts{gap:8px}
+.toast{border-radius:var(--n-r2)!important;background:rgba(12,14,20,.9)!important;border:1px solid var(--n-stroke)!important;border-left:3px solid var(--n-acc)!important;padding:10px 14px;font:600 13.5px/1.45 var(--n-ui);box-shadow:0 14px 32px -16px rgba(0,0,0,.9)}
+.toast.warn{border-left-color:#ffb020!important}.toast.police{border-left-color:#ff3b3b!important;background:rgba(40,8,12,.92)!important}.toast.toll{border-left-color:#9b5cff!important}.toast.chat{border-left-color:#33c27a!important}
+.toast.goal{background:var(--n-grad)!important;color:#fff;border:0!important}
+.keyhint{border-radius:var(--n-r2)!important;background:rgba(8,10,16,.66);border:1px solid var(--n-stroke);font-family:var(--n-ui)}
+.keyhint kbd,kbd{border-radius:6px}
+.prompt{border-radius:999px;background:rgba(10,12,18,.86);border-color:var(--n-stroke2);font-weight:700;padding:8px 16px 8px 8px}
+.navhud,.pursuithud,.mapsel{border-radius:var(--n-r2)!important}
+.fps{color:rgba(255,255,255,.45);font-weight:600}
+
+/* radio: station card (now playing) + tune-in banner */
+#hud .radio-banner{top:calc(max(14px,env(safe-area-inset-top)) + 46px);min-width:240px;padding:12px 22px 12px;border-radius:var(--n-r);background:var(--n-glass);border:1px solid var(--n-stroke);box-shadow:var(--n-sh);text-align:center}
+.radio-banner .rb-freq{font:600 11px var(--n-num);letter-spacing:.3em;color:var(--n-txt3)}.radio-banner .rb-freq b{font-size:22px;letter-spacing:.02em;color:#fff;margin-left:4px}
+.radio-banner .rb-name{font:800 15px var(--n-ui);letter-spacing:.06em;margin-top:2px;background:var(--n-grad);-webkit-background-clip:text;background-clip:text;color:transparent}
+.radio-banner .rb-genre{font:600 11px var(--n-ui);color:var(--n-txt2);letter-spacing:.08em;text-transform:uppercase}
+.radio-banner .rb-song{margin-top:6px;font:700 13px var(--n-ui);color:#fff}.radio-banner .rb-song span{color:var(--n-txt2);font-weight:600}
+#hud .radiopill{display:flex;align-items:center;gap:10px;width:min(380px,40vw);max-width:none;padding:8px 8px 8px 8px;border-radius:var(--n-r);background:rgba(10,12,18,.8);border:1px solid var(--n-stroke);box-shadow:0 16px 36px -18px rgba(0,0,0,.9);font:600 12px var(--n-ui)}
+#hud .radiopill[hidden]{display:none}
+.radiopill .rp-fold{flex:none;width:40px!important;height:40px!important;border-radius:var(--n-r3)!important;background:var(--n-grad)!important;display:grid;place-items:center;padding:0}
+.rp-eq{display:flex;align-items:flex-end;gap:2px;height:16px;font-style:normal}.rp-eq i{width:3px;background:#fff;border-radius:2px;height:40%;animation:rp-eq 1.1s ease-in-out infinite;transform-origin:bottom}
+.rp-eq i:nth-child(2){animation-delay:-.35s}.rp-eq i:nth-child(3){animation-delay:-.7s}.rp-eq i:nth-child(4){animation-delay:-.2s}
+@keyframes rp-eq{0%,100%{height:30%}50%{height:100%}}
+.radiopill .rp-body{flex:1;min-width:0;display:flex;flex-direction:column;gap:1px}
+.radiopill .rp-st{display:flex;align-items:baseline;gap:6px;white-space:nowrap;overflow:hidden}
+.radiopill .rp-freq{font:700 15px var(--n-num);color:#fff}.radiopill .rp-name{font:800 11px var(--n-ui);letter-spacing:.06em;color:#ffb38f;overflow:hidden;text-overflow:ellipsis}
+.radiopill .rp-genre{font:600 10px var(--n-ui);color:var(--n-txt3);letter-spacing:.06em;text-transform:uppercase}
+.radiopill .rp-t{font:600 12px var(--n-ui);color:var(--n-txt2);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.radiopill .rp-ctl{display:flex;gap:4px;flex:none}
+#hud .radiopill .rp-ctl button{width:32px;height:32px;border-radius:var(--n-r3);background:rgba(255,255,255,.07);border:0;color:#fff;font:700 15px var(--n-ui);cursor:pointer}
+#hud .radiopill .rp-ctl button:hover{background:rgba(255,255,255,.14)}
+#hud .radiopill .rp-ctl .rp-off{color:var(--n-txt2);font-size:13px}
+#hud .radiopill.folded{width:auto;padding:4px}.radiopill.folded .rp-body,.radiopill.folded .rp-ctl{display:none!important}
+@media (prefers-reduced-motion:reduce){.rp-eq i{animation:none;height:60%}}
+
+/* ── full map ── */
+#map canvas#bigmap{border-radius:20px;border:1px solid var(--n-stroke2)}
+#map .mapctl .btn{width:44px;height:44px;min-height:44px;padding:0;border-radius:var(--n-r2)!important;background:rgba(12,14,20,.86)}
+#map .qt-h{border-radius:var(--n-r2) var(--n-r2) 0 0!important;font:800 12px var(--n-ui);letter-spacing:.14em}
+#map .qt-list{border-radius:0 0 var(--n-r2) var(--n-r2)!important;background:rgba(10,12,18,.88)}
+#map .qt-item{display:flex;gap:6px;align-items:stretch}
+#map .qt-item .qt-card{flex:1;min-width:0;border-radius:var(--n-r3)!important}
+#map .qt-go{flex:none;width:40px;border-radius:var(--n-r3);border:0;background:var(--n-grad);color:#fff;font:800 16px var(--n-ui);cursor:pointer}
+#map .qt-go:hover{filter:brightness(1.1)}#map .qt-go:active{transform:scale(.94)}
+#map .mapsel{border-radius:var(--n-r)!important;background:var(--n-glass);box-shadow:var(--n-sh);padding:14px 16px}
+#map .mapsel .ms-go{font-size:14px}
+
+/* ── touch controls ── */
+#touch button{border-radius:18px;border:1px solid rgba(255,255,255,.2);background:rgba(10,12,18,.42);font-family:var(--n-num);box-shadow:inset 0 1px 0 rgba(255,255,255,.08)}
+#touch button.on,#touch button:active{background:rgba(255,90,54,.5)}
+.t-gas{background:linear-gradient(180deg,rgba(60,200,120,.55),rgba(30,130,80,.5))!important}.t-brake{background:linear-gradient(180deg,rgba(240,70,70,.55),rgba(160,30,40,.5))!important}
+
+/* ── phones / touch: nothing on top of anything ── */
+@media (pointer:coarse),(max-width:760px){
+  #hud .tl{max-width:calc(100vw - min(40vw,200px) - 30px)}
+  #hud .loc{font-size:14px}#hud .clock{font-size:20px}
+  #hud .hudbar .autobtn{height:36px;padding:0 10px}
+  .online-pill{left:auto!important;right:max(10px,env(safe-area-inset-right))!important;top:calc(max(10px,env(safe-area-inset-top)) + min(30vw,150px) + 18px)!important;transform:none!important;height:36px}
+  #hud .radio-banner{display:none}
+  #hud .radiopill{width:min(330px,calc(100vw - 24px))!important}
+  #map canvas#bigmap{inset:calc(max(8px,env(safe-area-inset-top)) + 8px) 8px 190px 8px;width:auto;height:auto}
+  #map .mapx{right:18px!important;top:calc(max(8px,env(safe-area-inset-top)) + 16px)!important}
+  #map .mapctl{right:18px;bottom:200px;gap:4px}#map .mapctl .btn{width:40px;height:40px;min-height:40px}
+  #map .qt{left:16px;right:70px;bottom:200px;top:auto;width:auto}
+  #map .mapsel{bottom:200px;max-width:calc(100vw - 32px)}
+  #map .maphint{display:none}
+}
+@media (orientation:portrait) and (max-width:760px){
+  .speedo{left:max(10px,env(safe-area-inset-left))!important;right:auto!important;transform:none!important;bottom:calc(max(14px,env(safe-area-inset-bottom)) + 84px)!important;width:128px!important}
+  #speedo{width:128px!important;height:128px!important}
+  .speedo .icons{transform:scale(.85);transform-origin:top center}
+}
+/* v2.15 fixes after review */
+#title{justify-content:flex-start;padding-left:max(5vw,env(safe-area-inset-left))}
+#ui .title-box{max-height:calc(100vh - 32px);overflow-y:auto;scrollbar-width:thin}
+.spawnmap{max-height:150px;object-fit:cover}
+@media (max-width:760px){#title{justify-content:center;padding-left:0}}
+#hud .radiopill{width:min(420px,42vw)}.radiopill .rp-genre{display:none}
+@media (pointer:coarse),(max-width:760px){
+  #map canvas#bigmap{left:8px;right:auto;top:calc(max(8px,env(safe-area-inset-top)) + 8px);width:calc(100vw - 16px);height:calc(100vh - max(8px,env(safe-area-inset-top)) - 206px)}
+  #map .mapctl{flex-direction:row;right:auto;left:16px;bottom:auto;top:calc(max(8px,env(safe-area-inset-top)) + 16px)}
+  #map .qt{right:124px;bottom:206px}
+  #map .mapsel{left:16px;right:124px;bottom:206px;transform:none}
+  .toasts{top:calc(max(10px,env(safe-area-inset-top)) + min(30vw,150px) + 128px)!important}
+}

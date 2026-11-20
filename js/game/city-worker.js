@@ -194,6 +194,7 @@ function buildTile(T, lod, opts) {
   const ground = {};             // land use class → Flat
   const wires = new Buf(3);
   const trees = new Buf(5);
+  const props = new Buf(4);       // v2.15 real 3D street props (Sketchfab models, drawn instanced by js/game/props.js): kind, x, z, rotY
   const fuels = [], forecourts = [], synFuel = [], shops = [], boards = []; // boards: [type, x, z, nx, nz, w, nArms, (dx, dz)…] blue guide boards (0) / intersection name plates (1) // shops: konbini doors x, z, nx, nz (walkers go in / come out)               // x, z, tx, tz, brand per pump island      // x, z, scale, rot, variant
   const cols = [];               // [x, z, hx, hz, ry, y0, y1]
   const DEC = new Buf(6);        // v2.1 road text + traffic signs: position, atlas uv, back-plate flag
@@ -299,13 +300,9 @@ function buildTile(T, lod, opts) {
       const CON = [0.62, 0.62, 0.6], DARK = [0.22, 0.22, 0.22];
       let prev = null;
       for (const p of poles) {
-        const [x, z, tx, tz] = p; const H = 11 + rnd() * 1.5; C(x, z);
-        pm.cyl(x, z, 0, H, 0.17, 6, CON, [PLAIN, 0, 0, 0], true, 0.12);
-        pm.box(x, H - 1.0, z, -tz, tx, 0.9, 0.05, 0.05, DARK, [PLAIN, 0, 0, 0]);
-        pm.box(x, H - 1.9, z, -tz, tx, 0.7, 0.05, 0.05, DARK, [PLAIN, 0, 0, 0]);
-        if (rnd() < 0.35) pm.cyl(x - tz * 0.45, z + tx * 0.45, H - 3.6, H - 2.4, 0.28, 6, [0.55, 0.57, 0.58], [PLAIN, 0, 0, 0]);
-        // yellow guard sleeve at the bottom
-        pm.cyl(x, z, 0, 1.8, 0.2, 6, [0.85, 0.7, 0.15], [PLAIN, 0, 0, 0], false);
+        const [x, z, tx, tz] = p; const H = 12; C(x, z);
+        // v2.15: a real concrete 電柱 model (cross-arm + insulators, some with a pole transformer); arm across the wire line
+        props.push(rnd() < 0.35 ? 1 : 2, x, z, Math.atan2(-tz, tx));
         cols.push([x, z, 0.22, 0.22, 0, -1, H]);
         if (prev && Math.hypot(prev[0] - x, prev[1] - z) < 45) {
           for (const [o, hh] of [[-0.8, H - 1.0], [0, H - 1.0], [0.8, H - 1.0], [-0.6, H - 1.9], [0.6, H - 1.9]]) {
@@ -631,11 +628,9 @@ function buildTile(T, lod, opts) {
   }
   function vending(x, z, ry, n) {
     const tx = Math.cos(ry), tz = -Math.sin(ry), nx = -tz, nz = tx; // machine faces +n
-    const COLS = [[0.85, 0.12, 0.12], [0.1, 0.35, 0.75], [0.93, 0.93, 0.93], [0.15, 0.55, 0.3], [0.95, 0.6, 0.1]];
     for (let k = 0; k < n; k++) {
       const o = (k - (n - 1) / 2) * 1.05; const cx = x + tx * o, cz = z + tz * o;
-      pm.box(cx, 0.92, cz, tx, tz, 0.5, 0.38, 0.92, COLS[Math.floor(rnd() * COLS.length)], [PLAIN, 0, 0, 0]);
-      gm.box(cx + nx * 0.39, 1.15, cz + nz * 0.39, tx, tz, 0.44, 0.01, 0.45, [0.95, 0.97, 1], [3, rnd(), 0, 0]);
+      props.push(0, cx, cz, ry - Math.PI / 2); // v2.15: real 3D vending machine (front = +n), lit front by its emissive map
     }
     cols.push([x, z, n * 0.53, 0.4, -ry, -1, 1.9]);
   }
@@ -1036,11 +1031,12 @@ function buildTile(T, lod, opts) {
   if (DECKS) {
     for (let k = cols.length - 1; k >= 0; k--) { const [x, z, hx, hz, , y0, y1] = cols[k]; if (deckIn(OX + x, OZ + z, y0 + 0.3, y1 + 0.5, Math.min(hx, hz) + 0.4) !== null) cols.splice(k, 1); }
     for (let k = lamps.length - 1; k >= 0; k--) { const [x, y, z] = lamps[k]; if (deckIn(OX + x, OZ + z, 0.3, y + 1.5, 1) !== null) lamps.splice(k, 1); }
+    { let w = 0; const A = props.a, st = props.stride; for (let k = 0; k < props.n; k++) { const x = A[k * st + 1], z = A[k * st + 2]; if (deckIn(OX + x, OZ + z, 0.3, A[k * st] ? 12.5 : 2.2, 0.8) !== null) continue; if (w !== k) A.copyWithin(w * st, k * st, k * st + st); w++; } props.n = w; }
     { let w = 0; const A = trees.a, st = trees.stride; for (let k = 0; k < trees.n; k++) { const x = A[k * st], z = A[k * st + 1]; if (deckIn(OX + x, OZ + z, 0.3, 12, 1.5) !== null) continue; if (w !== k) A.copyWithin(w * st, k * st, k * st + st); w++; } trees.n = w; }
   }
   const mask = mid ? buildMask(T, streets, forecourts) : null;
   const landR = buildLand(T, streets, OX, OZ, landF);
-  const out = { dec: DEC.out(), mask, landR, runways, gates, rails, stations, fuels, synFuel, shops, boards, fuelWhy: self.__fuelWhy, net, sigs, land: landF.out(), bm: bm.out(), pm: pm.out(), gm: gm.out(), sg: sg.out(), road: road.out(), walk: walk.out(), paint: paint.out(), wires: wires.out(), trees: trees.out(), cols, lamps, water, bridges, ground: {} };
+  const out = { dec: DEC.out(), mask, landR, runways, gates, rails, stations, fuels, synFuel, shops, boards, fuelWhy: self.__fuelWhy, net, sigs, land: landF.out(), bm: bm.out(), pm: pm.out(), gm: gm.out(), sg: sg.out(), road: road.out(), walk: walk.out(), paint: paint.out(), wires: wires.out(), trees: trees.out(), props: props.out(), cols, lamps, water, bridges, ground: {} };
   for (const c in ground) out.ground[c] = ground[c].out();
   return out;
 }
@@ -1143,7 +1139,7 @@ self.onmessage = async ev => {
     let T = cache.get(url);
     if (!T) { const r = await fetch(url); if (!r.ok) throw new Error(r.status + ' ' + url); T = await r.json(); cache.set(url, T); if (cache.size > 80) cache.delete(cache.keys().next().value); }
     const o = buildTile(T, lod, opts || {});
-    const tr = [o.land.buffer, ...o.bm.map(b => b.buffer), ...o.pm.map(b => b.buffer), ...o.gm.map(b => b.buffer), ...o.sg.map(b => b.buffer), o.road.buffer, o.walk.buffer, o.paint.buffer, o.wires.buffer, o.trees.buffer, ...Object.values(o.ground).map(g => g.buffer)]; if (o.mask) tr.push(o.mask.buffer); tr.push(o.landR.buffer); tr.push(o.dec.buffer);
+    const tr = [o.land.buffer, ...o.bm.map(b => b.buffer), ...o.pm.map(b => b.buffer), ...o.gm.map(b => b.buffer), ...o.sg.map(b => b.buffer), o.road.buffer, o.walk.buffer, o.paint.buffer, o.wires.buffer, o.trees.buffer, o.props.buffer, ...Object.values(o.ground).map(g => g.buffer)]; if (o.mask) tr.push(o.mask.buffer); tr.push(o.landR.buffer); tr.push(o.dec.buffer);
     self.postMessage({ id, ok: true, o }, tr);
   } catch (e) { self.postMessage({ id, ok: false, err: String(e && e.stack || e) }); }
 };

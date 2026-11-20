@@ -1834,7 +1834,9 @@
    "windscreen.3"
   ],
   "lamps": {
-   "head": [],
+   "head": [
+    "LIGHT_A_HEAD.4"
+   ],
    "tail": [
     "LIGHT_ON_TAIL.4"
    ]
@@ -2035,7 +2037,15 @@
   ],
   "notes": "v2.13: Sketchfab download, normalised with tools/car-normalize.mjs",
   "lo": "hustler_lo.glb",
-  "loTris": 189098
+  "loTris": 189098,
+  "lamps": {
+   "head": [
+    "light.001"
+   ],
+   "tail": [
+    "light.002"
+   ]
+  }
  },
  "laurel": {
   "file": "laurel.glb",
@@ -2121,7 +2131,12 @@
   ],
   "notes": "v2.13: Sketchfab download, normalised with tools/car-normalize.mjs",
   "lo": "odyssey_lo.glb",
-  "loTris": 67447
+  "loTris": 67447,
+  "lamps": {
+   "tail": [
+    "odyssey02_spadie_honda_lights"
+   ]
+  }
  },
  "cube": {
   "file": "cube.glb",
@@ -2162,7 +2177,15 @@
   ],
   "notes": "v2.13: Sketchfab download, normalised with tools/car-normalize.mjs",
   "lo": "cube_lo.glb",
-  "loTris": 19859
+  "loTris": 19859,
+  "lamps": {
+   "head": [
+    "ncube_light0"
+   ],
+   "tail": [
+    "ncube_light1"
+   ]
+  }
  },
  "evo6": {
   "file": "evo6.glb",

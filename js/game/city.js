@@ -7,6 +7,8 @@ import * as THREE from 'three';
 import { SUNFLOWER_FIELDS } from '../../data/sunflowers.js';
 import { RoadBoards } from './roadboards.js';
 import { speciesGeos, floraMaterial, speciesAt, speciesColor, registerTrees, forgetTrees } from './flora.js';
+import { loadProps, addProps } from './props.js';
+import { NearTrees } from './neartrees.js';
 import { surface, weather } from './textures.js';
 import { MAP } from './roads.js';
 import { signCanvas } from './signs.js';
@@ -364,6 +366,8 @@ export class City {
     this.mGround = { 12: g('concrete', 6, 0xb8b8b2), 0: g('grass', 3, 0x9fb27a), 1: g('pavement', 5, 0xbdbfc0), 2: g('gravel', 3, 0xc7b08a), 3: water, 4: g('parking', 5, 0xffffff), 5: g('pavement', 4, 0xffffff), 6: g('pavement', 4, 0xffffff), 7: g('gravel', 2, 0x9a948c), 8: g('concrete_smooth', 5, 0xb2b4b5), 9: g('sand', 3, 0xffffff), 10: g('grass', 3, 0x6f8a52), 11: g('grass', 2.5, 0x9cc070) };
     this.mLand = surface('concrete', { tile: 6, tint: 0xc9c6bf });
     this.treeGeo = speciesGeos(); // v2.8: species trees (flora.js)
+    await loadProps(); // v2.15: real 3D street props (vending machines, utility poles, spring cherry trees)
+    this.nearTrees = new NearTrees(this.group, this.q);
     this.mTree = floraMaterial();
     weather(this.mProp, 0.5);
     this.ready = true;
@@ -402,6 +406,7 @@ export class City {
     if (!this.ready) return;
     this.uniforms.uTime.value += dt; this.uniforms.uNight.value = night;
     this.mSign.emissiveIntensity = 0.25 + night * 1.6; if (this.mDecal) this.mDecal.emissiveIntensity = 0.04 + night * 0.22;
+    this.nearTrees?.update(dt, focus, this.tiles);
     if (this.installQ?.length) { const [k, t, lod, o] = this.installQ.shift(); if (this.tiles.get(k) === t && t.pending === lod) this.install(k, t, lod, o); }
     this._t = (this._t || 0) - dt; if (this._t > 0) return; this._t = 0.25;
     const dk = this.detail || 1, R0 = this.R[0] * dk, R1 = this.R[1] * dk, R2 = this.R[2] * dk; const fx = focus.x, fz = focus.z;
@@ -457,24 +462,29 @@ export class City {
     add(flat(o.paint), this.mPaint, false, true);
     for (const c in o.ground) add(flat(o.ground[c]), this.mGround[c] || this.mGround[1], false, true);
     if (o.wires.length) { const g = new THREE.BufferGeometry(); g.setAttribute('position', new THREE.BufferAttribute(o.wires, 3)); g.computeBoundingSphere(); const l = new THREE.LineSegments(g, this.mWire); l.matrixAutoUpdate = false; l.updateMatrix(); grp.add(l); }
+    let treeIMs = null;
     if (o.trees.length) {
       const n = o.trees.length / 5; const bySp = new Map();
       const hsh = (x, z) => { const v = Math.sin(x * 12.9898 + z * 78.233) * 43758.5453; return v - Math.floor(v); };
       for (let k2 = 0; k2 < n; k2++) { if (inSunflowers(ox + o.trees[k2 * 5], oz + o.trees[k2 * 5 + 1])) continue; const b = k2 * 5, sp = speciesAt(o.trees[b + 4] | 0, ox + o.trees[b], oz + o.trees[b + 1], hsh(ox + o.trees[b], oz + o.trees[b + 1])); let l = bySp.get(sp); if (!l) bySp.set(sp, l = []); l.push(k2); }
       const M = new THREE.Matrix4(), Q = new THREE.Quaternion(), Y = new THREE.Vector3(0, 1, 0), P = new THREE.Vector3(), Sc = new THREE.Vector3(), C = new THREE.Color();
+      treeIMs = [];
       for (const [sp, ids] of bySp) {
         const im = new THREE.InstancedMesh(this.treeGeo[sp], this.mTree, ids.length);
         const hs = new Float32Array(ids.length);
         ids.forEach((k2, n2) => { const b = k2 * 5; const s = o.trees[b + 2], h = hsh(o.trees[b] + 0.37, o.trees[b + 1]); hs[n2] = h; Q.setFromAxisAngle(Y, o.trees[b + 3]); P.set(o.trees[b], 0, o.trees[b + 1]); Sc.set(s, s * (0.9 + h * 0.25), s); M.compose(P, Q, Sc); im.setMatrixAt(n2, M); im.setColorAt(n2, speciesColor(sp, h, C)); });
         registerTrees(im, sp, hs);
         im.castShadow = shadows && sp !== 'far'; im.receiveShadow = false; im.computeBoundingSphere(); grp.add(im);
+        if (near && sp !== 'far') (treeIMs ||= []).push({ sp, im, hs }); // v2.15: near trees get real 3D models (neartrees.js)
       }
     }
+    if (o.props?.length) addProps(grp, o.props, shadows); // v2.15 real 3D props
     let bKeys = null; if (o.boards?.length) { try { const r = this.boards.build(o.boards, ox, oz); bKeys = r.keys; if (r.mesh) { r.mesh.position.set(-ox, 0, -oz); r.mesh.receiveShadow = true; grp.add(r.mesh); } } catch (e) { console.warn('boards', e); } }
     // swap in
     this.boards.release(t.bKeys); t.bKeys = bKeys;
     if (t.group) { forgetTrees(t.group); this.group.remove(t.group); disposeGroup(t.group); }
     this.unindex(t);
+    this.nearTrees?.forget(t); t.treeIMs = treeIMs;
     t.group = grp; t.lod = lod; t.pending = undefined; t.mask = o.mask || null; t.landR = o.landR || null;
     this.group.add(grp);
     // colliders → grid (world coords)

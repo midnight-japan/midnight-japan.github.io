@@ -907,7 +907,7 @@ export class MusicEngine {
     this.playing = false;
     this.song = null;
     this.onSong = null;
-    this.ahead = 0.3;
+    this.ahead = 0.6; // v2.15: was 0.3 s — a long frame (city streaming, shader compile) starved the 50 ms ticker and the music stuttered
     // shared reverbs
     this.hall = ctx.createConvolver(); this.hall.buffer = res.hallIR;
     this.hallRet = ctx.createGain(); this.hallRet.gain.value = 0.55;

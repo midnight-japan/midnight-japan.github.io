@@ -141,3 +141,21 @@ Everything else in the audio (synth engine layer, turbo whistle, EV drive, siren
 ## Terrain
 
 Hakone Turnpike terrain heights: AWS Terrain Tiles (Mapzen, Terrarium format, zoom 13) — https://registry.opendata.aws/terrain-tiles/ — elevation derived from SRTM, GMTED2010, ETOPO1 and other public-domain / open sources. Road geometry © OpenStreetMap contributors (ODbL).
+
+## Street props & trees (v2.15)
+
+Third-party models from Sketchfab, all modified for this game (merged into one mesh + one WebP texture atlas, rescaled to metres, simplified / thinned, meshopt-compressed; leaf textures converted to grey for seasonal tinting) with `tools/prop-bake.mjs`, in `assets/models/props/`.
+
+| file | title | author | source | license |
+|---|---|---|---|---|
+| `vending` | Red Japanese Vending Machine | Watanuki_San (tokyo45otaku) | https://sketchfab.com/3d-models/a8a6874f62da478f8572554959d3c62e | [CC BY 4.0](https://creativecommons.org/licenses/by/4.0/) |
+| `pole_a`, `pole_b` | Japanese Traffic Assets | Erik Kinč (erikkinc) | https://sketchfab.com/3d-models/1a4833770ace4df6aecfdabb76e36d60 | [CC BY 4.0](https://creativecommons.org/licenses/by/4.0/) |
+| `sakura` | Japanese Cherry Tree (low-Poly) | Sereib | https://sketchfab.com/3d-models/7c9e7c4e971f4953b06faf300cbb1209 | [CC BY 4.0](https://creativecommons.org/licenses/by/4.0/) |
+| `tree_ginkgo` | Ginkgo Tree Spring/Summer | PuzzledPapaya | https://sketchfab.com/3d-models/2aa9348064c243f8b1f67ba73707c45e | [CC BY 4.0](https://creativecommons.org/licenses/by/4.0/) |
+| `tree_zelkova` | Elm tree | evolveduk | https://sketchfab.com/3d-models/f36443d3e59946bfa38b3f5cb90ea5fa | [CC BY 4.0](https://creativecommons.org/licenses/by/4.0/) |
+| `tree_camphor` | Beech tree | evolveduk | https://sketchfab.com/3d-models/0983d8933531491f9be71c669e8a907b | [CC BY 4.0](https://creativecommons.org/licenses/by/4.0/) |
+| `tree_pine` | Japanese Black Pine | matt z chan (mattzch) | https://sketchfab.com/3d-models/f0cb4705f1c446c7bc393fdbfcdf024a | [CC BY 4.0](https://creativecommons.org/licenses/by/4.0/) |
+| `tree_cedar` | Pine Tree [Game-ready] | Wenedi | https://sketchfab.com/3d-models/dc3fbd9205cf4027a4455d1f415e0478 | [CC BY 4.0](https://creativecommons.org/licenses/by/4.0/) |
+| `tree_maple` | Japanese Maple | endlessvoidmc | https://sketchfab.com/3d-models/003c6ab20e644655ba36fe54cb04765b | [CC BY 4.0](https://creativecommons.org/licenses/by/4.0/) |
+
+Map tiles: 地理院タイル (GSI Japan, https://maps.gsi.go.jp/development/ichiran.html), used with attribution.

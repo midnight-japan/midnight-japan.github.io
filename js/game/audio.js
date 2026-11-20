@@ -1240,11 +1240,16 @@ class Radio {
     const G = (v) => { const g = ctx.createGain(); g.gain.value = v; return g; };
     N.pre = G(0.55);
     N.comp = ctx.createDynamicsCompressor();
-    N.comp.threshold.value = -20; N.comp.knee.value = 8; N.comp.ratio.value = 4; N.comp.attack.value = 0.006; N.comp.release.value = 0.2;
-    N.hp = ctx.createBiquadFilter(); N.hp.type = 'highpass'; N.hp.frequency.value = 55;
-    N.pres = ctx.createBiquadFilter(); N.pres.type = 'peaking'; N.pres.frequency.value = 2800; N.pres.Q.value = 0.8; N.pres.gain.value = 1.5;
+    // v2.15 broadcast-style mastering: slower, gentler bus compression (no pumping), warm low shelf, de-harsh the
+    // 2–4 kHz synth edge a touch, open air on top — then the car cabin / outside filters below
+    N.comp.threshold.value = -18; N.comp.knee.value = 14; N.comp.ratio.value = 2.4; N.comp.attack.value = 0.018; N.comp.release.value = 0.28;
+    N.hp = ctx.createBiquadFilter(); N.hp.type = 'highpass'; N.hp.frequency.value = 38; N.hp.Q.value = 0.6;
+    N.warm = ctx.createBiquadFilter(); N.warm.type = 'lowshelf'; N.warm.frequency.value = 140; N.warm.gain.value = 2.5;
+    N.pres = ctx.createBiquadFilter(); N.pres.type = 'peaking'; N.pres.frequency.value = 3200; N.pres.Q.value = 0.9; N.pres.gain.value = -1.5;
+    N.air = ctx.createBiquadFilter(); N.air.type = 'highshelf'; N.air.frequency.value = 9500; N.air.gain.value = 2;
+    N.sat = ctx.createWaveShaper(); N.sat.curve = softClipCurve(1024, 0.6); N.sat.oversample = '2x'; // gentle tape-style glue on peaks
     N.power = G(this.on ? 1 : 0);
-    N.pre.connect(N.comp); N.comp.connect(N.hp); N.hp.connect(N.pres); N.pres.connect(N.power);
+    N.pre.connect(N.comp); N.comp.connect(N.hp); N.hp.connect(N.warm); N.warm.connect(N.pres); N.pres.connect(N.air); N.air.connect(N.sat); N.sat.connect(N.power);
     N.intG = G(0); N.power.connect(N.intG); N.intG.connect(a.bus.radio);
     N.extLP = ctx.createBiquadFilter(); N.extLP.type = 'lowpass'; N.extLP.frequency.value = 800; N.extLP.Q.value = 0.6;
     N.extG = G(0); N.panner = a._panner(false); N.panner.refDistance = 3;
@@ -1330,7 +1335,8 @@ class Radio {
     let meta;
     if (this.music && this.music.song && this._playing === this.station) meta = { title: this.music.song.title, artist: this.music.song.artist };
     else meta = songName(st.id, this._seed[this.station]);
-    return { station: `${st.name} ${st.freq}`, id: st.id, freq: st.freq, genre: st.genre, title: meta.title, artist: meta.artist, on: this.on };
+    const nm = st.name.replace(String(st.freq), '').replace(/\s+/g, ' ').trim(); // 'J-POP 90.8 BAYSTAR' already carries its frequency
+    return { station: `${nm} ${st.freq}`, name: nm, id: st.id, freq: st.freq, genre: st.genre, title: meta.title, artist: meta.artist, on: this.on };
   }
   update(s) {
     if (this._dead) return;
@@ -1436,13 +1442,17 @@ export class GameAudio {
     // master chain: buses → master → glue comp → limiter → out
     this.master = G(Math.pow(this._vol.master, 3) * 0.8);
     this.comp = ctx.createDynamicsCompressor();
-    this.comp.threshold.value = -20; this.comp.knee.value = 10; this.comp.ratio.value = 4; this.comp.attack.value = 0.005; this.comp.release.value = 0.25;
+    // v2.15: gentler glue (was −20 dB / 4:1 / 5 ms → audible pumping on engine + music); the limiter still catches peaks
+    this.comp.threshold.value = -16; this.comp.knee.value = 12; this.comp.ratio.value = 2.5; this.comp.attack.value = 0.012; this.comp.release.value = 0.22;
     this.limiter = ctx.createDynamicsCompressor();
     this.limiter.threshold.value = -3; this.limiter.knee.value = 0; this.limiter.ratio.value = 20; this.limiter.attack.value = 0.001; this.limiter.release.value = 0.1;
     this.out = G(0.85); // makeup gain after the heavier levelling compressor
     this.master.connect(this.comp); this.comp.connect(this.limiter); this.limiter.connect(this.out); this.out.connect(ctx.destination);
     this.bus = { engine: G(this._vol.engine ** 2), sfx: G(this._vol.sfx ** 2), ambient: G(this._vol.ambient ** 2), radio: G(this._vol.radio ** 2) };
-    for (const k in this.bus) this.bus[k].connect(this.master);
+    // v2.15: the radio is already mastered on its own chain → it skips the glue compressor (double compression made the
+    // music sound squashed and pump with the engine) and goes straight to the limiter at the same master volume
+    this.masterR = G(Math.pow(this._vol.master, 3) * 0.8); this.masterR.connect(this.limiter);
+    for (const k in this.bus) this.bus[k].connect(k === 'radio' ? this.masterR : this.master);
     // shared reverb (small, generated impulse) — SFX / siren / ambience send into revIn
     this.revIn = G(1);
     this.rev = ctx.createConvolver(); this.rev.buffer = makeIR(ctx, 1.3, 3, 6000, 1500, false);
@@ -1499,6 +1509,7 @@ export class GameAudio {
       // v2.13.3: perceptual (cubic) slider curve and a quieter top end — the lowest settings were still loud
       const curve = x => Math.pow(x, 3) * 0.8;
       sp(this.master.gain, curve(this._vol.master), t, 0.05);
+      if (this.masterR) sp(this.masterR.gain, curve(this._vol.master), t, 0.05);
       for (const k in this.bus) sp(this.bus[k].gain, Math.pow(this._vol[k], 2), t, 0.05);
     } catch (e) { this._err(e); }
   }

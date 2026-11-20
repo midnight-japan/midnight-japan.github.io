@@ -195,6 +195,16 @@ export class Plateau {
         // v2.4: untextured (LOD1) blocks were all one pale grey — Japanese streets mix off-white, concrete, beige and brown
         // tile; flat roofs read darker. Picked per ~18 m cell so neighbouring buildings differ.
         .replace('#include <map_fragment>', `#include <map_fragment>
+        #ifdef USE_MAP
+        // v2.15: PLATEAU facades are oblique aerial photos — walls that were in shadow when photographed came out near
+        // black. Lift the shadows (keep highlights), add a little colour back, so streets read as daylight concrete.
+        {
+          vec3 c0 = diffuseColor.rgb; float l0 = dot(c0, vec3(0.299, 0.587, 0.114));
+          vec3 lifted = pow(c0, vec3(0.72)) * 1.05;
+          diffuseColor.rgb = mix(lifted, c0, smoothstep(0.35, 0.8, l0));
+          diffuseColor.rgb = mix(vec3(dot(diffuseColor.rgb, vec3(0.333))), diffuseColor.rgb, 1.12);
+        }
+        #endif
         #ifndef USE_MAP
         {
           float t = h21(floor(vWP.xz / 18.0) + 0.37);

@@ -9,6 +9,7 @@ import { GTAOPass } from 'three/addons/postprocessing/GTAOPass.js';
 import { ShaderPass } from 'three/addons/postprocessing/ShaderPass.js';
 import { CARS, CAR_BY_ID } from '../../data/cars.js';
 import { GAME } from '../../data/meta.js';
+import { DESTS } from '../../data/destinations.js';
 import { detectLang, setLang, t } from '../i18n.js';
 import { displayName, currentUser, updateUser } from '../account.js';
 import { initTextures } from './textures.js';
@@ -214,6 +215,8 @@ class Game {
     this.ui.loading(1, t('game.load.done'));
     this.applyVolumes();
     // title cam
+    // ?spawn=<region> (the site's per-course "play" links) preselects that region in the lobby; ?auto=1 / ?go=1 skip the lobby
+    this.spawnReq = new URLSearchParams(location.search).get('spawn') || null;
     this.mode = 'title';
     this.ui.showTitle();
     this.last = performance.now();
@@ -284,6 +287,9 @@ class Game {
       const CITY_SPAWN = { mm: [-3949.7, 1257.2, 1.01, 14], chinatown: [-2987.3, 2310, -1.04, 7.5], tsurumi: [-2109.4, -2792.6, -0.93, 7.5], kawasaki: [2598.8, -5144.9, -0.91, 7.5], haneda: [7756.1, -9056.3, 1.02, 7.5], zama: [-26884.1, -2770.6, 1.545, 7.5] };
       if (CITY_SPAWN[region]) { const [x, z, yaw, w] = CITY_SPAWN[region]; const o = w / 4; return { pos: new THREE.Vector3(x + Math.cos(yaw) * o, 0.3, z - Math.sin(yaw) * o), yaw }; }
       if (region === 'futo') { const r = net.byId.futo_5 || net.roads.find(x => x.kind === 'local'); const L = r.lanes.filter(l => l.dir === 1).sort((a, b) => b.lat - a.lat)[0] || r.lanes[0]; return at(r, r.length * 0.5, L.lat); }
+      // v2.15: any other spawn id from the quick-travel table (new courses): the nearest carriageway at its pin, first direction
+      const d = DESTS.find(x => x.spawn === region);
+      if (d) { const o = this.tpOptions(d.x, d.z)[0]; if (o) { const p = o.road.at(o.s, o.lane.lat); return { pos: p.clone().setY(p.y + 0.3), yaw: o.yaw }; } }
     } catch (e) { console.warn('spawn', e); }
     return null;
   }
@@ -305,7 +311,7 @@ class Game {
   startDrive(id, keepPos = false) {
     this.unlockAudio();
     const prev = this.vehicle;
-    const reg = keepPos && prev ? null : (new URLSearchParams(location.search).get('spawn') || this.settings.spawn || 'pa');
+    const reg = keepPos && prev ? null : (this.spawnReq || this.settings.spawn || 'pa');
     const spot = keepPos && prev ? null : ((reg !== 'pa' && this.regionSpawn(reg)) || this.spawnPoint());
     if (spot && !spot.size && this.mySpot) { this.mySpot.taken = false; this.mySpot = null; }
     if (this.model) { this.scene.remove(this.model.root); this.model.dispose(); }
@@ -627,6 +633,18 @@ class Game {
       out.push({ road: c.r, s: c.s, lane: L, yaw, name: c.r.name || '' }); if (out.length >= 2) return out;
     }
     return out;
+  }
+  // v2.15: one-tap fast travel to a quick-travel destination — its proper start (PA stall / course start / city street)
+  // when it has a spawn id, otherwise the nearest carriageway at the pin
+  travelTo(d) {
+    if (!d) return; let sp = null;
+    if (d.spawn) { try { if (this.mySpot && d.spawn === 'pa') { this.mySpot.taken = false; this.mySpot = null; } sp = d.spawn === 'pa' ? this.spawnPoint() : this.regionSpawn(d.spawn); } catch (e) { console.warn('travel', e); } }
+    if (!sp) { const o = this.tpOptions(d.x, d.z); return o.length ? this.teleport(d.x, d.z, o[0]) : this.teleport(d.x, d.z); }
+    if (this.mode === 'walk') this.enterCar(); const v = this.vehicle; if (!v) return;
+    if (this.police?.state === 'pursuit') this.police.endPursuit(false);
+    if (!sp.size && this.mySpot) { this.mySpot.taken = false; this.mySpot = null; }
+    v.place(sp.pos.clone(), sp.yaw); this._safe = null; v.handbrakeOn = true; this.camSnap = true;
+    this.ui.toast(t('game.map.tpDone'), 'info', 2); this.awaitCity();
   }
   teleport(x, z, opt = null) {
     if (opt) { // a chosen carriageway + direction
