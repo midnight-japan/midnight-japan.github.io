@@ -1,9 +1,10 @@
 # 📜 MIDNIGHT JAPAN 업데이트 기록 · Changelog
 
-현재 버전 · Current: **v2.15.0** · [▶ 웹에서 플레이](https://midnight-japan.github.io/) · [🌐 업데이트 페이지](https://midnight-japan.github.io/changelog.html)
+현재 버전 · Current: **v2.15.1** · [▶ 웹에서 플레이](https://midnight-japan.github.io/) · [🌐 업데이트 페이지](https://midnight-japan.github.io/changelog.html)
 
 | 버전 | 날짜 | 이름 | 요약 |
 |---|---|---|---|
+| [v2.15.1](#v2151--meet-up-2026-11-20) | 2026-11-20 | Meet Up | 온라인 만남 연결 안정화: 차단·불안정 신호 서버 교체, 다양한 네트워크(공유기·모바일)에서 서로 찾도록 STUN 서버 추가. |
 | [v2.15.0](#v2150--real-streets-2026-11-20) | 2026-11-20 | Real Streets | 실사 3D 모델: 자판기·전신주·가로수 6종·봄 벚꽃(Sketchfab CC BY), 건물 외벽 그늘 보정, 지도 즉시 열기 + 일본 전역 상세 지도·랜드마크 아이콘 약 150개, 원탭 이동, 로비 시작, UI 전면 리디자인·라디오 개선, 차량 실내·유리 개선. |
 | [v2.14.4](#v2144--clear-portals-2026-11-20) | 2026-11-20 | Clear Portals | 터널 입구 정리: 지하로 내려가기 직전 도로 위에 깔려 있던 땅·도시 도로·보도·주차장 판을 걷어 내 차가 판을 뚫고 들어가는 것처럼 보이던 문제 수정(38곳 전수 점검). |
 | [v2.14.3](#v2143--signposted-2026-11-20) | 2026-11-20 | Signposted | 도심 교차로 표지가 반대 차선에 있던 큰 버그 수정(정지선·止まれ·신호등·횡단보도·속도·일방통행 표지가 이제 내 차선 왼쪽에), 국도·현도에 파란 방면 안내 표지판과 교차로 이름판 추가. |
@@ -72,6 +73,17 @@
 | [v0.2.0](#v020--bayshore-2026-11-05) | 2026-11-05 | Bayshore | 수도고속 완간선을 따라 하네다까지, 도쿄만 아쿠아라인 해저터널을 지나 우미호타루 PA까지. 실제 3D 차량 모델과 열리는 보닛도 들어왔어요. |
 | [v0.1.1](#v011--one-click-2026-11-04) | 2026-11-04 | One Click | 링크 하나로 바로 플레이. 크롬에서 공식 사이트 주소만 열면 설치 없이 실행돼요. |
 | [v0.1.0](#v010--first-meet-2026-11-04) | 2026-11-04 | First Meet | 첫 공개 버전. 다이코쿠 JCT·PA와 다이코쿠 부두 일대를 3D로 구현했습니다. |
+
+---
+
+## v2.15.1 — Meet Up (2026-11-20)
+
+> 온라인 만남 연결 안정화: 차단·불안정 신호 서버 교체, 다양한 네트워크(공유기·모바일)에서 서로 찾도록 STUN 서버 추가.
+> Steadier online meets: swapped rate-limited/unstable signalling relays and added STUN servers so players on home routers and mobile networks find each other.
+
+**🐞 수정 · Fixed**
+
+- 접속자가 같은 방(다이코쿠 PA)에 있어도 서로 안 보이던 경우 — relay.damus.io 차단·relay.nostr.band 다운 대응<br><sub>Players in the same room sometimes never saw each other — relay.damus.io bans and relay.nostr.band outages worked around</sub>
 
 ---
 

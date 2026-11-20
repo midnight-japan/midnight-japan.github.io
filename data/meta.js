@@ -1,8 +1,15 @@
 // Shared game metadata: version, changelog, regions. Update VERSION + CHANGELOG on every release.
-export const GAME = { title: 'MIDNIGHT JAPAN', titleJa: 'ミッドナイト・ジャパン', version: '2.15.0', build: '2026.11.20' };
+export const GAME = { title: 'MIDNIGHT JAPAN', titleJa: 'ミッドナイト・ジャパン', version: '2.15.1', build: '2026.11.20' };
 
 // Newest first. type: new | change | fix | known
 export const CHANGELOG = [
+  {
+    version: '2.15.1', date: '2026-11-20', codename: 'Meet Up',
+    summary: { ko: '온라인 만남 연결 안정화: 차단·불안정 신호 서버 교체, 다양한 네트워크(공유기·모바일)에서 서로 찾도록 STUN 서버 추가.', ja: 'オンラインミートの接続を安定化：ブロック・不安定なシグナルサーバーを交換、様々なネットワーク（ルーター・モバイル）で互いを見つけられるようSTUNサーバーを追加。', en: 'Steadier online meets: swapped rate-limited/unstable signalling relays and added STUN servers so players on home routers and mobile networks find each other.' },
+    items: [
+      { type: 'fix', ko: '접속자가 같은 방(다이코쿠 PA)에 있어도 서로 안 보이던 경우 — relay.damus.io 차단·relay.nostr.band 다운 대응', ja: '同じ部屋（大黒PA）にいても互いが見えない場合 — relay.damus.ioのブロック・relay.nostr.bandのダウンに対応', en: 'Players in the same room sometimes never saw each other — relay.damus.io bans and relay.nostr.band outages worked around' },
+    ],
+  },
   {
     version: '2.15.0', date: '2026-11-20', codename: 'Real Streets',
     summary: { ko: '실사 3D 모델: 자판기·전신주·가로수 6종·봄 벚꽃(Sketchfab CC BY), 건물 외벽 그늘 보정, 지도 즉시 열기 + 일본 전역 상세 지도·랜드마크 아이콘 약 150개, 원탭 이동, 로비 시작, UI 전면 리디자인·라디오 개선, 차량 실내·유리 개선.', ja: '実写3Dモデル：自販機・電柱・街路樹6種・春の桜（Sketchfab CC BY）、建物外壁の陰補正、地図を即表示＋日本全国の詳細地図・ランドマークアイコン約150、ワンタップ移動、ロビーから開始、UI全面リデザイン・ラジオ改善、車内・ガラス改善。', en: 'Real 3D models: vending machines, utility poles, six street-tree species and spring cherry trees (Sketchfab CC BY), lifted facade shadows, instant map + detailed all-Japan map with ~150 landmark icons, one-tap travel, lobby on start, full UI redesign and better radio, improved car cabins and glass.' },
