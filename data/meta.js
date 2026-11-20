@@ -1,8 +1,17 @@
 // Shared game metadata: version, changelog, regions. Update VERSION + CHANGELOG on every release.
-export const GAME = { title: 'MIDNIGHT JAPAN', titleJa: 'ミッドナイト・ジャパン', version: '2.15.3', build: '2026.11.20' };
+export const GAME = { title: 'MIDNIGHT JAPAN', titleJa: 'ミッドナイト・ジャパン', version: '2.15.4', build: '2026.11.20' };
 
 // Newest first. type: new | change | fix | known
 export const CHANGELOG = [
+  {
+    version: '2.15.4', date: '2026-11-20', codename: 'Lobby Online',
+    summary: { ko: '온라인 서버(방) 선택과 친구끼리 비공개 방 코드, 🌐 버튼으로 플레이어 목록(차종·거리·핑 ms), 위치 동기화 초당 30회로 지연 감소.', ja: 'オンラインのサーバー（部屋）選択と友達用のプライベート部屋コード、🌐ボタンでプレイヤー一覧（車種・距離・ping ms）、位置同期を毎秒30回にして遅延を軽減。', en: 'Pick an online server (room) or a private room code for friends, player list on the 🌐 button (car, distance, ping ms), 30 Hz position sync for less lag.' },
+    items: [
+      { type: 'new', ko: '🌐 버튼 → 플레이어 목록: 나와 접속자 전원의 닉네임·차종·거리·핑(ms), 채팅 버튼', ja: '🌐ボタン → プレイヤー一覧：自分と参加者全員のニックネーム・車種・距離・ping（ms）、チャットボタン', en: '🌐 button → player list: nickname, car, distance and ping (ms) for everyone, plus chat' },
+      { type: 'new', ko: '서버(방) 선택: 大黒PA·湾岸線·C1·箱根·横浜·Free 1·Free 2, 🔒 비공개 방 코드 — 선택한 방은 다음에도 기억', ja: 'サーバー（部屋）選択：大黒PA・湾岸線・C1・箱根・横浜・Free 1・Free 2、🔒プライベート部屋コード — 選んだ部屋は次回も記憶', en: 'Server (room) picker: Daikoku PA, Wangan, C1, Hakone, Yokohama, Free 1/2, or a 🔒 private room code — remembered next time' },
+      { type: 'fix', ko: '상대 차 끊김·지연 감소: 위치 전송 초당 10→30회, 핑을 반영한 위치 예측, 더 빠른 보간', ja: '相手の車のカクつき・遅延を軽減：位置送信を毎秒10→30回、pingを反映した位置予測、より速い補間', en: 'Smoother, lower-lag remote cars: 10 → 30 Hz updates, ping-aware prediction, faster smoothing' },
+    ],
+  },
   {
     version: '2.15.3', date: '2026-11-20', codename: 'Fresh Cache',
     summary: { ko: '오프라인 캐시 갱신: 새 버전이 바로 적용되도록 캐시 버전 정리, 실사 소품·나무·지도 아이콘 파일도 오프라인 저장.', ja: 'オフラインキャッシュ更新：新バージョンがすぐ反映されるようキャッシュ版を整理、実写小物・木・地図アイコンもオフライン保存。', en: 'Offline cache refresh: cache version synced so new releases apply right away; real props, trees and map icons are cached offline too.' },

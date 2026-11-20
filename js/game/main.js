@@ -337,7 +337,7 @@ class Game {
     this.ui.toast(t('game.hint.start'), 'info', 7);
     if (this.player) { this.scene.remove(this.player.h.object); this.player = null; }
     this.camSnap = true;
-    if (this.settings.online) { this.online.start(); this.online.announce(); }
+    if (this.settings.online) { this.online.start(this.settings.onlineRoom || undefined); this.online.announce(); } // v2.15.4: remembered room
     let seen = false; try { seen = localStorage.getItem('dn.tutorial') === '1'; } catch {}
     if (!seen && !new URLSearchParams(location.search).get('auto')) this.ui.startTutorial();
     if (!keepPos) this.awaitCity();

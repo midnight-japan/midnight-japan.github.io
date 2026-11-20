@@ -16,7 +16,7 @@ import { PLATE_TYPES } from './plates.js';
 
 const APP_ID = 'midnight-japan-v2';
 export const ROOM_DEFAULT = 'daikoku-pa';
-const SEND_HZ = 10;
+const SEND_HZ = 30; // v2.15.4: 30 Hz state (was 10) — less visible lag between players
 const MAX_PEERS = 24;
 
 const isNum = (x, lim = 1e5) => typeof x === 'number' && Number.isFinite(x) && Math.abs(x) < lim;
@@ -171,6 +171,8 @@ export class Online {
     if (!this.room) return;
     const g = this.g;
     // ── send my state
+    this.pingT = (this.pingT || 0) - dt;
+    if (this.pingT <= 0 && this.room?.ping) { this.pingT = 2; for (const [id, p] of this.peers) this.room.ping(id).then(ms => { p.ping = Math.round(ms); }).catch(() => {}); }
     this.sendT -= dt;
     if (this.sendT <= 0 && this._sendSt && g.vehicle && (g.mode === 'drive' || g.mode === 'walk')) {
       this.sendT = 1 / SEND_HZ;
@@ -187,9 +189,9 @@ export class Online {
     for (const p of this.peers.values()) {
       if (!p.have || !p.info) continue;
       if (now - p.recv > 8000) { if (p.model) p.model.root.visible = false; if (p.human) p.human.object.visible = false; continue; }
-      const ahead = Math.min(0.35, (now - p.recv) / 1000);
+      const ahead = Math.min(0.3, (now - p.recv) / 1000 + (p.ping || 60) / 2000);
       const target = p.tgt.clone().addScaledVector(p.vel, ahead);
-      if (p.pos.distanceTo(target) > 25) p.pos.copy(target); else p.pos.lerp(target, 1 - Math.exp(-dt * 10));
+      if (p.pos.distanceTo(target) > 25) p.pos.copy(target); else p.pos.lerp(target, 1 - Math.exp(-dt * 18));
       let dy = p.tyaw - p.yaw; dy = Math.atan2(Math.sin(dy), Math.cos(dy)); p.yaw += dy * (1 - Math.exp(-dt * 10));
       const m = p.model;
       if (p.mode === 'd') {

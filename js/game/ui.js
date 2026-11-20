@@ -103,7 +103,7 @@ export class UI {
         <div class="radio-banner" aria-live="polite"></div><div id="radiopill" class="radiopill" hidden><button class="rp-fold" data-a="radioFold" aria-label="radio"><i class="rp-eq"><i></i><i></i><i></i><i></i></i></button><div class="rp-body"><div class="rp-st"><b class="rp-freq"></b><span class="rp-name"></span><span class="rp-genre"></span></div><div class="rp-t"></div></div><div class="rp-ctl"><button data-a="radioPrev" title="R" aria-label="previous station">‹</button><button data-a="radioSkip" title="Y" aria-label="skip song">⏭</button><button data-a="radioNext" title="T" aria-label="next station">›</button><button class="rp-off" data-a="radioPower" aria-label="radio off">⏻</button></div></div>
         <div class="prompt"><kbd></kbd><span></span></div>
         <div class="toasts"></div>
-        <button class="online-pill" data-a="chat" id="online-pill"></button>
+        <button class="online-pill" data-a="plist" id="online-pill"></button><div id="plist" class="plist hidden"></div>
         <div class="chat" id="chat"><div class="log"></div><form><input maxlength="120" autocomplete="off" enterkeyhint="send"><button type="submit">↵</button></form></div>
         <div class="fps"></div>
       </div>
@@ -204,6 +204,7 @@ export class UI {
       case 'quick': g.quickStart(); break;
       case 'tutNext': this.tutStep(this.tut + 1); break;
       case 'tutSkip': this.endTutorial(); break;
+      case 'plist': this.togglePlayers(); break;
       case 'chat': this.openChat(); break;
       case 'play': g.unlockAudio(); g.openGarage(); break;
       case 'drive': g.closeGarage(true); break;
@@ -624,6 +625,22 @@ export class UI {
     const txt = st === 'on' ? t('game.online.on', { n: o.count + 1 }) : t('game.online.' + st);
     const pill = $('#online-pill'); if (pill) { pill.textContent = '🌐 ' + (st === 'on' ? (o.count + 1) : txt); pill.className = 'online-pill ' + st; pill.title = txt; }
     const lob = $('#lobby-online'); if (lob) lob.textContent = '🌐 ' + t('game.lobby.online') + ' · ' + (st === 'on' ? txt : t(on ? 'game.online.ready' : 'game.online.off'));
+  }
+  // v2.15.4 player list: everyone in the room with car, distance and ping (ms)
+  togglePlayers(force) {
+    const el = $('#plist'); if (!el) return; const show = force ?? el.classList.contains('hidden'); el.classList.toggle('hidden', !show);
+    clearInterval(this._plT); if (!show) return; const draw = () => {
+      const o = this.g.online, me = this.g.vehicle?.pos, mc = CAR_BY_ID[this.g.carId || this.g.garage.car];
+      const rows = [`<div class="pl-row me"><b>${esc(displayName())}</b><span>${esc(mc ? mc.maker + ' ' + mc.name : '')}</span><i>${esc(t('game.online.you') || 'YOU')}</i></div>`];
+      for (const p of (o?.peers || new Map()).values()) { if (!p.info) continue; const c = CAR_BY_ID[p.info.c]; const d = me && p.have ? me.distanceTo(p.pos) : null;
+        rows.push(`<div class="pl-row"><b>🌐 ${esc(p.name)}</b><span>${esc(c ? c.maker + ' ' + c.name : '')}</span><i>${d == null ? '—' : d < 1000 ? Math.round(d) + ' m' : (d / 1000).toFixed(1) + ' km'} · ${p.ping ? p.ping + ' ms' : '…'}</i></div>`); }
+      const ROOMS = [['daikoku-pa', '大黒PA'], ['wangan', '湾岸線'], ['c1', 'C1'], ['hakone', '箱根'], ['yokohama', '横浜'], ['free-1', 'Free 1'], ['free-2', 'Free 2']], cur = o?.roomName || 'daikoku-pa';
+      const opts = ROOMS.map(([id, l]) => `<option value="${id}"${id === cur ? ' selected' : ''}>${l}</option>`).join('') + (ROOMS.some(r => r[0] === cur) ? '' : `<option value="${esc(cur)}" selected>🔒 ${esc(cur.replace(/^p-/, ''))}</option>`);
+      if (!el.querySelector('select') || el._cur !== cur) { el._cur = cur; el.innerHTML = `<div class="pl-head">🌐 <select class="pl-room">${opts}<option value="__p">🔒 …</option></select><button data-a="chat">💬</button></div><div class="pl-rows"></div>`;
+        el.querySelector('select').onchange = e => { let r = e.target.value; if (r === '__p') { const c = (prompt('Room code / 방 코드') || '').trim().toLowerCase().replace(/[^a-z0-9-]/g, '').slice(0, 24); if (!c) { e.target.value = cur; return; } r = 'p-' + c; }
+          this.g.settings.onlineRoom = r; this.g.saveSettings?.(); o.stop(); o.start(r); this.toast('🌐 ' + (r.startsWith('p-') ? '🔒 ' + r.slice(2) : ROOMS.find(x => x[0] === r)?.[1] || r), 'info'); el._cur = null; draw(); }; }
+      el.querySelector('.pl-rows').innerHTML = rows.join('');
+    }; draw(); this._plT = setInterval(() => { if ($('#plist').classList.contains('hidden')) return clearInterval(this._plT); draw(); }, 1000);
   }
   openChat() {
     const o = this.g.online; if (!o?.room) { this.toast(t('game.online.' + (this.g.settings.online ? 'connecting' : 'off')), 'info'); return; }

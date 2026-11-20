@@ -629,3 +629,9 @@ body.photo .online-pill,body.photo .chat{display:none}
   #map .mapsel{left:16px;right:124px;bottom:206px;transform:none}
   .toasts{top:calc(max(10px,env(safe-area-inset-top)) + min(30vw,150px) + 128px)!important}
 }
+
+/* v2.15.4 player list */
+.plist{position:absolute;top:calc(44px + env(safe-area-inset-top));left:50%;transform:translateX(-50%);min-width:280px;max-width:min(92vw,420px);max-height:50vh;overflow:auto;pointer-events:auto;background:rgba(10,14,22,.86);backdrop-filter:blur(10px);border:1px solid rgba(255,255,255,.14);border-radius:14px;padding:8px;z-index:30;font:500 13px/1.35 system-ui,sans-serif;color:#e6edf7}
+.plist.hidden{display:none}.pl-head{display:flex;justify-content:space-between;align-items:center;font-weight:800;padding:2px 6px 6px}.pl-head button{background:none;border:1px solid rgba(255,255,255,.2);color:#fff;border-radius:8px;padding:2px 8px;cursor:pointer}
+.pl-row{display:grid;grid-template-columns:1fr auto;gap:0 10px;padding:6px 8px;border-radius:10px}.pl-row+.pl-row{border-top:1px solid rgba(255,255,255,.06)}.pl-row b{color:#bff6ff}.pl-row.me b{color:#ffb347}.pl-row span{grid-column:1;color:#9fb0c6;font-size:12px}.pl-row i{grid-column:2;grid-row:1/3;align-self:center;font-style:normal;color:#cfe3ff;font-size:12px;white-space:nowrap}
+.pl-room{background:rgba(255,255,255,.08);color:#fff;border:1px solid rgba(255,255,255,.2);border-radius:8px;padding:3px 6px;font:700 13px system-ui;margin-left:4px;max-width:180px}.pl-room option{color:#000}
