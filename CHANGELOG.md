@@ -1,9 +1,10 @@
 # 📜 MIDNIGHT JAPAN 업데이트 기록 · Changelog
 
-현재 버전 · Current: **v2.15.5** · [▶ 웹에서 플레이](https://midnight-japan.github.io/) · [🌐 업데이트 페이지](https://midnight-japan.github.io/changelog.html)
+현재 버전 · Current: **v2.15.6** · [▶ 웹에서 플레이](https://midnight-japan.github.io/) · [🌐 업데이트 페이지](https://midnight-japan.github.io/changelog.html)
 
 | 버전 | 날짜 | 이름 | 요약 |
 |---|---|---|---|
+| [v2.15.6](#v2156--bumper-to-bumper-2026-11-20) | 2026-11-20 | Bumper to Bumper | 멀티플레이 강화: 중계 서버 여러 곳에 동시 접속(서로 다른 서버에 붙어도 만남), 중복 메시지 제거, 플레이어끼리 충돌, 상대 경적 소리. |
 | [v2.15.5](#v2155--always-connected-2026-11-20) | 2026-11-20 | Always Connected | 어떤 네트워크에서도 만나도록 중계(MQTT) 예비 경로 추가, 상대 이름표 크기 버그 수정, 일본 전역 지도를 게임답게 단순화. |
 | [v2.15.4](#v2154--lobby-online-2026-11-20) | 2026-11-20 | Lobby Online | 온라인 서버(방) 선택과 친구끼리 비공개 방 코드, 🌐 버튼으로 플레이어 목록(차종·거리·핑 ms), 위치 동기화 초당 30회로 지연 감소. |
 | [v2.15.3](#v2153--fresh-cache-2026-11-20) | 2026-11-20 | Fresh Cache | 오프라인 캐시 갱신: 새 버전이 바로 적용되도록 캐시 버전 정리, 실사 소품·나무·지도 아이콘 파일도 오프라인 저장. |
@@ -77,6 +78,21 @@
 | [v0.2.0](#v020--bayshore-2026-11-05) | 2026-11-05 | Bayshore | 수도고속 완간선을 따라 하네다까지, 도쿄만 아쿠아라인 해저터널을 지나 우미호타루 PA까지. 실제 3D 차량 모델과 열리는 보닛도 들어왔어요. |
 | [v0.1.1](#v011--one-click-2026-11-04) | 2026-11-04 | One Click | 링크 하나로 바로 플레이. 크롬에서 공식 사이트 주소만 열면 설치 없이 실행돼요. |
 | [v0.1.0](#v010--first-meet-2026-11-04) | 2026-11-04 | First Meet | 첫 공개 버전. 다이코쿠 JCT·PA와 다이코쿠 부두 일대를 3D로 구현했습니다. |
+
+---
+
+## v2.15.6 — Bumper to Bumper (2026-11-20)
+
+> 멀티플레이 강화: 중계 서버 여러 곳에 동시 접속(서로 다른 서버에 붙어도 만남), 중복 메시지 제거, 플레이어끼리 충돌, 상대 경적 소리.
+> Multiplayer: relays on several brokers at once (players on different brokers still meet), duplicate filtering, player-vs-player contact, other players' horns.
+
+**✨ 추가 · New**
+
+- 플레이어 차끼리 부딪히면 밀려나고 충돌음, 상대가 경적을 울리면 들림<br><sub>Player cars bump each other with a crash sound; you hear other players' horns</sub>
+
+**🐞 수정 · Fixed**
+
+- 첫 중계 서버가 응답 없으면 플레이어마다 다른 서버로 흩어져 못 만나던 문제 — 모든 중계 서버에 동시에 연결<br><sub>If the first relay broker was down players scattered to different brokers and never met — now connected to all at once</sub>
 
 ---
 

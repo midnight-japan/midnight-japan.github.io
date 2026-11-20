@@ -9,10 +9,18 @@ function varint(n) { const b = []; do { let x = n % 128; n = Math.floor(n / 128)
 function mstr(s) { const u = enc.encode(s); return [u.length >> 8, u.length & 255, ...u]; }
 function packet(type, body) { return new Uint8Array([type, ...varint(body.length), ...body]); }
 
+// v2.15.6: one connection per broker, all at once — players who end up on different brokers still meet (online.js dedupes)
+export class RelayMulti {
+  constructor(room, selfId, onMsg, onState) { this.list = BROKERS.map(u => new Relay(room, selfId, onMsg, onState, u)); }
+  get ok() { return this.list.some(r => r.ok); }
+  send(kind, data) { for (const r of this.list) r.send(kind, data); }
+  close() { for (const r of this.list) r.close(); }
+}
+
 export class Relay {
-  constructor(room, selfId, onMsg, onState) { this.room = room; this.id = selfId; this.onMsg = onMsg; this.onState = onState; this.bi = 0; this.buf = new Uint8Array(0); this.closed = false; this.connect(); }
+  constructor(room, selfId, onMsg, onState, url) { this.room = room; this.id = selfId; this.onMsg = onMsg; this.onState = onState; this.url = url; this.bi = 0; this.buf = new Uint8Array(0); this.closed = false; this.connect(); }
   connect() {
-    if (this.closed) return; const url = BROKERS[this.bi % BROKERS.length];
+    if (this.closed) return; const url = this.url || BROKERS[this.bi % BROKERS.length];
     let ws; try { ws = new WebSocket(url, 'mqtt'); } catch { return this.retry(); }
     ws.binaryType = 'arraybuffer'; this.ws = ws; this.ok = false;
     const to = setTimeout(() => { if (!this.ok) { try { ws.close(); } catch {} } }, 6000);
@@ -21,7 +29,7 @@ export class Relay {
     ws.onclose = ws.onerror = () => { clearTimeout(to); clearInterval(this.pingI); if (this.ws !== ws) return; this.ws = null; this.ok = false; this.onState?.('down'); this.bi++; this.retry(); };
     this._to = to;
   }
-  retry() { if (!this.closed) setTimeout(() => this.connect(), 2500); }
+  retry() { if (!this.closed) setTimeout(() => this.connect(), this.url ? 5000 : 2500); }
   parse() {
     while (this.buf.length >= 2) {
       let len = 0, mul = 1, i = 1, byte; do { if (i >= this.buf.length) return; byte = this.buf[i++]; len += (byte & 127) * mul; mul *= 128; } while (byte & 128);

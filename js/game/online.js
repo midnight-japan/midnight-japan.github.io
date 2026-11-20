@@ -13,7 +13,7 @@ import { createHuman, createNameTag, defaultOutfit, OUTFIT_OPTIONS } from './hum
 import { displayName } from '../account.js';
 import { t } from '../i18n.js';
 import { PLATE_TYPES } from './plates.js';
-import { Relay } from './relay.js';
+import { RelayMulti } from './relay.js';
 
 const APP_ID = 'midnight-japan-v2';
 export const ROOM_DEFAULT = 'daikoku-pa';
@@ -67,7 +67,7 @@ export class Online {
       aSt.onMessage = (d, m) => { const id = m?.peerId ?? m; const p = this.peers.get(id); if (p) p.rtcAt = performance.now(); this.setState(id, d); };
       aChat.onMessage = (d, m) => this.onChat(m?.peerId ?? m, d);
       // v2.15.5: MQTT relay in parallel — reaches players WebRTC can't (strict NAT); same ids as Trystero so no duplicates
-      this.relay = new Relay(roomName, selfId, (k, id, d) => this.onRelay(k, id, d), st => { if (st === 'up') this.relay.send('i', this.info()); });
+      this.relay = new RelayMulti(roomName, selfId, (k, id, d) => this.onRelay(k, id, d), st => { if (st === 'up') this.relay.send('i', this.info()); });
       this.status = 'on';
     } catch (e) { console.warn('online', e); this.err = String(e?.stack || e); this.status = 'error'; this.room = null; }
     this.g.ui.updateOnline?.();
@@ -146,6 +146,7 @@ export class Online {
   setState(id, d) {
     if (!d || typeof d !== 'object' || !Array.isArray(d.p) || d.p.length !== 3 || !d.p.every(x => isNum(x, 2e4)) || !isNum(d.y, 100)) return;
     const p = this.peer(id); const now = performance.now();
+    if (Number.isInteger(d.q)) { if (p.lastQ && d.q <= p.lastQ && p.lastQ - d.q < 5000) return; p.lastQ = d.q; } // duplicate via another path / broker
     const np = new THREE.Vector3(d.p[0], d.p[1], d.p[2]);
     if (p.have) { const dtr = Math.max(0.05, (now - p.recv) / 1000); p.vel.subVectors(np, p.tgt).divideScalar(dtr); if (p.vel.length() > 120) p.vel.set(0, 0, 0); }
     else { p.pos.copy(np); p.yaw = d.y; }
@@ -189,10 +190,11 @@ export class Online {
     if (this.sendT <= 0 && this._sendSt && g.vehicle && (g.mode === 'drive' || g.mode === 'walk')) {
       this.sendT = 1 / SEND_HZ;
       const v = g.vehicle, L = g.model?.lights || {};
-      const lights = (L.head ? 1 : 0) | (L.brake ? 2 : 0) | (L.hazard ? 4 : 0) | (L.reverse ? 8 : 0) | (L.strobe && L.strobe !== 'off' ? 16 : 0);
+      const lights = (L.head ? 1 : 0) | (L.brake ? 2 : 0) | (L.hazard ? 4 : 0) | (L.reverse ? 8 : 0) | (L.strobe && L.strobe !== 'off' ? 16 : 0) | (g._hornT > 0 ? 32 : 0); // v2.15.6: 32 = horn
       const walk = g.mode === 'walk' && g.player;
       const P = walk ? g.player.pos : v.pos, r = x => Math.round(x * 100) / 100;
-      const msg = { p: [r(P.x), r(P.y), r(P.z)], y: r(walk ? g.player.yaw : v.yaw), v: Math.round(walk ? g.player.speed * 3.6 : v.kmh), r: Math.round(v.engine?.rpm || 0), s: r(v.steerAng || 0), l: lights, m: walk ? 'w' : 'd' };
+      this.seq = (this.seq || 0) + 1;
+      const msg = { q: this.seq, p: [r(P.x), r(P.y), r(P.z)], y: r(walk ? g.player.yaw : v.yaw), v: Math.round(walk ? g.player.speed * 3.6 : v.kmh), r: Math.round(v.engine?.rpm || 0), s: r(v.steerAng || 0), l: lights, m: walk ? 'w' : 'd' };
       if (walk) { msg.cp = [r(v.pos.x), r(v.pos.y), r(v.pos.z)]; msg.cy = r(v.yaw); }
       try { this._sendSt(msg); } catch {}
       this.relayT = (this.relayT || 0) - 1 / SEND_HZ; if (this.relayT <= 0 && this.relay) { this.relayT = 1 / 12; this.relay.send('s', msg); } // relay at 12 Hz
@@ -223,6 +225,13 @@ export class Online {
         if (m && p.cp) { m.root.visible = true; m.root.position.copy(p.cp); m.root.rotation.y = p.cy; m.update(dt, { steer: 0, spin: [0, 0, 0, 0], susp: [0, 0, 0, 0], pitch: 0, roll: 0 }); }
       }
       if (!p.snd && m && g.audio?.ready) p.snd = g.audio.createEngine(CAR_BY_ID[p.info.c], { lod: 'lite' });
+      const hornOn = !!(p.lights & 32) && now - p.recv < 600; if (hornOn !== !!p.hornOn) { p.hornOn = hornOn; try { p.snd?.horn?.(hornOn); } catch {} }
+      // v2.15.6 player-vs-player contact: each client pushes only its own car out of the other car (symmetric, no authority needed)
+      const me = g.vehicle; if (p.mode === 'd' && g.mode === 'drive' && me && now - p.recv < 1000) {
+        const dx = me.pos.x - p.pos.x, dz = me.pos.z - p.pos.z, d = Math.hypot(dx, dz), R = 2.3;
+        if (d < R && d > 0.01 && Math.abs(me.pos.y - p.pos.y) < 2) { const nx = dx / d, nz = dz / d, ov = R - d; me.pos.x += nx * ov; me.pos.z += nz * ov;
+          const fx = Math.sin(me.yaw), fz = Math.cos(me.yaw), into = -(fx * nx + fz * nz) * Math.sign(me.vx || 1); if (into > 0.2) me.vx *= 0.55;
+          if (!p.bumpT || now - p.bumpT > 700) { p.bumpT = now; try { g.audio?.sfx?.('crash', { gain: Math.min(1, Math.abs(me.vx) / 15 + 0.2) }); } catch {} } } }
       p.snd?.update({ rpm: p.rpm, throttle: p.kmh > 2 ? 0.4 : 0, load: 0.3, running: p.rpm > 300, cranking: false, boost: 0, speed: p.kmh / 3.6, slip: 0, position: p.mode === 'w' && p.cp ? p.cp : p.pos, interior: false, openness: 1 });
     }
   }

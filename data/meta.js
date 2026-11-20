@@ -1,8 +1,16 @@
 // Shared game metadata: version, changelog, regions. Update VERSION + CHANGELOG on every release.
-export const GAME = { title: 'MIDNIGHT JAPAN', titleJa: 'ミッドナイト・ジャパン', version: '2.15.5', build: '2026.11.20' };
+export const GAME = { title: 'MIDNIGHT JAPAN', titleJa: 'ミッドナイト・ジャパン', version: '2.15.6', build: '2026.11.20' };
 
 // Newest first. type: new | change | fix | known
 export const CHANGELOG = [
+  {
+    version: '2.15.6', date: '2026-11-20', codename: 'Bumper to Bumper',
+    summary: { ko: '멀티플레이 강화: 중계 서버 여러 곳에 동시 접속(서로 다른 서버에 붙어도 만남), 중복 메시지 제거, 플레이어끼리 충돌, 상대 경적 소리.', ja: 'マルチプレイ強化：複数の中継サーバーに同時接続（別サーバーでも会える）、重複メッセージ除去、プレイヤー同士の接触、相手のクラクション音。', en: 'Multiplayer: relays on several brokers at once (players on different brokers still meet), duplicate filtering, player-vs-player contact, other players\' horns.' },
+    items: [
+      { type: 'fix', ko: '첫 중계 서버가 응답 없으면 플레이어마다 다른 서버로 흩어져 못 만나던 문제 — 모든 중계 서버에 동시에 연결', ja: '最初の中継サーバーが応答しないとプレイヤーごとに別サーバーへ散らばり会えなかった問題 — 全中継サーバーへ同時接続', en: 'If the first relay broker was down players scattered to different brokers and never met — now connected to all at once' },
+      { type: 'new', ko: '플레이어 차끼리 부딪히면 밀려나고 충돌음, 상대가 경적을 울리면 들림', ja: 'プレイヤー同士の車がぶつかると押し返され衝突音、相手のクラクションが聞こえる', en: 'Player cars bump each other with a crash sound; you hear other players\' horns' },
+    ],
+  },
   {
     version: '2.15.5', date: '2026-11-20', codename: 'Always Connected',
     summary: { ko: '어떤 네트워크에서도 만나도록 중계(MQTT) 예비 경로 추가, 상대 이름표 크기 버그 수정, 일본 전역 지도를 게임답게 단순화.', ja: 'どんなネットワークでも会えるよう中継（MQTT）の予備経路を追加、相手の名札サイズのバグ修正、日本全国マップをゲームらしくシンプルに。', en: 'Relay (MQTT) fallback so players meet on any network, fixed tiny remote name tags, cleaner game-style all-Japan map.' },
