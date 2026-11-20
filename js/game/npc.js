@@ -1,7 +1,8 @@
 // People at the meet: drivers get out of their cars, chat, take photos, crouch at wheels, buy drinks,
 // smoke only in the smoking area, and walk back when their car leaves. Restricted areas are never entered.
 import * as THREE from 'three';
-import { createHuman, randomOutfit } from './humans.js';
+import { randomOutfit } from './humans.js';
+import { createPerson, loadPeople, peopleReady, peopleFailed, peopleFrame } from './people.js';
 import { PA_RECT } from './roads.js';
 
 const rnd = Math.random;
@@ -23,7 +24,7 @@ export const CHATTER = [
 export class NPCs {
   constructor(game) {
     this.g = game; this.people = []; this.max = { low: 16, medium: 34, high: 56, ultra: 80 }[game.quality] ?? 34;
-    this.cache = [];
+    this.cache = []; this.born = performance.now(); loadPeople();
   }
   canWalk(x, z) { return this.g.world.canWalk(x, z) && !this.blocked(x, z); }
   blocked(x, z, r = 0.35) {
@@ -45,9 +46,11 @@ export class NPCs {
   }
   spawn(pos, opts = {}) {
     if (this.people.length >= this.max) return null;
+    // v2.16: realistic people only — wait for them to load (the procedural human is the fallback if they never do)
+    if (!peopleReady() && !peopleFailed() && performance.now() - this.born < 25000) return null;
     const outfit = opts.outfit || randomOutfit();
     let h;
-    try { h = createHuman(outfit); } catch (e) { console.warn('human', e); return null; }
+    try { h = createPerson({ outfit, type: opts.role === 'visitor' ? 'casual' : 'driver', sex: outfit.body }); } catch (e) { console.warn('human', e); return null; }
     h.object.position.copy(pos);
     this.g.scene.add(h.object);
     const p = { h, pos: h.object.position, yaw: opts.yaw ?? rnd() * 6.28, state: 'idle', action: 'idle', t: 0, wait: 2 + rnd() * 6, target: null, speed: 0, car: opts.car || null, ...opts };
@@ -99,6 +102,7 @@ export class NPCs {
   }
 
   update(dt) {
+    peopleFrame(this.g);
     const focus = this.g.focus;
     // ambient population: a few staff / visitors around the building
     if (this.people.length < this.max * 0.35 && rnd() < dt * 0.5) {

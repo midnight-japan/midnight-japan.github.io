@@ -6,6 +6,7 @@ import { CARS, CAR_BY_ID } from '../../data/cars.js';
 import { buildCarAuto, requestGlb, glbEntry } from './carfactory.js';
 import { PA_RECT, PA, PA_LAYOUT } from './roads.js';
 import { STANCE_PRESETS, defaultStance } from './carmodel.js';
+import { createDriver, peopleReady, loadPeople } from './people.js';
 
 const _pa = new THREE.Vector3(), _pb = new THREE.Vector3();
 const clamp = (x, a, b) => Math.max(a, Math.min(b, x));
@@ -81,6 +82,9 @@ export class Traffic {
   }
   // v2.10: a driver at the wheel of every moving NPC car (seated torso + head, a few outfits; hidden when parked)
   driverFor(ai) {
+    // v2.16: a realistic person posed at the wheel (js/game/people.js); the simple dummy below only while they load
+    const c0 = ai.car, big0 = c0.cat === 'traffic' && (c0.id === 'bus' || c0.id === 'truck');
+    if (!big0) { const real = createDriver(); if (real) { const hw = c0.W / 2000; real.position.set(-Math.min(0.38, hw * 0.48) * (c0.lhd ? -1 : 1), Math.max(0.2, c0.H / 1000 * 0.2), -c0.wb / 1000 * 0.12); real.userData.real = true; return real; } } else loadPeople();
     if (!this._drv) { const skin = [0xe8c4a4, 0xd9b08c, 0xc8956e].map(c => new THREE.MeshStandardMaterial({ color: c, roughness: 0.7 })), shirt = [0x1c2433, 0xe8e8e4, 0x2b2b2e, 0x4a5a7a, 0x6b2a2a, 0x3c4a3a, 0x8a8a90].map(c => new THREE.MeshStandardMaterial({ color: c, roughness: 0.85 })), hair = new THREE.MeshStandardMaterial({ color: 0x15120f, roughness: 0.8 });
       const torso = new THREE.CylinderGeometry(0.15, 0.19, 0.5, 10); torso.translate(0, 0.25, 0); torso.scale(1.25, 1, 0.75);
       const head = new THREE.SphereGeometry(0.095, 14, 10); head.scale(0.92, 1.1, 1); head.translate(0, 0.66, 0.01);
@@ -250,7 +254,7 @@ export class Traffic {
     let ph = null;
     if (player) ph = this.net.hits(player.pos.x, player.pos.z).filter(h => h.inside && Math.abs(h.y - player.pos.y) < 2);
     for (const ai of this.cars) {
-      if (ai.seatD) ai.seatD.visible = ai.mode !== 'parked' && !ai.accident; // v2.10: seat empty when parked
+      if (ai.seatD) ai.seatD.visible = ai.mode !== 'parked' && !ai.accident && !ai.driverOut; // v2.10: seat empty when parked
       if (ai.model.isGlb && this.g.camera) { const cp = this.g.camera.position, dd = (ai.pos.x - cp.x) ** 2 + (ai.pos.z - cp.z) ** 2, R = (this.g.quality === 'low' ? 350 : this.g.quality === 'medium' ? 600 : 900) * (this.visScale || 1); ai.model.root.visible = dd < R * R; } // v2.11: far cars are a few pixels — not drawn
       ai.t += dt;
       if (ai.mode === 'road') this.driveRoad(ai, dt, byLane, ph, player);
@@ -273,6 +277,8 @@ export class Traffic {
       ai.beam.visible = L.head;
       if (this.g.frame % 2 === 0 || ai.near) m.update(dt * 2, { steer: ai.steer || 0, spin: [ai.spin, ai.spin, ai.spin, ai.spin] });
     }
+    // v2.16: swap the stand-in dummies for realistic drivers once the people models are in (a few per frame)
+    if (peopleReady() && (this._drvT = (this._drvT || 0) - dt) <= 0) { this._drvT = 1; let n = 0; for (const ai of this.cars) if (ai.seatD && !ai.seatD.userData.real && !(ai.car.cat === 'traffic' && (ai.car.id === 'bus' || ai.car.id === 'truck')) && n++ < 6) this.seatDriver(ai); }
     // spawn management
     this.spawnT -= dt;
     if (this.spawnT <= 0) { this.spawnT = 1.2; this.manage(); }
@@ -527,7 +533,7 @@ export class Traffic {
     const net = this.world.city?.net; if (!net || !net.chains.size) return;
     const f = this.g.focus; const city = this.cars.filter(c => c.mode === 'city');
     // recycle far / orphaned cars to new spots near the player
-    for (const ai of city) if (ai.c.dead || Math.hypot(ai.pos.x - f.x, ai.pos.z - f.z) > 650 || ai.stuck > 25) this.placeCity(ai, net, f);
+    for (const ai of city) if (!ai.incident && (ai.c.dead || Math.hypot(ai.pos.x - f.x, ai.pos.z - f.z) > 650 || ai.stuck > 25)) this.placeCity(ai, net, f);
     // cars only appear when the player is near the city streets
     const nearStreet = net.randomNear(f.x, f.z, 0, 400);
     if (!nearStreet) return;
@@ -631,6 +637,7 @@ export class Traffic {
   }
 
   // collisions with the player (circle approximations)
+  // v2.16: the NPC car takes the damage (accidents.wreck), the player's car none — no v.lastHit, so main.js does not dent it
   collidePlayer(v) {
     if (!v) return;
     const pr = v.car.W / 2000, pL = v.car.L / 2000, f = v.forward;
@@ -648,7 +655,7 @@ export class Traffic {
           v.pos.x += nx * pen * heavy; v.pos.z += nz * pen * heavy;
           if (ai.mode === 'road' || ai.mode === 'city') ai.v *= 0.7; else { ai.pos.x -= nx * pen * (1 - heavy); ai.pos.z -= nz * pen * (1 - heavy); }
           const rel = (v.vel.x - af.x * ai.v) * nx + (v.vel.z - af.z * ai.v) * nz;
-          if (rel < 0) { v.vel.x -= nx * rel * 1.2; v.vel.z -= nz * rel * 1.2; v.vx = v.vel.dot(v.forward); v.vlat = v.vel.dot(v.left); if (rel < -2) { v.events.push('crash'); const hit = { x: (px + qx) / 2, z: (pz + qz) / 2, y: v.pos.y + 0.6, vin: -rel, t: performance.now() }; v.lastHit = hit; this.g.fx?.damage(ai.model, hit, -rel, true); } ai.hitBy = this.t; }
+          if (rel < 0) { v.vel.x -= nx * rel * 1.2; v.vel.z -= nz * rel * 1.2; v.vx = v.vel.dot(v.forward); v.vlat = v.vel.dot(v.left); if (rel < -2) { v.events.push('crash'); const hit = { x: (px + qx) / 2, z: (pz + qz) / 2, y: v.pos.y + 0.6, vin: -rel, t: performance.now() }; ai.lastHit = hit; if (this.g.accidents?.wreck) this.g.accidents.wreck(ai, hit, -rel); else this.g.fx?.damage(ai.model, hit, -rel, true); } ai.hitBy = this.t; }
         }
       }
     }

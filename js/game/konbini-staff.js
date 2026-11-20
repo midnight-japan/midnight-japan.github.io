@@ -3,7 +3,8 @@
 // uniform restocks the shelves — walks an aisle, crouches at a shelf, faces the products up, moves on.
 // Built only while you are near the PA (two animated humans, nothing elsewhere).
 import * as THREE from 'three';
-import { createHuman, randomOutfit } from './humans.js';
+import { randomOutfit } from './humans.js';
+import { createPerson, peopleReady, peopleFailed, loadPeople } from './people.js';
 
 const UNI = ['#2f6fb5', '#2f6fb5', '#2f6fb5']; // LAWSON blue striped uniform
 function staffOutfit(seed) {
@@ -16,7 +17,7 @@ export class KonbiniStaff {
   constructor(game) { this.g = game; this.on = false; this.t = 0; }
   build() {
     const g = this.g, K = g.world.konbiniStaff; if (!K) return false;
-    const mk = seed => { try { const h = createHuman(staffOutfit(seed)); g.scene.add(h.object); return h; } catch { return null; } };
+    const mk = seed => { try { const h = createPerson({ outfit: staffOutfit(seed), id: seed === 4021 ? 'kana' : 'shun', mirror: false }); g.scene.add(h.object); return h; } catch { return null; } };
     this.clerk = { h: mk(4021), pos: K.counter.clone(), yaw: yawTo(K.counter, K.customer), act: 'idle', actT: 0 };
     const a0 = K.aisles[1]; this.stock = { h: mk(9157), pos: a0.a.clone(), yaw: 0, path: [], act: 'walk', wait: 0, aisle: 1 };
     this.on = true; return true;
@@ -27,6 +28,7 @@ export class KonbiniStaff {
   update(dt, focus) {
     const g = this.g, W = g.world, K = W.konbiniStaff; if (!K || !focus) return;
     const near = focus.distanceTo(K.counter) < 140;
+    if (near && !this.on && !peopleReady() && !peopleFailed()) { loadPeople(); return; } // v2.16: build with the realistic staff once loaded
     if (near && !this.on) this.build(); else if (!near && this.on) this.destroy();
     if (!this.on) return;
     const p = g.player?.pos, inStore = g.mode === 'walk' && p && W.konbini && p.x > W.konbini.x0 && p.x < W.konbini.x1 && p.z > W.konbini.z0 && p.z < W.konbini.z1;

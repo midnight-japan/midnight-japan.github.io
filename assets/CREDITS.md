@@ -159,3 +159,59 @@ Third-party models from Sketchfab, all modified for this game (merged into one m
 | `tree_maple` | Japanese Maple | endlessvoidmc | https://sketchfab.com/3d-models/003c6ab20e644655ba36fe54cb04765b | [CC BY 4.0](https://creativecommons.org/licenses/by/4.0/) |
 
 Map tiles: 地理院タイル (GSI Japan, https://maps.gsi.go.jp/development/ichiran.html), used with attribution.
+
+## Sunflowers, fuel dispensers, guard rails (v2.16)
+
+Third-party models from Sketchfab, modified for this game with `tools/prop-bake.mjs` (merged into one mesh + one WebP texture atlas, rescaled to metres, simplified, meshopt-compressed; the guard rail's galvanised texture repainted white; in game the dispenser's red trim is recoloured to the station brand colour and the sunflower's petals / leaves are recoloured by season), in `assets/models/props/`.
+
+| file | title | author | source | license |
+|---|---|---|---|---|
+| `sunflower`, `sunflower_lo` | Sunflower | zvanstone | https://sketchfab.com/3d-models/3a9514b8df044abe809432201b8f1c6e | [CC BY 4.0](https://creativecommons.org/licenses/by/4.0/) |
+| `pump` | gas pump | kunkun (youoyouyou) | https://sketchfab.com/3d-models/add0f902b9164718bd0540e88bf9927e | [CC BY 4.0](https://creativecommons.org/licenses/by/4.0/) |
+| `rail_w` | GuardRail and Terminal (rail panel only) | xplanepilot | https://sketchfab.com/3d-models/693dee3dc6a1495f90ab0ba1f8237cb4 | [CC BY 4.0](https://creativecommons.org/licenses/by/4.0/) |
+
+## More sound effects (v2.16)
+
+CC0 recordings from freesound.org (trimmed, made mono or looped with a crossfade, re-encoded), in `assets/audio/sfx/`.
+
+| file | title | author | source | license |
+|---|---|---|---|---|
+| `sfx/vending` | Vending machine | Emma7073 | https://freesound.org/people/Emma7073/sounds/250194/ | [CC0 1.0](https://creativecommons.org/publicdomain/zero/1.0/) |
+| `sfx/crow` | crow.wav | nigelcoop | https://freesound.org/people/nigelcoop/sounds/75162/ | [CC0 1.0](https://creativecommons.org/publicdomain/zero/1.0/) |
+| `sfx/wings` | Pigeons flying | mcmikai | https://freesound.org/people/mcmikai/sounds/532180/ | [CC0 1.0](https://creativecommons.org/publicdomain/zero/1.0/) |
+| `sfx/crash_metal` | Car Crash | squareal | https://freesound.org/people/squareal/sounds/237375/ | [CC0 1.0](https://creativecommons.org/publicdomain/zero/1.0/) |
+| `sfx/trunk_close` | CarBootClose.wav | jmdh | https://freesound.org/people/jmdh/sounds/136535/ | [CC0 1.0](https://creativecommons.org/publicdomain/zero/1.0/) |
+| `sfx/ui_select` | User Interface Elegant Wooden Confirmation Sound | qubodup | https://freesound.org/people/qubodup/sounds/822568/ | [CC0 1.0](https://creativecommons.org/publicdomain/zero/1.0/) |
+| `sfx/rain_out` (loop) | Light Rain | soundrecorder7 | https://freesound.org/people/soundrecorder7/sounds/167034/ | [CC0 1.0](https://creativecommons.org/publicdomain/zero/1.0/) |
+| `sfx/rain_roof` (loop) | Ambiance_Rain_Inside_Car_Close_Roof_Loop_Stereo.wav | Nox_Sound | https://freesound.org/people/Nox_Sound/sounds/535870/ | [CC0 1.0](https://creativecommons.org/publicdomain/zero/1.0/) |
+| `sfx/crickets` (loop) | AMBIENCE NIGHT FIELD CRICKET 01.wav | sengjinn | https://freesound.org/people/sengjinn/sounds/175020/ | [CC0 1.0](https://creativecommons.org/publicdomain/zero/1.0/) |
+
+## People, animations & ambulance (v2.16)
+
+Rigged / animated people and vehicles from Sketchfab, all [CC BY 4.0](https://creativecommons.org/licenses/by/4.0/), in `assets/models/people/`. Modified: optimized (joints renamed, meshes joined into one skinned mesh with one WebP texture atlas, simplified to ~9–10k triangles, meshopt-compressed; animation files reduced to the skeleton + one clip, which `js/game/people.js` retargets onto every character) with `tools/people-bake.mjs`; the ambulance and stretcher merged into one mesh each with `tools/prop-bake.mjs`.
+
+| file | title | author | source | license |
+|---|---|---|---|---|
+| `shun`, `a_walk_m` | Walk-japanese-man | ddd (endonoriko) | https://sketchfab.com/3d-models/76b94edd6770459b8ae144ba11135775 | CC BY 4.0 — modified: optimized |
+| `a_talk_m` | Talk-japanese-man | ddd (endonoriko) | https://sketchfab.com/3d-models/d2b53829ea1749c9b4d0c2fceaf9fc41 | CC BY 4.0 — modified: optimized |
+| `a_lying` | Lyingfbx-japanese-man | ddd (endonoriko) | https://sketchfab.com/3d-models/4ddc779989424e5981d49d1fa1349996 | CC BY 4.0 — modified: optimized |
+| `kana`, `a_walk_f` | Free 018 Kana Walk | ddd (endonoriko) | https://sketchfab.com/3d-models/f465652729944a66aed790cd88fa0b0f | CC BY 4.0 — modified: optimized |
+| `a_talk_f` | Free 018 Kana Talk | ddd (endonoriko) | https://sketchfab.com/3d-models/0cb49eca498e4ce1b44d271a98d07148 | CC BY 4.0 — modified: optimized |
+| `a_phone` | Free 018 Kana Tablet | ddd (endonoriko) | https://sketchfab.com/3d-models/9da9099962e946a185cbc71d7754f034 | CC BY 4.0 — modified: optimized |
+| `a_sit` | Free 018 Kana Sitting | ddd (endonoriko) | https://sketchfab.com/3d-models/993eaa99578640e98dce99e40c8b5b5c | CC BY 4.0 — modified: optimized |
+| `eric` | Eric Rigged 001 - Rigged 3D Business Man | Renderpeople | https://sketchfab.com/3d-models/a46bc9f67aaa415bb4f3241eef900e7f | CC BY 4.0 — modified: optimized |
+| `carla` | Carla Rigged 001 - Rigged 3D Business Women | Renderpeople | https://sketchfab.com/3d-models/acf520f450d14dd799f98a6fede3edf5 | CC BY 4.0 — modified: optimized |
+| `claudia` | Claudia Rigged 002 - 3D Rigged Business Women | Renderpeople | https://sketchfab.com/3d-models/c659bd0accab47c6bbe390cf822a2b92 | CC BY 4.0 — modified: optimized |
+| `nathan`, `a_walk_rp` | Nathan Animated 003 - Walking 3D Man | Renderpeople | https://sketchfab.com/3d-models/143a2b1ea5eb4385ae90a73657aca3bc | CC BY 4.0 — modified: optimized |
+| `sophia`, `a_idle_f` | Sophia Animated 003 - Animated 3D Woman | Renderpeople | https://sketchfab.com/3d-models/dc448c3be0e74f96a55fb475a13433cf | CC BY 4.0 — modified: optimized |
+| `manuel` | Manuel Animated 001 - 3D Dancing Man | Renderpeople | https://sketchfab.com/3d-models/e65e0fef4e0743868c8d5bff36d61116 | CC BY 4.0 — modified: optimized |
+| `yuto`, `a_idle_m` | Standing Man | zhuoyi0904 | https://sketchfab.com/3d-models/8401da7cb2564fc08681836cbeff39bc | CC BY 4.0 — modified: optimized |
+| `a_argue` | Asian Man Standing Arguing | Nabilahrahim | https://sketchfab.com/3d-models/c54e1838f86e4c4bba7e8e75ae967930 | CC BY 4.0 — modified: optimized (animation only) |
+| `a_run` | Pengawal Running | Nabilahrahim | https://sketchfab.com/3d-models/722b9c55842a47bf97dedaa2ef26ddb3 | CC BY 4.0 — modified: optimized (animation only) |
+| `a_hit` | Militar Hit Reaction | informatica e manutenção (nunoreis79) | https://sketchfab.com/3d-models/4b3e96ee86014b21a09055820c98d75b | CC BY 4.0 — modified: optimized (animation only) |
+| `a_wave` | Waving | wumpalump | https://sketchfab.com/3d-models/0fea625e330a4c0f85b8e5f06079bbf2 | CC BY 4.0 — modified: optimized (animation only) |
+| `a_kneel` | Kneeling Inspecting | Appsbypaulhamilton | https://sketchfab.com/3d-models/838bd6d1201542ada49c5d8c3fc05a04 | CC BY 4.0 — modified: optimized (animation only) |
+| `a_drive` | Driving | Jean (2532272) | https://sketchfab.com/3d-models/748304ef4e46422aae0fb38010cc451d | CC BY 4.0 — modified: optimized (animation only) |
+| `ambulance` | Japanese Ambulance Van | Pavel Gorbachev (paul_sawyer_11) | https://sketchfab.com/3d-models/8785bdc40ea64f19907bcefe86aabb11 | CC BY 4.0 — modified: optimized |
+| `stretcher` | Hospital Stretcher | Gunnar Correa (gunnarcorrea) | https://sketchfab.com/3d-models/a74239ec0dfe454a906c339071855d87 | CC BY 4.0 — modified: optimized |
+| `bicycle` | Old red bicycle | patrakeevasveta | https://sketchfab.com/3d-models/577376dfd2f142359dbac143a49a2489 | CC BY 4.0 — modified: optimized |

@@ -1389,6 +1389,15 @@ const ACTIONS = {
     p.neckX = lerp(0.05, -0.32, up); p.spineX = lerp(0.02, -0.06, up);
     return p;
   },
+  // v2.16: a cartoon open-hand slap (state.t 0→1: wind-up, swing across, follow-through)
+  slap(c, p) {
+    poseStand(c, p);
+    const t = clamp(c.t, 0, 1), up = sstep(0, 0.3, t), sw = sstep(0.3, 0.5, t), back = sstep(0.75, 1, t);
+    p.rShZ = (1.25 * up - 0.2 * sw) * (1 - back); p.rShX = (-0.55 * up - 0.5 * sw) * (1 - back);
+    p.rShY = (-0.7 * up + 1.6 * sw) * (1 - back); p.rElX = (-1.1 * up + 0.85 * sw) * (1 - back); p.rElY = 0;
+    p.spineY = (0.3 * up - 0.55 * sw) * (1 - back); p.hipsY = (0.08 * up - 0.12 * sw) * (1 - back);
+    return p;
+  },
   wave(c, p) {
     poseStand(c, p);
     const t = c.time + c.seed;
@@ -1522,8 +1531,11 @@ class Human {
     this.lookTarget.copy(target);
   }
 
+  /** v2.16: play an action for dur seconds on top of whatever the owner asks for (the player's slap) */
+  playOnce(action, dur) { this.override = { action, dur, t: dur }; }
   update(dt, state = {}) {
     dt = Math.min(dt || 0, 0.1);
+    if (this.override) { this.override.t -= dt; if (this.override.t <= 0) this.override = null; else state = { ...state, speed: 0, action: this.override.action, t: 1 - this.override.t / this.override.dur }; }
     const speed = Math.max(0, state.speed || 0);
     let action = state.action || (speed > 0.15 ? 'walk' : 'idle');
     if (!ACTIONS[action]) action = 'idle';

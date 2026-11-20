@@ -301,7 +301,10 @@ function smp(a, dest, t, name, o = {}) {
 }
 const SFX_FILES = ['tire_squeal', 'tire_scrub', 'road', 'wind', 'backfire', 'bov', 'pops', 'door_close', 'door_close_in', 'handbrake', 'blink_on', 'blink_off', 'ui_click', 'shift',
   // v1.1.1: recorded (CC0) replacements for the synthesised horn, starter, crash, door and blow-off, and a real night-city bed
-  'pssh.mp3', 'hiss.mp3', 'horn.mp3', 'starter.mp3', 'crash_big.mp3', 'crash_hit.mp3', 'door_open.mp3', 'city_night.mp3'];
+  'pssh.mp3', 'hiss.mp3', 'horn.mp3', 'starter.mp3', 'crash_big.mp3', 'crash_hit.mp3', 'door_open.mp3', 'city_night.mp3',
+  // v2.16: more CC0 recordings in place of synthesis — vending machine, crows, pigeons, a second crash, boot lid, menu
+  // confirm, rain (outside + on the roof inside the car) and a night field-cricket bed (assets/CREDITS.md)
+  'vending.mp3', 'crow.mp3', 'wings.mp3', 'crash_metal.mp3', 'trunk_close.mp3', 'ui_select.mp3', 'rain_out', 'rain_roof', 'crickets'];
 
 // FM bell (store chime, coin, …)
 function bell(a, dest, t, f, gain, decay, ratio = 3.5, idx = 1.5) {
@@ -354,6 +357,7 @@ const SFX = {
     return nz(a, d, t + 0.08, { f: 3400, f2: 2600, q: 1.4, gain: 0.05, attack: 0.08, hold: 0.25, decay: 0.12 });
   },
   trunk_close(a, d, t) {
+    { const e = smp(a, d, t, 'trunk_close', { gain: 0.9, rate: 0.96 + Math.random() * 0.08 }); if (e) return e; }
     const e = smp(a, d, t, 'door_close', { gain: 0.85, rate: 0.82 + Math.random() * 0.06, lp: 3500 });
     if (e) { tn(a, d, t, { f: 60, f2: 36, gain: 0.4, decay: 0.09, glide: 0.12 }); return e; }
     tn(a, d, t, { f: 66, f2: 38, gain: 0.85, decay: 0.11, glide: 0.14 });
@@ -442,6 +446,7 @@ const SFX = {
     return nz(a, d, t, { type: 'highpass', f: 4000, gain: 0.06, decay: 0.003 });
   },
   ui_select(a, d, t) {
+    { const e = smp(a, d, t, 'ui_select', { gain: 0.6 }); if (e) return e; }
     tn(a, d, t, { type: 'triangle', f: 880, gain: 0.14, decay: 0.04 });
     return tn(a, d, t + 0.06, { type: 'triangle', f: 1318.5, gain: 0.14, decay: 0.09 });
   },
@@ -468,6 +473,8 @@ const SFX = {
     return nz(a, d, t + 0.01, { type: 'highpass', f: 3500, gain: 0.04 + r * 0.03, decay: 0.015 });
   },
   crash(a, d, t) {
+    // v2.16: two recordings, alternated at random (metal crunch / crash with glass)
+    if (Math.random() < 0.45) { const e = smp(a, d, t, 'crash_metal', { dur: 3.2, gain: 1.0, rate: 0.95 + Math.random() * 0.1 }); if (e) { smp(a, d, t, 'crash_hit', { gain: 0.7 }); tn(a, d, t, { f: 62, f2: 30, gain: 0.6, decay: 0.14, glide: 0.4 }); return e; } }
     { const e = smp(a, d, t, 'crash_big', { offset: 0, dur: 2.1, gain: 1.0, rate: 0.95 + Math.random() * 0.1 }); if (e) { smp(a, d, t, 'crash_hit', { gain: 0.8 }); tn(a, d, t, { f: 62, f2: 30, gain: 0.6, decay: 0.14, glide: 0.4 }); return e; } }
     tn(a, d, t, { f: 70, f2: 32, gain: 0.9, decay: 0.15, glide: 0.4 });
     nz(a, d, t, { type: 'lowpass', f: 900, gain: 0.75, decay: 0.12, noise: 'brown' });
@@ -494,6 +501,7 @@ const SFX = {
     return nz(a, d, t + 0.25, { f: 1600, q: 1, gain: 0.06, attack: 0.02, hold: 0.15, decay: 0.05 });
   },
   vending(a, d, t) {
+    { const e = smp(a, d, t, 'vending', { gain: 0.9 }); if (e) { tn(a, d, t, { type: 'square', f: 1046, gain: 0.04, attack: 0.003, hold: 0.07, decay: 0.01, lp: 3000 }); return e; } } // button beep + real machine / can drop
     tn(a, d, t, { type: 'square', f: 1046, gain: 0.05, attack: 0.003, hold: 0.07, decay: 0.01, lp: 3000 });
     tn(a, d, t + 0.15, { type: 'sawtooth', f: 90, f2: 100, glide: 0.4, gain: 0.05, attack: 0.03, hold: 0.35, decay: 0.03, lp: 400 });
     for (const [k, g] of [[0.6, 1], [0.95, 0.55]]) {
@@ -505,10 +513,12 @@ const SFX = {
   },
   // v2.13.7 wildlife: a flock of pigeons taking off (rapid wing claps) and a crow's caw (two harsh nasal calls)
   wings(a, d, t) {
+    { const e = smp(a, d, t, 'wings', { gain: 0.8, rate: 0.92 + Math.random() * 0.16 }); if (e) return e; }
     let end = t; for (let k = 0; k < 9; k++) end = nz(a, d, t + k * 0.055 + Math.random() * 0.02, { f: 900 + Math.random() * 500, q: 0.9, gain: 0.16 * (1 - k / 12), attack: 0.004, decay: 0.03 });
     return end;
   },
   crow(a, d, t) {
+    { const e = smp(a, d, t, 'crow', { gain: 0.7, rate: 0.93 + Math.random() * 0.12, dur: 1 + Math.random() * 2.6 }); if (e) return e; }
     let end = t; for (const k of [0, 0.42]) { tn(a, d, t + k, { type: 'sawtooth', f: 560, f2: 470, gain: 0.07, attack: 0.02, decay: 0.24, glide: 0.25 }); end = nz(a, d, t + k, { f: 1150, q: 3, gain: 0.08, attack: 0.02, decay: 0.22 }); }
     return end;
   },
@@ -1544,6 +1554,7 @@ export class GameAudio {
       if (e.inCity !== undefined) E.inCity = clamp(num(e.inCity, 0), 0, 1);
       if (e.rain !== undefined) E.rain = clamp(num(e.rain, 0), 0, 1);
       if (e.inside !== undefined) E.inside = !!e.inside;
+      if (e.winter !== undefined) E.winter = !!e.winter; // v2.16: no crickets in winter (optional; main.js may pass it)
       if (e.chime !== undefined) { E.chime = e.chime | 0; E.chimeVol = clamp(num(e.chimeVol, 0), 0, 1); }
     } catch (x) { this._err(x); }
   }
@@ -1767,7 +1778,17 @@ export class GameAudio {
     sp(A.wind.gain, wTot * (A.windS ? 0.35 : 1), t, 0.15);
     sv(A.windBP.frequency, 350 + 900 * Math.min(w, 1) + A.gust * 200, 0.03);
     sp(A.rum.gain, Math.min(0.35, 0.22 * w * w) * (1 + A.gust), t, 0.15);
-    sp(A.rain.gain, E.rain * (E.inside ? 0.05 : 0.2), t, 0.5); sp(A.roof.gain, E.rain * (E.inside ? 0.12 : 0.02), t, 0.5);
+    // v2.16: recorded rain loops (outside / drumming on the roof inside the car) replace most of the filtered noise
+    if (!A.recRain && this.banks?.get('rain_out') && this.banks?.get('rain_roof')) {
+      const loop = (name, lp) => { const src = ctx.createBufferSource(), g = ctx.createGain(), f = ctx.createBiquadFilter(); src.buffer = this.banks.get(name); src.loop = true; f.type = 'lowpass'; f.frequency.value = lp; g.gain.value = 0; src.connect(f); f.connect(g); g.connect(A.out); src.start(t, Math.random() * 10); return { src, g, f }; };
+      A.recRain = { out: loop('rain_out', 12000), roof: loop('rain_roof', 9000) };
+    }
+    const RR = A.recRain ? 1 : 0;
+    sp(A.rain.gain, E.rain * (E.inside ? 0.05 : 0.2) * (1 - 0.85 * RR), t, 0.5); sp(A.roof.gain, E.rain * (E.inside ? 0.12 : 0.02) * (1 - 0.85 * RR), t, 0.5);
+    if (RR) { sp(A.recRain.out.g.gain, E.rain * (E.inside ? 0.12 : 0.55), t, 0.5); sv(A.recRain.out.f.frequency, E.inside ? 1800 : 12000, 0.1); sp(A.recRain.roof.g.gain, E.rain * (E.inside ? 0.5 : 0.04), t, 0.5); }
+    // v2.16: night field crickets (recorded bed) away from the city centre and the sea, not in winter (no insects)
+    if (!A.crick && this.banks?.get('crickets')) { const src = ctx.createBufferSource(); src.buffer = this.banks.get('crickets'); src.loop = true; A.crick = ctx.createGain(); A.crick.gain.value = 0; src.connect(A.crick); A.crick.connect(A.out); src.start(t, Math.random() * 20); }
+    if (A.crick) sp(A.crick.gain, (E.winter ? 0 : 1) * Math.max(0, n - 0.3) * (1 - Math.min(1, E.inCity * 1.4)) * (E.nearSea ? 0.4 : 1) * (E.inside ? 0.12 : 0.35), t, 1.5);
     const ci = E.inCity;
     if (!A.cityRecOn && this.banks?.get('city_night')) { const src = this.ctx.createBufferSource(); src.buffer = this.banks.get('city_night'); src.loop = true; src.loopStart = 1; src.loopEnd = Math.max(2, src.buffer.duration - 1); src.connect(A.cityRec); src.start(t, Math.random() * 20); A.cityRecOn = true; }
     const rec = A.cityRecOn ? 1 : 0, bed = Math.max(ci, E.inPA ? 0.7 : 0);
@@ -1859,6 +1880,7 @@ export class GameAudio {
   }
   _crow() { // ハシブトガラス "kaa… kaa"
     const ctx = this.ctx, t0 = ctx.currentTime + 0.01, d = this._ambDest(Math.random() * 1.6 - 0.8, 3200, 0.03);
+    if (smp(this, d, t0, 'crow', { gain: 1.4, rate: 0.9 + Math.random() * 0.15, dur: 1 + Math.random() * 2.6 })) return; // v2.16 recorded crows
     const k = 2 + Math.floor(Math.random() * 3);
     for (let i = 0; i < k; i++) {
       const t = t0 + i * (0.55 + Math.random() * 0.15);

@@ -5,6 +5,8 @@
 import { HAKONE } from '../../data/map-hakone.js';
 
 const cache = new Map();
+// v2.16: car parks / view points of the lazily loaded regions (region.js) — bays keep away from them too
+export const TOUGE_LOTS = [];
 export function tougeBays(road) {
   if (!road || road.kind !== 'mountain') return [];
   if (cache.has(road)) return cache.get(road);
@@ -13,7 +15,7 @@ export function tougeBays(road) {
     const q = S[i]; if (q.s - last < 650) continue;
     let ok = true; for (let k = i - 7; k <= i + 7; k++) { const g = S[k].grade, t = S[k].t; if (Math.abs(g) > 0.035 || t.x * q.t.x + t.z * q.t.z < 0.985) { ok = false; break; } } if (!ok) continue;
     const off = (hw + 1.7) * side, x = q.p.x + q.left.x * off, z = q.p.z + q.left.z * off;
-    if (HAKONE.lots.some(L => !L.bay && Math.hypot(L.x - x, L.z - z) < 120)) continue;
+    if (HAKONE.lots.some(L => !L.bay && Math.hypot(L.x - x, L.z - z) < 120) || TOUGE_LOTS.some(L => !L.bay && Math.hypot(L.x - x, L.z - z) < 120)) continue;
     out.push({ name: n % 3 === 2 ? '駐車帯' : '非常駐車帯', x, z, y: q.p.y + 0.02, yaw: Math.atan2(q.t.x, q.t.z), l: 26, w: 3.4, bay: true, side, s: q.s }); last = q.s; side = -side; n++;
   }
   cache.set(road, out); return out;

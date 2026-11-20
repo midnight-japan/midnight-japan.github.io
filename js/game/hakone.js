@@ -57,10 +57,11 @@ export class Hakone {
   }
   dem(x, z) { return this.D ? this.grid(this.D, x, z) : 0; }
   nearest(x, z) { let best = null; const cx = Math.floor(x / this.CS), cz = Math.floor(z / this.CS); const S = this.road.samples; for (let a = -1; a <= 1; a++) for (let b = -1; b <= 1; b++) for (const i of this.cell.get((cx + a) + ',' + (cz + b)) || []) { const q = S[i]; const d = (q.p.x - x) ** 2 + (q.p.z - z) ** 2; if (!best || d < best.d) best = { d, i }; } if (best) best.d = Math.sqrt(best.d); return best; }
-  lotAt(x, z) { for (const L of HAKONE.lots) { const dx = x - L.x, dz = z - L.z; if (dx * dx + dz * dz > (L.l + L.w) * (L.l + L.w) * 0.25 + 4) continue; const s = Math.sin(L.yaw), c = Math.cos(L.yaw); const a = dx * s + dz * c, b = dx * c - dz * s; if (Math.abs(a) < L.l / 2 && Math.abs(b) < L.w / 2) return L; } return null; }
+  lotAt(x, z) { if (this.exts) for (const e of this.exts) { const L = e.lotAt(x, z); if (L) return L; } for (const L of HAKONE.lots) { const dx = x - L.x, dz = z - L.z; if (dx * dx + dz * dz > (L.l + L.w) * (L.l + L.w) * 0.25 + 4) continue; const s = Math.sin(L.yaw), c = Math.cos(L.yaw); const a = dx * s + dz * c, b = dx * c - dz * s; if (Math.abs(a) < L.l / 2 && Math.abs(b) < L.w / 2) return L; } return null; }
   // ground height off the road: car parks → their level; the road-side band → the cut/fill slope; else the terrain
   ground(x, z) {
     if (!this.H) return this.road ? this.road.samples[0].p.y : 0;
+    if (this.exts) for (const e of this.exts) { const g = e.groundNear(x, z); if (g !== undefined) return g; } // v2.16: 箱根七曲り (region.js) — its road band and lots
     const L = this.lotAt(x, z); if (L) return L.y;
     const n = this.nearest(x, z);
     if (n && n.d < 34) { const q = this.road.samples[n.i]; const hw = (this.road.edgeL - this.road.edgeR) / 2 + 0.6; const base = q.p.y - 0.35; return n.d < hw ? base : base + (this.dem(x, z) - base) * ss(hw, 30, n.d); } // kept below the deck so the road (and its guardrails) always win
@@ -81,7 +82,7 @@ export class Hakone {
     geo.setAttribute('color', new THREE.BufferAttribute(col, 3)); geo.computeVertexNormals();
     { const uv = geo.attributes.uv; for (let k = 0; k < pos.count; k++) uv.setXY(k, pos.getX(k), pos.getZ(k)); uv.needsUpdate = true; } // v2.8: UVs in metres (the grass texture was stretched over the whole range → flat brown)
     const grass = surface('grass', { tile: 6, tint: 0xffffff }).clone(); grass.vertexColors = true;
-    const terr = new THREE.Mesh(geo, grass); terr.receiveShadow = true; g.add(terr);
+    const terr = new THREE.Mesh(geo, grass); terr.receiveShadow = true; g.add(terr); this.terrain = terr;
     // ── cut / fill slopes along both sides of the road (follow the road exactly, meet the terrain 30 m out) ──
     const S = this.road.samples, hw = (this.road.edgeL - this.road.edgeR) / 2 + 0.55, rows = [0, 2, 5, 9, 15, 22, 30];
     const sp = [], sc = [], si = [];
@@ -186,6 +187,21 @@ export class Hakone {
     this.w.addCollider(bx, bz, 0.45, 2, Math.atan2(t0.x, t0.z), s0.p.y - 1, s0.p.y + 3);
     const roof = new THREE.Mesh(new THREE.BoxGeometry(16, 0.6, 9), new THREE.MeshStandardMaterial({ color: 0xc7262e, roughness: 0.5 })); roof.position.set(s0.p.x, s0.p.y + 5.6, s0.p.z); roof.rotation.y = booth.rotation.y; g.add(roof);
     for (const o of [-7, 7]) { const pl = new THREE.Mesh(new THREE.BoxGeometry(0.5, 5.4, 0.5), conc); pl.position.set(s0.p.x + s0.left.x * o, s0.p.y + 2.7, s0.p.z + s0.left.z * o); g.add(pl); }
+  }
+  // v2.16 — a lazily loaded region inside this terrain (箱根七曲り, region.js): carve the terrain under its roads and lots
+  // (its own cut/fill slopes cover the band, as along the Turnpike), refresh the terrain mesh, and clear the trees and
+  // grass that stood where its roads now run
+  extend(reg) {
+    (this.exts ||= []).push(reg);
+    const H = this.H, sc = G.scale, carve = (x, z, R, y, rect) => { const i0 = Math.floor((x - R - G.x0) / G.step), i1 = Math.ceil((x + R - G.x0) / G.step), j0 = Math.floor((z - R - G.z0) / G.step), j1 = Math.ceil((z + R - G.z0) / G.step);
+      for (let j = Math.max(0, j0); j <= Math.min(G.h - 1, j1); j++) for (let i = Math.max(0, i0); i <= Math.min(G.w - 1, i1); i++) { const px = G.x0 + i * G.step, pz = G.z0 + j * G.step; if (rect ? !rect(px, pz) : Math.hypot(px - x, pz - z) > R) continue; const k = j * G.w + i; H[k] = Math.min(H[k], Math.round((y - 3.5) / sc)); } };
+    for (const r of reg.roads) for (let n = 0; n < r.samples.length; n += 2) { const q = r.samples[n]; if (!inHakone(q.p.x, q.p.z) || q.p.y - this.dem(q.p.x, q.p.z) > 6) continue; carve(q.p.x, q.p.z, 34, q.p.y); }
+    for (const L of reg.lots) { const s = Math.sin(L.yaw), c = Math.cos(L.yaw); carve(L.x, L.z, Math.max(L.l, L.w) / 2 + 40, L.y, (px, pz) => { const dx = px - L.x, dz = pz - L.z; return Math.abs(dx * s + dz * c) < L.l / 2 + 26 && Math.abs(dx * c - dz * s) < L.w / 2 + 26; }); }
+    if (this.terrain) { const pos = this.terrain.geometry.attributes.position; for (let k = 0; k < pos.count; k++) pos.setY(k, H[k] * sc); pos.needsUpdate = true; this.terrain.geometry.computeVertexNormals(); this.terrain.geometry.computeBoundingSphere(); }
+    const M = new THREE.Matrix4(), Z = new THREE.Matrix4().makeScale(0, 0, 0);
+    for (const m of this.cells || []) { let ch = false; for (let i = 0; i < m.count; i++) { m.getMatrixAt(i, M); const x = M.elements[12], z = M.elements[14], n = reg.nearest(x, z);
+      if ((n && n.d < (n.road.edgeL - n.road.edgeR) / 2 + 3.5) || reg.lots.some(L => Math.hypot(x - L.x, z - L.z) < Math.max(L.l, L.w) / 2 + 6)) { m.setMatrixAt(i, Z); ch = true; } }
+      if (ch) m.instanceMatrix.needsUpdate = true; }
   }
   update(env) { if (this.loungeGlass) this.loungeGlass.emissiveIntensity = (env?.night ?? 0) * 1.2;
     const cam = this.w.cam; this._cT = (this._cT || 0) - 1; if (!cam || !this.cells || this._cT > 0) return; this._cT = 20; // every ~20 frames

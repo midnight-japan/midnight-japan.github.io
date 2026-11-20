@@ -1,8 +1,19 @@
 // Shared game metadata: version, changelog, regions. Update VERSION + CHANGELOG on every release.
-export const GAME = { title: 'MIDNIGHT JAPAN', titleJa: 'ミッドナイト・ジャパン', version: '2.15.7', build: '2026.11.20' };
+export const GAME = { title: 'MIDNIGHT JAPAN', titleJa: 'ミッドナイト・ジャパン', version: '2.16.0', build: '2026.11.20' };
 
 // Newest first. type: new | change | fix | known
 export const CHANGELOG = [
+  {
+    version: '2.16.0', date: '2026-11-20', codename: 'Living Japan',
+    summary: { ko: '새 코스 4곳(하코네 나나마가리·후지 스카이라인·에노시마·비너스 라인), 실사 사람 9명과 사고 후 구급차·뺨 때리기, NPC 차만 부서지는 사고, 실제 렌즈 모양대로 켜지는 램프와 번호판 정렬, 실사 해바라기·주유기·가드레일, 실제 녹음 효과음.', ja: '新コース4つ（箱根七曲り・富士山スカイライン・江の島・ビーナスライン）、実写の人9人と事故後の救急車・ビンタ、NPCの車だけ壊れる事故、実際のレンズ形状で光るランプとナンバー位置、実写のひまわり・給油機・ガードレール、実録の効果音。', en: 'Four new real courses (Hakone Nanamagari, Fuji Skyline, Enoshima, Venus Line), realistic people with ambulance and slap after crashes, NPC-only crash damage, lamps lit by real lens shapes and fitted plates, real sunflowers / fuel pumps / guard rails, recorded sound effects.' },
+    items: [
+      { type: 'new', ko: '새 코스: 箱根七曲り(턴파이크와 연결, 헤어핀 46곳), 富士山スカイライン(五合目 2,353m), 江の島·134호(대교·섬·시캔들), ビーナスライン(65km) — 실제 지도·표고, 지도/빠른 이동에서 바로 이동', ja: '新コース：箱根七曲り（ターンパイクと接続、ヘアピン46）、富士山スカイライン（五合目2,353m）、江の島・134号（大橋・島・シーキャンドル）、ビーナスライン（65km）— 実際の地図・標高、地図／クイック移動から直行', en: 'New courses: Hakone Nanamagari (joins the Turnpike, 46 hairpins), Fuji Skyline (5th station, 2,353 m), Enoshima & Route 134 (bridge, island, Sea Candle), Venus Line (65 km) — real map and elevation, reachable from the map / quick travel' },
+      { type: 'new', ko: '실사 사람 9명(걷기·대기·통화·자전거·신호 대기), 사고 시 구급차 출동·들것 이송, 화난 운전자에게 뺨 때리기(F)', ja: '実写の人9人（歩く・待つ・通話・自転車・信号待ち）、事故で救急車出動・担架搬送、怒ったドライバーにビンタ（F）', en: 'Nine realistic people (walk, idle, phone, cycling, waiting at crossings); ambulances answer crashes with a stretcher; slap an angry driver (F)' },
+      { type: 'new', ko: 'NPC 차를 들이받으면 그 차만 찌그러지고 유리 파편·연기·비상등, 내 차는 멀쩡', ja: 'NPCの車にぶつけるとその車だけへこみ、ガラス片・煙・ハザード、自分の車は無傷', en: 'Hitting an NPC car wrecks only that car (dents, glass, smoke, hazards); yours stays clean' },
+      { type: 'fix', ko: '전 차종 램프를 실제 렌즈 형상에서 점등(하향·미등·브레이크·보조제동·우측 후방안개·방향지시·후진), 번호판을 범퍼 경사에 맞춰 정렬, 프렐류드 앞뒤 반전 수정', ja: '全車のランプを実際のレンズ形状で点灯（ロービーム・テール・ブレーキ・ハイマウント・右リアフォグ・ウインカー・バック）、ナンバーをバンパー傾斜に合わせて配置、プレリュードの前後反転を修正', en: 'Every car lights its real lens shapes (low beam, tail, brake, high-mount, right rear fog, indicators, reverse); plates fitted to the bumper slope; Prelude front/back fixed' },
+      { type: 'new', ko: '실사 해바라기(멀리서도 보이는 노란 띠, 계절 변화), 브랜드별 주유기와 멀리서 보이는 캐노피 로고, 흰 W형 가드레일, 실제 녹음 효과음(비·풀벌레·까마귀·자판기·충돌 등, CC0)', ja: '実写のひまわり（遠くからも見える黄色い帯、季節変化）、ブランド別給油機と遠くから見えるキャノピーロゴ、白いW型ガードレール、実録の効果音（雨・虫の声・カラス・自販機・衝突など、CC0）', en: 'Real sunflowers (visible yellow band from afar, seasons), branded fuel pumps with canopy logos visible from distance, white W-beam guard rails, recorded CC0 sound effects (rain, crickets, crows, vending, crashes…)' },
+    ],
+  },
   {
     version: '2.15.7', date: '2026-11-20', codename: 'Name Tags',
     summary: { ko: '다른 플레이어 차 위 이름표가 하늘 높이(약 1.3km)에 떠서 안 보이던 버그 수정 — 이제 차 바로 위에 「닉네임 · 차종」.', ja: '他プレイヤーの車の上の名札が空高く（約1.3km）に浮いて見えなかったバグを修正 — 車のすぐ上に「ニックネーム・車種」。', en: 'Fixed other players\' name tags floating ~1.3 km up in the sky — "nickname · car" now sits right above their car.' },

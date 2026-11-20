@@ -16,4 +16,9 @@ export const DESTS = [
   { id: 'c1', name: '首都高 都心環状線', x: 5810, z: -24414 },
   { id: 'hakone', name: '箱根ターンパイク', x: -57257, z: 30719 },
   { id: 'zama', name: '座間ひまわり畑', x: -26884, z: -2774, spawn: 'zama' },
+  // v2.16 — lazily loaded regions (js/game/region.js, data/regions/): the region streams in when you travel there
+  { id: 'nanamagari', name: '箱根七曲り', x: -56827, z: 28516, spawn: 'nanamagari', icon: 'circuit' },
+  { id: 'fujisky', name: '富士山スカイライン', x: -84367, z: 17528, spawn: 'fujisky', icon: 'circuit' },
+  { id: 'enoshima', name: '江の島', x: -19649, z: 15929, spawn: 'enoshima', icon: 'circuit' },
+  { id: 'venus', name: 'ビーナスライン', x: -136385, z: -61076, spawn: 'venus', icon: 'circuit' },
 ];

@@ -330,8 +330,15 @@ function buildTile(T, lod, opts) {
       }
       if (swW) for (const sd of [1, -1]) {
         for (let s = 6 + rnd() * 4; s < acc - 4; s += 13 + rnd() * 3) { const p = at(s, sd * (hw + swW * 0.62)); if (nearJunction(p[0], p[1], hw + 6) || onCarriage(p[0], p[1], 0.3)) continue; trees.push(p[0], p[1], 0.75 + rnd() * 0.4, rnd() * 6.28, cls <= S.PRIMARY ? 1 : 0); cols.push([p[0], p[1], 0.3, 0.3, 0, -1, 4]); }
-        // white pipe guard rail along the kerb (6 m panels: two rails + a post)
-        for (let s0 = 2; s0 < acc - 2; s0 += 6) {
+        // white guard rail along the kerb. v2.16 near tiles: a real white W-beam ガードレール model (Sketchfab, CC BY — see
+        // assets/CREDITS.md), one 4 m panel per instance with the beam towards the road; mid tiles keep the light pipe rail
+        if (near) for (let s0 = 2; s0 + 4 < acc - 1; s0 += 4) {
+          const p = at(s0, sd * (hw + 0.3)), q2 = at(s0 + 4, sd * (hw + 0.3)); if (nearJunction(p[0], p[1], hw + 5) || nearJunction(q2[0], q2[1], hw + 5)) continue;
+          const l = Math.hypot(q2[0] - p[0], q2[1] - p[1]); if (l < 3.6) continue; // a sharp bend: leave the gap
+          const tx = (q2[0] - p[0]) / l, tz = (q2[1] - p[1]) / l, mx = (p[0] + q2[0]) / 2, mz = (p[1] + q2[1]) / 2; C(mx, mz);
+          props.push(3, mx, mz, Math.atan2(-tz, tx) + (sd > 0 ? Math.PI : 0));
+        }
+        else for (let s0 = 2; s0 < acc - 2; s0 += 6) {
           const s1 = Math.min(acc - 1, s0 + 6); const p = at(s0, sd * (hw + 0.25)), q2 = at(s1, sd * (hw + 0.25)); if (nearJunction(p[0], p[1], hw + 5) || nearJunction(q2[0], q2[1], hw + 5)) continue;
           const mx = (p[0] + q2[0]) / 2, mz = (p[1] + q2[1]) / 2, l = Math.hypot(q2[0] - p[0], q2[1] - p[1]) / 2; if (l < 0.5) continue;
           const tx = (q2[0] - p[0]) / (2 * l), tz = (q2[1] - p[1]) / (2 * l); C(mx, mz);
@@ -348,11 +355,18 @@ function buildTile(T, lod, opts) {
   function gasStation(cx, cz, tx, tz, hl, hw, seed, toStreet = 0, opts = {}) {
     const H = 5.4, nx = -tz, nz = tx;
     const at = (a, b) => [cx + tx * a + nx * b, cz + tz * a + nz * b];
+    const BR = [[0.92, 0.32, 0.08], [0.1, 0.35, 0.75], [0.85, 0.1, 0.12], [0.1, 0.55, 0.3]][seed % 4];
+    // v2.16: deep brand fascia all round the canopy + a lit logo plate on both long faces — reads from far away, day and
+    // night (far LOD tiles draw only this: canopy, fascia, plates)
+    const canopy = () => {
+      bm.box(cx, H + 0.45, cz, tx, tz, hl, hw, 0.45, [0.94, 0.94, 0.92], [PLAIN, 0, 0, 0]);          // canopy
+      gm.box(cx, H + 0.4, cz, tx, tz, hl + 0.03, hw + 0.03, 0.34, BR, [1, 0, 0, 0]);               // brand fascia band
+      for (const sd of [1, -1]) { const [x, z] = at(0, sd * (hw + 0.05)); gm.box(x, H + 0.42, z, tx, tz, Math.min(2.2, hl * 0.3), 0.03, 0.28, [1, 1, 0.97], [1, 0, 0, 0]); } // logo plates
+    };
+    if (opts.far) { canopy(); return; }
     // v2.13.4: the forecourt (and its driveway to the street) is drivable in the access mask — cars pull up to the pumps
     { const b0 = Math.min(-hw - 2, toStreet), b1 = Math.max(hw + 2, toStreet); forecourts.push([at(-hl - 3, b0), at(hl + 3, b0), at(hl + 3, b1), at(-hl - 3, b1)]); }
-    const BR = [[0.92, 0.32, 0.08], [0.1, 0.35, 0.75], [0.85, 0.1, 0.12], [0.1, 0.55, 0.3]][seed % 4];
-    bm.box(cx, H + 0.45, cz, tx, tz, hl, hw, 0.45, [0.94, 0.94, 0.92], [PLAIN, 0, 0, 0]);          // canopy
-    gm.box(cx, H + 0.42, cz, tx, tz, hl + 0.03, hw + 0.03, 0.2, BR, [1, 0, 0, 0]);               // brand fascia band
+    canopy();
     gm.box(cx, H - 0.02, cz, tx, tz, hl * 0.86, hw * 0.8, 0.02, [1, 0.98, 0.94], [1, 0, 0, 0]);   // canopy downlights
     for (const a of [-0.62, 0.62]) for (const b of [-0.5, 0.5]) { const [x, z] = at(a * hl, b * hw); pm.box(x, H / 2, z, tx, tz, 0.22, 0.22, H / 2, [0.88, 0.88, 0.86], [PLAIN, 0, 0, 0]); cols.push([x, z, 0.25, 0.25, 0, -1, H]); }
     const islands = hl > 9 ? [-0.32, 0.32] : [0];
@@ -368,7 +382,9 @@ function buildTile(T, lod, opts) {
     for (const a of islands) for (const b of hw > 6 ? [-0.22, 0.22] : [0]) {
       const [x, z] = at(a * hl, b * hw);
       pm.box(x, 0.1, z, tx, tz, 1.5, 0.45, 0.1, [0.78, 0.78, 0.76], [PLAIN, 0, 0, 0]);                 // island kerb
-      for (const d of [-0.75, 0.75]) { const px = x + tx * d, pz = z + tz * d; pm.box(px, 0.95, pz, tx, tz, 0.35, 0.28, 0.75, [0.95, 0.95, 0.95], [PLAIN, 0, 0, 0]); gm.box(px + nx * 0.29, 1.15, pz + nz * 0.29, tx, tz, 0.22, 0.01, 0.16, [0.6, 0.9, 1], [1, 0, 0, 0]); gm.box(px, 1.72, pz, tx, tz, 0.36, 0.29, 0.06, BR, [1, 0, 0, 0]); }
+      // v2.16: a real fuel dispenser model on the island (Sketchfab, CC BY — js/game/props.js recolours its red trim to
+      // the station's brand colour: kind 4 + brand), display towards +n
+      props.push(4 + seed % 4, x, z, Math.atan2(nx, nz));
       cols.push([x, z, 1.55, 0.5, Math.atan2(-tz, tx), -1, 1.8]);
       fuels.push(x, z, tx, tz, seed % 4, oX, oZ); // v2.13.4: pump island for the full-service sequence (fuelstation.js)
     }
@@ -426,12 +442,12 @@ function buildTile(T, lod, opts) {
   for (let k = 0; k < P.length; k += 4) {
     const ty = P[k], x = P[k + 1] * D, z = P[k + 2] * D, hh = P[k + 3]; C(x, z);
     if (ty === PT.CHIMNEY || ty === PT.TOWER) { if (!mid) continue; const H = hh || (ty === PT.CHIMNEY ? 60 + rnd() * 60 : 30 + rnd() * 30); const red = ty === PT.CHIMNEY; for (let b = 0; b < (red ? 8 : 1); b++) bm.cyl(x, z, b * H / 8, red ? (b + 1) * H / 8 : H, red ? 2.2 - b * 0.12 : 1.4, 12, red ? (b % 2 ? [0.85, 0.22, 0.16] : [0.93, 0.93, 0.92]) : [0.7, 0.72, 0.74], [PLAIN, 0, 0, 0], b === 7, red ? 2.2 - (b + 1) * 0.12 : 1.0); cols.push([x, z, 2.2, 2.2, 0, -1, H]); gm.box(x, H + 0.6, z, 1, 0, 0.5, 0.5, 0.5, [1, 0.15, 0.1], [5, 0, 0, 0]); continue; }
-    if (ty === PT.FUEL && mid) {
+    if (ty === PT.FUEL) { // (far LOD: canopy + fascia only)
       let best = null; for (const sg of segs.near(x, z)) { if (sg.st.flags & 16) continue; const dx = sg.bx - sg.ax, dz = sg.bz - sg.az, L = Math.hypot(dx, dz) || 1; const t = Math.max(0, Math.min(1, ((x - sg.ax) * dx + (z - sg.az) * dz) / (L * L))); const px = sg.ax + dx * t, pz = sg.az + dz * t; const d = Math.hypot(x - px, z - pz); if (!best || d < best.d) best = { d, tx: dx / L, tz: dz / L, px, pz, w: sg.w }; }
       if (best && best.d < 60) {
         const hl = 8, hw = 5.5; let nx = (x - best.px) / (best.d || 1), nz = (z - best.pz) / (best.d || 1); if (!best.d) { nx = -best.tz; nz = best.tx; }
         const set = Math.max(best.d, best.w / 2 + 3.5 + hw); // keep the canopy off the carriageway and the pavement
-        gasStation(best.px + nx * set, best.pz + nz * set, best.tx, best.tz, hl, hw, Math.floor(Math.abs(x * 7 + z * 13)), -set * Math.sign(nx * -best.tz + nz * best.tx || 1));
+        gasStation(best.px + nx * set, best.pz + nz * set, best.tx, best.tz, hl, hw, Math.floor(Math.abs(x * 7 + z * 13)), -set * Math.sign(nx * -best.tz + nz * best.tx || 1), { far: !mid });
       }
       continue;
     }
@@ -643,7 +659,7 @@ function buildTile(T, lod, opts) {
     const pts = []; for (let k = 5; k < a.length; k += 2) pts.push([a[k] * D, a[k + 1] * D]);
     if (pts.length < 3) continue;
     const A = Math.abs(ringArea(pts));
-    if (!mid && h < 14 && cls !== B.TANK) continue; // far LOD: only the skyline
+    if (!mid && h < 14 && cls !== B.TANK && cls !== B.GAS) continue; // far LOD: only the skyline (+ fuel station canopies)
     const ob = obb(pts); if (!ob) continue;
     const fill = A / (ob.hl * ob.hw * 4);
     // OSM footprints that sit across a driveable street (covered passages, mapping overlaps) walled the road off: skip them
@@ -691,7 +707,8 @@ function buildTile(T, lod, opts) {
     }
     // ── fuel station (ガソリンスタンド): open forecourt under a lit canopy on pillars, pump islands with dispensers,
     // a brand fascia that glows at night and a tall price pole at the kerb — drivable in, only pillars/pumps collide ──
-    if (cls === B.GAS && ob.hl > 3 && ob.hw > 3) { gasStation(cx, cz, ob.tx, ob.tz, ob.hl, ob.hw, seed, 0, { noOffice: true }); continue; }
+    if (cls === B.GAS && ob.hl > 3 && ob.hw > 3) { gasStation(cx, cz, ob.tx, ob.tz, ob.hl, ob.hw, seed, 0, { noOffice: true, far: !mid }); continue; }
+    if (cls === B.GAS && !mid) continue;
     // ── storage tank: cylinder + dome ──
     if (cls === B.TANK) {
       const rad = Math.sqrt(A / Math.PI);
@@ -1031,7 +1048,7 @@ function buildTile(T, lod, opts) {
   if (DECKS) {
     for (let k = cols.length - 1; k >= 0; k--) { const [x, z, hx, hz, , y0, y1] = cols[k]; if (deckIn(OX + x, OZ + z, y0 + 0.3, y1 + 0.5, Math.min(hx, hz) + 0.4) !== null) cols.splice(k, 1); }
     for (let k = lamps.length - 1; k >= 0; k--) { const [x, y, z] = lamps[k]; if (deckIn(OX + x, OZ + z, 0.3, y + 1.5, 1) !== null) lamps.splice(k, 1); }
-    { let w = 0; const A = props.a, st = props.stride; for (let k = 0; k < props.n; k++) { const x = A[k * st + 1], z = A[k * st + 2]; if (deckIn(OX + x, OZ + z, 0.3, A[k * st] ? 12.5 : 2.2, 0.8) !== null) continue; if (w !== k) A.copyWithin(w * st, k * st, k * st + st); w++; } props.n = w; }
+    { let w = 0; const A = props.a, st = props.stride; for (let k = 0; k < props.n; k++) { const x = A[k * st + 1], z = A[k * st + 2]; if (deckIn(OX + x, OZ + z, 0.3, A[k * st] === 1 || A[k * st] === 2 ? 12.5 : 2.4, 0.8) !== null) continue; if (w !== k) A.copyWithin(w * st, k * st, k * st + st); w++; } props.n = w; }
     { let w = 0; const A = trees.a, st = trees.stride; for (let k = 0; k < trees.n; k++) { const x = A[k * st], z = A[k * st + 1]; if (deckIn(OX + x, OZ + z, 0.3, 12, 1.5) !== null) continue; if (w !== k) A.copyWithin(w * st, k * st, k * st + st); w++; } trees.n = w; }
   }
   const mask = mid ? buildMask(T, streets, forecourts) : null;

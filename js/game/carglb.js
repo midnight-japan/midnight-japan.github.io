@@ -110,7 +110,7 @@ function fixMaterials(scene, info) {
         m.roughness = 0.04; m.metalness = 0; if ('transmission' in m) m.transmission = 0;
         m.depthWrite = false; m.side = THREE.DoubleSide; m.forceSinglePass = true; m.needsUpdate = true;
       } else if (isG) {
-        m.transparent = true; m.opacity = 0.62; if (m.color) m.color.setHex(0x0d1419); m.roughness = 0.03; m.metalness = 0;
+        m.transparent = true; m.opacity = 0.62; if (m.color) { m.userData.col0 ??= m.color.getHex(); m.color.setHex(0x0d1419); } m.roughness = 0.03; m.metalness = 0;
         if ('transmission' in m) m.transmission = 0; m.depthWrite = false; m.side = THREE.DoubleSide; m.forceSinglePass = true; m.map = null; m.alphaMap = null; m.alphaTest = 0; // v2.4: one pass (two passes re-validated the shader twice per glass per frame)
         glassShader(m); m.needsUpdate = true;
       } else if (m.transparent && m.map && m.opacity >= 0.99 && !/shadow/i.test(n)) {
@@ -146,6 +146,204 @@ function lensRole(n, h, l, b, z0, z1, H) {
   if (rear && h < 0 && l > 0.3 && !/head|front/i.test(n)) return 'rev'; // a light, clear lens at the back (not a smoked cover)
   return null;
 }
+// v2.16: the model's REAL lamps, triangle by triangle. Lamp-like materials (by name, own emission, lens, or a red /
+// amber colour at either end) are split by where each triangle sits and what colour it is (material colour × its
+// texture there): clear at the front → low/high beam, amber → indicator (per corner), red at the back → tail + brake,
+// red high in the middle → high-mount stop lamp, clear at the back → reversing lamp, fog-named → fog lamps. Every
+// split part gets its own material (userData.lampRole) that buildGlbCar drives from the light switch. Before, whole
+// materials were lit (front + back lenses shared one material → the headlight glass glowed red, the windows white),
+// most models' lamps were not recognised (generic names), and many models' own baked emission stayed on day and night.
+// manifest `lamps` {head|tail|brake|rev|ind|fog|none: [material names]} forces a material's role (the side / end
+// still comes from the geometry); `lampPos` {head|tail|ind|indR|rev|fog: [x, y, z]} (left side, mirrored) places the
+// glows by hand.
+const LAMP_NAME_RE = /light|lamp|lens|lght|r(ü|ue?)?cklicht|head|(?<!de)tail|brake|break|stop|blink|signal|indic|turn|revers|backup|fog|glow|phare|feu|luz|licht|leucht|(^|[^a-z])(red|orange|amber)/i;
+const LAMP_EXCL_RE = /dis[ck]|caliper|hub|rotor|pad|interior|interier|(^|[_\s.-])int[_\s.-]|seat|belt|dash|gauge|icon|button|stee?r|cockpit|symbol|badge|logo|emblem|trim|stripe|paint|tyre|tire|rim|wheel|mirror|plate|licen|frame|housing|bezel|plastic|shadow|metal|carcolor|body/i;
+const N_HEAD = /head|front|phare|scheinw|(^|_)hl(_|$)|avant/i, N_TAIL = /(?<!de)tail|rear|back|stop|brake|break|r(ü|ue?)?cklicht|(^|_)tl(_|$)/i, N_IND = /blink|signal|indic|turn|orange|amber|clignot/i, N_REV = /revers|backup/i, N_FOG = /fog/i;
+const _texCache = new WeakMap();
+function texSampler(tex) {
+  if (!tex?.image) return null; let s = _texCache.get(tex); if (s !== undefined) return s;
+  try {
+    const im = tex.image, W = 128, H = 128, c = document.createElement('canvas'); c.width = W; c.height = H;
+    const g = c.getContext('2d', { willReadFrequently: true }); g.drawImage(im, 0, 0, W, H); const d = g.getImageData(0, 0, W, H).data;
+    tex.updateMatrix(); const M = tex.matrix.clone(), v = new THREE.Vector2();
+    s = (u, w) => { v.set(u, w).applyMatrix3(M); const x = Math.floor((v.x - Math.floor(v.x)) * W) % W, y = Math.floor((v.y - Math.floor(v.y)) * H) % H, i = (y * W + x) * 4; return [d[i] / 255, d[i + 1] / 255, d[i + 2] / 255]; };
+  } catch { s = null; }
+  _texCache.set(tex, s); return s;
+}
+const S2L = c => (c <= 0.04045 ? c / 12.92 : ((c + 0.055) / 1.055) ** 2.4), toS = l => l.map(v => Math.min(1, v <= 0.0031308 ? v * 12.92 : 1.055 * v ** (1 / 2.4) - 0.055));
+function lampSplit(scene, info) {
+  const [bx0 = -0.9, , bz0 = -2.2, bx1 = 0.9, by1 = 1.3, bz1 = 2.2] = info.bbox || [], L = bz1 - bz0, H = by1;
+  const zq = Math.min(1.1, Math.max(0.55, L * 0.2)), paint = new Set(info.paint || []), cut = info.lampCut; // lampCut: [[x0,y0,z0,x1,y1,z1]] never a lamp
+  // lamps {role: [name | [name, [x0,y0,z0,x1,y1,z1]]]}: a box limits the forced role to that part of the material
+  const force = new Map(), fbox = new Map(); for (const [r, list] of Object.entries(info.lamps || {})) if (Array.isArray(list) && r !== 'atlas') for (const it of list) { const n = Array.isArray(it) ? it[0] : it; force.set(n, r); if (Array.isArray(it)) fbox.set(n, it[1]); }
+  scene.updateMatrixWorld(true); const inv = scene.matrixWorld.clone().invert();
+  const P = new THREE.Vector3(), Q = new THREE.Vector3(), R = new THREE.Vector3(), C = new THREE.Vector3(), m4 = new THREE.Matrix4();
+  const roleMats = new Map(), mk = (m, role) => { const k = m.uuid + role; let c = roleMats.get(k); if (!c) { c = cloneMat(m); c.name = m.name; c.userData.lampRole = role; roleMats.set(k, c); } return c; };
+  const offMats = new Map(), off = m => { let c = offMats.get(m); if (!c) { c = cloneMat(m); c.emissive?.setHex(0); c.emissiveMap = null; offMats.set(m, c); } return c; };
+  const atlas = new Set(info.lamps?.atlas || []); // textured materials (even the paint) whose red / amber / white texels at either end are lamps
+  // per material: how much of it lies between the lamp zones (a plain red / amber material all over the car is paint, not a lamp)
+  const midShare = new Map(); { const cnt = new Map(), V = new THREE.Vector3();
+    scene.traverse(o => { if (!o.isMesh || isWheel(o)) return; const g = o.geometry, pos = g.attributes.position, idx = g.index, n = idx ? idx.count : pos.count, ms = Array.isArray(o.material) ? o.material : [o.material];
+      const groups = Array.isArray(o.material) && g.groups.length ? g.groups : [{ start: 0, count: n, materialIndex: 0 }]; m4.multiplyMatrices(inv, o.matrixWorld);
+      for (const gr of groups) { const m = ms[gr.materialIndex ?? 0]; if (!m) continue; const c = cnt.get(m) || cnt.set(m, [0, 0]).get(m); const step = 3 * Math.max(1, Math.floor(gr.count / 3 / 300));
+        for (let t = gr.start; t < Math.min(gr.start + gr.count, n); t += step) { V.fromBufferAttribute(pos, idx ? idx.getX(t) : t).applyMatrix4(m4); c[0]++; if (V.z < bz1 - zq && V.z > bz0 + zq) c[1]++; } } });
+    for (const [m, [a, b]] of cnt) midShare.set(m, a ? b / a : 0); }
+  const isCand = m => {
+    if (!m) return false; const n = m.name || '';
+    if (atlas.has(n)) return true;
+    if (force.has(n)) return force.get(n) !== 'none';
+    if (paint.has(n) || m.userData.mjGlass || LAMP_EXCL_RE.test(n)) return false;
+    if (LAMP_NAME_RE.test(n) || m.userData.lamp) return true;
+    const emis = m.emissive && (m.emissive.r + m.emissive.g + m.emissive.b > 0.05 || m.emissiveMap);
+    if (emis) return true;
+    const hsl = m.color?.getHSL({}, THREE.SRGBColorSpace); return !!hsl && hsl.s > 0.5 && hsl.l > 0.15 && (hsl.h < 0.17 || hsl.h > 0.92) && !m.map && (midShare.get(m) ?? 1) < 0.1; // red / amber plain colour at the ends only (decided per triangle by position)
+  };
+  const work = [];
+  scene.traverse(o => { if (!o.isMesh || o.isSkinnedMesh || o.isInstancedMesh || isWheel(o) || o.geometry.morphAttributes?.position) return;
+    const ms = Array.isArray(o.material) ? o.material : [o.material]; if (ms.some(isCand)) work.push(o); });
+  const cls = rgb => { const c = new THREE.Color().setRGB(rgb[0], rgb[1], rgb[2]), h = c.getHSL({}, THREE.SRGBColorSpace); // rgb in sRGB 0..1
+    if (h.s > 0.4 && h.l > 0.12 && h.l < 0.97 && (h.h < 0.045 || h.h > 0.92)) return 'red';
+    if (h.s > 0.45 && h.l > 0.2 && h.h >= 0.045 && h.h < 0.17) return 'amber';
+    if (h.l > 0.42 && h.s < 0.4) return h.l > 0.62 ? 'white' : 'clear'; return 'dark'; };
+  const tri = (o, t) => { const g = o.geometry, idx = g.index, a = idx ? idx.getX(t) : t, b = idx ? idx.getX(t + 1) : t + 1, c = idx ? idx.getX(t + 2) : t + 2; return [a, b, c]; };
+  const pending = [];
+  for (const o of work) {
+    const g = o.geometry, pos = g.attributes.position, uv = g.attributes.uv, vc = g.attributes.color, idx = g.index, ms = Array.isArray(o.material) ? o.material : [o.material];
+    m4.multiplyMatrices(inv, o.matrixWorld);
+    const groups = Array.isArray(o.material) && g.groups.length ? g.groups : [{ start: 0, count: idx ? idx.count : pos.count, materialIndex: 0 }];
+    const buckets = new Map(); // matIndex|role → [indices]
+    for (const gr of groups) {
+      const mi = gr.materialIndex ?? 0, m = ms[mi]; if (!m) continue; const cand = isCand(m), n = m.name || '', fr = force.get(n);
+      const base = m.color ? [m.color.r, m.color.g, m.color.b] : [1, 1, 1];
+      const smap = cand && m.map && uv ? texSampler(m.map) : null, semi = cand && m.emissiveMap && uv ? texSampler(m.emissiveMap) : null, vcol = cand && m.vertexColors && vc;
+      const ecol = m.emissive ? [m.emissive.r, m.emissive.g, m.emissive.b] : [0, 0, 0], emOn = ecol[0] + ecol[1] + ecol[2] > 0.05;
+      let uniCls = cls(toS(base)); if (emOn && !m.map && uniCls === 'dark') { const ec = cls(toS(ecol)); if (ec === 'red' || ec === 'amber') uniCls = ec; }
+      const lens = !!m.userData.lamp || (m.transparent && !m.map), tex = !!(smap || vcol);
+      const end = Math.min(gr.start + gr.count, idx ? idx.count : pos.count);
+      for (let t = gr.start; t + 2 < end + 0; t += 3) {
+        const [a, b, c] = tri(o, t);
+        let role = 'none';
+        if (cand) {
+          P.fromBufferAttribute(pos, a).applyMatrix4(m4); Q.fromBufferAttribute(pos, b).applyMatrix4(m4); R.fromBufferAttribute(pos, c).applyMatrix4(m4);
+          C.copy(P).add(Q).add(R).divideScalar(3);
+          const front = C.z > bz1 - zq, rear = C.z < bz0 + zq, side = C.x > 0.03 ? 'L' : C.x < -0.03 ? 'R' : '';
+          if (cut && cut.some(q => C.x > q[0] && C.y > q[1] && C.z > q[2] && C.x < q[3] && C.y < q[4] && C.z < q[5])) { const k = mi + '|none'; let B = buckets.get(k); if (!B) buckets.set(k, B = []); B.push(a, b, c); continue; }
+          let col = uniCls;
+          if (smap || semi || vcol) { const u = uv ? (uv.getX(a) + uv.getX(b) + uv.getX(c)) / 3 : 0, w = uv ? (uv.getY(a) + uv.getY(b) + uv.getY(c)) / 3 : 0;
+            let rgb = null;
+            if (semi && emOn) { const e = semi(u, w); const s2 = [S2L(e[0]) * ecol[0], S2L(e[1]) * ecol[1], S2L(e[2]) * ecol[2]]; if (s2[0] + s2[1] + s2[2] > 0.3) rgb = s2; }
+            if (!rgb) { rgb = base.slice(); if (smap) { const e = smap(u, w); rgb = [S2L(e[0]) * rgb[0], S2L(e[1]) * rgb[1], S2L(e[2]) * rgb[2]]; }
+              if (vcol) for (let k = 0; k < 3; k++) rgb[k] *= (vc.getComponent(a, k) + vc.getComponent(b, k) + vc.getComponent(c, k)) / 3; }
+            col = cls(toS(rgb)); }
+          const hi = C.y > 0.62 * H, centre = Math.abs(C.x) < 0.3;
+          let done = false;
+          const fb = fr && fbox.get(n), inFb = !fb || (C.x > fb[0] && C.y > fb[1] && C.z > fb[2] && C.x < fb[3] && C.y < fb[4] && C.z < fb[5]);
+          if (fr && !inFb) done = true; // outside its box: not a lamp
+          else if (fr) { // forced by the manifest: that role at the end it belongs to (elsewhere: found as usual)
+            done = true;
+            if (fr === 'head' && front && Math.abs(C.x) > 0.12) role = 'head';
+            else if (fr === 'tail' && rear) role = 'tail';
+            else if (fr === 'brake' && rear) role = 'brake';
+            else if (fr === 'rev' && rear) role = 'rev';
+            else if (fr === 'ind' && (front || rear) && side) role = 'ind' + (front ? 'F' : 'R') + side;
+            else if (fr === 'fog' && (front || rear)) role = front ? 'ffog' : side === 'R' ? 'rfog' : 'none';
+            else done = false;
+          } else if (atlas.has(n)) { // texels only: red → tail, amber → indicator, bright white at the front → headlamp
+            done = true;
+            if (C.y < 0.86 * H && (front || rear)) role = col === 'red' && rear ? 'tail' : col === 'amber' && side ? 'ind' + (front ? 'F' : 'R') + side : col === 'white' && front && Math.abs(C.x) > 0.16 && !paint.has(n) ? 'head' : 'none'; // (white texels of a painted atlas are body)
+          }
+          if (done) {} else if (C.y < 0.86 * H || (rear && centre)) {
+            if (front) {
+              if (N_FOG.test(n) && !tex) role = 'ffog';
+              else if ((N_IND.test(n) && !tex) || col === 'amber') role = side ? 'indF' + side : 'none';
+              else if (col === 'red' || Math.abs(C.x) < 0.16) role = 'none'; // no headlamp on the centre line (badges, grille chrome)
+              else if (N_TAIL.test(n) && !N_HEAD.test(n) && !tex) role = 'none';
+              else if (col === 'clear' || col === 'white') role = 'head';
+              else if (col === 'dark' && (N_HEAD.test(n) || lens || (/light|lamp/i.test(n) && !tex))) role = 'head';
+            } else if (rear) {
+              if (N_FOG.test(n) && !tex) role = side === 'R' ? 'rfog' : 'none';
+              else if (N_IND.test(n) && !tex) role = side ? 'indR' + side : 'none';
+              else if (N_REV.test(n) && !tex) role = 'rev';
+              else if (col === 'red') role = centre && hi && (Math.abs(C.x) < 0.2 || /stop|brake|break/i.test(n)) ? 'brake' : 'tail';
+              else if (col === 'amber') role = side ? 'indR' + side : 'none';
+              else if (col === 'white' || col === 'clear') role = N_TAIL.test(n) && !tex ? 'tail' : (N_HEAD.test(n) && !tex) ? 'none' : (tex ? col === 'white' : (lens || /light|lamp/i.test(n))) ? 'rev' : 'none';
+              else if (col === 'dark' && N_TAIL.test(n) && !N_HEAD.test(n)) role = 'tail';
+            }
+          }
+          if (role === 'tail' && centre && hi && /stop|brake|break/i.test(n)) role = 'brake';
+        }
+        const k = mi + '|' + role; let B = buckets.get(k); if (!B) buckets.set(k, B = []); B.push(a, b, c);
+      }
+    }
+    // a few stray texels (a white highlight on a red lens) are not a reversing lamp
+    for (const [k, B] of [...buckets]) { const [mi, role] = k.split('|'); if (role === 'rev' && B.length < 24 && (ms[mi].map || ms[mi].vertexColors)) { buckets.delete(k); const k2 = mi + '|tail'; buckets.set(k2, [...(buckets.get(k2) || []), ...B]); } }
+    const matFor = k => { const [mi, role] = k.split('|'), m = ms[+mi]; if (role !== 'none') return mk(m, role); return isCand(m) && m.emissive && (m.emissive.r + m.emissive.g + m.emissive.b > 0.05 || m.emissiveMap) ? off(m) : m; };
+    pending.push({ o, buckets, matFor });
+  }
+  // lamp boxes (per role and side) from the lamp triangles
+  const acc = {}; const A = (k, p, w) => { const r = acc[k] ||= { x: 0, y: 0, z: 0, w: 0, zmax: -1e9, zmin: 1e9, x0: 1e9, x1: -1e9, y0: 1e9, y1: -1e9 }; r.x += p.x * w; r.y += p.y * w; r.z += p.z * w; r.w += w; r.zmax = Math.max(r.zmax, p.z); r.zmin = Math.min(r.zmin, p.z); r.x0 = Math.min(r.x0, p.x); r.x1 = Math.max(r.x1, p.x); r.y0 = Math.min(r.y0, p.y); r.y1 = Math.max(r.y1, p.y); };
+  const E1 = new THREE.Vector3(), E2 = new THREE.Vector3();
+  const accumulate = (o, buckets) => { const pos = o.geometry.attributes.position; m4.multiplyMatrices(inv, o.matrixWorld);
+    for (const [k, B] of buckets) { const role = k.split('|')[1]; if (role === 'none' || role === 'lens') continue; const step = 3 * Math.max(1, Math.floor(B.length / 3 / 500));
+      for (let t = 0; t + 2 < B.length; t += step) { P.fromBufferAttribute(pos, B[t]).applyMatrix4(m4); Q.fromBufferAttribute(pos, B[t + 1]).applyMatrix4(m4); R.fromBufferAttribute(pos, B[t + 2]).applyMatrix4(m4);
+        const w = E1.subVectors(Q, P).cross(E2.subVectors(R, P)).length() * 0.5 + 1e-7; C.copy(P).add(Q).add(R).divideScalar(3);
+        A(role + (/ind/.test(role) ? '' : C.x > 0 ? 'L' : 'R'), C, w); } } };
+  for (const { o, buckets } of pending) accumulate(o, buckets);
+  const boxes = Object.entries(acc).filter(([, r]) => r.x1 - r.x0 < 1.3).map(([k, r]) => ({ role: /^ind/.test(k) ? k : k.replace(/[LR]$/, ''), key: k, r }));
+  // pass 2 — window glass over the lamps: several models cover head / tail lamps with the window-glass material (dark
+  // film → the lamps never showed). Glass inside a lamp box takes that lamp's role as a clear lens; glass low at either
+  // end (below any window) is a lens too.
+  const lensMats = new Map(), lensMat = (m, role) => { const k = m.uuid + role; let c = lensMats.get(k); if (!c) {
+    c = m.clone(); c.onBeforeCompile = () => {}; c.customProgramCacheKey = () => 'lens'; delete c.userData.mjGlass; const c0 = m.userData.col0;
+    c.color.setHex(c0 !== undefined && new THREE.Color(c0).getHSL({}, THREE.SRGBColorSpace).s > 0.45 ? c0 : 0xe8edf2); c.opacity = 0.3; c.roughness = 0.04;
+    if (role !== 'lens') c.userData.lampRole = role; lensMats.set(k, c); } return c; };
+  scene.traverse(o => { if (!o.isMesh || isWheel(o) || o.isSkinnedMesh) return; const ms = Array.isArray(o.material) ? o.material : [o.material];
+    if (!ms.some(m => m?.userData.mjGlass) || pending.some(p => p.o === o)) return;
+    const g = o.geometry, pos = g.attributes.position, idx = g.index; m4.multiplyMatrices(inv, o.matrixWorld);
+    const groups = Array.isArray(o.material) && g.groups.length ? g.groups : [{ start: 0, count: idx ? idx.count : pos.count, materialIndex: 0 }];
+    const buckets = new Map(); let any = false;
+    for (const gr of groups) { const mi = gr.materialIndex ?? 0, m = ms[mi]; const end = Math.min(gr.start + gr.count, idx ? idx.count : pos.count);
+      for (let t = gr.start; t + 2 < end; t += 3) { const [a, b, c] = tri(o, t); let role = 'none';
+        if (m?.userData.mjGlass) { P.fromBufferAttribute(pos, a).applyMatrix4(m4); Q.fromBufferAttribute(pos, b).applyMatrix4(m4); R.fromBufferAttribute(pos, c).applyMatrix4(m4); C.copy(P).add(Q).add(R).divideScalar(3);
+          const front = C.z > bz1 - zq, rear = C.z < bz0 + zq;
+          const cutHere = cut && cut.some(q => C.x > q[0] && C.y > q[1] && C.z > q[2] && C.x < q[3] && C.y < q[4] && C.z < q[5]);
+          if ((front || rear) && C.y < 0.8 * H && !cutHere && !PLATE_RE.test(m.name || '')) {
+            const bx = boxes.find(({ r }) => C.x > r.x0 - 0.03 && C.x < r.x1 + 0.03 && C.y > r.y0 - 0.03 && C.y < r.y1 + 0.03 && C.z > r.zmin - 0.1 && C.z < r.zmax + 0.1 && (front ? r.zmax > bz1 - zq : r.zmin < bz0 + zq));
+            const c0 = m.userData.col0 !== undefined ? cls(toS(new THREE.Color(m.userData.col0).toArray())) : 'dark';
+            if (bx && !(bx.role === 'head' && Math.abs(C.x) < 0.16)) role = bx.role;
+            // glass low at either end, below any window, is a lamp cover: clear at the front → headlamp, at the back a lens (red → tail)
+            else if (front && C.y < Math.min(0.62 * H, 0.85) && C.y > 0.42 && Math.abs(C.x) > 0.3 && !boxes.some(b => b.role === 'head')) role = c0 === 'amber' ? (C.x > 0 ? 'indFL' : 'indFR') : c0 === 'red' ? 'lens' : 'head';
+            else if (rear && C.y < Math.min(0.55 * H, 0.8)) role = c0 === 'red' ? 'tail' : 'lens';
+          } }
+        if (role !== 'none') any = true;
+        const k = mi + '|' + role; let B = buckets.get(k); if (!B) buckets.set(k, B = []); B.push(a, b, c); } }
+    if (any) pending.push({ o, buckets, matFor: k => { const [mi, role] = k.split('|'), m = ms[+mi]; return role === 'none' ? m : lensMat(m, role); } });
+  });
+  // build: one mesh per part (same transform, shared vertex buffers, own index)
+  for (const { o, buckets, matFor } of pending) {
+    const keys = [...buckets.keys()];
+    if (keys.length === 1 && !Array.isArray(o.material)) { o.material = matFor(keys[0]); continue; }
+    const g = o.geometry, parent = o.parent; let first = true;
+    for (const k of keys) {
+      const sub = new THREE.BufferGeometry(); for (const [nm, at] of Object.entries(g.attributes)) sub.setAttribute(nm, at);
+      sub.setIndex(buckets.get(k));
+      if (first) { o.geometry = sub; o.material = matFor(k); first = false; continue; }
+      const me = new THREE.Mesh(sub, matFor(k)); me.name = o.name + '#' + k.split('|')[1]; me.position.copy(o.position); me.quaternion.copy(o.quaternion); me.scale.copy(o.scale);
+      me.castShadow = o.castShadow; me.receiveShadow = o.receiveShadow; me.renderOrder = o.renderOrder; parent.add(me); me.updateMatrixWorld(true);
+    }
+  }
+  // the models' own always-on emission outside the lamps (glowing wheels, trims, white-hot "lamp" atlases) is switched off;
+  // the cabin keeps its (dash / gauge) glow
+  scene.traverse(o => { if (!o.isMesh) return; const ms = Array.isArray(o.material) ? o.material : [o.material];
+    const out = ms.map(m => { if (!m || m.userData.lampRole || !m.emissive || !(m.emissive.r + m.emissive.g + m.emissive.b > 0.05 || m.emissiveMap)) return m;
+      if (!o.geometry.boundingBox) o.geometry.computeBoundingBox(); const b = o.geometry.boundingBox.clone().applyMatrix4(o.matrixWorld).applyMatrix4(inv);
+      const inCabin = !isWheel(o) && b.max.z < bz1 - zq && b.min.z > bz0 + zq && b.min.y > 0.25 * H;
+      return inCabin ? m : off(m); });
+    o.material = Array.isArray(o.material) ? out : out[0]; });
+  // anchors: where each lamp is (area-weighted centre, outer face), per side — glows, beams and the rear fog lamp sit there
+  const out = {}; for (const [k, r] of Object.entries(acc)) if (r.w > 0) out[k] = { p: [r.x / r.w, r.y / r.w, r.z / r.w], zmax: r.zmax, zmin: r.zmin, w: r.x1 - r.x0, h: r.y1 - r.y0 };
+  return out;
+}
 // Window glass: alpha and reflection follow the view angle (Fresnel) — mostly reflection at grazing angles, a dark
 // tint face-on; reflections are added on top of what is seen through (not faded with the alpha). From inside the car
 // (vertex normal facing away from the viewer, see fixMaterials) the glass is a light tint, so the cockpit view stays clear.
@@ -169,6 +367,15 @@ function glassShader(m) {
 }
 // Material.clone() drops onBeforeCompile → the glass shader is put back on copies (per-car paint / lamp / clipped body copies)
 const cloneMat = m => { const c = m.clone(); if (m.userData.mjGlass) glassShader(c); return c; };
+// v2.16: a model exported facing backwards (manifest forward "-z", e.g. the Prelude: tail lamps at the "front", the
+// front wheels steering at the back) is turned round inside its root, its wheel nodes renamed to the corners they are at
+function faceForward(e) {
+  const sc = e.scene, turn = new THREE.Group(); turn.name = 'mj_turn'; turn.rotation.y = Math.PI;
+  for (const c of [...sc.children]) turn.add(c); sc.add(turn);
+  const ren = { wheel_fl: 'wheel_rr', wheel_fr: 'wheel_rl', wheel_rl: 'wheel_fr', wheel_rr: 'wheel_fl' }, ws = [];
+  sc.traverse(o => { if (ren[o.name]) ws.push(o); }); for (const o of ws) o.name = ren[o.name];
+  const b = e.info.bbox; if (b && !e.info._turned) { e.info.bbox = [-b[3], b[1], -b[5], -b[0], b[4], -b[2]]; e.info._turned = true; }
+}
 export function requestGlb(id, lod) {
   if (lod === 'lo' && !manifest) return loadManifest().then(() => requestGlb(id, lod));
   const key = ckey(id, lod); id = mid(id);
@@ -177,7 +384,7 @@ export function requestGlb(id, lod) {
   e.promise = loadManifest().then(m => {
     const info = m[id]; if (!info) throw new Error('no model for ' + id);
     if (!gltf) { gltf = new GLTFLoader(); gltf.setMeshoptDecoder(MeshoptDecoder); }
-    return gltf.loadAsync(new URL(key.endsWith('@lo') ? info.lo : info.file, BASE).href).then(g => { e.scene = g.scene; e.info = info; e.scene.updateMatrixWorld(true); if (info.split) splitLivery(e.scene, info); fixMaterials(e.scene, info); e.scene.traverse(o => { if (o.geometry) o.geometry.userData.shared = true; }); return precompile(e); });
+    return gltf.loadAsync(new URL(key.endsWith('@lo') ? info.lo : info.file, BASE).href).then(g => { e.scene = g.scene; e.info = info; if (info.forward === '-z') faceForward(e); e.scene.updateMatrixWorld(true); if (info.split) splitLivery(e.scene, info); fixMaterials(e.scene, info); e.lamps = lampSplit(e.scene, info); e.scene.traverse(o => { if (o.geometry) o.geometry.userData.shared = true; }); return precompile(e); });
   });
   e.promise.catch(err => { if (!/no model/.test(err.message)) console.warn('car model', id, err); });
   return e.promise;
@@ -233,43 +440,37 @@ export function flatClone(e) {
   for (const { o, m } of e.flat.keep) { const c = o.clone(true); m.decompose(c.position, c.quaternion, c.scale); vis.add(c); }
   return vis;
 }
-// v2.4.1: where the real model's lamps are — per side (x > 0 is the car's left), from the vertices of its head- and
-// tail-lamp materials, in the model's own space. Cached per model.
-export function lampAnchors(e, isHead, isTail) {
+// v2.4.1 / v2.16: where the real model's lamps are — per side (x > 0 is the car's left), in the model's own space, from
+// the lamp triangles found by lampSplit (manifest `lampPos` overrides; a guess from the body box when a model has none).
+// Cached per model.
+export function lampAnchors(e) {
   if (e.lampA !== undefined) return e.lampA;
-  const sc = e.scene; sc.updateMatrixWorld(true); const inv = sc.matrixWorld.clone().invert(), m4 = new THREE.Matrix4(), v = new THREE.Vector3();
-  const box = () => ({ x0: 1e9, x1: -1e9, y0: 1e9, y1: -1e9, z0: 1e9, z1: -1e9, n: 0 });
-  const B = { hL: box(), hR: box(), tL: box(), tR: box(), rL: box(), rR: box(), iFL: box(), iFR: box(), iRL: box(), iRR: box() };
-  const IND_RE = /blinker|orange|indicator|turn.?sig|amber/i;
-  sc.traverse(o => {
-    if (!o.isMesh) return; const ms = Array.isArray(o.material) ? o.material : [o.material];
-    const kinds = ms.map(m => isHead(m.name, m) ? 'h' : isTail(m.name, m) ? 't' : m.userData.lamp === 'rev' ? 'r' : (IND_RE.test(m.name || '') || m.userData.lamp === 'ind') ? 'i' : null); if (!kinds.some(Boolean)) return;
-    const g = o.geometry, pos = g.attributes.position, idx = g.index; m4.multiplyMatrices(inv, o.matrixWorld);
-    const groups = g.groups.length && Array.isArray(o.material) ? g.groups : [{ start: 0, count: idx ? idx.count : pos.count, materialIndex: 0 }];
-    for (const gr of groups) { const k = kinds[gr.materialIndex ?? 0]; if (!k) continue;
-      const step = Math.max(1, Math.floor(gr.count / 600));
-      for (let i = gr.start; i < gr.start + gr.count; i += step) { const vi = idx ? idx.getX(i) : i; v.fromBufferAttribute(pos, vi).applyMatrix4(m4);
-        const b = B[k === 'i' ? 'i' + (v.z > 0 ? 'F' : 'R') + (v.x > 0 ? 'L' : 'R') : k + (v.x > 0 ? 'L' : 'R')]; b.n++; b.x0 = Math.min(b.x0, v.x); b.x1 = Math.max(b.x1, v.x); b.y0 = Math.min(b.y0, v.y); b.y1 = Math.max(b.y1, v.y); b.z0 = Math.min(b.z0, v.z); b.z1 = Math.max(b.z1, v.z); } }
-  });
-  const [bx0, , bz0, bx1, , bz1] = e.info.bbox;
-  const ok = b => b.n > 6 && b.x1 - b.x0 < 1.2;
-  const out = { head: [], tail: [], ind: [], rev: [], fog: [] };
+  const A = e.lamps || {}, [bx0, , bz0, bx1, by1, bz1] = e.info.bbox, hw = Math.max(bx1, -bx0), O = e.info.lampPos || {};
+  const ok = a => a && a.w < 1.3 && a.h < 0.8;
+  const mir = (p, sg) => [Math.abs(p[0]) * sg, p[1], p[2]];
+  const out = { head: [], tail: [], ind: [], rev: [], fog: [], ffog: [], brake: [] };
   for (const side of ['L', 'R']) { const sg = side === 'L' ? 1 : -1;
-    const h = B['h' + side], t = B['t' + side];
-    const hp = ok(h) ? [(h.x0 + h.x1) / 2, (h.y0 + h.y1) / 2, h.z1 + 0.03] : [sg * (Math.max(bx1, -bx0) - 0.35), 0.68, bz1 + 0.02];
-    const tp = ok(t) ? [(t.x0 + t.x1) / 2, (t.y0 + t.y1) / 2, t.z0 - 0.03] : [sg * (Math.max(bx1, -bx0) - 0.3), 0.85, bz0 - 0.02];
+    const h = A['head' + side], t = A['tail' + side];
+    const hp = O.head ? mir(O.head, sg) : ok(h) ? [h.p[0], h.p[1], h.zmax + 0.02] : [sg * (hw - 0.35), 0.68, bz1 + 0.02];
+    const tp = O.tail ? mir(O.tail, sg) : ok(t) ? [t.p[0], t.p[1], t.zmin - 0.02] : [sg * (hw - 0.3), 0.85, bz0 - 0.02];
     out.head.push({ side, p: hp }); out.tail.push({ side, p: tp });
-    // indicators at the outer corner of each lamp (front and rear)
-    const hx = ok(h) ? (sg > 0 ? h.x1 : h.x0) - sg * 0.04 : hp[0] + sg * 0.18, tx = ok(t) ? (sg > 0 ? t.x1 : t.x0) - sg * 0.04 : tp[0] + sg * 0.15;
-    // the model's own amber lenses when it has them (front / rear, per side), else the lamp's outer corner
-    const iF = B['iF' + side], iR = B['iR' + side], cen = (b, z) => [(b.x0 + b.x1) / 2, (b.y0 + b.y1) / 2, z];
-    out.ind.push({ side, p: ok(iF) ? cen(iF, iF.z1 + 0.02) : [hx, hp[1] - 0.02, hp[2] - 0.01] }, { side, p: ok(iR) ? cen(iR, iR.z0 - 0.02) : [tx, tp[1] + 0.02, tp[2] + 0.01] });
-    // v2.14: reversing lamps (the model's own clear rear lenses, else the inner part of the tail lamp) and the single
-    // rear fog lamp — Japanese cars carry it on the driver's (right, x < 0) side, in the inner part of the cluster
-    const r = B['r' + side], tw = ok(t) ? Math.max(0.06, (t.x1 - t.x0) * 0.3) : 0.12;
-    out.rev.push({ side, p: ok(r) ? cen(r, r.z0 - 0.02) : [tp[0] - sg * tw, tp[1] - 0.02, tp[2] + 0.005] });
-    if (side === 'R') out.fog.push({ side, p: [tp[0] + tw * 0.5, tp[1] - 0.035, tp[2] - 0.004] });
+    // indicators: the model's own amber lamps (front / rear corner), else the outer edge of the head / tail lamp
+    const iF = A['indF' + side], iR = A['indR' + side];
+    const tw = ok(t) ? Math.max(0.05, t.w * 0.3) : 0.12, hW = ok(h) ? h.w : 0.3;
+    out.ind.push({ side, p: O.ind ? mir(O.ind, sg) : ok(iF) ? [iF.p[0], iF.p[1], iF.zmax + 0.015] : [hp[0] + sg * hW * 0.45, hp[1] - 0.02, hp[2] - 0.01] },
+      { side, p: O.indR ? mir(O.indR, sg) : ok(iR) ? [iR.p[0], iR.p[1], iR.zmin - 0.015] : [tp[0] + sg * tw, tp[1] + 0.01, tp[2] + 0.01] });
+    // reversing lamps: the model's own (clear lenses at the back), else the inner part of the tail lamp
+    const r = A['rev' + side];
+    out.rev.push({ side, p: O.rev ? mir(O.rev, sg) : ok(r) ? [r.p[0], r.p[1], r.zmin - 0.015] : [tp[0] - sg * tw, tp[1] - 0.03, tp[2] + 0.005] });
+    const ff = A['ffog' + side]; if (ok(ff)) out.ffog.push({ side, p: [ff.p[0], ff.p[1], ff.zmax + 0.015] });
   }
+  // ONE rear fog lamp, on the driver's (right, x < 0) side as on Japanese cars: the model's own if it has one, else the
+  // inner, lower part of the right tail lamp
+  { const f = A.rfogR, tR = out.tail[1].p, t = A.tailR, tw = ok(t) ? Math.max(0.05, t.w * 0.3) : 0.12;
+    out.fog.push({ side: 'R', p: O.fog ? mir(O.fog, -1) : ok(f) ? [f.p[0], f.p[1], f.zmin - 0.015] : [tR[0] + tw * 0.5, tR[1] - 0.035, tR[2] - 0.004] }); }
+  // high-mount stop lamp
+  { const bl = A.brakeL, br = A.brakeR, list = [bl, br].filter(Boolean);
+    if (list.length) { const wsum = list.length, p = [0, list.reduce((s, a) => s + a.p[1], 0) / wsum, Math.min(...list.map(a => a.zmin)) - 0.01]; out.brake.push({ side: 'C', p }); } }
   return (e.lampA = out);
 }
 let _glowTex = null;
@@ -335,7 +536,6 @@ function analyseBay(e, rear) {
 
 const isWhite = hex => { const c = new THREE.Color(hex); return c.r > 0.8 && c.g > 0.8 && c.b > 0.8; };
 const FINISH = { metallic: { metalness: 0.45, roughness: 0.36, clearcoat: 1 }, pearl: { metalness: 0.35, roughness: 0.22, clearcoat: 1 }, solid: { metalness: 0.05, roughness: 0.32, clearcoat: 1 }, matte: { metalness: 0.15, roughness: 0.75, clearcoat: 0 } };
-const HEAD_RE = /head.?(light|lamp)|front.?(light|lamp)|scheinwerfer|^hl(_|$)/i, TAIL_RE = /(tail|rear|brake|stop).?(light|lamp)|taillight|^tl(_|$)/i;
 
 /** Build a CarModel around a loaded glTF entry. opts: same as buildCar (+ openable=false to skip the bonnet cut). */
 export function buildGlbCar(car, e, opts = {}) {
@@ -356,21 +556,19 @@ export function buildGlbCar(car, e, opts = {}) {
   if (!full) { for (const o of procShell) o.matrixWorldAutoUpdate = false; for (const w of parts.wheels) w.steer.traverse(o => { if (o.isMesh) o.matrixWorldAutoUpdate = false; }); for (const d of parts.doors) d.pivot.matrixWorldAutoUpdate = false; } // v2.4: hidden for good → skip their matrices
   const vis = full || NOFLAT ? e.scene.clone(true) : flatClone(e); vis.name = 'glb';
   // per-instance paint & lamp materials (the rest is shared between all instances of this model)
-  const paintNames = new Set(info.paint || []), paintMats = [], head = [], tail = [];
-  // lamp materials: by name, or listed explicitly in the manifest (models with generic material names)
-  const headNames = new Set(info.lamps?.head || []), tailNames = new Set(info.lamps?.tail || []);
-  const isHead = (n, m) => headNames.has(n) || (!tailNames.has(n) && ((HEAD_RE.test(n) && !TAIL_RE.test(n)) || m?.userData.lamp === 'head')), isTail = (n, m) => tailNames.has(n) || (!headNames.has(n) && (TAIL_RE.test(n) || m?.userData.lamp === 'tail'));
-  const rev = [];
+  const paintNames = new Set(info.paint || []), paintMats = [];
+  // lamp materials (v2.16): the parts lampSplit cut out of the model, by role (head / tail / brake / rev / indFL … / ffog / rfog)
+  const lampM = {};
   const matMap = new Map();
-  const own = m => { let c = matMap.get(m); if (!c) { c = cloneMat(m); matMap.set(m, c); } return c; };
+  const ownSet = new Set(); // v2.16: an instance copy is its own owner (the cockpit pass used to copy the copies → the paint / lamp
+  // materials driven by setPaint and the light switch were no longer the ones on screen)
+  const own = m => { if (ownSet.has(m)) return m; let c = matMap.get(m); if (!c) { c = cloneMat(m); matMap.set(m, c); ownSet.add(c); } return c; };
   vis.traverse(o => {
     if (!o.isMesh) return;
     const mats = Array.isArray(o.material) ? o.material : [o.material];
     const out = mats.map(m => {
-      if (paintNames.has(m.name)) { const c = own(m); if (!paintMats.includes(c)) paintMats.push(c); return c; }
-      if (isHead(m.name, m)) { const c = own(m); if (!head.includes(c)) head.push(c); return c; }
-      if (isTail(m.name, m)) { const c = own(m); if (!tail.includes(c)) tail.push(c); return c; }
-      if (m.userData.lamp === 'rev') { const c = own(m); if (!rev.includes(c)) rev.push(c); return c; }
+      if (paintNames.has(m.name) && !m.userData.lampRole) { const c = own(m); if (!paintMats.includes(c)) paintMats.push(c); return c; }
+      const role = m.userData.lampRole; if (role) { const c = own(m), l = lampM[role] ||= []; if (!l.includes(c)) l.push(c); return c; }
       return m;
     });
     o.material = Array.isArray(o.material) ? out : out[0];
@@ -413,12 +611,14 @@ export function buildGlbCar(car, e, opts = {}) {
     const pz = e.plateZ ||= {}, ck = (k, y, fr) => pz[k + (low ? 'l' : 'h')] ??= surf(y, fr);
     if (pf) { const S = spots.f; if (S) pf.position.set(S.x, S.y, S.z); else pf.position.set(0, 0.42, ck('f', 0.42, true)); }
     if (pr) { const S = spots.r; if (S) pr.position.set(S.x, S.y, S.z); else pr.position.set(0, 0.55, ck('r', 0.55, false)); }
-    // v2.14: the plate recess measured on the model (a flat, plate-sized, recessed patch on the centre line, found by
-    // rays — see manifest `plate` {f|r: [x, y, z, tiltDeg]}, model space): flat on the recess at its real angle
+    // v2.14 / v2.16: the plate recess measured on the model (the flattest plate-sized patch on the centre line — or where
+    // the model's own plate was — found offline by a depth map of each end: manifest `plate` {f|r: [x, y, z, tiltDeg,
+    // yawDeg]}, model space, z = the most protruding point of the patch): flat on the recess at its real angle, never
+    // sunk into the bumper
     for (const [k, pm] of [['f', pf], ['r', pr]]) {
       const A = info.plate?.[k]; if (!A || !pm || info.plateAt?.[k]) continue;
-      const [x, y, z, tilt = 0] = A, out = k === 'f' ? 1 : -1, tr = tilt * Math.PI / 180;
-      pm.position.set(x, y + vis.position.y, z + zoff + out * 0.005); pm.rotation.x = out > 0 ? -tr : tr;
+      const [x, y, z, tilt = 0, yaw = 0] = A, out = k === 'f' ? 1 : -1, tr = tilt * Math.PI / 180;
+      pm.position.set(x, y + vis.position.y, z + zoff + out * 0.003); pm.rotation.x = out > 0 ? -tr : tr; pm.rotation.y = (out > 0 ? 0 : Math.PI) + yaw * Math.PI / 180;
       pm.userData.rx0 = pm.rotation.x; pm.userData.p0 = pm.position.clone();
     }
     // v2.5.3: plates painted into the body texture (no mesh to hide) — manifest plateAt {r|f: [x, y, z, w, h, tiltDeg]}:
@@ -441,7 +641,8 @@ export function buildGlbCar(car, e, opts = {}) {
   model.setFinish = finish => { const f = FINISH[finish] || FINISH.metallic; for (const m of model.allPaint ? model.allPaint() : paintMats) { m.metalness = f.metalness; m.roughness = f.roughness; if ('clearcoat' in m) m.clearcoat = f.clearcoat; m.needsUpdate = true; } };
   if (paintMats.length) { const col = opts.color || car.colors[0]; model.setPaint(col); model.setFinish(opts.finish || (car.cat === 'police' ? 'solid' : isWhite(col) ? 'pearl' : 'metallic')); }
   // lamps
-  for (const m of [...head, ...tail, ...rev]) { m.emissive = m.emissive || new THREE.Color(); m.emissiveIntensity = 0; }
+  // lit uniformly (the model's own emission map is a day-and-night glow pattern), clear lenses turn opaque-bright when lit
+  for (const list of Object.values(lampM)) for (const m of list) { if (!m.emissive) m.emissive = new THREE.Color(); m.emissive.setHex(0); m.emissiveMap = null; m.emissiveIntensity = 0; m.userData.op0 = m.opacity; m.needsUpdate = true; }
   const bay = opts.openable === false || low ? null : analyseBay(e, REAR_ENGINE(car));
   let cut = null;
   if (bay) cut = makeOpenable(model, vis, bay, car, new Set(matMap.values()));
@@ -535,31 +736,44 @@ export function buildGlbCar(car, e, opts = {}) {
     parts.doorMirrors = []; // the real model's own mirrors are on screen
     model._trimU = trimU;
   }
-  // v2.4.1: lamp glows and amber indicators at the real lamps (the procedural lamps are hidden on real models; hazards
-  // used to flash the whole headlight white and the tail red)
-  const LA = lampAnchors(e, isHead, isTail), glows = { head: [], tail: [], ind: [], rev: [], fog: [] };
+  // v2.4.1 / v2.16: glows at the real lamps (the procedural lamps are hidden on real models), and the beams from them
+  const LA = lampAnchors(e), glows = { head: [], tail: [], ind: [], rev: [], fog: [], ffog: [], brake: [] };
   const spr = (hex, p, k) => { const s2 = new THREE.Sprite(glowMat(hex)); s2.position.set(p[0], p[1], p[2]); s2.visible = false; s2.renderOrder = 3; vis.add(s2); glows[k].push(s2); return s2; };
-  for (const a of LA.ind) spr(0xffa020, a.p, 'ind').userData.side = a.side;
-  { const H = low ? LA.head.slice(0, 2) : LA.head, T = low ? LA.tail.slice(0, 2) : LA.tail; for (const a of H) spr(0xfff2dc, a.p, 'head'); for (const a of T) spr(0xff2010, a.p, 'tail'); }
-  for (const a of LA.rev || []) spr(0xfff6ee, a.p, 'rev');
-  for (const a of LA.fog || []) spr(0xff1408, a.p, 'fog'); // v2.11.1: NPC cars light up too (2 + 2 sprites)
+  for (const a of LA.ind) spr(0xff9418, a.p, 'ind').userData.side = a.side;
+  for (const a of LA.head) spr(0xfff2dc, a.p, 'head'); for (const a of LA.tail) spr(0xff2010, a.p, 'tail');
+  for (const a of LA.rev) spr(0xfff6ee, a.p, 'rev');
+  for (const a of LA.fog) spr(0xff1408, a.p, 'fog');
+  for (const a of LA.ffog) spr(0xfff0d0, a.p, 'ffog');
+  for (const a of LA.brake) spr(0xff1408, a.p, 'brake');
+  if (parts.real) { // the player's headlight beam from between the real headlamps, the rear glow from the real tail lamps
+    const avg = (l, i) => l.reduce((s2, a) => s2 + a.p[i], 0) / l.length, hy = avg(LA.head, 1) + vis.position.y, hz = avg(LA.head, 2) + vis.position.z;
+    const sz = Math.max(hz, bz1 + vis.position.z) + 0.05; // just ahead of the nose: the bumper / plate are not floodlit by their own beam
+    parts.real.spot.position.set(0, hy, sz); parts.real.spot.target.position.set(0, hy - 1.3, sz + 18);
+    parts.real.glow.position.set(0, avg(LA.tail, 1) + vis.position.y, avg(LA.tail, 2) + vis.position.z - 0.2);
+  }
+  const warm = (car.year || 2000) < 2006; // halogen (warm) vs HID / LED (cool white) headlamps
+  const setL = (role, hex, I) => { const l = lampM[role]; if (!l) return; for (const m of l) { m.emissive.setHex(hex); m.emissiveIntensity = I; if (m.transparent) m.opacity = I > 0 ? Math.max(m.userData.op0, 0.85) : m.userData.op0; } };
   const base = model.onUpdate;
   model.onUpdate = dt => {
     base?.(dt);
     if (model.cockpitView && model._trimU) model._trimU.uBodyInv.value.copy(bodyG.matrixWorld).invert();
     const L = model.lights; const blink = model.blinkOn;
-    const headOn = L.head || L.drl === true, brake = L.brake, pos = L.head || L.pos;
-    for (const m of head) { m.emissive.setHex(0xfff4e0); m.emissiveIntensity = headOn ? (L.high ? 5 : 3.5) : 0; }
-    // tail: dim red with the lights, bright only while braking; reversing lamps white in reverse; rear fog: one bright
-    // red lamp, only with the fog switch on and the lights on (as on a real car)
-    for (const m of tail) { m.emissive.setHex(0xff1a10); m.emissiveIntensity = brake ? 4.5 : pos ? 1.1 : 0; }
-    for (const m of rev) { m.emissive.setHex(0xfff6ee); m.emissiveIntensity = L.reverse ? 3.2 : 0; }
-    for (const s2 of glows.rev) { s2.visible = !!L.reverse; if (L.reverse) s2.scale.setScalar(0.3); }
-    { const fog = !!(L.fog && pos); for (const s2 of glows.fog) { s2.visible = fog; if (fog) s2.scale.setScalar(0.5); } }
-    const lOn = (L.hazard || L.left) && blink, rOn = (L.hazard || L.right) && blink;
-    for (const s2 of glows.ind) { const on = s2.userData.side === 'L' ? lOn : rOn; s2.visible = on; if (on) s2.scale.setScalar(0.3); }
-    for (const s2 of glows.head) { s2.visible = headOn; if (headOn) s2.scale.setScalar(L.high ? 0.68 : 0.46); }
-    for (const s2 of glows.tail) { const on = brake || pos; s2.visible = on; if (on) { s2.scale.setScalar(brake ? 0.46 : 0.22); } }
+    const headOn = L.head || L.drl === true, brake = L.brake, pos = !!(L.head || L.pos), fog = !!(L.fog && pos);
+    // head: low beam (high brighter); parking-lamp glow with only the small lamps on
+    setL('head', warm ? 0xffe2b8 : 0xeef3ff, headOn ? (L.high ? 3.4 : 2.4) : pos ? 0.3 : 0);
+    // tail: dim red with the lights on, bright red only while braking (same lens); high-mount stop lamp only braking
+    setL('tail', 0xff1808, brake ? 3.6 : pos ? 0.75 : 0); setL('brake', 0xff1808, brake ? 4 : 0);
+    setL('rev', 0xffffff, L.reverse ? 2.6 : 0);
+    setL('ffog', 0xfff2d0, fog ? 2.4 : 0); setL('rfog', 0xff1808, fog ? 4 : 0);
+    const lOn = !!((L.hazard || L.left) && blink), rOn = !!((L.hazard || L.right) && blink);
+    setL('indFL', 0xff7a00, lOn ? 3.4 : 0); setL('indRL', 0xff7a00, lOn ? 3.4 : 0); setL('indFR', 0xff7a00, rOn ? 3.4 : 0); setL('indRR', 0xff7a00, rOn ? 3.4 : 0);
+    for (const s2 of glows.ind) { const on = s2.userData.side === 'L' ? lOn : rOn; s2.visible = on; if (on) s2.scale.setScalar(0.26); }
+    for (const s2 of glows.head) { s2.visible = headOn; if (headOn) s2.scale.setScalar(L.high ? 0.6 : 0.36); }
+    for (const s2 of glows.tail) { const on = brake || pos; s2.visible = on; if (on) s2.scale.setScalar(brake ? 0.36 : 0.16); }
+    for (const s2 of glows.brake) { s2.visible = !!brake; if (brake) s2.scale.setScalar(0.2); }
+    for (const s2 of glows.rev) { s2.visible = !!L.reverse; if (L.reverse) s2.scale.setScalar(0.26); }
+    for (const s2 of glows.fog) { s2.visible = fog; if (fog) s2.scale.setScalar(0.34); }
+    for (const s2 of glows.ffog) { s2.visible = fog; if (fog) s2.scale.setScalar(0.3); }
     cut?.update();
   };
   const dispose0 = model.dispose.bind(model);

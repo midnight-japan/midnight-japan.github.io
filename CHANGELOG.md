@@ -1,9 +1,10 @@
 # 📜 MIDNIGHT JAPAN 업데이트 기록 · Changelog
 
-현재 버전 · Current: **v2.15.7** · [▶ 웹에서 플레이](https://midnight-japan.github.io/) · [🌐 업데이트 페이지](https://midnight-japan.github.io/changelog.html)
+현재 버전 · Current: **v2.16.0** · [▶ 웹에서 플레이](https://midnight-japan.github.io/) · [🌐 업데이트 페이지](https://midnight-japan.github.io/changelog.html)
 
 | 버전 | 날짜 | 이름 | 요약 |
 |---|---|---|---|
+| [v2.16.0](#v2160--living-japan-2026-11-20) | 2026-11-20 | Living Japan | 새 코스 4곳(하코네 나나마가리·후지 스카이라인·에노시마·비너스 라인), 실사 사람 9명과 사고 후 구급차·뺨 때리기, NPC 차만 부서지는 사고, 실제 렌즈 모양대로 켜지는 램프와 번호판 정렬, 실사 해바라기·주유기·가드레일, 실제 녹음 효과음. |
 | [v2.15.7](#v2157--name-tags-2026-11-20) | 2026-11-20 | Name Tags | 다른 플레이어 차 위 이름표가 하늘 높이(약 1.3km)에 떠서 안 보이던 버그 수정 — 이제 차 바로 위에 「닉네임 · 차종」. |
 | [v2.15.6](#v2156--bumper-to-bumper-2026-11-20) | 2026-11-20 | Bumper to Bumper | 멀티플레이 강화: 중계 서버 여러 곳에 동시 접속(서로 다른 서버에 붙어도 만남), 중복 메시지 제거, 플레이어끼리 충돌, 상대 경적 소리. |
 | [v2.15.5](#v2155--always-connected-2026-11-20) | 2026-11-20 | Always Connected | 어떤 네트워크에서도 만나도록 중계(MQTT) 예비 경로 추가, 상대 이름표 크기 버그 수정, 일본 전역 지도를 게임답게 단순화. |
@@ -79,6 +80,24 @@
 | [v0.2.0](#v020--bayshore-2026-11-05) | 2026-11-05 | Bayshore | 수도고속 완간선을 따라 하네다까지, 도쿄만 아쿠아라인 해저터널을 지나 우미호타루 PA까지. 실제 3D 차량 모델과 열리는 보닛도 들어왔어요. |
 | [v0.1.1](#v011--one-click-2026-11-04) | 2026-11-04 | One Click | 링크 하나로 바로 플레이. 크롬에서 공식 사이트 주소만 열면 설치 없이 실행돼요. |
 | [v0.1.0](#v010--first-meet-2026-11-04) | 2026-11-04 | First Meet | 첫 공개 버전. 다이코쿠 JCT·PA와 다이코쿠 부두 일대를 3D로 구현했습니다. |
+
+---
+
+## v2.16.0 — Living Japan (2026-11-20)
+
+> 새 코스 4곳(하코네 나나마가리·후지 스카이라인·에노시마·비너스 라인), 실사 사람 9명과 사고 후 구급차·뺨 때리기, NPC 차만 부서지는 사고, 실제 렌즈 모양대로 켜지는 램프와 번호판 정렬, 실사 해바라기·주유기·가드레일, 실제 녹음 효과음.
+> Four new real courses (Hakone Nanamagari, Fuji Skyline, Enoshima, Venus Line), realistic people with ambulance and slap after crashes, NPC-only crash damage, lamps lit by real lens shapes and fitted plates, real sunflowers / fuel pumps / guard rails, recorded sound effects.
+
+**✨ 추가 · New**
+
+- 새 코스: 箱根七曲り(턴파이크와 연결, 헤어핀 46곳), 富士山スカイライン(五合目 2,353m), 江の島·134호(대교·섬·시캔들), ビーナスライン(65km) — 실제 지도·표고, 지도/빠른 이동에서 바로 이동<br><sub>New courses: Hakone Nanamagari (joins the Turnpike, 46 hairpins), Fuji Skyline (5th station, 2,353 m), Enoshima & Route 134 (bridge, island, Sea Candle), Venus Line (65 km) — real map and elevation, reachable from the map / quick travel</sub>
+- 실사 사람 9명(걷기·대기·통화·자전거·신호 대기), 사고 시 구급차 출동·들것 이송, 화난 운전자에게 뺨 때리기(F)<br><sub>Nine realistic people (walk, idle, phone, cycling, waiting at crossings); ambulances answer crashes with a stretcher; slap an angry driver (F)</sub>
+- NPC 차를 들이받으면 그 차만 찌그러지고 유리 파편·연기·비상등, 내 차는 멀쩡<br><sub>Hitting an NPC car wrecks only that car (dents, glass, smoke, hazards); yours stays clean</sub>
+- 실사 해바라기(멀리서도 보이는 노란 띠, 계절 변화), 브랜드별 주유기와 멀리서 보이는 캐노피 로고, 흰 W형 가드레일, 실제 녹음 효과음(비·풀벌레·까마귀·자판기·충돌 등, CC0)<br><sub>Real sunflowers (visible yellow band from afar, seasons), branded fuel pumps with canopy logos visible from distance, white W-beam guard rails, recorded CC0 sound effects (rain, crickets, crows, vending, crashes…)</sub>
+
+**🐞 수정 · Fixed**
+
+- 전 차종 램프를 실제 렌즈 형상에서 점등(하향·미등·브레이크·보조제동·우측 후방안개·방향지시·후진), 번호판을 범퍼 경사에 맞춰 정렬, 프렐류드 앞뒤 반전 수정<br><sub>Every car lights its real lens shapes (low beam, tail, brake, high-mount, right rear fog, indicators, reverse); plates fitted to the bumper slope; Prelude front/back fixed</sub>
 
 ---
 

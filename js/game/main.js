@@ -21,6 +21,7 @@ import { setGlbCompiler } from './carglb.js';
 import { Nav } from './nav.js';
 import { Autopilot } from './autopilot.js';
 import { SeasonFX } from './seasonfx.js';
+import { getSeason } from './flora.js';
 import { Roadworks } from './roadworks.js';
 import { FuelStation } from './fuelstation.js';
 import { KonbiniStaff } from './konbini-staff.js';
@@ -133,6 +134,7 @@ class Game {
     this.world = new World(this.scene, this.net, this.quality);
     this.world.cam = this.camera; // v2.11: distance culling
     await this.world.build();
+    this.world.regions?.install(this); // v2.16: travel / spawn into a lazily loaded region waits for it (region.js)
     // v2.2: invisible depth-only covers over the open cuttings, drawn after the roads and before the sea — the sea
     // plane runs under the whole map and used to fill every cutting before a tunnel mouth with water
     try {
@@ -865,7 +867,7 @@ class Game {
       const city = this.world.city, onLand = this.world.isLand(this.focus.x, this.focus.z);
       const inCity = city && onLand && !inPA && this.focus.y < 8 && Math.hypot(this.focus.x - 150, this.focus.z + 100) > 900 ? 1 : 0;
       const ch = inCity ? city.chimeAt(this.focus) : { chime: 0, vol: 0 };
-      this.audio.setEnvironment({ night: this.env.night, rain: this.env.rain || 0, inside: this.camMode === 'cockpit' && this.mode === 'drive', inPA, inCity, chime: ch.chime, chimeVol: ch.vol, nearSea: !onLand || this.focus.y > 10, speedWind: this.mode === 'drive' ? this.vehicle.speed * (this.vehicle.car.open ? 1 : 0.3) : 0 });
+      this.audio.setEnvironment({ winter: getSeason() === 'winter', night: this.env.night, rain: this.env.rain || 0, inside: this.camMode === 'cockpit' && this.mode === 'drive', inPA, inCity, chime: ch.chime, chimeVol: ch.vol, nearSea: !onLand || this.focus.y > 10, speedWind: this.mode === 'drive' ? this.vehicle.speed * (this.vehicle.car.open ? 1 : 0.3) : 0 });
       if (this.radio && this.vehicle) this.radio.update({ position: this.vehicle.pos, interior: this.mode === 'drive' && (this.camMode === 'cockpit' || this.camMode === 'hood' || this.camMode === 'chase'), openness: this.openness ?? 0, speed: this.vehicle.speed });
       this.audio.update(dt);
     }

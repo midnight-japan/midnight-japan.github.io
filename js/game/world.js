@@ -10,6 +10,7 @@ import { mergeGeometries } from 'three/addons/utils/BufferGeometryUtils.js';
 import { surface, chainlinkMaterial, windowTexture, glowTexture, weather } from './textures.js';
 import { buildPortals } from './portals.js';
 import { Hakone, inHakone } from './hakone.js';
+import { Regions } from './region.js';
 import { COAST_W } from '../../data/coast-west.js';
 import { buildRoadMeshes, cullRoads, splitByCell, lampSpots, bridgeSpan, trenchPolys, PA_RECT, PA, PA_LAYOUT, MAP } from './roads.js';
 import { buildBay, noPierBay, inUmihotaru } from './bay.js';
@@ -241,16 +242,19 @@ export class World {
   // ground height (land = 0, sea = sea floor)
   ground(x, z) {
     if (this.hakone && inHakone(x, z)) return this.hakone.ground(x, z);
+    { const rg = this.regions?.ground(x, z); if (rg !== undefined) return rg; } // v2.16 lazily loaded regions (region.js)
     if (this.isLand(x, z)) return this.city?.inWater(x, z) ? -12 : 0;
     return -12;
   }
   isLand(x, z) {
     if (inHakone(x, z)) return true;
+    { const rl = this.regions?.isLand(x, z); if (rl !== undefined) return rl; }
     if (x < CR[0] || x > CR[2] || z < CR[1] || z > CR[3]) return farLand(x, z);
     for (const l of LAND) { const b = l.bb; if (x > b.x0 && x < b.x1 && z > b.z0 && z < b.z1 && inPoly(x, z, l.pts)) return true; }
     return this.city ? this.city.landAt(x, z) === 1 : false; // piers / yards the coastline misses (v2.0)
   }
   zoneAt(x, z, y) {
+    { const rz = this.regions?.zoneAt(x, z, y); if (rz) return rz; }
     if (inHakone(x, z)) { const L = this.hakone?.lotAt(x, z); if (L) return L.name === '大観山' ? '大観山 · 箱根' : L.name + ' · 箱根ターンパイク'; const h = this.net.query(x, z, y); return h.road ? h.road.name : '箱根'; }
     const pl = placeAt(x, z), area = pl ? pl.name : '';
     const withArea = n => area && area !== n ? `${n} · ${area}` : n;
@@ -302,6 +306,7 @@ export class World {
     const trenches = trenchPolys(this.net, (x, z) => this.isLand(x, z));
     try { this.group.add(buildPortals(this)); } catch (e) { console.warn('portals', e); }
     try { if (this.net.byId.hakone_tp) this.hakone = new Hakone(this); } catch (e) { console.warn('hakone', e); }
+    try { this.regions = new Regions(this); } catch (e) { console.warn('regions', e); }
     for (const l of LAND) {
       if (l.name === '海ほたるPA') { l.skipSeawall = true; }
       const near = l.bb.x1 > -2600 && l.bb.x0 < 2600 && l.bb.z1 > -2600 && l.bb.z0 < 2600;
@@ -1301,6 +1306,7 @@ export class World {
   // ───────────────────────── per-frame ─────────────────────────
   update(dt, env) {
     this.hakone?.update(env);
+    this.regions?.update(env, dt);
     // v2.11 culling: road cells beyond the view range, and the whole Hakone region unless you are near it
     this._cullT = (this._cullT || 0) - dt;
     if (this.cam && this._cullT <= 0) { this._cullT = 0.4; const R = (this.q === 'low' ? 3500 : this.q === 'medium' ? 5500 : 8000) * (this.cullScale || 1); cullRoads(this.roadGroup, this.cam, R); cullRoads(this.group, this.cam, R * 0.7); cullRoads(this.signGroup, this.cam, Math.min(R, 2500));
@@ -1396,6 +1402,7 @@ export class World {
       for (let i = 0; i < this.lotPolys.length; i++) { const bb = B[i]; if (x < bb.x0 || x > bb.x1 || z < bb.z0 || z > bb.z1) continue; if (inPoly(x, z, this.lotPolys[i])) return true; } }
     if (walk && this.umiRing && inPoly(x, z, this.umiRing)) return true;
     if (inHakone(x, z)) { const L = this.hakone?.lotAt(x, z); if (L) return true; }
+    if (this.regions?.lotAt(x, z)) return true;
     const m = this.city ? this.city.maskAt(x, z) : -2;
     if (m === -1) return true; // not streamed in yet: never trap the player
     if (m >= (walk ? 1 : 2)) return true;
