@@ -1,8 +1,15 @@
 // Shared game metadata: version, changelog, regions. Update VERSION + CHANGELOG on every release.
-export const GAME = { title: 'MIDNIGHT JAPAN', titleJa: 'ミッドナイト・ジャパン', version: '2.15.2', build: '2026.11.20' };
+export const GAME = { title: 'MIDNIGHT JAPAN', titleJa: 'ミッドナイト・ジャパン', version: '2.15.3', build: '2026.11.20' };
 
 // Newest first. type: new | change | fix | known
 export const CHANGELOG = [
+  {
+    version: '2.15.3', date: '2026-11-20', codename: 'Fresh Cache',
+    summary: { ko: '오프라인 캐시 갱신: 새 버전이 바로 적용되도록 캐시 버전 정리, 실사 소품·나무·지도 아이콘 파일도 오프라인 저장.', ja: 'オフラインキャッシュ更新：新バージョンがすぐ反映されるようキャッシュ版を整理、実写小物・木・地図アイコンもオフライン保存。', en: 'Offline cache refresh: cache version synced so new releases apply right away; real props, trees and map icons are cached offline too.' },
+    items: [
+      { type: 'fix', ko: '서비스 워커 캐시 버전이 1.1.1에 멈춰 있어 일부 브라우저가 예전 파일을 쓰던 문제', ja: 'サービスワーカーのキャッシュ版が1.1.1のままで一部ブラウザが古いファイルを使っていた問題', en: 'Service-worker cache version was stuck at 1.1.1, so some browsers kept old files' },
+    ],
+  },
   {
     version: '2.15.2', date: '2026-11-20', codename: 'Who Is Where',
     summary: { ko: '온라인 접속자 위치 표시: 미니맵·큰 지도에 닉네임과 차종, 차 위 이름표에도 차종.', ja: 'オンライン参加者の位置表示：ミニマップ・大きな地図にニックネームと車種、車の上の名札にも車種。', en: 'See where other online players are: nickname and car model on the minimap and full map, car model on their name tags.' },
