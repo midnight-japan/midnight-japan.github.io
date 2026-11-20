@@ -1,8 +1,16 @@
 // Shared game metadata: version, changelog, regions. Update VERSION + CHANGELOG on every release.
-export const GAME = { title: 'MIDNIGHT JAPAN', titleJa: 'ミッドナイト・ジャパン', version: '2.15.1', build: '2026.11.20' };
+export const GAME = { title: 'MIDNIGHT JAPAN', titleJa: 'ミッドナイト・ジャパン', version: '2.15.2', build: '2026.11.20' };
 
 // Newest first. type: new | change | fix | known
 export const CHANGELOG = [
+  {
+    version: '2.15.2', date: '2026-11-20', codename: 'Who Is Where',
+    summary: { ko: '온라인 접속자 위치 표시: 미니맵·큰 지도에 닉네임과 차종, 차 위 이름표에도 차종.', ja: 'オンライン参加者の位置表示：ミニマップ・大きな地図にニックネームと車種、車の上の名札にも車種。', en: 'See where other online players are: nickname and car model on the minimap and full map, car model on their name tags.' },
+    items: [
+      { type: 'new', ko: '미니맵: 다른 플레이어를 하늘색 점 + 「닉네임 · 차종」으로, 화면 밖이면 가장자리에 방향 표시', ja: 'ミニマップ：他のプレイヤーを水色の点＋「ニックネーム・車種」で、画面外なら縁に方向表示', en: 'Minimap: other players as cyan dots with "nickname · car", on the rim when out of view' },
+      { type: 'new', ko: '큰 지도: 접속자마다 닉네임과 제조사·차종', ja: '大きな地図：参加者ごとにニックネームとメーカー・車種', en: 'Full map: each player with nickname and make/model' },
+    ],
+  },
   {
     version: '2.15.1', date: '2026-11-20', codename: 'Meet Up',
     summary: { ko: '온라인 만남 연결 안정화: 차단·불안정 신호 서버 교체, 다양한 네트워크(공유기·모바일)에서 서로 찾도록 STUN 서버 추가.', ja: 'オンラインミートの接続を安定化：ブロック・不安定なシグナルサーバーを交換、様々なネットワーク（ルーター・モバイル）で互いを見つけられるようSTUNサーバーを追加。', en: 'Steadier online meets: swapped rate-limited/unstable signalling relays and added STUN servers so players on home routers and mobile networks find each other.' },

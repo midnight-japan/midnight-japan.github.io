@@ -827,7 +827,14 @@ export class UI {
       const q = 2.6 / S * 1.6, sn = Math.sin(ai.yaw), cs = Math.cos(ai.yaw); c.fillStyle = ai.police ? (ai.pursuit ? '#ff3030' : '#4a8cff') : '#e9edf3'; c.strokeStyle = 'rgba(0,0,0,.7)'; c.lineWidth = q * 0.35;
       c.beginPath(); c.moveTo(ai.pos.x + sn * q * 1.6, ai.pos.z + cs * q * 1.6); c.lineTo(ai.pos.x - sn * q + cs * q * 0.9, ai.pos.z - cs * q - sn * q * 0.9); c.lineTo(ai.pos.x - sn * q * 0.5, ai.pos.z - cs * q * 0.5); c.lineTo(ai.pos.x - sn * q - cs * q * 0.9, ai.pos.z - cs * q + sn * q * 0.9); c.closePath(); c.fill(); c.stroke(); }
     this.drawNav(c, 1 / S);
+    const mmT = c.getTransform();
     c.restore();
+    // v2.15.2 online players: cyan dot + nickname · car (on the rim when out of view)
+    const peers = this.g.online?.peers; if (peers?.size) { const dpr0 = W / (c.canvas.clientWidth || W);
+      for (const pp of peers.values()) { if (!pp.have || !pp.info) continue; const q = mmT.transformPoint({ x: pp.pos.x, y: pp.pos.z }); const R2 = Math.min(W, H) * 0.42;
+        let x = q.x, y = q.y; const out = Math.hypot(x - cx, (y - cy) / 0.9) > R2; if (out) { const a2 = Math.atan2((y - cy) / 0.9, x - cx); x = cx + Math.cos(a2) * R2; y = cy + Math.sin(a2) * R2 * 0.9; }
+        c.fillStyle = '#35e0ff'; c.strokeStyle = '#002b33'; c.lineWidth = 2; c.beginPath(); c.arc(x, y, out ? 6 : 8, 0, Math.PI * 2); c.fill(); c.stroke();
+        if (!out) { const car = CAR_BY_ID[pp.info.c]; const l = pp.name + (car ? ' · ' + car.name : ''); c.font = `700 ${Math.round(13 * dpr0)}px system-ui,sans-serif`; c.textAlign = 'center'; c.textBaseline = 'bottom'; c.lineWidth = 3; c.strokeStyle = 'rgba(0,0,0,.75)'; c.strokeText(l, x, y - 10); c.fillStyle = '#bff6ff'; c.fillText(l, x, y - 10); } } }
     // pointers on the edge for the destination / police
     const rim = (x, z, col) => { const a = Math.atan2(x - pos.x, z - pos.z) - yaw; const d = Math.hypot(x - pos.x, z - pos.z) * S; if (d < Math.min(W, H) * 0.42) return; const ang = -a - Math.PI / 2; const R2 = Math.min(W, H) * 0.42; c.fillStyle = col; c.beginPath(); c.arc(cx + Math.cos(ang) * R2, cy + Math.sin(ang) * R2 * 0.9, 6, 0, Math.PI * 2); c.fill(); };
     if (this.g.nav?.target) rim(this.g.nav.target.x, this.g.nav.target.z, '#3fb6ff');
@@ -1038,6 +1045,12 @@ export class UI {
       if (near) { const [a, b] = P(l.x, l.z); c.beginPath(); c.arc(a, b, 16 * dpr, 0, 7); c.strokeStyle = '#ffd38a'; c.lineWidth = 2.5 * dpr; c.stroke(); }
       lab('◆ ' + l.name, l.x, l.z, near ? 21 : 14, near ? '#fff2c8' : '#ffd38a', near); }
     if (kk >= 0.012) lab('大黒PA', (PA_RECT.x0 + PA_RECT.x1) / 2, (PA_RECT.z0 + PA_RECT.z1) / 2, 15, '#ffb347');
+    // v2.15.2 online players: nickname + car model
+    const peersB = this.g.online?.peers; if (peersB?.size) for (const pp of peersB.values()) { if (!pp.have || !pp.info) continue; const [a, b] = P(pp.pos.x, pp.pos.z); const car = CAR_BY_ID[pp.info.c];
+      c.fillStyle = '#35e0ff'; c.strokeStyle = '#002b33'; c.lineWidth = 2 * dpr; c.beginPath(); c.arc(a, b, 7 * dpr, 0, Math.PI * 2); c.fill(); c.stroke();
+      const l1 = '🌐 ' + pp.name, l2 = car ? `${car.maker} ${car.name}` : ''; c.textAlign = 'center'; c.textBaseline = 'bottom'; c.lineWidth = 3 * dpr; c.strokeStyle = 'rgba(0,0,0,.8)';
+      c.font = `800 ${13 * dpr}px system-ui,sans-serif`; c.strokeText(l1, a, b - 22 * dpr); c.fillStyle = '#bff6ff'; c.fillText(l1, a, b - 22 * dpr);
+      if (l2) { c.font = `600 ${11 * dpr}px system-ui,sans-serif`; c.strokeText(l2, a, b - 9 * dpr); c.fillStyle = '#e9f2f7'; c.fillText(l2, a, b - 9 * dpr); } }
     // player
     const p = this.mapPos(); if (p) { const [a, b] = P(p.x, p.z); const yaw = this.g.mode === 'walk' ? this.g.player.yaw : this.g.vehicle.yaw; const pr = (performance.now() / 900) % 1; c.beginPath(); c.arc(a, b, (14 + pr * 26) * dpr, 0, 7); c.strokeStyle = `rgba(255,179,71,${1 - pr})`; c.lineWidth = 3 * dpr; c.stroke(); c.beginPath(); c.arc(a, b, 13 * dpr, 0, 7); c.fillStyle = 'rgba(255,179,71,.25)'; c.fill(); c.save(); c.translate(a, b); c.rotate(-yaw + Math.PI); c.fillStyle = '#ffb347'; c.strokeStyle = '#000'; c.lineWidth = 2.5 * dpr; c.beginPath(); c.moveTo(0, -16 * dpr); c.lineTo(12 * dpr, 13 * dpr); c.lineTo(0, 6 * dpr); c.lineTo(-12 * dpr, 13 * dpr); c.closePath(); c.fill(); c.stroke(); c.restore(); c.font = `800 ${13 * dpr}px system-ui,sans-serif`; c.textAlign = 'center'; c.fillStyle = '#fff'; c.strokeStyle = 'rgba(0,0,0,.8)'; c.lineWidth = 4 * dpr; { // v2.5.2: "you are here" card — the place in the play language, with the Japanese name under it
         const here = ({ ko: '현재 위치', ja: '現在地', zh: '当前位置', 'zh-TW': '目前位置', es: 'Estás aquí', fr: 'Vous êtes ici', de: 'Sie sind hier' })[getLang()] || 'You are here';

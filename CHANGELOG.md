@@ -1,9 +1,10 @@
 # 📜 MIDNIGHT JAPAN 업데이트 기록 · Changelog
 
-현재 버전 · Current: **v2.15.1** · [▶ 웹에서 플레이](https://midnight-japan.github.io/) · [🌐 업데이트 페이지](https://midnight-japan.github.io/changelog.html)
+현재 버전 · Current: **v2.15.2** · [▶ 웹에서 플레이](https://midnight-japan.github.io/) · [🌐 업데이트 페이지](https://midnight-japan.github.io/changelog.html)
 
 | 버전 | 날짜 | 이름 | 요약 |
 |---|---|---|---|
+| [v2.15.2](#v2152--who-is-where-2026-11-20) | 2026-11-20 | Who Is Where | 온라인 접속자 위치 표시: 미니맵·큰 지도에 닉네임과 차종, 차 위 이름표에도 차종. |
 | [v2.15.1](#v2151--meet-up-2026-11-20) | 2026-11-20 | Meet Up | 온라인 만남 연결 안정화: 차단·불안정 신호 서버 교체, 다양한 네트워크(공유기·모바일)에서 서로 찾도록 STUN 서버 추가. |
 | [v2.15.0](#v2150--real-streets-2026-11-20) | 2026-11-20 | Real Streets | 실사 3D 모델: 자판기·전신주·가로수 6종·봄 벚꽃(Sketchfab CC BY), 건물 외벽 그늘 보정, 지도 즉시 열기 + 일본 전역 상세 지도·랜드마크 아이콘 약 150개, 원탭 이동, 로비 시작, UI 전면 리디자인·라디오 개선, 차량 실내·유리 개선. |
 | [v2.14.4](#v2144--clear-portals-2026-11-20) | 2026-11-20 | Clear Portals | 터널 입구 정리: 지하로 내려가기 직전 도로 위에 깔려 있던 땅·도시 도로·보도·주차장 판을 걷어 내 차가 판을 뚫고 들어가는 것처럼 보이던 문제 수정(38곳 전수 점검). |
@@ -73,6 +74,18 @@
 | [v0.2.0](#v020--bayshore-2026-11-05) | 2026-11-05 | Bayshore | 수도고속 완간선을 따라 하네다까지, 도쿄만 아쿠아라인 해저터널을 지나 우미호타루 PA까지. 실제 3D 차량 모델과 열리는 보닛도 들어왔어요. |
 | [v0.1.1](#v011--one-click-2026-11-04) | 2026-11-04 | One Click | 링크 하나로 바로 플레이. 크롬에서 공식 사이트 주소만 열면 설치 없이 실행돼요. |
 | [v0.1.0](#v010--first-meet-2026-11-04) | 2026-11-04 | First Meet | 첫 공개 버전. 다이코쿠 JCT·PA와 다이코쿠 부두 일대를 3D로 구현했습니다. |
+
+---
+
+## v2.15.2 — Who Is Where (2026-11-20)
+
+> 온라인 접속자 위치 표시: 미니맵·큰 지도에 닉네임과 차종, 차 위 이름표에도 차종.
+> See where other online players are: nickname and car model on the minimap and full map, car model on their name tags.
+
+**✨ 추가 · New**
+
+- 미니맵: 다른 플레이어를 하늘색 점 + 「닉네임 · 차종」으로, 화면 밖이면 가장자리에 방향 표시<br><sub>Minimap: other players as cyan dots with "nickname · car", on the rim when out of view</sub>
+- 큰 지도: 접속자마다 닉네임과 제조사·차종<br><sub>Full map: each player with nickname and make/model</sub>
 
 ---
 

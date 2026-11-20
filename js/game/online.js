@@ -109,7 +109,7 @@ export class Online {
     p.info = info; p.name = info.n;
     if (rebuild) this.buildModel(p);
     if (outfitChanged && p.human) { try { p.human.setOutfit(info.o); } catch {} }
-    if (nameChanged || !p.tag) this.buildTag(p);
+    if (nameChanged || !p.tag || p.tagCar !== info.c) { p.tagCar = info.c; this.buildTag(p); }
     if (first) this.g.ui.toast(t('game.online.joined', { name: p.name }), 'info');
     this.g.ui.updateOnline?.();
   }
@@ -130,7 +130,7 @@ export class Online {
   }
   buildTag(p) {
     if (p.tag) { p.tag.parent?.remove(p.tag); p.tag.userData.dispose?.(); }
-    p.tag = createNameTag('🌐 ' + p.name); p.tag.scale.multiplyScalar(3.2);
+    p.tag = createNameTag('🌐 ' + p.name + (CAR_BY_ID[p.info?.c] ? ' · ' + CAR_BY_ID[p.info.c].name : '')); // v2.15.2: nickname · car p.tag.scale.multiplyScalar(3.2);
     this.attachTag(p);
   }
   attachTag(p) {
