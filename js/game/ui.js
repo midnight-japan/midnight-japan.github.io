@@ -908,6 +908,7 @@ export class UI {
   // a web-Mercator tile is linear in lon and is placed by its corner latitudes, in horizontal strips at low zoom so the
   // Mercator→equirectangular stretch inside one big tile stays invisible. A missing tile shows its nearest loaded ancestor.
   drawGsi(c, W, H, m, k) {
+    if (k < 0.004) return; // v2.15.5: country / region view stays a clean game map (land + borders); photo-detail tiles from city zoom
     const G = this._gsi || (this._gsi = { img: new Map(), bad: new Set(), busy: 0 });
     const o = MAP.origin || { lat: 35.4615, lon: 139.68 }, R2D = 180 / Math.PI, KX = 111320 * Math.cos(o.lat / R2D), KZ = 110574;
     const x0 = m.x - W / 2 / k, x1 = m.x + W / 2 / k, z0 = m.z - H / 2 / k, z1 = m.z + H / 2 / k;
@@ -982,7 +983,7 @@ export class UI {
     for (const d of DESTS) { const rd = getLang() !== 'ja' ? reading(d.name) : '', named = kk > 0.0012 || d.spawn;
       const ib = place(d.x, d.z, this.destIcon(d), 26, named ? (rd || d.name) : '', named && rd ? d.name : '', '#ffd38a', 1, true); if (ib) this._destHit.push({ d, ib }); }
     // 2) landmarks: tier 1 everywhere, tier 2 from regional zoom, tier 3 from city zoom; fade in over each threshold
-    const need = [0, 0, 0.0009, 0.004];
+    const need = [0, 0, 0.002, 0.008]; // v2.15.5: fewer markers when zoomed out
     for (const L of this.markerList()) { const t0 = need[L.tier]; if (kk < t0) continue; const al = t0 ? Math.min(1, (kk - t0) / (t0 * 0.8)) : 1; if (al < 0.15) continue;
       const nm = lang === 'ja' ? L.ja : lang === 'ko' ? L.ko : L.en;
       place(L.x, L.z, L.icon, L.tier === 1 ? 26 : 22, nm, lang === 'ja' ? '' : L.ja, '#ffffff', al, false); }
@@ -1030,7 +1031,7 @@ export class UI {
     if (this.mapSel) { const [a, b] = P(this.mapSel.x, this.mapSel.z); c.strokeStyle = '#ffb347'; c.lineWidth = 3 * dpr; c.beginPath(); c.arc(a, b, 10 * dpr, 0, Math.PI * 2); c.stroke(); c.beginPath(); c.moveTo(a, b - 18 * dpr); c.lineTo(a, b + 18 * dpr); c.moveTo(a - 18 * dpr, b); c.lineTo(a + 18 * dpr, b); c.stroke(); }
     if (k < 0.004) { // city names across Japan + a glow round the drivable region
       c.textAlign = 'center'; c.textBaseline = 'middle';
-      for (const [n, x, z, pop] of JAPAN_CITIES) { if (pop < (k < 0.0006 ? 1500000 : 300000)) continue; const [a, b] = P(x, z); c.fillStyle = '#ffd38a'; c.beginPath(); c.arc(a, b, 2.5 * dpr, 0, 7); c.fill(); c.font = `700 ${11 * dpr}px "Hiragino Sans","Noto Sans JP",system-ui`; c.lineWidth = 3 * dpr; c.strokeStyle = 'rgba(0,0,0,.8)'; c.strokeText(n, a, b - 10 * dpr); c.fillStyle = '#fff'; c.fillText(n, a, b - 10 * dpr); }
+      for (const [n, x, z, pop] of JAPAN_CITIES) { if (pop < (k < 0.0006 ? 3000000 : 900000)) continue; const [a, b] = P(x, z); c.fillStyle = '#ffd38a'; c.beginPath(); c.arc(a, b, 2.5 * dpr, 0, 7); c.fill(); c.font = `700 ${11 * dpr}px "Hiragino Sans","Noto Sans JP",system-ui`; c.lineWidth = 3 * dpr; c.strokeStyle = 'rgba(0,0,0,.8)'; c.strokeText(n, a, b - 10 * dpr); c.fillStyle = '#fff'; c.fillText(n, a, b - 10 * dpr); }
       const g0 = P(-20000, 0), rad = Math.max(10 * dpr, 70000 * k); c.strokeStyle = 'rgba(47,191,116,.9)'; c.lineWidth = 2 * dpr; c.setLineDash([5 * dpr, 4 * dpr]); c.beginPath(); c.arc(g0[0], g0[1], rad, 0, 7); c.stroke(); c.setLineDash([]);
       c.font = `800 ${12 * dpr}px system-ui`; c.fillStyle = '#7ff0b0'; c.fillText('MIDNIGHT JAPAN', g0[0], g0[1] + rad + 14 * dpr); }
     // v2.15: every drivable destination + ~150 famous landmarks across Japan as pictogram badges with names in the

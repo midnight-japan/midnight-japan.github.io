@@ -13,6 +13,7 @@ import { createHuman, createNameTag, defaultOutfit, OUTFIT_OPTIONS } from './hum
 import { displayName } from '../account.js';
 import { t } from '../i18n.js';
 import { PLATE_TYPES } from './plates.js';
+import { Relay } from './relay.js';
 
 const APP_ID = 'midnight-japan-v2';
 export const ROOM_DEFAULT = 'daikoku-pa';
@@ -63,14 +64,16 @@ export class Online {
       room.onPeerJoin = id => { if (this.peers.size >= MAX_PEERS) return; this.peer(id); this._sendInfo(this.info(), id); };
       room.onPeerLeave = id => { const p = this.peers.get(id); if (p?.name) this.g.ui.toast(t('game.online.left', { name: p.name }), 'info'); this.remove(id); };
       aInfo.onMessage = (d, m) => this.setInfo(m?.peerId ?? m, d);
-      aSt.onMessage = (d, m) => this.setState(m?.peerId ?? m, d);
+      aSt.onMessage = (d, m) => { const id = m?.peerId ?? m; const p = this.peers.get(id); if (p) p.rtcAt = performance.now(); this.setState(id, d); };
       aChat.onMessage = (d, m) => this.onChat(m?.peerId ?? m, d);
+      // v2.15.5: MQTT relay in parallel — reaches players WebRTC can't (strict NAT); same ids as Trystero so no duplicates
+      this.relay = new Relay(roomName, selfId, (k, id, d) => this.onRelay(k, id, d), st => { if (st === 'up') this.relay.send('i', this.info()); });
       this.status = 'on';
     } catch (e) { console.warn('online', e); this.err = String(e?.stack || e); this.status = 'error'; this.room = null; }
     this.g.ui.updateOnline?.();
   }
   stop() {
-    try { this.room?.leave(); } catch {}
+    try { this.room?.leave(); } catch {} try { this.relay?.close(); } catch {} this.relay = null;
     this.room = null; this.status = 'off';
     for (const id of [...this.peers.keys()]) this.remove(id);
     this.g.ui.updateOnline?.();
@@ -81,10 +84,10 @@ export class Online {
     return { n: str(displayName(), 20), c: id, col: S.color, fin: S.finish, rim: S.rim, plate: S.plate, cf: S.camberF, cr: S.camberR, ride: S.ride, tr: S.track, tf: S.toeF, tR: S.toeR, rk: S.rake, o: g.outfit };
   }
   /** call after the player changes car / paint / outfit */
-  announce() { if (this._sendInfo) try { this._sendInfo(this.info()); } catch {} }
+  announce() { if (this._sendInfo) try { this._sendInfo(this.info()); } catch {} this.relay?.send('i', this.info()); }
   chat(text) {
     text = str(text, 120).trim(); if (!text || !this._sendChat) return;
-    try { this._sendChat({ m: text }); } catch {}
+    const k = Math.random().toString(36).slice(2, 10); try { this._sendChat({ m: text, k }); } catch {} this.relay?.send('c', { m: text, k });
     this.pushChat(displayName(), text, true);
   }
   pushChat(name, text, mine) {
@@ -130,7 +133,7 @@ export class Online {
   }
   buildTag(p) {
     if (p.tag) { p.tag.parent?.remove(p.tag); p.tag.userData.dispose?.(); }
-    p.tag = createNameTag('🌐 ' + p.name + (CAR_BY_ID[p.info?.c] ? ' · ' + CAR_BY_ID[p.info.c].name : '')); // v2.15.2: nickname · car p.tag.scale.multiplyScalar(3.2);
+    p.tag = createNameTag('🌐 ' + p.name + (CAR_BY_ID[p.info?.c] ? ' · ' + CAR_BY_ID[p.info.c].name : '')); p.tag.scale.multiplyScalar(3.2); // v2.15.2: nickname · car
     this.attachTag(p);
   }
   attachTag(p) {
@@ -154,9 +157,18 @@ export class Online {
   }
   onChat(id, d) {
     const p = this.peers.get(id); if (!p || !d) return;
+    if (typeof d.k === 'string') { this.seenChat ||= new Set(); if (this.seenChat.has(d.k)) return; this.seenChat.add(d.k); if (this.seenChat.size > 200) this.seenChat = new Set([...this.seenChat].slice(-100)); }
     const text = str(d.m, 120).trim(); if (!text) return;
     const now = performance.now(); if (p.lastChat && now - p.lastChat < 600) return; p.lastChat = now; // flood guard
     this.pushChat(p.name || 'Guest', text, false);
+  }
+  // relay message (untrusted): info / state / chat / hello. State from the relay is ignored while WebRTC delivers fresh state.
+  onRelay(kind, id, d) {
+    if (!d || typeof d !== 'object' || id === this.selfId) return;
+    const known = this.peers.has(id); if (!known && this.peers.size >= MAX_PEERS) return;
+    if (kind === 'i') { const p = this.peer(id); if (!known) { p.viaRelay = true; this.relay?.send('i', this.info()); } this.setInfo(id, d); }
+    else if (kind === 's') { const p = this.peer(id); if (p.rtcAt && performance.now() - p.rtcAt < 1500) return; p.viaRelay = true; this.setState(id, d); if (!p.info && !p.asked) { p.asked = true; this.relay?.send('i', this.info()); } }
+    else if (kind === 'c' && known) this.onChat(id, d);
   }
   remove(id) {
     const p = this.peers.get(id); if (!p) return;
@@ -183,11 +195,14 @@ export class Online {
       const msg = { p: [r(P.x), r(P.y), r(P.z)], y: r(walk ? g.player.yaw : v.yaw), v: Math.round(walk ? g.player.speed * 3.6 : v.kmh), r: Math.round(v.engine?.rpm || 0), s: r(v.steerAng || 0), l: lights, m: walk ? 'w' : 'd' };
       if (walk) { msg.cp = [r(v.pos.x), r(v.pos.y), r(v.pos.z)]; msg.cy = r(v.yaw); }
       try { this._sendSt(msg); } catch {}
+      this.relayT = (this.relayT || 0) - 1 / SEND_HZ; if (this.relayT <= 0 && this.relay) { this.relayT = 1 / 12; this.relay.send('s', msg); } // relay at 12 Hz
+      this.infoT = (this.infoT || 0) - 1 / SEND_HZ; if (this.infoT <= 0 && this.relay) { this.infoT = 6; this.relay.send('i', this.info()); }
     }
     // ── render peers
     const now = performance.now();
     for (const p of this.peers.values()) {
       if (!p.have || !p.info) continue;
+      if (p.viaRelay && !p.rtcAt && now - p.recv > 20000) { this.remove(p.id); continue; }
       if (now - p.recv > 8000) { if (p.model) p.model.root.visible = false; if (p.human) p.human.object.visible = false; continue; }
       const ahead = Math.min(0.3, (now - p.recv) / 1000 + (p.ping || 60) / 2000);
       const target = p.tgt.clone().addScaledVector(p.vel, ahead);

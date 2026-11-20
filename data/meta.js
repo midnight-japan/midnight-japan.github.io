@@ -1,8 +1,17 @@
 // Shared game metadata: version, changelog, regions. Update VERSION + CHANGELOG on every release.
-export const GAME = { title: 'MIDNIGHT JAPAN', titleJa: 'ミッドナイト・ジャパン', version: '2.15.4', build: '2026.11.20' };
+export const GAME = { title: 'MIDNIGHT JAPAN', titleJa: 'ミッドナイト・ジャパン', version: '2.15.5', build: '2026.11.20' };
 
 // Newest first. type: new | change | fix | known
 export const CHANGELOG = [
+  {
+    version: '2.15.5', date: '2026-11-20', codename: 'Always Connected',
+    summary: { ko: '어떤 네트워크에서도 만나도록 중계(MQTT) 예비 경로 추가, 상대 이름표 크기 버그 수정, 일본 전역 지도를 게임답게 단순화.', ja: 'どんなネットワークでも会えるよう中継（MQTT）の予備経路を追加、相手の名札サイズのバグ修正、日本全国マップをゲームらしくシンプルに。', en: 'Relay (MQTT) fallback so players meet on any network, fixed tiny remote name tags, cleaner game-style all-Japan map.' },
+    items: [
+      { type: 'new', ko: '직접 연결(WebRTC)이 막힌 모바일·회사·학교 네트워크에서도 공개 MQTT 중계로 위치·차량·채팅 전달(직접 연결되면 자동으로 빠른 경로 사용)', ja: '直接接続（WebRTC）が塞がれたモバイル・会社・学校のネットワークでも公開MQTT中継で位置・車・チャットを伝達（直接つながれば自動で速い経路）', en: 'Players behind strict NATs (mobile, office, school) now meet through a public MQTT relay; the fast WebRTC path is used whenever it works' },
+      { type: 'fix', ko: '다른 플레이어 이름표가 아주 작게 보이던 문제', ja: '他のプレイヤーの名札がとても小さく見えた問題', en: 'Other players\' name tags were tiny' },
+      { type: 'fix', ko: '전국·지역 보기 지도: 지리원 상세 타일은 도시 확대부터, 랜드마크·도시 이름은 줌에 따라 줄여 깔끔하게', ja: '全国・地方表示の地図：地理院の詳細タイルは都市ズームから、ランドマーク・都市名はズームに応じて減らしてすっきり', en: 'Country/region map decluttered: detailed GSI tiles only from city zoom, fewer landmarks and city names when zoomed out' },
+    ],
+  },
   {
     version: '2.15.4', date: '2026-11-20', codename: 'Lobby Online',
     summary: { ko: '온라인 서버(방) 선택과 친구끼리 비공개 방 코드, 🌐 버튼으로 플레이어 목록(차종·거리·핑 ms), 위치 동기화 초당 30회로 지연 감소.', ja: 'オンラインのサーバー（部屋）選択と友達用のプライベート部屋コード、🌐ボタンでプレイヤー一覧（車種・距離・ping ms）、位置同期を毎秒30回にして遅延を軽減。', en: 'Pick an online server (room) or a private room code for friends, player list on the 🌐 button (car, distance, ping ms), 30 Hz position sync for less lag.' },

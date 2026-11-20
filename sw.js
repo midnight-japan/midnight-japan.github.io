@@ -5,7 +5,7 @@
 // - everything else (images, models, audio): stale-while-revalidate
 // - cross-origin (Google Fonts, GitHub) is not intercepted
 // Keep VERSION in sync with GAME.version in data/meta.js — bumping it drops old caches.
-const VERSION = '2.15.4';
+const VERSION = '2.15.5';
 const CACHE = 'dn-' + VERSION + '-nf1'; // suffix bumps when the caching strategy changes
 const VENDOR = 'dn-vendor-' + VERSION;
 
@@ -15,7 +15,7 @@ const PRECACHE = [
   'js/i18n.js', 'js/account.js',
   'js/site/common.js', 'js/site/carart.js', 'js/site/car3d.js', 'js/site/home.js', 'js/site/cars.js', 'js/site/regions.js', 'js/site/changelog.js', 'js/site/account-page.js',
   'data/cars.js', 'data/meta.js', 'data/landmarks-jp.js', 'data/map-daikoku.js', 'assets/models/cars/manifest.json',
-  'play.html', 'css/game.css', ...['props','neartrees','map-icons','main','ui','world','roads','bay','vehicle','carmodel','carglb','carfactory','carparts','carshapes','plates','traffic','npc','police','toll','sky','textures','signs','humans','audio','music','input','online','accident'].map(f => `js/game/${f}.js`),
+  'play.html', 'css/game.css', ...['relay','online','props','neartrees','map-icons','main','ui','world','roads','bay','vehicle','carmodel','carglb','carfactory','carparts','carshapes','plates','traffic','npc','police','toll','sky','textures','signs','humans','audio','music','input','online','accident'].map(f => `js/game/${f}.js`),
   'i18n/en.json', 'i18n/ko.json', 'i18n/ja.json',
   'assets/icons/icon.svg', 'assets/icons/icon-192.png', 'assets/icons/icon-512.png', 'assets/icons/favicon-32.png', 'assets/icons/apple-touch-icon.png',
 ];

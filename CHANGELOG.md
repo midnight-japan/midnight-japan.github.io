@@ -1,9 +1,10 @@
 # 📜 MIDNIGHT JAPAN 업데이트 기록 · Changelog
 
-현재 버전 · Current: **v2.15.4** · [▶ 웹에서 플레이](https://midnight-japan.github.io/) · [🌐 업데이트 페이지](https://midnight-japan.github.io/changelog.html)
+현재 버전 · Current: **v2.15.5** · [▶ 웹에서 플레이](https://midnight-japan.github.io/) · [🌐 업데이트 페이지](https://midnight-japan.github.io/changelog.html)
 
 | 버전 | 날짜 | 이름 | 요약 |
 |---|---|---|---|
+| [v2.15.5](#v2155--always-connected-2026-11-20) | 2026-11-20 | Always Connected | 어떤 네트워크에서도 만나도록 중계(MQTT) 예비 경로 추가, 상대 이름표 크기 버그 수정, 일본 전역 지도를 게임답게 단순화. |
 | [v2.15.4](#v2154--lobby-online-2026-11-20) | 2026-11-20 | Lobby Online | 온라인 서버(방) 선택과 친구끼리 비공개 방 코드, 🌐 버튼으로 플레이어 목록(차종·거리·핑 ms), 위치 동기화 초당 30회로 지연 감소. |
 | [v2.15.3](#v2153--fresh-cache-2026-11-20) | 2026-11-20 | Fresh Cache | 오프라인 캐시 갱신: 새 버전이 바로 적용되도록 캐시 버전 정리, 실사 소품·나무·지도 아이콘 파일도 오프라인 저장. |
 | [v2.15.2](#v2152--who-is-where-2026-11-20) | 2026-11-20 | Who Is Where | 온라인 접속자 위치 표시: 미니맵·큰 지도에 닉네임과 차종, 차 위 이름표에도 차종. |
@@ -76,6 +77,22 @@
 | [v0.2.0](#v020--bayshore-2026-11-05) | 2026-11-05 | Bayshore | 수도고속 완간선을 따라 하네다까지, 도쿄만 아쿠아라인 해저터널을 지나 우미호타루 PA까지. 실제 3D 차량 모델과 열리는 보닛도 들어왔어요. |
 | [v0.1.1](#v011--one-click-2026-11-04) | 2026-11-04 | One Click | 링크 하나로 바로 플레이. 크롬에서 공식 사이트 주소만 열면 설치 없이 실행돼요. |
 | [v0.1.0](#v010--first-meet-2026-11-04) | 2026-11-04 | First Meet | 첫 공개 버전. 다이코쿠 JCT·PA와 다이코쿠 부두 일대를 3D로 구현했습니다. |
+
+---
+
+## v2.15.5 — Always Connected (2026-11-20)
+
+> 어떤 네트워크에서도 만나도록 중계(MQTT) 예비 경로 추가, 상대 이름표 크기 버그 수정, 일본 전역 지도를 게임답게 단순화.
+> Relay (MQTT) fallback so players meet on any network, fixed tiny remote name tags, cleaner game-style all-Japan map.
+
+**✨ 추가 · New**
+
+- 직접 연결(WebRTC)이 막힌 모바일·회사·학교 네트워크에서도 공개 MQTT 중계로 위치·차량·채팅 전달(직접 연결되면 자동으로 빠른 경로 사용)<br><sub>Players behind strict NATs (mobile, office, school) now meet through a public MQTT relay; the fast WebRTC path is used whenever it works</sub>
+
+**🐞 수정 · Fixed**
+
+- 다른 플레이어 이름표가 아주 작게 보이던 문제<br><sub>Other players' name tags were tiny</sub>
+- 전국·지역 보기 지도: 지리원 상세 타일은 도시 확대부터, 랜드마크·도시 이름은 줌에 따라 줄여 깔끔하게<br><sub>Country/region map decluttered: detailed GSI tiles only from city zoom, fewer landmarks and city names when zoomed out</sub>
 
 ---
 
