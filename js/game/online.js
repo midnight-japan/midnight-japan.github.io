@@ -140,7 +140,7 @@ export class Online {
     const host = p.mode === 'w' && p.human ? p.human.object : p.model?.root;
     if (!host || !p.tag) return;
     host.add(p.tag);
-    p.tag.position.set(0, p.mode === 'w' ? 1.95 : (CAR_BY_ID[p.info?.c]?.H || 1.4) + 0.55, 0);
+    const H = CAR_BY_ID[p.info?.c]?.H || 1.4; p.tag.position.set(0, p.mode === 'w' ? 1.95 : (H > 10 ? H / 1000 : H) + 0.55, 0); // v2.15.6: car H is in mm
     if (p.mode === 'w') p.tag.scale.set(p.tag.scale.x / 3.2 * 1.6, p.tag.scale.y / 3.2 * 1.6, 1);
   }
   setState(id, d) {

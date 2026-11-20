@@ -1,9 +1,10 @@
 # 📜 MIDNIGHT JAPAN 업데이트 기록 · Changelog
 
-현재 버전 · Current: **v2.15.6** · [▶ 웹에서 플레이](https://midnight-japan.github.io/) · [🌐 업데이트 페이지](https://midnight-japan.github.io/changelog.html)
+현재 버전 · Current: **v2.15.7** · [▶ 웹에서 플레이](https://midnight-japan.github.io/) · [🌐 업데이트 페이지](https://midnight-japan.github.io/changelog.html)
 
 | 버전 | 날짜 | 이름 | 요약 |
 |---|---|---|---|
+| [v2.15.7](#v2157--name-tags-2026-11-20) | 2026-11-20 | Name Tags | 다른 플레이어 차 위 이름표가 하늘 높이(약 1.3km)에 떠서 안 보이던 버그 수정 — 이제 차 바로 위에 「닉네임 · 차종」. |
 | [v2.15.6](#v2156--bumper-to-bumper-2026-11-20) | 2026-11-20 | Bumper to Bumper | 멀티플레이 강화: 중계 서버 여러 곳에 동시 접속(서로 다른 서버에 붙어도 만남), 중복 메시지 제거, 플레이어끼리 충돌, 상대 경적 소리. |
 | [v2.15.5](#v2155--always-connected-2026-11-20) | 2026-11-20 | Always Connected | 어떤 네트워크에서도 만나도록 중계(MQTT) 예비 경로 추가, 상대 이름표 크기 버그 수정, 일본 전역 지도를 게임답게 단순화. |
 | [v2.15.4](#v2154--lobby-online-2026-11-20) | 2026-11-20 | Lobby Online | 온라인 서버(방) 선택과 친구끼리 비공개 방 코드, 🌐 버튼으로 플레이어 목록(차종·거리·핑 ms), 위치 동기화 초당 30회로 지연 감소. |
@@ -78,6 +79,17 @@
 | [v0.2.0](#v020--bayshore-2026-11-05) | 2026-11-05 | Bayshore | 수도고속 완간선을 따라 하네다까지, 도쿄만 아쿠아라인 해저터널을 지나 우미호타루 PA까지. 실제 3D 차량 모델과 열리는 보닛도 들어왔어요. |
 | [v0.1.1](#v011--one-click-2026-11-04) | 2026-11-04 | One Click | 링크 하나로 바로 플레이. 크롬에서 공식 사이트 주소만 열면 설치 없이 실행돼요. |
 | [v0.1.0](#v010--first-meet-2026-11-04) | 2026-11-04 | First Meet | 첫 공개 버전. 다이코쿠 JCT·PA와 다이코쿠 부두 일대를 3D로 구현했습니다. |
+
+---
+
+## v2.15.7 — Name Tags (2026-11-20)
+
+> 다른 플레이어 차 위 이름표가 하늘 높이(약 1.3km)에 떠서 안 보이던 버그 수정 — 이제 차 바로 위에 「닉네임 · 차종」.
+> Fixed other players' name tags floating ~1.3 km up in the sky — "nickname · car" now sits right above their car.
+
+**🐞 수정 · Fixed**
+
+- 차량 높이 값(mm)을 미터로 읽어 이름표가 1340m 위에 있던 문제<br><sub>Car height (mm) was read as metres, putting tags 1340 m up</sub>
 
 ---
 

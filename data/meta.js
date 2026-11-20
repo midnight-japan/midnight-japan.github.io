@@ -1,8 +1,13 @@
 // Shared game metadata: version, changelog, regions. Update VERSION + CHANGELOG on every release.
-export const GAME = { title: 'MIDNIGHT JAPAN', titleJa: 'ミッドナイト・ジャパン', version: '2.15.6', build: '2026.11.20' };
+export const GAME = { title: 'MIDNIGHT JAPAN', titleJa: 'ミッドナイト・ジャパン', version: '2.15.7', build: '2026.11.20' };
 
 // Newest first. type: new | change | fix | known
 export const CHANGELOG = [
+  {
+    version: '2.15.7', date: '2026-11-20', codename: 'Name Tags',
+    summary: { ko: '다른 플레이어 차 위 이름표가 하늘 높이(약 1.3km)에 떠서 안 보이던 버그 수정 — 이제 차 바로 위에 「닉네임 · 차종」.', ja: '他プレイヤーの車の上の名札が空高く（約1.3km）に浮いて見えなかったバグを修正 — 車のすぐ上に「ニックネーム・車種」。', en: 'Fixed other players\' name tags floating ~1.3 km up in the sky — "nickname · car" now sits right above their car.' },
+    items: [ { type: 'fix', ko: '차량 높이 값(mm)을 미터로 읽어 이름표가 1340m 위에 있던 문제', ja: '車高の値（mm）をメートルとして読み名札が1340m上にあった問題', en: 'Car height (mm) was read as metres, putting tags 1340 m up' } ],
+  },
   {
     version: '2.15.6', date: '2026-11-20', codename: 'Bumper to Bumper',
     summary: { ko: '멀티플레이 강화: 중계 서버 여러 곳에 동시 접속(서로 다른 서버에 붙어도 만남), 중복 메시지 제거, 플레이어끼리 충돌, 상대 경적 소리.', ja: 'マルチプレイ強化：複数の中継サーバーに同時接続（別サーバーでも会える）、重複メッセージ除去、プレイヤー同士の接触、相手のクラクション音。', en: 'Multiplayer: relays on several brokers at once (players on different brokers still meet), duplicate filtering, player-vs-player contact, other players\' horns.' },
