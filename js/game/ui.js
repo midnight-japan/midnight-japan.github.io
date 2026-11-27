@@ -6,6 +6,7 @@ import { GAME, LANGS, CHANGELOG } from '../../data/meta.js';
 import { reading } from './names.js';
 import { t, pick, setLang, getLang } from '../i18n.js';
 import { displayName, currentUser } from '../account.js';
+import { ranking, serverStats } from '../server.js';
 import { PLATE_REGIONS, PLATE_KANA, PLATE_TYPES, plateCanvas, formatNumber } from './plates.js';
 import { STROBE_MODES, STANCE_PRESETS } from './carmodel.js';
 import { TUNE_PRESETS, resolveTune } from './vehicle.js';
@@ -55,6 +56,7 @@ export class UI {
         <div class="lobby-online" id="lobby-online"></div>
         <div class="lobby-row"><button class="btn sm" data-a="settings">⚙ <span data-i18n="game.menu.settings"></span></button>
         <button class="btn sm" data-a="controls">🎮 <span data-i18n="game.menu.controls"></span></button>
+        <button class="btn sm" data-a="ranking">🏁 <span data-i18n="game.rank.title"></span></button>
         <button class="btn sm" data-a="whatsnew">✨ NEW v${GAME.version}</button>
         <a class="btn sm ghost" href="index.html">🌐 <span data-i18n="game.title.site"></span></a></div>
         <p class="hint" data-i18n="game.title.hint"></p>
@@ -138,6 +140,9 @@ export class UI {
         <a class="btn ghost" href="index.html" data-i18n="game.menu.quit"></a>
       </div></div>
       <div id="settings" class="screen dim"><div class="menu wide"><h2 data-i18n="game.menu.settings"></h2><div class="sgrid" id="s-grid"></div><button class="btn primary" data-a="settingsClose" data-i18n="game.menu.back"></button></div></div>
+      <div id="ranking" class="screen dim"><div class="menu wide rk"><h2>🏁 <span data-i18n="game.rank.title"></span></h2><p class="rk-sub" data-i18n="game.rank.sub"></p>
+        <div class="rk-tabs"><button class="btn sm" data-a="rankWeek" data-i18n="game.rank.week"></button><button class="btn sm" data-a="rankAll" data-i18n="game.rank.all"></button></div>
+        <div class="rk-sum"></div><div class="rk-list"></div><button class="btn ghost" data-a="rankClose" data-i18n="game.wn.close"></button></div></div>
       <div id="whatsnew" class="screen dim"><div class="menu wide wn"><div class="wn-tag">NEW · v<span class="wn-ver"></span></div><h2 class="wn-title"></h2><p class="wn-sum"></p><ul class="wn-list"></ul><div class="wn-go"><button class="btn primary" data-a="wnDaiba"></button><button class="btn primary" data-a="wnSeisho"></button></div><button class="btn ghost" data-a="wnClose"></button></div></div>
       <div id="goals" class="screen dim"><div class="menu wide"><h2 data-i18n="game.goal.title"></h2><div id="g-body" class="goals"></div><button class="btn primary" data-a="goalsClose" data-i18n="game.menu.back"></button></div></div>
       <div id="controls" class="screen dim"><div class="menu wide"><h2 data-i18n="game.menu.controls"></h2><div id="c-body"></div><button class="btn primary" data-a="controlsClose" data-i18n="game.menu.back"></button></div></div>
@@ -165,7 +170,7 @@ export class UI {
   relabel() { this.root.querySelectorAll('[data-i18n]').forEach(e => e.textContent = t(e.dataset.i18n)); }
   loading(p, msg) { $('#loading .bar i').style.width = (p * 100) + '%'; $('#loading .load-msg').textContent = msg || ''; if (p >= 1) setTimeout(() => $('#loading').classList.remove('show'), 300); }
   fatal(msg) { $('#fatal').classList.add('show'); $('#fatal-msg').textContent = msg; }
-  screens(show) { for (const id of ['title', 'garage', 'pause', 'settings', 'goals', 'whatsnew', 'controls', 'outfit', 'map', 'tutorial']) $('#' + id).classList.toggle('show', show === id); }
+  screens(show) { for (const id of ['title', 'garage', 'pause', 'settings', 'goals', 'whatsnew', 'ranking', 'controls', 'outfit', 'map', 'tutorial']) $('#' + id).classList.toggle('show', show === id); }
   showWhatsNew() {
     const c = CHANGELOG[0]; $('#whatsnew .wn-ver').textContent = c.version; $('#whatsnew .wn-title').textContent = `${c.codename} — ${t('game.wn.title')}`;
     $('#whatsnew .wn-sum').textContent = pick(c.summary);
@@ -221,6 +226,10 @@ export class UI {
       }
       case 'goals': this.screens('goals'); this.buildGoals(); break;
       case 'whatsnew': this.showWhatsNew(); break;
+      case 'ranking': this.prevScreen = g.mode === 'title' ? 'title' : 'pause'; this.screens('ranking'); this.showRanking('week'); break;
+      case 'rankWeek': this.showRanking('week'); break;
+      case 'rankAll': this.showRanking('all'); break;
+      case 'rankClose': if (this.prevScreen === 'title') this.showTitle(); else this.screens(this.prevScreen || 'pause'); break;
       case 'wnClose': try { localStorage.setItem('dn.seenVer', GAME.version); } catch {} this.showTitle(); break;
       case 'wnDaiba': case 'wnSeisho': try { localStorage.setItem('dn.seenVer', GAME.version); } catch {} g.settings.spawn = a === 'wnDaiba' ? 'daiba' : 'seisho'; g.saveSettings?.(); this.screens(null); g.quickStart(); break;
       case 'goalsClose': this.screens('pause'); this.updateGoals(); break;
@@ -617,12 +626,28 @@ export class UI {
     try { localStorage.setItem('dn.tutorial', '1'); } catch {}
     this.paused = false; this.showHUD();
   }
+  // v2.17 driver ranking from the game server DB (weekly / all-time distance)
+  async showRanking(period) {
+    const box = $('#ranking'); if (!box) return;
+    box.querySelectorAll('.rk-tabs .btn').forEach(b => b.classList.toggle('primary', b.dataset.a === (period === 'all' ? 'rankAll' : 'rankWeek')));
+    const list = box.querySelector('.rk-list'), sum = box.querySelector('.rk-sum'); list.innerHTML = `<div class="rk-msg">${esc(t('game.rank.loading'))}</div>`; sum.textContent = '';
+    const tok = this._rkTok = Symbol();
+    try {
+      const [r, st] = await Promise.all([ranking(period, 20), serverStats().catch(() => null)]);
+      if (tok !== this._rkTok) return;
+      sum.textContent = t('game.rank.summary', { drivers: r.drivers, km: Math.round(r.km).toLocaleString() }) + (st ? ' · ' + t('game.rank.online', { n: st.online }) : '');
+      const me = displayName();
+      list.innerHTML = r.rows.length ? r.rows.map((x, i) => { const c = CAR_BY_ID[x.car];
+        return `<div class="rk-row${x.name === me ? ' me' : ''}"><b class="rk-n">${i + 1}</b><span class="rk-name">${x.member ? '★ ' : ''}${esc(x.name)}</span><span class="rk-car">${esc(c ? c.maker + ' ' + c.name : x.car)}</span><span class="rk-km">${x.km.toFixed(1)} km</span><span class="rk-top">${Math.round(x.top)} km/h</span></div>`; }).join('')
+        : `<div class="rk-msg">${esc(t('game.rank.empty'))}</div>`;
+    } catch { if (tok === this._rkTok) list.innerHTML = `<div class="rk-msg">${esc(t('game.rank.offline'))}</div>`; }
+  }
   // ───── online ─────
   updateOnline() {
     const o = this.g.online; if (!o) return;
     const on = this.g.settings.online;
     const st = !on ? 'off' : o.status === 'on' ? 'on' : o.status === 'error' ? 'error' : o.status === 'connecting' ? 'connecting' : 'ready';
-    const txt = st === 'on' ? t('game.online.on', { n: o.count + 1 }) : t('game.online.' + st);
+    const txt = st === 'on' ? t('game.online.on', { n: o.count + 1 }) + (o.server?.ok ? ' · ' + t('game.online.server') : '') : t('game.online.' + st);
     const pill = $('#online-pill'); if (pill) { pill.textContent = '🌐 ' + (st === 'on' ? (o.count + 1) : txt); pill.className = 'online-pill ' + st; pill.title = txt; }
     const lob = $('#lobby-online'); if (lob) lob.textContent = '🌐 ' + t('game.lobby.online') + ' · ' + (st === 'on' ? txt : t(on ? 'game.online.ready' : 'game.online.off'));
   }
@@ -643,7 +668,7 @@ export class UI {
     }; draw(); this._plT = setInterval(() => { if ($('#plist').classList.contains('hidden')) return clearInterval(this._plT); draw(); }, 1000);
   }
   openChat() {
-    const o = this.g.online; if (!o?.room) { this.toast(t('game.online.' + (this.g.settings.online ? 'connecting' : 'off')), 'info'); return; }
+    const o = this.g.online; if (!o?.active) { this.toast(t('game.online.' + (this.g.settings.online ? 'connecting' : 'off')), 'info'); return; }
     const c = $('#chat'); c.classList.add('open', 'show'); const inp = c.querySelector('input'); inp.placeholder = t('game.online.chatPh'); inp.focus();
     this.g.input.chatting = true;
     c.querySelector('form').onsubmit = e => { e.preventDefault(); o.chat(inp.value); inp.value = ''; inp.blur(); };

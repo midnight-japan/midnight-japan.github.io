@@ -11,7 +11,8 @@ import { CARS, CAR_BY_ID } from '../../data/cars.js';
 import { GAME } from '../../data/meta.js';
 import { DESTS } from '../../data/destinations.js';
 import { detectLang, setLang, t } from '../i18n.js';
-import { displayName, currentUser, updateUser } from '../account.js';
+import { displayName, currentUser, updateUser, syncAccount } from '../account.js';
+import { DriveLog } from './drivelog.js';
 import { initTextures } from './textures.js';
 import { setSignAnisotropy, setSignResolution } from './signs.js';
 import { RoadNet, PA_RECT, PA } from './roads.js';
@@ -212,6 +213,8 @@ class Game {
     this.dialog = new Dialog(this);
     this.toll = new TollPlaza(this);
     this.online = new Online(this);
+    this.drivelog = new DriveLog(this); // v2.17 drive records → game server (ranking)
+    syncAccount().then(() => { if (this.mode === 'title' && document.querySelector('#title.show')) this.ui.showTitle?.(); }).catch(() => {}); // v2.17 account from the server
     this.accidents = new Accidents(this);
     this.goals = new Goals(this);
     this.ui.loading(1, t('game.load.done'));
@@ -835,6 +838,7 @@ class Game {
       this.npc.update(dt);
       this.toll.update(dt);
       this.online.update(dt);
+      this.drivelog.update(dt);
       this.accidents.update(dt);
       this.goals.update(dt);
     }

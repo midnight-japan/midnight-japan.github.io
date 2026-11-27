@@ -635,3 +635,14 @@ body.photo .online-pill,body.photo .chat{display:none}
 .plist.hidden{display:none}.pl-head{display:flex;justify-content:space-between;align-items:center;font-weight:800;padding:2px 6px 6px}.pl-head button{background:none;border:1px solid rgba(255,255,255,.2);color:#fff;border-radius:8px;padding:2px 8px;cursor:pointer}
 .pl-row{display:grid;grid-template-columns:1fr auto;gap:0 10px;padding:6px 8px;border-radius:10px}.pl-row+.pl-row{border-top:1px solid rgba(255,255,255,.06)}.pl-row b{color:#bff6ff}.pl-row.me b{color:#ffb347}.pl-row span{grid-column:1;color:#9fb0c6;font-size:12px}.pl-row i{grid-column:2;grid-row:1/3;align-self:center;font-style:normal;color:#cfe3ff;font-size:12px;white-space:nowrap}
 .pl-room{background:rgba(255,255,255,.08);color:#fff;border:1px solid rgba(255,255,255,.2);border-radius:8px;padding:3px 6px;font:700 13px system-ui;margin-left:4px;max-width:180px}.pl-room option{color:#000}
+
+/* v2.17 ranking (game server DB) */
+.rk-sub{opacity:.75;text-align:center;margin:0 0 10px;font-size:13px}.rk-tabs{display:flex;gap:8px;justify-content:center;margin-bottom:10px}
+.rk-sum{text-align:center;font-size:13px;opacity:.85;margin-bottom:8px;min-height:1.2em}
+.rk-list{max-height:46vh;overflow:auto;margin:0 0 12px;text-align:left}
+.rk-row{display:grid;grid-template-columns:34px 1.2fr 1.4fr 80px 76px;gap:8px;align-items:center;padding:7px 10px;border-radius:6px;font-size:14px}
+.rk-row:nth-child(odd){background:rgba(255,255,255,.05)}.rk-row.me{background:rgba(255,47,112,.22)}
+.rk-n{font-family:var(--display);text-align:center}.rk-row:nth-child(-n+3) .rk-n{color:#ffb547}
+.rk-name,.rk-car{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}.rk-car{opacity:.75}.rk-km,.rk-top{text-align:right;font-variant-numeric:tabular-nums}
+.rk-msg{text-align:center;opacity:.75;padding:24px 0}
+@media (max-width:560px){.rk-row{grid-template-columns:28px 1fr 70px 66px}.rk-car{display:none}}

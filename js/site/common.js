@@ -94,6 +94,7 @@ const NAV = [
   ['cars', 'cars.html', 'site.nav.cars', 'Cars'],
   ['regions', 'regions.html', 'site.nav.regions', 'Regions'],
   ['changelog', 'changelog.html', 'site.nav.updates', 'Updates'],
+  ['ranking', 'ranking.html', 'site.nav.ranking', 'Ranking'],
   ['account', 'account.html', 'site.nav.account', 'Account'],
 ];
 
@@ -137,6 +138,7 @@ function footer() {
           <li><a href="cars.html" data-i18n="site.nav.cars">Cars</a></li>
           <li><a href="regions.html" data-i18n="site.nav.regions">Regions</a></li>
           <li><a href="changelog.html" data-i18n="site.nav.updates">Updates</a></li>
+          <li><a href="ranking.html" data-i18n="site.nav.ranking">Ranking</a></li>
         </ul>
       </nav>
       <nav aria-label="More">

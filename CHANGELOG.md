@@ -1,9 +1,10 @@
 # 📜 MIDNIGHT JAPAN 업데이트 기록 · Changelog
 
-현재 버전 · Current: **v2.16.1** · [▶ 웹에서 플레이](https://midnight-japan.github.io/) · [🌐 업데이트 페이지](https://midnight-japan.github.io/changelog.html)
+현재 버전 · Current: **v2.17.0** · [▶ 웹에서 플레이](https://midnight-japan.github.io/) · [🌐 업데이트 페이지](https://midnight-japan.github.io/changelog.html)
 
 | 버전 | 날짜 | 이름 | 요약 |
 |---|---|---|---|
+| [v2.17.0](#v2170--home-server-2026-11-27) | 2026-11-27 | Home Server | 미드나잇 재팬 전용 게임 서버와 DB 오픈: 어느 기기에서나 같은 계정, 주행 거리·최고 속도가 저장되는 드라이버 랭킹, 방 입장 즉시 접속자·최근 채팅 표시, 상대가 나가면 바로 사라지는 온라인 카밋. |
 | [v2.16.1](#v2161--full-circle-2026-11-21) | 2026-11-21 | Full Circle | 하코네 나나마가리를 유모토·국도1호로 이어 턴파이크까지 22km 순환, 에노시마 134호 실제 고도, 새 코스 자율주행 수정, 제복 입은 경찰·구급대·점원, 도로를 따라 달리는 구급차, 페달 밟는 자전거, 번호판·램프 추가 정렬, AE86 팝업 라이트. |
 | [v2.16.0](#v2160--living-japan-2026-11-20) | 2026-11-20 | Living Japan | 새 코스 4곳(하코네 나나마가리·후지 스카이라인·에노시마·비너스 라인), 실사 사람 9명과 사고 후 구급차·뺨 때리기, NPC 차만 부서지는 사고, 실제 렌즈 모양대로 켜지는 램프와 번호판 정렬, 실사 해바라기·주유기·가드레일, 실제 녹음 효과음. |
 | [v2.15.7](#v2157--name-tags-2026-11-20) | 2026-11-20 | Name Tags | 다른 플레이어 차 위 이름표가 하늘 높이(약 1.3km)에 떠서 안 보이던 버그 수정 — 이제 차 바로 위에 「닉네임 · 차종」. |
@@ -81,6 +82,23 @@
 | [v0.2.0](#v020--bayshore-2026-11-05) | 2026-11-05 | Bayshore | 수도고속 완간선을 따라 하네다까지, 도쿄만 아쿠아라인 해저터널을 지나 우미호타루 PA까지. 실제 3D 차량 모델과 열리는 보닛도 들어왔어요. |
 | [v0.1.1](#v011--one-click-2026-11-04) | 2026-11-04 | One Click | 링크 하나로 바로 플레이. 크롬에서 공식 사이트 주소만 열면 설치 없이 실행돼요. |
 | [v0.1.0](#v010--first-meet-2026-11-04) | 2026-11-04 | First Meet | 첫 공개 버전. 다이코쿠 JCT·PA와 다이코쿠 부두 일대를 3D로 구현했습니다. |
+
+---
+
+## v2.17.0 — Home Server (2026-11-27)
+
+> 미드나잇 재팬 전용 게임 서버와 DB 오픈: 어느 기기에서나 같은 계정, 주행 거리·최고 속도가 저장되는 드라이버 랭킹, 방 입장 즉시 접속자·최근 채팅 표시, 상대가 나가면 바로 사라지는 온라인 카밋.
+> MIDNIGHT JAPAN now has its own game server and database: one account on every device, a driver ranking from saved distance and top speed, instant player list and recent chat when you join a room, and players who leave disappear at once.
+
+**✨ 추가 · New**
+
+- 전용 게임 서버(방마다 WebSocket 서버): 입장 즉시 같은 방 플레이어·최근 채팅, 퇴장 즉시 반영, 서버 핑 표시. 기존 P2P·중계는 예비 경로로 유지<br><sub>Dedicated game server (a WebSocket server per room): players and recent chat on join, instant leave, server ping; P2P and relays stay as backup paths</sub>
+- 서버 계정: 회원가입·로그인·닉네임·프로필이 서버 DB에 저장되어 PC·휴대폰 어디서나 같은 계정. 기존 기기 계정은 다음 로그인 때 자동 이전<br><sub>Server accounts: sign-up, login, nickname and profile live in the server DB, so the same account works on PC and phone; device-only accounts move over on the next login</sub>
+- 드라이버 랭킹: 실제로 달린 거리·최고 속도·주행 시간을 서버에 저장(텔레포트 제외), 로비 🏁 랭킹과 사이트 랭킹 페이지에서 이번 주·전체 순위와 지금 접속자 수<br><sub>Driver ranking: real distance, top speed and drive time saved on the server (teleports excluded); weekly and all-time tables plus players online now, in the lobby 🏁 and on the new ranking page</sub>
+
+**🔧 변경 · Changed**
+
+- 서버가 모든 입력을 검사(메시지 크기·종류별 초당 횟수·좌표 범위·비정상 주행 기록 거부), 비밀번호·로그인 토큰은 해시로만 저장<br><sub>The server checks every input (message size, per-kind rate limits, coordinate ranges, impossible drive records); passwords and login tokens are stored only as hashes</sub>
 
 ---
 

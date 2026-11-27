@@ -4,7 +4,8 @@
 const RELAYS = ['wss://nos.lol', 'wss://relay.primal.net', 'wss://nostr.mom', 'wss://relay.snort.social'];
 // several STUN servers so players behind home routers / mobile networks find a direct path to each other
 const RTC = { iceServers: [{ urls: ['stun:stun.l.google.com:19302', 'stun:stun1.l.google.com:19302'] }, { urls: 'stun:stun.cloudflare.com:3478' }, { urls: 'stun:global.stun.twilio.com:3478' }] };
-// No game server: players in the same room see each other's cars, name tags, lights and engine sound,
+// v2.17: plus the MIDNIGHT JAPAN game server (gameserver.js) as the main path — room presence, relay, chat history in its DB.
+// Players in the same room see each other's cars, name tags, lights and engine sound,
 // and can chat. Everything received from peers is untrusted and validated before use.
 import * as THREE from 'three';
 import { CAR_BY_ID } from '../../data/cars.js';
@@ -14,6 +15,7 @@ import { displayName } from '../account.js';
 import { t } from '../i18n.js';
 import { PLATE_TYPES } from './plates.js';
 import { RelayMulti } from './relay.js';
+import { GameServer } from './gameserver.js';
 
 const APP_ID = 'midnight-japan-v2';
 export const ROOM_DEFAULT = 'daikoku-pa';
@@ -50,13 +52,16 @@ export class Online {
     this.chatLog = [];
   }
   get count() { return this.peers.size; }
+  get active() { return !!(this.room || this.server); }
 
   async start(roomName = this.roomName) {
-    if (this.room || this.status === 'connecting') return;
+    if (this.active || this.status === 'connecting') return;
     this.status = 'connecting'; this.roomName = roomName; this.g.ui.updateOnline?.();
+    this.selfId ||= 'mj' + Array.from(crypto.getRandomValues(new Uint8Array(9)), b => b.toString(36).padStart(2, '0')).join('').slice(0, 18);
     try {
       const { joinRoom, selfId } = await import('../../vendor/trystero/trystero-nostr.mjs');
-      this.selfId = selfId;
+      this.selfId = selfId; // one id on every path (WebRTC, game server, MQTT) so a player is never shown twice
+      this.startServer(roomName); // v2.17 game server: does not depend on the public relays below
       const room = this.room = joinRoom({ appId: APP_ID, relayConfig: { urls: RELAYS, redundancy: 4 }, rtcConfig: RTC }, roomName);
       const aInfo = room.makeAction('info'), aSt = room.makeAction('st'), aChat = room.makeAction('chat');
       const send = a => (data, target) => a.send(data, target ? { target } : undefined);
@@ -69,11 +74,26 @@ export class Online {
       // v2.15.5: MQTT relay in parallel — reaches players WebRTC can't (strict NAT); same ids as Trystero so no duplicates
       this.relay = new RelayMulti(roomName, selfId, (k, id, d) => this.onRelay(k, id, d), st => { if (st === 'up') this.relay.send('i', this.info()); });
       this.status = 'on';
-    } catch (e) { console.warn('online', e); this.err = String(e?.stack || e); this.status = 'error'; this.room = null; }
+    } catch (e) { console.warn('online', e); this.err = String(e?.stack || e); this.room = null; if (!this.server) this.startServer(roomName); this.status = 'on'; }
     this.g.ui.updateOnline?.();
+  }
+  // v2.17 dedicated server link (room presence, relay, chat history)
+  startServer(roomName) {
+    try { this.server?.close(); } catch {}
+    this.server = new GameServer(roomName, this.selfId, {
+      onMsg: (k, id, d) => this.onRelay(k, id, d),
+      onWelcome: m => {
+        if (Array.isArray(m.peers)) for (const p of m.peers.slice(0, MAX_PEERS)) if (p && typeof p.id === 'string' && p.d) this.onRelay('i', p.id.slice(0, 40), p.d);
+        if (Array.isArray(m.chat) && !this.chatLog.length) for (const c of m.chat.slice(-6)) { const n = str(c?.n, 20), tx = str(c?.m, 120).trim(); if (tx) this.pushChat(n || 'Guest', tx, false); }
+        this.server.send('i', this.info()); this.g.ui.updateOnline?.();
+      },
+      onLeave: id => { const p = this.peers.get(id); if (!p || (p.rtcAt && performance.now() - p.rtcAt < 3000)) return; if (p.name) this.g.ui.toast(t('game.online.left', { name: p.name }), 'info'); this.remove(id); },
+      onState: () => this.g.ui.updateOnline?.(),
+    });
   }
   stop() {
     try { this.room?.leave(); } catch {} try { this.relay?.close(); } catch {} this.relay = null;
+    try { this.server?.close(); } catch {} this.server = null;
     this.room = null; this.status = 'off';
     for (const id of [...this.peers.keys()]) this.remove(id);
     this.g.ui.updateOnline?.();
@@ -84,10 +104,10 @@ export class Online {
     return { n: str(displayName(), 20), c: id, col: S.color, fin: S.finish, rim: S.rim, plate: S.plate, cf: S.camberF, cr: S.camberR, ride: S.ride, tr: S.track, tf: S.toeF, tR: S.toeR, rk: S.rake, o: g.outfit };
   }
   /** call after the player changes car / paint / outfit */
-  announce() { if (this._sendInfo) try { this._sendInfo(this.info()); } catch {} this.relay?.send('i', this.info()); }
+  announce() { if (this._sendInfo) try { this._sendInfo(this.info()); } catch {} this.relay?.send('i', this.info()); this.server?.send('i', this.info()); }
   chat(text) {
-    text = str(text, 120).trim(); if (!text || !this._sendChat) return;
-    const k = Math.random().toString(36).slice(2, 10); try { this._sendChat({ m: text, k }); } catch {} this.relay?.send('c', { m: text, k });
+    text = str(text, 120).trim(); if (!text || !this.active) return;
+    const k = Math.random().toString(36).slice(2, 10); try { this._sendChat?.({ m: text, k }); } catch {} this.relay?.send('c', { m: text, k }); this.server?.send('c', { m: text, k });
     this.pushChat(displayName(), text, true);
   }
   pushChat(name, text, mine) {
@@ -181,13 +201,14 @@ export class Online {
   }
 
   update(dt) {
-    if (!this.room) return;
+    if (!this.active) return;
     const g = this.g;
     // ── send my state
     this.pingT = (this.pingT || 0) - dt;
-    if (this.pingT <= 0 && this.room?.ping) { this.pingT = 2; for (const [id, p] of this.peers) this.room.ping(id).then(ms => { p.ping = Math.round(ms); }).catch(() => {}); }
+    if (this.pingT <= 0) { this.pingT = 2; const nowP = performance.now();
+      for (const [id, p] of this.peers) { if (this.server?.ok && (!p.rtcAt || nowP - p.rtcAt > 3000)) p.ping = this.server.ping; else if (this.room?.ping) this.room.ping(id).then(ms => { p.ping = Math.round(ms); }).catch(() => {}); } }
     this.sendT -= dt;
-    if (this.sendT <= 0 && this._sendSt && g.vehicle && (g.mode === 'drive' || g.mode === 'walk')) {
+    if (this.sendT <= 0 && g.vehicle && (g.mode === 'drive' || g.mode === 'walk')) {
       this.sendT = 1 / SEND_HZ;
       const v = g.vehicle, L = g.model?.lights || {};
       const lights = (L.head ? 1 : 0) | (L.brake ? 2 : 0) | (L.hazard ? 4 : 0) | (L.reverse ? 8 : 0) | (L.strobe && L.strobe !== 'off' ? 16 : 0) | (g._hornT > 0 ? 32 : 0); // v2.15.6: 32 = horn
@@ -196,7 +217,8 @@ export class Online {
       this.seq = (this.seq || 0) + 1;
       const msg = { q: this.seq, p: [r(P.x), r(P.y), r(P.z)], y: r(walk ? g.player.yaw : v.yaw), v: Math.round(walk ? g.player.speed * 3.6 : v.kmh), r: Math.round(v.engine?.rpm || 0), s: r(v.steerAng || 0), l: lights, m: walk ? 'w' : 'd' };
       if (walk) { msg.cp = [r(v.pos.x), r(v.pos.y), r(v.pos.z)]; msg.cy = r(v.yaw); }
-      try { this._sendSt(msg); } catch {}
+      try { this._sendSt?.(msg); } catch {}
+      this.srvT = (this.srvT || 0) - 1 / SEND_HZ; if (this.srvT <= 0 && this.server?.ok) { this.srvT = 1 / 15; this.server.send('s', msg); } // game server at 15 Hz
       this.relayT = (this.relayT || 0) - 1 / SEND_HZ; if (this.relayT <= 0 && this.relay) { this.relayT = 1 / 12; this.relay.send('s', msg); } // relay at 12 Hz
       this.infoT = (this.infoT || 0) - 1 / SEND_HZ; if (this.infoT <= 0 && this.relay) { this.infoT = 6; this.relay.send('i', this.info()); }
     }

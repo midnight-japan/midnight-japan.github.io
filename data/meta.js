@@ -1,8 +1,20 @@
 // Shared game metadata: version, changelog, regions. Update VERSION + CHANGELOG on every release.
-export const GAME = { title: 'MIDNIGHT JAPAN', titleJa: 'ミッドナイト・ジャパン', version: '2.16.1', build: '2026.11.21' };
+export const GAME = { title: 'MIDNIGHT JAPAN', titleJa: 'ミッドナイト・ジャパン', version: '2.17.0', build: '2026.11.27' };
+// v2.17 game server (server/ — Cloudflare Workers): accounts, online rooms, drive records, ranking
+export const SERVER = 'https://midnight-japan-server.midnight-japan.workers.dev';
 
 // Newest first. type: new | change | fix | known
 export const CHANGELOG = [
+  {
+    version: '2.17.0', date: '2026-11-27', codename: 'Home Server',
+    summary: { ko: '미드나잇 재팬 전용 게임 서버와 DB 오픈: 어느 기기에서나 같은 계정, 주행 거리·최고 속도가 저장되는 드라이버 랭킹, 방 입장 즉시 접속자·최근 채팅 표시, 상대가 나가면 바로 사라지는 온라인 카밋.', ja: 'ミッドナイト・ジャパン専用ゲームサーバーとDBを開設：どの端末でも同じアカウント、走行距離・最高速度が保存されるドライバーランキング、入室時に接続中のプレイヤーと最近のチャットを表示、退出したプレイヤーはすぐ消えるオンラインミート。', en: 'MIDNIGHT JAPAN now has its own game server and database: one account on every device, a driver ranking from saved distance and top speed, instant player list and recent chat when you join a room, and players who leave disappear at once.' },
+    items: [
+      { type: 'new', ko: '전용 게임 서버(방마다 WebSocket 서버): 입장 즉시 같은 방 플레이어·최근 채팅, 퇴장 즉시 반영, 서버 핑 표시. 기존 P2P·중계는 예비 경로로 유지', ja: '専用ゲームサーバー（ルームごとのWebSocketサーバー）：入室と同時に同じルームのプレイヤー・最近のチャット、退出を即時反映、サーバーping表示。従来のP2P・中継は予備経路として維持', en: 'Dedicated game server (a WebSocket server per room): players and recent chat on join, instant leave, server ping; P2P and relays stay as backup paths' },
+      { type: 'new', ko: '서버 계정: 회원가입·로그인·닉네임·프로필이 서버 DB에 저장되어 PC·휴대폰 어디서나 같은 계정. 기존 기기 계정은 다음 로그인 때 자동 이전', ja: 'サーバーアカウント：登録・ログイン・ニックネーム・プロフィールがサーバーDBに保存され、PC・スマホどこでも同じアカウント。既存の端末アカウントは次回ログイン時に自動移行', en: 'Server accounts: sign-up, login, nickname and profile live in the server DB, so the same account works on PC and phone; device-only accounts move over on the next login' },
+      { type: 'new', ko: '드라이버 랭킹: 실제로 달린 거리·최고 속도·주행 시간을 서버에 저장(텔레포트 제외), 로비 🏁 랭킹과 사이트 랭킹 페이지에서 이번 주·전체 순위와 지금 접속자 수', ja: 'ドライバーランキング：実際に走った距離・最高速度・走行時間をサーバーに保存（テレポートは除外）、ロビーの🏁ランキングとサイトのランキングページで今週・全期間の順位と現在の接続数', en: 'Driver ranking: real distance, top speed and drive time saved on the server (teleports excluded); weekly and all-time tables plus players online now, in the lobby 🏁 and on the new ranking page' },
+      { type: 'change', ko: '서버가 모든 입력을 검사(메시지 크기·종류별 초당 횟수·좌표 범위·비정상 주행 기록 거부), 비밀번호·로그인 토큰은 해시로만 저장', ja: 'サーバーがすべての入力を検査（メッセージサイズ・種類別の毎秒回数・座標範囲・異常な走行記録を拒否）、パスワードとログイントークンはハッシュのみ保存', en: 'The server checks every input (message size, per-kind rate limits, coordinate ranges, impossible drive records); passwords and login tokens are stored only as hashes' },
+    ],
+  },
   {
     version: '2.16.1', date: '2026-11-21', codename: 'Full Circle',
     summary: { ko: '하코네 나나마가리를 유모토·국도1호로 이어 턴파이크까지 22km 순환, 에노시마 134호 실제 고도, 새 코스 자율주행 수정, 제복 입은 경찰·구급대·점원, 도로를 따라 달리는 구급차, 페달 밟는 자전거, 번호판·램프 추가 정렬, AE86 팝업 라이트.', ja: '箱根七曲りを湯本・国道1号でターンパイクまで22kmの周回に、江の島134号に実際の標高、新コースの自動運転を修正、制服の警察・救急隊・店員、道路に沿って走る救急車、ペダルをこぐ自転車、ナンバー・ランプの追加調整、AE86リトラクタブル。', en: 'Hakone Nanamagari now loops via Yumoto and Route 1 back to the Turnpike (22 km), real elevation on Enoshima Route 134, autopilot fixes on new courses, uniformed police / paramedics / clerks, ambulances that follow roads, pedalling cyclists, more plate and lamp fixes, AE86 pop-up headlights.' },
