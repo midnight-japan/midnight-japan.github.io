@@ -4,6 +4,7 @@
  "account.err.login": "Falsche ID oder falsches Passwort.",
  "account.err.nick": "Der Spitzname muss 2–16 Zeichen lang sein: Buchstaben, Ziffern, Leerzeichen oder _ . -",
  "account.err.pw": "Das Passwort muss mindestens 6 Zeichen lang sein.",
+ "account.err.rate": "Too many attempts. Please try again in a minute.",
  "game.acc.assault": "Reported for assault — the police are on their way",
  "game.acc.call": "Der andere Fahrer hat die 110 (Polizei) gerufen",
  "game.acc.crash": "💥 Unfall! Halte an einer sicheren Stelle",

@@ -4,6 +4,7 @@
  "account.err.login": "아이디 또는 비밀번호가 올바르지 않습니다.",
  "account.err.nick": "닉네임은 문자·숫자·공백·_ . - 로 2–16자여야 합니다.",
  "account.err.pw": "비밀번호는 6자 이상이어야 합니다.",
+ "account.err.rate": "요청이 너무 많아요. 1분 뒤 다시 시도해 주세요.",
  "game.acc.assault": "폭행으로 신고되었습니다 — 경찰이 출동합니다",
  "game.acc.call": "상대 운전자가 110(경찰)에 신고했어요",
  "game.acc.crash": "💥 사고 발생! 안전한 곳에 정차하세요",

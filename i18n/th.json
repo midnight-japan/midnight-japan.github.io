@@ -4,6 +4,7 @@
  "account.err.login": "ID หรือรหัสผ่านไม่ถูกต้อง",
  "account.err.nick": "ชื่อเล่นต้องมี 2–16 ตัว ประกอบด้วยตัวอักษร ตัวเลข ช่องว่าง หรือ _ . -",
  "account.err.pw": "รหัสผ่านต้องมีอย่างน้อย 6 ตัวอักษร",
+ "account.err.rate": "Too many attempts. Please try again in a minute.",
  "game.acc.assault": "Reported for assault — the police are on their way",
  "game.acc.call": "คนขับอีกคันโทรแจ้ง 110 (ตำรวจ) แล้ว",
  "game.acc.crash": "💥 เกิดอุบัติเหตุ! จอดในที่ปลอดภัย",

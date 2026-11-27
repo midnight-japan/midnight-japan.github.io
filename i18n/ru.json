@@ -4,6 +4,7 @@
  "account.err.login": "Неверный ID или пароль.",
  "account.err.nick": "Никнейм: 2–16 букв, цифр, пробелов или _ . -",
  "account.err.pw": "Пароль должен содержать не менее 6 символов.",
+ "account.err.rate": "Too many attempts. Please try again in a minute.",
  "game.acc.assault": "Reported for assault — the police are on their way",
  "game.acc.call": "Второй водитель позвонил в 110 (полиция)",
  "game.acc.crash": "💥 Авария! Остановитесь в безопасном месте",

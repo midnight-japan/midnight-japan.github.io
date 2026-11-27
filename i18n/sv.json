@@ -4,6 +4,7 @@
  "account.err.login": "Fel ID eller lösenord.",
  "account.err.nick": "Smeknamnet måste vara 2–16 bokstäver, siffror, mellanslag eller _ . -",
  "account.err.pw": "Lösenordet måste vara minst 6 tecken.",
+ "account.err.rate": "Too many attempts. Please try again in a minute.",
  "game.acc.assault": "Reported for assault — the police are on their way",
  "game.acc.call": "Andra föraren ringde 110 (polisen)",
  "game.acc.crash": "💥 Olycka! Stanna på en säker plats",

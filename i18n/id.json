@@ -4,6 +4,7 @@
  "account.err.login": "ID atau kata sandi salah.",
  "account.err.nick": "Nama panggilan harus 2–16 huruf, angka, spasi, atau _ . -",
  "account.err.pw": "Kata sandi minimal 6 karakter.",
+ "account.err.rate": "Too many attempts. Please try again in a minute.",
  "game.acc.assault": "Reported for assault — the police are on their way",
  "game.acc.call": "Pengemudi lain menelepon 110 (polisi)",
  "game.acc.crash": "💥 Kecelakaan! Berhenti di tempat aman",

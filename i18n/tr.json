@@ -4,6 +4,7 @@
  "account.err.login": "Kimlik veya şifre hatalı.",
  "account.err.nick": "Takma ad 2–16 karakter olmalı: harf, rakam, boşluk veya _ . -",
  "account.err.pw": "Şifre en az 6 karakter olmalı.",
+ "account.err.rate": "Too many attempts. Please try again in a minute.",
  "game.acc.assault": "Reported for assault — the police are on their way",
  "game.acc.call": "Diğer sürücü 110’u (polis) aradı",
  "game.acc.crash": "💥 Kaza! Güvenli bir yerde dur",

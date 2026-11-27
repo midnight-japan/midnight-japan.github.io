@@ -1,9 +1,10 @@
 # 📜 MIDNIGHT JAPAN 업데이트 기록 · Changelog
 
-현재 버전 · Current: **v2.17.0** · [▶ 웹에서 플레이](https://midnight-japan.github.io/) · [🌐 업데이트 페이지](https://midnight-japan.github.io/changelog.html)
+현재 버전 · Current: **v2.17.1** · [▶ 웹에서 플레이](https://midnight-japan.github.io/) · [🌐 업데이트 페이지](https://midnight-japan.github.io/changelog.html)
 
 | 버전 | 날짜 | 이름 | 요약 |
 |---|---|---|---|
+| [v2.17.1](#v2171--steady-server-2026-11-27) | 2026-11-27 | Steady Server | 게임 서버 안정화: 연결 유지 핑을 서버가 깨지 않고 바로 응답해 접속이 끊기지 않고 가벼워짐, 랭킹 조회가 기록이 많아져도 빠르게, 로그인 반복 시도 제한, 만료된 로그인·오래된 채팅을 매일 자동 정리. |
 | [v2.17.0](#v2170--home-server-2026-11-27) | 2026-11-27 | Home Server | 미드나잇 재팬 전용 게임 서버와 DB 오픈: 어느 기기에서나 같은 계정, 주행 거리·최고 속도가 저장되는 드라이버 랭킹, 방 입장 즉시 접속자·최근 채팅 표시, 상대가 나가면 바로 사라지는 온라인 카밋. |
 | [v2.16.1](#v2161--full-circle-2026-11-21) | 2026-11-21 | Full Circle | 하코네 나나마가리를 유모토·국도1호로 이어 턴파이크까지 22km 순환, 에노시마 134호 실제 고도, 새 코스 자율주행 수정, 제복 입은 경찰·구급대·점원, 도로를 따라 달리는 구급차, 페달 밟는 자전거, 번호판·램프 추가 정렬, AE86 팝업 라이트. |
 | [v2.16.0](#v2160--living-japan-2026-11-20) | 2026-11-20 | Living Japan | 새 코스 4곳(하코네 나나마가리·후지 스카이라인·에노시마·비너스 라인), 실사 사람 9명과 사고 후 구급차·뺨 때리기, NPC 차만 부서지는 사고, 실제 렌즈 모양대로 켜지는 램프와 번호판 정렬, 실사 해바라기·주유기·가드레일, 실제 녹음 효과음. |
@@ -82,6 +83,18 @@
 | [v0.2.0](#v020--bayshore-2026-11-05) | 2026-11-05 | Bayshore | 수도고속 완간선을 따라 하네다까지, 도쿄만 아쿠아라인 해저터널을 지나 우미호타루 PA까지. 실제 3D 차량 모델과 열리는 보닛도 들어왔어요. |
 | [v0.1.1](#v011--one-click-2026-11-04) | 2026-11-04 | One Click | 링크 하나로 바로 플레이. 크롬에서 공식 사이트 주소만 열면 설치 없이 실행돼요. |
 | [v0.1.0](#v010--first-meet-2026-11-04) | 2026-11-04 | First Meet | 첫 공개 버전. 다이코쿠 JCT·PA와 다이코쿠 부두 일대를 3D로 구현했습니다. |
+
+---
+
+## v2.17.1 — Steady Server (2026-11-27)
+
+> 게임 서버 안정화: 연결 유지 핑을 서버가 깨지 않고 바로 응답해 접속이 끊기지 않고 가벼워짐, 랭킹 조회가 기록이 많아져도 빠르게, 로그인 반복 시도 제한, 만료된 로그인·오래된 채팅을 매일 자동 정리.
+> Game server hardening: keep-alive pings answered without waking the room (steadier, lighter connections), a ranking query that stays fast as records grow, a limit on repeated login attempts, and daily cleanup of expired logins and old chat.
+
+**🔧 변경 · Changed**
+
+- 연결 유지 핑 자동 응답(5초 간격), 서버 위치 동기화 초당 10회(상대 화면에서 보간)<br><sub>Keep-alive ping auto-response (every 5 s); server position sync at 10 Hz (interpolated on the other side)</sub>
+- 랭킹을 한 번의 DB 조회로 계산, IP당 1분 10회 로그인·가입 제한, 매일 04:00 만료 세션·7일 지난 채팅 정리<br><sub>Ranking computed in a single DB pass; 10 login/sign-up attempts per minute per IP; daily 04:00 cleanup of expired sessions and chat older than 7 days</sub>
 
 ---
 

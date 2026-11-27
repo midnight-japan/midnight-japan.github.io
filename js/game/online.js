@@ -218,7 +218,7 @@ export class Online {
       const msg = { q: this.seq, p: [r(P.x), r(P.y), r(P.z)], y: r(walk ? g.player.yaw : v.yaw), v: Math.round(walk ? g.player.speed * 3.6 : v.kmh), r: Math.round(v.engine?.rpm || 0), s: r(v.steerAng || 0), l: lights, m: walk ? 'w' : 'd' };
       if (walk) { msg.cp = [r(v.pos.x), r(v.pos.y), r(v.pos.z)]; msg.cy = r(v.yaw); }
       try { this._sendSt?.(msg); } catch {}
-      this.srvT = (this.srvT || 0) - 1 / SEND_HZ; if (this.srvT <= 0 && this.server?.ok) { this.srvT = 1 / 15; this.server.send('s', msg); } // game server at 15 Hz
+      this.srvT = (this.srvT || 0) - 1 / SEND_HZ; if (this.srvT <= 0 && this.server?.ok) { this.srvT = 1 / 10; this.server.send('s', msg); } // game server at 10 Hz (interpolated on the other side)
       this.relayT = (this.relayT || 0) - 1 / SEND_HZ; if (this.relayT <= 0 && this.relay) { this.relayT = 1 / 12; this.relay.send('s', msg); } // relay at 12 Hz
       this.infoT = (this.infoT || 0) - 1 / SEND_HZ; if (this.infoT <= 0 && this.relay) { this.infoT = 6; this.relay.send('i', this.info()); }
     }

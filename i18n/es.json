@@ -4,6 +4,7 @@
  "account.err.login": "ID o contraseña incorrectos.",
  "account.err.nick": "El apodo debe tener 2–16 letras, números, espacios o _ . -",
  "account.err.pw": "La contraseña debe tener al menos 6 caracteres.",
+ "account.err.rate": "Too many attempts. Please try again in a minute.",
  "game.acc.assault": "Reported for assault — the police are on their way",
  "game.acc.call": "El otro conductor llamó al 110 (policía)",
  "game.acc.crash": "💥 ¡Accidente! Detente en un lugar seguro",

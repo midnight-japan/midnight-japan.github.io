@@ -1,10 +1,18 @@
 // Shared game metadata: version, changelog, regions. Update VERSION + CHANGELOG on every release.
-export const GAME = { title: 'MIDNIGHT JAPAN', titleJa: 'ミッドナイト・ジャパン', version: '2.17.0', build: '2026.11.27' };
+export const GAME = { title: 'MIDNIGHT JAPAN', titleJa: 'ミッドナイト・ジャパン', version: '2.17.1', build: '2026.11.27' };
 // v2.17 game server (server/ — Cloudflare Workers): accounts, online rooms, drive records, ranking
 export const SERVER = 'https://midnight-japan-server.midnight-japan.workers.dev';
 
 // Newest first. type: new | change | fix | known
 export const CHANGELOG = [
+  {
+    version: '2.17.1', date: '2026-11-27', codename: 'Steady Server',
+    summary: { ko: '게임 서버 안정화: 연결 유지 핑을 서버가 깨지 않고 바로 응답해 접속이 끊기지 않고 가벼워짐, 랭킹 조회가 기록이 많아져도 빠르게, 로그인 반복 시도 제한, 만료된 로그인·오래된 채팅을 매일 자동 정리.', ja: 'ゲームサーバーの安定化：接続維持のpingにサーバーを起こさず即応答して接続が途切れず軽く、記録が増えてもランキングを高速に、ログインの連続試行を制限、期限切れのログインと古いチャットを毎日自動整理。', en: 'Game server hardening: keep-alive pings answered without waking the room (steadier, lighter connections), a ranking query that stays fast as records grow, a limit on repeated login attempts, and daily cleanup of expired logins and old chat.' },
+    items: [
+      { type: 'change', ko: '연결 유지 핑 자동 응답(5초 간격), 서버 위치 동기화 초당 10회(상대 화면에서 보간)', ja: '接続維持pingの自動応答（5秒間隔）、サーバー経由の位置同期は毎秒10回（相手側で補間）', en: 'Keep-alive ping auto-response (every 5 s); server position sync at 10 Hz (interpolated on the other side)' },
+      { type: 'change', ko: '랭킹을 한 번의 DB 조회로 계산, IP당 1분 10회 로그인·가입 제한, 매일 04:00 만료 세션·7일 지난 채팅 정리', ja: 'ランキングを1回のDB照会で計算、IPごとに1分10回のログイン・登録制限、毎日04:00に期限切れセッション・7日以上前のチャットを整理', en: 'Ranking computed in a single DB pass; 10 login/sign-up attempts per minute per IP; daily 04:00 cleanup of expired sessions and chat older than 7 days' },
+    ],
+  },
   {
     version: '2.17.0', date: '2026-11-27', codename: 'Home Server',
     summary: { ko: '미드나잇 재팬 전용 게임 서버와 DB 오픈: 어느 기기에서나 같은 계정, 주행 거리·최고 속도가 저장되는 드라이버 랭킹, 방 입장 즉시 접속자·최근 채팅 표시, 상대가 나가면 바로 사라지는 온라인 카밋.', ja: 'ミッドナイト・ジャパン専用ゲームサーバーとDBを開設：どの端末でも同じアカウント、走行距離・最高速度が保存されるドライバーランキング、入室時に接続中のプレイヤーと最近のチャットを表示、退出したプレイヤーはすぐ消えるオンラインミート。', en: 'MIDNIGHT JAPAN now has its own game server and database: one account on every device, a driver ranking from saved distance and top speed, instant player list and recent chat when you join a room, and players who leave disappear at once.' },

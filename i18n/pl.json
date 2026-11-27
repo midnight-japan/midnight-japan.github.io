@@ -4,6 +4,7 @@
  "account.err.login": "Nieprawidłowe ID lub hasło.",
  "account.err.nick": "Pseudonim musi mieć 2–16 znaków: litery, cyfry, spacje lub _ . -",
  "account.err.pw": "Hasło musi mieć co najmniej 6 znaków.",
+ "account.err.rate": "Too many attempts. Please try again in a minute.",
  "game.acc.assault": "Reported for assault — the police are on their way",
  "game.acc.call": "Drugi kierowca zadzwonił pod 110 (policja)",
  "game.acc.crash": "💥 Wypadek! Zatrzymaj się w bezpiecznym miejscu",

@@ -4,6 +4,7 @@
  "account.err.login": "Mali ang ID o password.",
  "account.err.nick": "Ang palayaw ay dapat 2–16 na titik, numero, espasyo o _ . -",
  "account.err.pw": "Ang password ay dapat hindi bababa sa 6 na character.",
+ "account.err.rate": "Too many attempts. Please try again in a minute.",
  "game.acc.assault": "Reported for assault — the police are on their way",
  "game.acc.call": "Tumawag ang kabilang driver sa 110 (pulis)",
  "game.acc.crash": "💥 Aksidente! Huminto sa ligtas na lugar",

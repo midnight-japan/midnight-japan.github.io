@@ -4,6 +4,7 @@
  "account.err.login": "Sai ID hoặc mật khẩu.",
  "account.err.nick": "Biệt danh phải có 2–16 chữ cái, số, khoảng trắng hoặc _ . -",
  "account.err.pw": "Mật khẩu phải có ít nhất 6 ký tự.",
+ "account.err.rate": "Too many attempts. Please try again in a minute.",
  "game.acc.assault": "Reported for assault — the police are on their way",
  "game.acc.call": "Tài xế kia đã gọi 110 (cảnh sát)",
  "game.acc.crash": "💥 Tai nạn! Dừng xe ở nơi an toàn",

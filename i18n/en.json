@@ -4,6 +4,7 @@
  "account.err.login": "Incorrect ID or password.",
  "account.err.nick": "Nickname must be 2–16 letters, numbers, spaces or _ . -",
  "account.err.pw": "Password must be at least 6 characters.",
+ "account.err.rate": "Too many attempts. Please try again in a minute.",
  "game.acc.assault": "Reported for assault — the police are on their way",
  "game.acc.call": "The other driver called 110 (police)",
  "game.acc.crash": "💥 Accident! Stop somewhere safe",

@@ -20,8 +20,9 @@ export class GameServer {
       if (typeof e.data !== 'string' || e.data.length > 64e3) return;
       let m; try { m = JSON.parse(e.data); } catch { return; }
       if (!m || typeof m !== 'object') return;
-      if (m.k === 'w') { clearTimeout(to); this.ok = true; this.tries = 0; this.onState?.('up'); this.onWelcome?.(m); this.pingI = setInterval(() => this.raw({ k: 'p', d: { t: Date.now() } }), 3000); return; }
-      if (m.k === 'p') { const t = m.d?.t; if (typeof t === 'number') this.ping = Math.max(1, Date.now() - t); return; }
+      // keep-alive ping: the exact string {"k":"p"} is answered by the server runtime without waking the room (free-tier friendly)
+      if (m.k === 'w') { clearTimeout(to); this.ok = true; this.tries = 0; this.onState?.('up'); this.onWelcome?.(m); this.pingI = setInterval(() => { if (this.ws?.readyState === 1) { this.pingAt = Date.now(); try { this.ws.send('{"k":"p"}'); } catch {} } }, 5000); return; }
+      if (m.k === 'p') { if (this.pingAt) this.ping = Math.max(1, Date.now() - this.pingAt); return; }
       if (typeof m.id !== 'string' || m.id === this.id) return;
       if (m.k === 'x') this.onLeave?.(m.id);
       else if (m.k === 'i' || m.k === 's' || m.k === 'c') this.onMsg(m.k, m.id.slice(0, 40), m.d);

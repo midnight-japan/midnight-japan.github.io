@@ -4,6 +4,7 @@
  "account.err.login": "ID 或密碼錯誤。",
  "account.err.nick": "暱稱須為 2–16 個字元，可使用字母、數字、空格或 _ . -",
  "account.err.pw": "密碼至少需要 6 個字元。",
+ "account.err.rate": "Too many attempts. Please try again in a minute.",
  "game.acc.assault": "Reported for assault — the police are on their way",
  "game.acc.call": "對方駕駛撥打了110報警",
  "game.acc.crash": "💥 發生事故！請在安全處停車",
