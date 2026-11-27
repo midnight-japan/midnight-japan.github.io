@@ -1,10 +1,18 @@
 // Shared game metadata: version, changelog, regions. Update VERSION + CHANGELOG on every release.
-export const GAME = { title: 'MIDNIGHT JAPAN', titleJa: 'ミッドナイト・ジャパン', version: '2.17.1', build: '2026.11.27' };
+export const GAME = { title: 'MIDNIGHT JAPAN', titleJa: 'ミッドナイト・ジャパン', version: '2.17.2', build: '2026.11.27' };
 // v2.17 game server (server/ — Cloudflare Workers): accounts, online rooms, drive records, ranking
 export const SERVER = 'https://midnight-japan-server.midnight-japan.workers.dev';
 
 // Newest first. type: new | change | fix | known
 export const CHANGELOG = [
+  {
+    version: '2.17.2', date: '2026-11-27', codename: 'Clean Cards',
+    summary: { ko: '작은 수정: 온라인 플레이어 목록에서 내 이름 옆에 「나」가 제대로 표시, 사진이 아직 없는 새 코스(에노시마·나나마가리·후지 스카이라인·비너스 라인)의 빠른 이동 카드가 빈칸 대신 코스 이름 카드로 표시되고 불필요한 요청이 사라짐.', ja: '小さな修正：オンラインのプレイヤー一覧で自分の名前の横に「自分」と正しく表示、写真がまだない新コース（江の島・七曲り・富士山スカイライン・ビーナスライン）のクイック移動カードが空欄ではなくコース名カードに、不要なリクエストもなくなりました。', en: 'Small fixes: the online player list now labels you as "YOU" properly, and quick-travel cards for the new courses without a photo yet (Enoshima, Nanamagari, Fuji Skyline, Venus Line) show a course-name card instead of a blank (no more failed requests).' },
+    items: [
+      { type: 'fix', ko: '플레이어 목록의 내 표시가 번역 키 그대로 보이던 문제', ja: 'プレイヤー一覧の自分の表示が翻訳キーのまま表示されていた問題', en: 'Your own row in the player list showed a raw translation key' },
+      { type: 'fix', ko: '사진 없는 빠른 이동 카드: 빈칸·404 요청 대신 코스 이름 카드', ja: '写真のないクイック移動カード：空欄・404リクエストの代わりにコース名カード', en: 'Quick-travel cards without a photo: course-name card instead of a blank and a 404' },
+    ],
+  },
   {
     version: '2.17.1', date: '2026-11-27', codename: 'Steady Server',
     summary: { ko: '게임 서버 안정화: 연결 유지 핑을 서버가 깨지 않고 바로 응답해 접속이 끊기지 않고 가벼워짐, 랭킹 조회가 기록이 많아져도 빠르게, 로그인 반복 시도 제한, 만료된 로그인·오래된 채팅을 매일 자동 정리.', ja: 'ゲームサーバーの安定化：接続維持のpingにサーバーを起こさず即応答して接続が途切れず軽く、記録が増えてもランキングを高速に、ログインの連続試行を制限、期限切れのログインと古いチャットを毎日自動整理。', en: 'Game server hardening: keep-alive pings answered without waking the room (steadier, lighter connections), a ranking query that stays fast as records grow, a limit on repeated login attempts, and daily cleanup of expired logins and old chat.' },

@@ -646,3 +646,6 @@ body.photo .online-pill,body.photo .chat{display:none}
 .rk-name,.rk-car{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}.rk-car{opacity:.75}.rk-km,.rk-top{text-align:right;font-variant-numeric:tabular-nums}
 .rk-msg{text-align:center;opacity:.75;padding:24px 0}
 @media (max-width:560px){.rk-row{grid-template-columns:28px 1fr 70px 66px}.rk-car{display:none}}
+
+/* v2.17.2 quick-travel card without a photo */
+#map .qt-card .qt-ph{grid-row:1/3;width:84px;height:48px;border-radius:6px;display:flex;align-items:center;justify-content:center;font-weight:800;font-size:15px;color:#fff;background:linear-gradient(135deg,#ff2f70,#ff6a3d 55%,#ffb836);opacity:.85}

@@ -1,9 +1,10 @@
 # 📜 MIDNIGHT JAPAN 업데이트 기록 · Changelog
 
-현재 버전 · Current: **v2.17.1** · [▶ 웹에서 플레이](https://midnight-japan.github.io/) · [🌐 업데이트 페이지](https://midnight-japan.github.io/changelog.html)
+현재 버전 · Current: **v2.17.2** · [▶ 웹에서 플레이](https://midnight-japan.github.io/) · [🌐 업데이트 페이지](https://midnight-japan.github.io/changelog.html)
 
 | 버전 | 날짜 | 이름 | 요약 |
 |---|---|---|---|
+| [v2.17.2](#v2172--clean-cards-2026-11-27) | 2026-11-27 | Clean Cards | 작은 수정: 온라인 플레이어 목록에서 내 이름 옆에 「나」가 제대로 표시, 사진이 아직 없는 새 코스(에노시마·나나마가리·후지 스카이라인·비너스 라인)의 빠른 이동 카드가 빈칸 대신 코스 이름 카드로 표시되고 불필요한 요청이 사라짐. |
 | [v2.17.1](#v2171--steady-server-2026-11-27) | 2026-11-27 | Steady Server | 게임 서버 안정화: 연결 유지 핑을 서버가 깨지 않고 바로 응답해 접속이 끊기지 않고 가벼워짐, 랭킹 조회가 기록이 많아져도 빠르게, 로그인 반복 시도 제한, 만료된 로그인·오래된 채팅을 매일 자동 정리. |
 | [v2.17.0](#v2170--home-server-2026-11-27) | 2026-11-27 | Home Server | 미드나잇 재팬 전용 게임 서버와 DB 오픈: 어느 기기에서나 같은 계정, 주행 거리·최고 속도가 저장되는 드라이버 랭킹, 방 입장 즉시 접속자·최근 채팅 표시, 상대가 나가면 바로 사라지는 온라인 카밋. |
 | [v2.16.1](#v2161--full-circle-2026-11-21) | 2026-11-21 | Full Circle | 하코네 나나마가리를 유모토·국도1호로 이어 턴파이크까지 22km 순환, 에노시마 134호 실제 고도, 새 코스 자율주행 수정, 제복 입은 경찰·구급대·점원, 도로를 따라 달리는 구급차, 페달 밟는 자전거, 번호판·램프 추가 정렬, AE86 팝업 라이트. |
@@ -83,6 +84,18 @@
 | [v0.2.0](#v020--bayshore-2026-11-05) | 2026-11-05 | Bayshore | 수도고속 완간선을 따라 하네다까지, 도쿄만 아쿠아라인 해저터널을 지나 우미호타루 PA까지. 실제 3D 차량 모델과 열리는 보닛도 들어왔어요. |
 | [v0.1.1](#v011--one-click-2026-11-04) | 2026-11-04 | One Click | 링크 하나로 바로 플레이. 크롬에서 공식 사이트 주소만 열면 설치 없이 실행돼요. |
 | [v0.1.0](#v010--first-meet-2026-11-04) | 2026-11-04 | First Meet | 첫 공개 버전. 다이코쿠 JCT·PA와 다이코쿠 부두 일대를 3D로 구현했습니다. |
+
+---
+
+## v2.17.2 — Clean Cards (2026-11-27)
+
+> 작은 수정: 온라인 플레이어 목록에서 내 이름 옆에 「나」가 제대로 표시, 사진이 아직 없는 새 코스(에노시마·나나마가리·후지 스카이라인·비너스 라인)의 빠른 이동 카드가 빈칸 대신 코스 이름 카드로 표시되고 불필요한 요청이 사라짐.
+> Small fixes: the online player list now labels you as "YOU" properly, and quick-travel cards for the new courses without a photo yet (Enoshima, Nanamagari, Fuji Skyline, Venus Line) show a course-name card instead of a blank (no more failed requests).
+
+**🐞 수정 · Fixed**
+
+- 플레이어 목록의 내 표시가 번역 키 그대로 보이던 문제<br><sub>Your own row in the player list showed a raw translation key</sub>
+- 사진 없는 빠른 이동 카드: 빈칸·404 요청 대신 코스 이름 카드<br><sub>Quick-travel cards without a photo: course-name card instead of a blank and a 404</sub>
 
 ---
 
