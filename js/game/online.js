@@ -1,7 +1,7 @@
 // Online meets (beta) — serverless peer-to-peer via WebRTC (Trystero, Nostr relays for signalling).
 // fixed set of large, long-lived public Nostr relays (Trystero's default pool includes small relays that go offline)
 // v2.15.1: relay.damus.io rate-limits/bans busy apps and relay.nostr.band is often down — swapped for steadier relays
-const RELAYS = ['wss://nos.lol', 'wss://relay.primal.net', 'wss://nostr.mom', 'wss://relay.snort.social'];
+const RELAYS = ['wss://nos.lol', 'wss://relay.primal.net', 'wss://relay.snort.social']; // v2.17.3: nostr.mom dropped (fails on WebKit/Safari)
 // several STUN servers so players behind home routers / mobile networks find a direct path to each other
 const RTC = { iceServers: [{ urls: ['stun:stun.l.google.com:19302', 'stun:stun1.l.google.com:19302'] }, { urls: 'stun:stun.cloudflare.com:3478' }, { urls: 'stun:global.stun.twilio.com:3478' }] };
 // v2.17: plus the MIDNIGHT JAPAN game server (gameserver.js) as the main path — room presence, relay, chat history in its DB.
@@ -62,7 +62,7 @@ export class Online {
       const { joinRoom, selfId } = await import('../../vendor/trystero/trystero-nostr.mjs');
       this.selfId = selfId; // one id on every path (WebRTC, game server, MQTT) so a player is never shown twice
       this.startServer(roomName); // v2.17 game server: does not depend on the public relays below
-      const room = this.room = joinRoom({ appId: APP_ID, relayConfig: { urls: RELAYS, redundancy: 4 }, rtcConfig: RTC }, roomName);
+      const room = this.room = joinRoom({ appId: APP_ID, relayConfig: { urls: RELAYS, redundancy: 3 }, rtcConfig: RTC }, roomName);
       const aInfo = room.makeAction('info'), aSt = room.makeAction('st'), aChat = room.makeAction('chat');
       const send = a => (data, target) => a.send(data, target ? { target } : undefined);
       this._sendInfo = send(aInfo); this._sendSt = send(aSt); this._sendChat = send(aChat);

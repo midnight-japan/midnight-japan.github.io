@@ -15,7 +15,7 @@ export class GameServer {
     if (this.closed) return;
     let ws; try { ws = new WebSocket(wsUrl(this.room, this.id)); } catch { return this.retry(); }
     this.ws = ws;
-    const to = setTimeout(() => { if (!this.ok) try { ws.close(); } catch {} }, 8000);
+    const to = setTimeout(() => { if (!this.ok) try { ws.close(); } catch {} }, 20000); // slow phones busy loading the world
     ws.onmessage = e => {
       if (typeof e.data !== 'string' || e.data.length > 64e3) return;
       let m; try { m = JSON.parse(e.data); } catch { return; }

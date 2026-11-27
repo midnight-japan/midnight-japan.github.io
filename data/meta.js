@@ -1,10 +1,18 @@
 // Shared game metadata: version, changelog, regions. Update VERSION + CHANGELOG on every release.
-export const GAME = { title: 'MIDNIGHT JAPAN', titleJa: 'ミッドナイト・ジャパン', version: '2.17.2', build: '2026.11.27' };
+export const GAME = { title: 'MIDNIGHT JAPAN', titleJa: 'ミッドナイト・ジャパン', version: '2.17.3', build: '2026.11.27' };
 // v2.17 game server (server/ — Cloudflare Workers): accounts, online rooms, drive records, ranking
 export const SERVER = 'https://midnight-japan-server.midnight-japan.workers.dev';
 
 // Newest first. type: new | change | fix | known
 export const CHANGELOG = [
+  {
+    version: '2.17.3', date: '2026-11-27', codename: 'All Devices',
+    summary: { ko: '기기 호환성 점검 후 수정: 느린 기기에서 첫 화면을 불러오는 동안 게임 서버 연결이 끊겼다 다시 붙던 문제, 사파리·아이폰에서 접속이 계속 실패하던 공개 중계 서버 하나 제외.', ja: '端末互換性チェック後の修正：遅い端末で最初の読み込み中にゲームサーバー接続が切れて再接続していた問題、Safari・iPhoneで接続に失敗し続けていた公開中継サーバーを1つ除外。', en: 'Device compatibility fixes: on slow devices the game-server link no longer drops and reconnects while the world is still loading, and one public relay that always failed on Safari/iPhone was removed.' },
+    items: [
+      { type: 'fix', ko: '게임 서버 첫 응답 대기 8초 → 20초 (휴대폰에서 로딩 중 재접속 방지)', ja: 'ゲームサーバーの初回応答待ち 8秒 → 20秒（スマホで読み込み中の再接続を防止）', en: 'Game-server welcome timeout 8 s → 20 s (no reconnect while a phone is still loading)' },
+      { type: 'fix', ko: '사파리(WebKit)에서 매번 실패하던 Nostr 릴레이 제외, 콘솔 오류 제거', ja: 'Safari（WebKit）で毎回失敗していたNostrリレーを除外、コンソールエラーを解消', en: 'Dropped a Nostr relay that always failed on Safari (WebKit); no more console error' },
+    ],
+  },
   {
     version: '2.17.2', date: '2026-11-27', codename: 'Clean Cards',
     summary: { ko: '작은 수정: 온라인 플레이어 목록에서 내 이름 옆에 「나」가 제대로 표시, 사진이 아직 없는 새 코스(에노시마·나나마가리·후지 스카이라인·비너스 라인)의 빠른 이동 카드가 빈칸 대신 코스 이름 카드로 표시되고 불필요한 요청이 사라짐.', ja: '小さな修正：オンラインのプレイヤー一覧で自分の名前の横に「自分」と正しく表示、写真がまだない新コース（江の島・七曲り・富士山スカイライン・ビーナスライン）のクイック移動カードが空欄ではなくコース名カードに、不要なリクエストもなくなりました。', en: 'Small fixes: the online player list now labels you as "YOU" properly, and quick-travel cards for the new courses without a photo yet (Enoshima, Nanamagari, Fuji Skyline, Venus Line) show a course-name card instead of a blank (no more failed requests).' },
