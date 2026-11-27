@@ -27,14 +27,14 @@ const N = {
   '美ヶ原高原美術館': ['우쓰쿠시가하라 고원 미술관', 'Utsukushigahara Open-Air Museum'], '白樺湖': ['시라카바호', 'Lake Shirakaba'], '車山肩': ['구루마야마카타', 'Kurumayama-kata'], '霧ヶ峰 強清水': ['기리가미네 고와시미즈', 'Kirigamine Kowashimizu'], '扉峠': ['도비라 고개', 'Tobira Pass'],
   '非常駐車帯': ['비상 주차대', 'Emergency bay'], '駐車帯': ['주차대', 'Lay-by'],
   '首都高速都心環状線（内回り）': ['수도고속 도심환상선 (내회선)', 'Shuto C1 Inner Circular (inner loop)'], '首都高速都心環状線（外回り）': ['수도고속 도심환상선 (외회선)', 'Shuto C1 Inner Circular (outer loop)'],
-  '首都高速湾岸線': ['수도고속 만안선', 'Shuto Bayshore Route'], '東京湾アクアライン': ['도쿄만 아쿠아라인', 'Tokyo Bay Aqua-Line'], '首都高速K5大黒線': ['수도고속 K5 다이코쿠선', 'Shuto K5 Daikoku Route'],
+  '首都高速湾岸線': ['수도고속 완간선', 'Shuto Bayshore Route'], '東京湾アクアライン': ['도쿄만 아쿠아라인', 'Tokyo Bay Aqua-Line'], '首都高速K5大黒線': ['수도고속 K5 다이코쿠선', 'Shuto K5 Daikoku Route'],
   '首都高速K1横羽線': ['수도고속 K1 요코하네선', 'Shuto K1 Yokohane Route'], '首都高速K3狩場線': ['수도고속 K3 가리바선', 'Shuto K3 Kariba Route'],
   '大黒PA 入口ランプ': ['다이코쿠 PA 진입 램프', 'Daikoku PA entry ramp'], '大黒PA 出口ランプ': ['다이코쿠 PA 진출 램프', 'Daikoku PA exit ramp'],
   '大黒ふ頭入口': ['다이코쿠 부두 입구', 'Daikoku Wharf entrance'], '大黒ふ頭出口': ['다이코쿠 부두 출구', 'Daikoku Wharf exit'], '大黒ふ頭 中央通り': ['다이코쿠 부두 중앙로', 'Daikoku Wharf Central Ave.'],
   '海ほたるPA · 東京湾アクアライン': ['우미호타루 PA · 도쿄만 아쿠아라인', 'Umihotaru PA · Aqua-Line'], '大黒PA · 鶴見区大黒ふ頭': ['다이코쿠 PA · 쓰루미구 다이코쿠 부두', 'Daikoku PA · Daikoku Wharf'],
 };
 // JCT ramps: 「生麦JCT（K5→K1 横浜方面）」 → translate the JCT part, keep the route numbers
-const DIR = { '横浜方面': ['요코하마 방면', 'to Yokohama'], '大黒方面': ['다이코쿠 방면', 'to Daikoku'], '本牧方面': ['혼모쿠 방면', 'to Honmoku'], '東京方面': ['도쿄 방면', 'to Tokyo'], '湾岸線': ['만안선', 'Bayshore'], 'アクアライン': ['아쿠아라인', 'Aqua-Line'], '大黒PA': ['다이코쿠 PA', 'Daikoku PA'] };
+const DIR = { '横浜方面': ['요코하마 방면', 'to Yokohama'], '大黒方面': ['다이코쿠 방면', 'to Daikoku'], '本牧方面': ['혼모쿠 방면', 'to Honmoku'], '東京方面': ['도쿄 방면', 'to Tokyo'], '湾岸線': ['완간선', 'Bayshore'], 'アクアライン': ['아쿠아라인', 'Aqua-Line'], '大黒PA': ['다이코쿠 PA', 'Daikoku PA'] };
 
 function one(ja, k) {
   if (N[ja]) return N[ja][k];

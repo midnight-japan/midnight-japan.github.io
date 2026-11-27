@@ -45,7 +45,7 @@
 | [v2.7.0](#v270--real-cars-2026-11-18) | 2026-11-18 | Real Cars | 애매한 차량 모델 12종을 정리해 실제 모델이 있는 차만 남기고, 차가 노면에 붙어 달리도록 수직 물리와 노면별 접지력을 새로 만들었습니다. |
 | [v2.6.1](#v261--clear-road-2026-11-18) | 2026-11-18 | Clear Road | 도로망 전수 점검: 데크가 서로 뚫고 지나가던 15곳, 접속부 단차, 지상 도로를 가로막던 램프 방호벽을 모두 수정하고 램프의 급경사·덜컹임을 완화했습니다. |
 | [v2.6.0](#v260--skyline-2026-11-14) | 2026-11-14 | Skyline | 후지산처럼 도쿄 랜드마크가 멀리서도 선명하게: 도쿄도청·신주쿠 초고층군·롯폰기힐스·미드타운·아자부다이힐스·도라노몬힐스·요코하마 랜드마크타워 추가, 야간 조명과 30km 밖에서도 보이는 항공장애등, 덜 뿌연 공기·밝아진 밤, 창고 외벽 디테일, 무게감 있는 차체 움직임과 수도고 이음매 진동. |
-| [v2.5.4](#v254--no-dead-ends-2026-11-14) | 2026-11-14 | No Dead Ends | 맵 전체 도로 끝 자동 점검으로 끊긴 곳 모두 연결(나마무기 K1 5.6m 절벽, 다이코쿠 JCT 만안선→다이코쿠 램프, 하네다 만안선 단차, 공중에서 끝나던 츠루미·시바우라 램프), 텔레포트는 도로와 진행 방향을 골라서. |
+| [v2.5.4](#v254--no-dead-ends-2026-11-14) | 2026-11-14 | No Dead Ends | 맵 전체 도로 끝 자동 점검으로 끊긴 곳 모두 연결(나마무기 K1 5.6m 절벽, 다이코쿠 JCT 완간선→다이코쿠 램프, 하네다 완간선 단차, 공중에서 끝나던 츠루미·시바우라 램프), 텔레포트는 도로와 진행 방향을 골라서. |
 | [v2.5.3](#v253--night-fixes-2026-11-14) | 2026-11-14 | Night Fixes | 베이브리지 서쪽 끝 막다른 길 연결, 나란한 고가 사이 구멍 메움과 중앙 방호벽, 터널에서 내려 점프하면 바다 위로 가던 버그, 시빅 번호판, 전체 음량·사이렌 낮춤, 경찰·NPC가 따라붙지 않게, VTEC 소리 강화. |
 | [v2.5.2](#v252--every-phone-2026-11-14) | 2026-11-14 | Every Phone | 아이폰 사파리에서 게임이 시작되지 않던 치명적 버그 수정, 휴대폰 HUD 겹침 정리와 버튼 이름 표시, 중앙분리대 통과 금지, 내비 경로 탐색 개선, 번호판(꺾인·字光式) 묻힘 수정, 엔진음 통일감, 젖은 노면·라이트 빛 과함 완화. |
 | [v2.5.1](#v251--fast-start-2026-11-14) | 2026-11-14 | Fast Start | 로딩 대폭 단축(PC 48초 → 13초, 시작 전 데이터 96MB → 25MB), 휴대폰 전용 가벼운 텍스처, 디테일한 후지산, 수도고 전역에 큰 방면 안내판·정보판·속도 표지, 다이코쿠 PA 분수 광장·이륜차 주차장·흡연소(OSM 위치). |
@@ -61,7 +61,7 @@
 | [v1.1.1](#v111--sound-&-traffic-2026-11-13) | 2026-11-13 | Sound & Traffic | 교통차량은 전부 실제 3D 모델, 추월차로(1차로)는 플레이어 전용, 경적에 비켜 주는 차들, 실제 녹음으로 바꾼 사운드와 터보 블로오프 「프슈욱」. |
 | [v1.1.0](#v110--connected-2026-11-12) | 2026-11-12 | Connected | 맵 전체가 하나로 — 다이코쿠·요코하마·가와사키·하네다·도쿄 도심(C1)·레인보우 브리지·하코네까지 실제 도로로 막힘 없이 이어짐. |
 | [v1.0.1](#v101--shakedown-2026-11-12) | 2026-11-12 | Shakedown | 직접 플레이하며 찾은 버그 대수술 — 고속도로의 보이지 않는 벽, PA 밖 허공, 하차 시 끼임, 터널 눈부심, 모바일 페달 실종 등 수정. |
-| [v1.0.0](#v100--real-japan-2026-11-06) | 2026-11-06 | Real Japan | 정식 1.0 — 실제 일본의 다섯 곳(C1·하코네·K1 루프·다이코쿠 PA와 만안선·요코하마/도쿄 시가지)을 달리는 게임으로. 홈페이지 전면 리뉴얼. |
+| [v1.0.0](#v100--real-japan-2026-11-06) | 2026-11-06 | Real Japan | 정식 1.0 — 실제 일본의 다섯 곳(C1·하코네·K1 루프·다이코쿠 PA와 완간선·요코하마/도쿄 시가지)을 달리는 게임으로. 홈페이지 전면 리뉴얼. |
 | [v0.11.1](#v0111--coin-parking-2026-11-06) | 2026-11-06 | Coin Parking | 시내 주차장에 코인파킹 디테일(주차선·차막이·P 간판·정산기). |
 | [v0.11.0](#v0110--inner-circular-2026-11-06) | 2026-11-06 | Inner Circular | C1 도심환상선 개통 — 도쿄 도심의 터널과 고가를 도는 내·외회선 루프, 주변 도쿄 도심 시가지. |
 | [v0.10.0](#v0100--touge-2026-11-06) | 2026-11-06 | Touge | 하코네 턴파이크 개통 — 실제 고도 데이터로 만든 산길 13.5km, 정상 다이칸야마 전망 주차장까지. |
@@ -719,7 +719,7 @@
 
 ## v2.5.4 — No Dead Ends (2026-11-14)
 
-> 맵 전체 도로 끝 자동 점검으로 끊긴 곳 모두 연결(나마무기 K1 5.6m 절벽, 다이코쿠 JCT 만안선→다이코쿠 램프, 하네다 만안선 단차, 공중에서 끝나던 츠루미·시바우라 램프), 텔레포트는 도로와 진행 방향을 골라서.
+> 맵 전체 도로 끝 자동 점검으로 끊긴 곳 모두 연결(나마무기 K1 5.6m 절벽, 다이코쿠 JCT 완간선→다이코쿠 램프, 하네다 완간선 단차, 공중에서 끝나던 츠루미·시바우라 램프), 텔레포트는 도로와 진행 방향을 골라서.
 > Every road end on the map checked automatically and every broken one joined (a 5.6 m cliff on K1 at Namamugi, the Bayshore→Daikoku ramp at Daikoku JCT, a step on the Bayshore at Haneda, the Namamugi and Shibaura ramps that ended in mid-air), and teleport now lets you pick the road and direction.
 
 **🔧 변경 · Changed**
@@ -728,7 +728,7 @@
 
 **🐞 수정 · Fixed**
 
-- 끊긴 길 전부 연결(맵 전체 자동 점검): K1 북행이 나마무기에서 19.6m 높이로 끝나고 다음 구간은 14m에서 시작하던 5.6m 절벽, 다이코쿠 JCT 「만안선→다이코쿠」 램프가 만안선 상판보다 2.7m 아래에서 시작하던 문제, 하네다에서 만안선 남행이 5m 아래에서 끝나던 단차<br><sub>Broken roads joined (whole map checked automatically): K1 northbound ended at 19.6 m at Namamugi while the next section began at 14 m (a 5.6 m cliff), the Daikoku JCT Bayshore→Daikoku ramp started 2.7 m under the Bayshore deck, and the Bayshore southbound ended 5 m low at Haneda</sub>
+- 끊긴 길 전부 연결(맵 전체 자동 점검): K1 북행이 나마무기에서 19.6m 높이로 끝나고 다음 구간은 14m에서 시작하던 5.6m 절벽, 다이코쿠 JCT 「완간선→다이코쿠」 램프가 완간선 상판보다 2.7m 아래에서 시작하던 문제, 하네다에서 완간선 남행이 5m 아래에서 끝나던 단차<br><sub>Broken roads joined (whole map checked automatically): K1 northbound ended at 19.6 m at Namamugi while the next section began at 14 m (a 5.6 m cliff), the Daikoku JCT Bayshore→Daikoku ramp started 2.7 m under the Bayshore deck, and the Bayshore southbound ended 5 m low at Haneda</sub>
 - 공중에서 끝나던 램프를 지면까지: 생麦(츠루미) 입구·시바우라 출구가 고가 높이 그대로 끝나 막다른 길이었던 것을 실제처럼 지상 도로로 내려오게<br><sub>Ramps that ended in mid-air now reach the ground: the Namamugi entrance and the Shibaura exit stayed at viaduct height and dead-ended</sub>
 
 ---
@@ -747,7 +747,7 @@
 **🐞 수정 · Fixed**
 
 - 요코하마 베이브리지 서쪽 끝: 서쪽으로 달리면 다리 끝(높이 14m)에서 길이 끊기고 K3 서행이 9m 아래에서 시작하던 문제 → 다리 위 같은 높이에서 K3 서행으로 자연스럽게 이어짐(자동주행으로 확인)<br><sub>Yokohama Bay Bridge, west end: driving west the deck ended at 14 m while K3 westbound began 9 m lower — K3 westbound now continues from the bridge at the same height (checked on autopilot)</sub>
-- 나란히 달리는 두 고가(아쿠아라인·만안선 등) 사이가 구멍처럼 보이던 틈을 상판으로 메우고, 반대 방향 차로 사이에는 콘크리트 중앙 방호벽(충돌 포함) — 합류 구간은 막지 않음<br><sub>The slot between twin viaducts (Aqua-Line, Bayshore…) that looked like a hole is decked over, with a concrete centre barrier (solid) between opposite carriageways — merges are left open</sub>
+- 나란히 달리는 두 고가(아쿠아라인·완간선 등) 사이가 구멍처럼 보이던 틈을 상판으로 메우고, 반대 방향 차로 사이에는 콘크리트 중앙 방호벽(충돌 포함) — 합류 구간은 막지 않음<br><sub>The slot between twin viaducts (Aqua-Line, Bayshore…) that looked like a hole is decked over, with a concrete centre barrier (solid) between opposite carriageways — merges are left open</sub>
 - 터널(아쿠아라인 등)에서 내려 점프하면 바다 위로 올라가던 버그: 점프 중에도 발밑 노면을 기준으로, 해수면 아래에서는 절대 수면으로 튀어오르지 않음<br><sub>Jumping after getting out in a tunnel (Aqua-Line…) put you on top of the sea — the floor under you now counts mid-jump, and below sea level you never pop up to the surface</sub>
 - 혼다 시빅(EK9): 차체 텍스처에 그려진 외국 번호판이 일본 번호판 위로 보이던 문제 → 차체색 커버로 가리고 일본 번호판을 실제 번호판 자리·각도에<br><sub>Honda Civic (EK9): the foreign plate painted into the body texture showed above the Japanese plate — covered in body colour, with the Japanese plate at the real plate position and angle</sub>
 
@@ -1020,7 +1020,7 @@
 - 레인보우 브리지를 실제 모습으로: 높이 126m 하얀 주탑 2기, 주경간 570m 현수 케이블·행어, 야간 조명<br><sub>The Rainbow Bridge as it really is: two white 126 m towers, the 570 m main span's suspension cables and hangers, lit at night</sub>
 - 요코하마 서쪽에 실제 해안선의 사가미만 바다 — 세이쇼 바이패스가 바다를 따라 달림<br><sub>Sagami Bay west of Yokohama, from the real coastline — the Seishō bypass runs along the sea</sub>
 - 시작 시 새 버전 소개 창(레인보우 브리지·하코네에서 바로 출발), 화면 좌상단 다음 도전 과제 진행 표시, 달성 시 큰 배너<br><sub>A what's-new screen at start (jump straight to the Rainbow Bridge or Hakone), the next accolade and its progress top-left, and a big banner when you earn one</sub>
-- 수도고 K1 요코하네선·K3 가리바선 양방향, 1호 하네다선, 만안선 북부(도쿄항 터널), 11호 다이바선(레인보우 브리지)을 실제 OSM 형상·JCT 그대로 추가 — 요코하마 루프에서 C1까지 고속도로로 직행<br><sub>Shuto K1 Yokohane and K3 Kariba both ways, Route 1 Haneda, the Bayshore north (Tokyo Port Tunnel) and Route 11 Daiba (Rainbow Bridge), from OpenStreetMap with the real junctions — drive from the Yokohama loop straight to the C1</sub>
+- 수도고 K1 요코하네선·K3 가리바선 양방향, 1호 하네다선, 완간선 북부(도쿄항 터널), 11호 다이바선(레인보우 브리지)을 실제 OSM 형상·JCT 그대로 추가 — 요코하마 루프에서 C1까지 고속도로로 직행<br><sub>Shuto K1 Yokohane and K3 Kariba both ways, Route 1 Haneda, the Bayshore north (Tokyo Port Tunnel) and Route 11 Daiba (Rainbow Bridge), from OpenStreetMap with the real junctions — drive from the Yokohama loop straight to the C1</sub>
 - 하코네까지 도로로: 요코하마 신도 → 국도1호 → 신쇼난 바이패스 → 국도134호 → 세이쇼 바이패스 → 턴파이크 (편도 약 59km, 주변 시가지 포함)<br><sub>Drive to Hakone: Yokohama Shindō → Route 1 → Shin-Shōnan bypass → Route 134 → Seishō bypass → the Turnpike (about 59 km, with the towns along the way)</sub>
 - 실제 출입 램프 13곳(하네다공항·헤이와지마·시바우라·다이바·아리아케·다이시 등)으로 고속도로와 시내 도로가 연결 — 출구로 나간 교통차량은 그대로 시내를 달림<br><sub>13 real exits and entrances (Haneda Airport, Heiwajima, Shibaura, Daiba, Ariake, Daishi …) join the expressways to the city streets — traffic leaving an exit carries on through town</sub>
 - 도전 과제(13+2개, 보상금): 베이브리지·쓰바사교·레인보우 브리지 횡단, 우미호타루, 다이칸야마 정상, C1 러너, 하코네 로드트립, 드리프트, 200km/h, 추격 따돌리기 등 — 일시정지 메뉴에서 진행 확인<br><sub>Accolades (15, with cash rewards): the Bay, Tsubasa and Rainbow bridges, Umihotaru, the Daikanyama summit, C1 runner, a road trip to Hakone, drifting, 200 km/h, escaping the police … — progress in the pause menu</sub>
@@ -1029,7 +1029,7 @@
 **🔧 변경 · Changed**
 
 - 일반국도(1호·134호)는 보도·연석이 있는 실제 국도 모습으로, 고가 구간만 난간 있는 육교로<br><sub>Ordinary national roads (Routes 1 and 134) look like the real thing — kerbs and pavements, parapets only on their overpasses</sub>
-- 만안선 양 끝 U턴 제거, 교통차량은 플레이어 주변 도로에 생성, 새 JCT의 녹색 방향 안내판(羽田·台場·都心·有明 등)<br><sub>No more U-turns at the Bayshore's ends, traffic appears on the roads around you, and green direction signs (Haneda, Daiba, City Centre, Ariake …) at the new junctions</sub>
+- 완간선 양 끝 U턴 제거, 교통차량은 플레이어 주변 도로에 생성, 새 JCT의 녹색 방향 안내판(羽田·台場·都心·有明 등)<br><sub>No more U-turns at the Bayshore's ends, traffic appears on the roads around you, and green direction signs (Haneda, Daiba, City Centre, Ariake …) at the new junctions</sub>
 
 **🐞 수정 · Fixed**
 
@@ -1067,12 +1067,12 @@
 
 ## v1.0.0 — Real Japan (2026-11-06)
 
-> 정식 1.0 — 실제 일본의 다섯 곳(C1·하코네·K1 루프·다이코쿠 PA와 만안선·요코하마/도쿄 시가지)을 달리는 게임으로. 홈페이지 전면 리뉴얼.
+> 정식 1.0 — 실제 일본의 다섯 곳(C1·하코네·K1 루프·다이코쿠 PA와 완간선·요코하마/도쿄 시가지)을 달리는 게임으로. 홈페이지 전면 리뉴얼.
 > Version 1.0: a game about driving the real Japan in five places — C1, Hakone, the K1 loop, Daikoku PA and the Bayshore, and the streets of Yokohama and Tokyo. A brand-new homepage.
 
 **✨ 추가 · New**
 
-- 정식 1.0: C1 도심환상선·하코네 턴파이크·K1 요코하마 루프·다이코쿠 PA와 만안선·요코하마/도쿄 시가지 — 실제 일본을 다섯 곳에서 달리는 게임<br><sub>Version 1.0: the C1 Inner Circular, the Hakone Turnpike, the K1 Yokohama loop, Daikoku PA and the Bayshore, and the streets of Yokohama and Tokyo — the real Japan in five places</sub>
+- 정식 1.0: C1 도심환상선·하코네 턴파이크·K1 요코하마 루프·다이코쿠 PA와 완간선·요코하마/도쿄 시가지 — 실제 일본을 다섯 곳에서 달리는 게임<br><sub>Version 1.0: the C1 Inner Circular, the Hakone Turnpike, the K1 Yokohama loop, Daikoku PA and the Bayshore, and the streets of Yokohama and Tokyo — the real Japan in five places</sub>
 
 **🔧 변경 · Changed**
 
@@ -1211,7 +1211,7 @@
 
 **🐞 수정 · Fixed**
 
-- 터널·지하 구간에 벽 충돌이 없어 차로를 벗어나면 차가 지상으로 튀어 오르던 문제(만안선 해저터널 포함)<br><sub>Tunnels and underground sections had no wall collisions, so leaving the carriageway popped the car up to the surface (including the Bayshore undersea tunnels)</sub>
+- 터널·지하 구간에 벽 충돌이 없어 차로를 벗어나면 차가 지상으로 튀어 오르던 문제(완간선 해저터널 포함)<br><sub>Tunnels and underground sections had no wall collisions, so leaving the carriageway popped the car up to the surface (including the Bayshore undersea tunnels)</sub>
 - AI 차량이 끝과 시작이 맞닿은 도로(램프→본선)에서 65% 확률로 사라지던 문제<br><sub>AI cars vanished 65% of the time where one road ends exactly where the next begins (ramp → main line)</sub>
 - 분기점에서 달릴 수 없는 장식용 고가(K2 등)와 반대 차로 고가의 가로등이 주행 차로를 막거나 뚫고 나오던 문제<br><sub>Decorative (non-drivable) viaducts such as the K2 at junctions, and the street lights of the opposite carriageway, no longer block or poke through the lanes you drive on</sub>
 - 지붕 없는 지하 진입 구간에서 바다 수면이 비쳐 차가 가려지던 문제<br><sub>In open cuttings below ground level the sea surface showed across the road and hid the car</sub>
@@ -1534,7 +1534,7 @@
 **✨ 추가 · New**
 
 - 다이코쿠 PA: 주차장·대형차 구역·편의점(24h)·푸드코트·화장실·자판기 줄·흡연소·고속도로 교통경찰대 분주소<br><sub>Daikoku PA: car & truck bays, 24h convenience store, food court, toilets, vending-machine row, smoking area, expressway police post</sub>
-- 다이코쿠 JCT 나선형 루프 램프, 만안선(B)·K5 다이코쿠선 고가도로, 베이브리지 방면<br><sub>Daikoku JCT spiral loop ramps, elevated Bayshore Route (B) and K5 Daikoku Line, Bay Bridge approach</sub>
+- 다이코쿠 JCT 나선형 루프 램프, 완간선(B)·K5 다이코쿠선 고가도로, 베이브리지 방면<br><sub>Daikoku JCT spiral loop ramps, elevated Bayshore Route (B) and K5 Daikoku Line, Bay Bridge approach</sub>
 - 다이코쿠 부두 출입구 톨게이트 (ETC/일반 차로, 차단봉, 보통차·경차 요금)<br><sub>Daikoku-futō toll gate with ETC / cash lanes, barrier arms, standard & kei fares</sub>
 - 실제 차량 41종 (R32·R33·R34·R35·GR86·AE86·FD3S·NSX·S2000·경차·EV·순찰차 등) 절차적 고폴리곤 모델<br><sub>41 real-world vehicles (R32/R33/R34/R35, GR86, AE86, FD3S, NSX, S2000, kei, EVs, police) as procedural high-poly models</sub>
 - 수동: 시동·클러치·H패턴 변속·엔스트 / 자동: P·R·N·D, 사이드브레이크 / EV 회생제동 3단계·원페달<br><sub>Manual: ignition, clutch, H-pattern, stalling · Auto: P/R/N/D, handbrake · EV regen 3 levels + one-pedal</sub>
