@@ -568,7 +568,7 @@ export class UI {
       const comp = DIRS[Math.round(((Math.atan2(dx, -dz) * 180 / Math.PI) + 360) % 360 / 45) % 8];
       const rd = getLang() !== 'ja' ? reading(d.name) : '';
       const km = dist < 1000 ? Math.round(dist) + ' m' : (dist / 1000).toFixed(dist < 10000 ? 1 : 0) + ' km';
-      return `<div class="qt-item"><button class="qt-card" data-a="qt:${d.id}">${TP_PHOTOS.has(d.id) ? `<img src="assets/tp/${d.id}.webp" alt="" loading="lazy" onerror="this.style.visibility='hidden'">` : `<span class="qt-ph" aria-hidden="true">${esc((d.name || '').slice(0, 2))}</span>`}<span class="qt-t"><b>${esc(d.name)}</b>${rd ? `<small>${esc(rd)}</small>` : ''}</span><span class="qt-d"><i style="transform:rotate(${(-rel * 180 / Math.PI).toFixed(0)}deg)">▲</i>${esc(comp)} · ${km}</span></button><button class="qt-go" data-a="qtgo:${d.id}" title="${esc(({ ko: '바로 이동', ja: 'すぐ移動' })[getLang()] || 'Go now')}" aria-label="go">➜</button></div>`;
+      return `<div class="qt-item"><button class="qt-card" data-a="qt:${d.id}">${TP_PHOTOS.has(d.id) ? `<img src="assets/tp/${d.id}.webp" alt="" loading="lazy" onerror="this.style.visibility='hidden'">` : `<span class="qt-ph" aria-hidden="true">NEW</span>`}<span class="qt-t"><b>${esc(d.name)}</b>${rd ? `<small>${esc(rd)}</small>` : ''}</span><span class="qt-d"><i style="transform:rotate(${(-rel * 180 / Math.PI).toFixed(0)}deg)">▲</i>${esc(comp)} · ${km}</span></button><button class="qt-go" data-a="qtgo:${d.id}" title="${esc(({ ko: '바로 이동', ja: 'すぐ移動' })[getLang()] || 'Go now')}" aria-label="go">➜</button></div>`;
     }).join('');
   }
   mapPos() { return this.g.mode === 'walk' ? this.g.player?.pos : this.g.vehicle?.pos; }
